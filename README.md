@@ -1,6 +1,33 @@
 # @cofoundy/ui
 
-A collection of accessible, production-ready components for Cofoundy products.
+A collection of accessible, production-ready AI-powered components.
+
+## Vision
+
+This package is the foundation for Cofoundy's **white-label AI component library** - our competitive moat.
+
+### Strategic Direction
+
+1. **Phase 1 (Current)**: Internal UI components for Cofoundy products
+   - ChatWidget with real-time AI conversations
+   - Appointment scheduling via natural language
+   - Multi-language support (ES, EN, PT)
+
+2. **Phase 2**: White-label product
+   - Embeddable AI chat widgets for any website
+   - Customizable branding (colors, logos, tone)
+   - Backend-agnostic (connect to any AI/scheduling API)
+
+3. **Phase 3**: AI Component Marketplace
+   - Pre-built AI-powered components (chat, forms, scheduling, support)
+   - Subscription model for businesses
+   - Similar to Intercom/Drift but component-based
+
+### Why This Matters
+
+- **For clients**: Drop-in AI capabilities without building from scratch
+- **For Cofoundy**: Recurring revenue + product differentiation
+- **Moat**: Proprietary AI UX patterns refined across multiple deployments
 
 ## Installation
 
