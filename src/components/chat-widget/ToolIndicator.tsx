@@ -1,96 +1,61 @@
 "use client";
 
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { cn } from "../../utils/cn";
 import type { Message as MessageType } from "../../types";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 
 interface ToolIndicatorProps {
   message: MessageType;
-  /** When true, renders as a compact pill without outer wrapper (for ToolGroup) */
+  /** When true, renders inline without wrapper (for ToolGroup) */
   compact?: boolean;
 }
 
 /**
- * ToolIndicator component for showing tool execution status.
- * Displays a card with icon, text, and animated progress indicator.
+ * Minimal tool indicator - git commit style
+ * ○ Running...
+ * ✓ Success
+ * ✗ Error
  */
 export const ToolIndicator = memo(
   function ToolIndicator({ message, compact = false }: ToolIndicatorProps) {
     const isRunning = message.toolStatus === "running";
     const isSuccess = message.toolStatus === "success";
+    const isError = message.toolStatus === "error";
 
-    // Get status-specific styles
-    const statusStyles = useMemo(() => {
-      if (isRunning) {
-        return {
-          bg: "bg-gradient-to-r from-blue-500/20 to-purple-500/20",
-          border: "border-blue-500/30",
-          text: "text-blue-200",
-          icon: <Loader2 className="w-4 h-4 animate-spin" />,
-        };
-      }
-      if (isSuccess) {
-        return {
-          bg: "bg-gradient-to-r from-green-500/20 to-emerald-500/20",
-          border: "border-green-500/30",
-          text: "text-green-200",
-          icon: <CheckCircle2 className="w-4 h-4" />,
-        };
-      }
-      // Error
-      return {
-        bg: "bg-gradient-to-r from-red-500/20 to-orange-500/20",
-        border: "border-red-500/30",
-        text: "text-red-200",
-        icon: <XCircle className="w-4 h-4" />,
-      };
-    }, [isRunning, isSuccess]);
-
-    const pill = (
+    const indicator = (
       <div
         className={cn(
-          "inline-flex items-center gap-1.5 rounded-full",
-          "border backdrop-blur-sm transition-all duration-300",
-          compact ? "px-3 py-1.5" : "px-4 py-2",
-          statusStyles.bg,
-          statusStyles.border,
-          statusStyles.text,
-          isRunning && "animate-pulse"
+          "flex items-center gap-2 text-sm font-mono",
+          isRunning && "text-[var(--chat-muted)]",
+          isSuccess && "text-[var(--chat-muted)]",
+          isError && "text-red-400/80"
         )}
       >
-        {/* Tool icon from backend */}
-        <span className={compact ? "text-sm" : "text-base"}>
-          {message.toolIcon}
+        {/* Status symbol */}
+        <span className={cn(isRunning && "animate-pulse")}>
+          {isRunning && "○"}
+          {isSuccess && "✓"}
+          {isError && "✗"}
         </span>
 
         {/* Tool text */}
-        <span className={cn("font-medium", compact ? "text-xs" : "text-sm")}>
+        <span>
           {message.content}
-        </span>
-
-        {/* Status icon */}
-        <span
-          className={cn(
-            "transition-opacity duration-300",
-            isRunning ? "opacity-100" : "opacity-80"
-          )}
-        >
-          {statusStyles.icon}
+          {isRunning && "..."}
         </span>
       </div>
     );
 
-    // In compact mode, ToolGroup handles the layout
     if (compact) {
-      return pill;
+      return indicator;
     }
 
     return (
-      <div className="flex justify-center my-2 chat-animate-fade-in">{pill}</div>
+      <div className="pl-4 my-1 chat-animate-fade-in">
+        {indicator}
+      </div>
     );
   },
-  // Custom comparison: re-render when status or compact changes
   (prevProps, nextProps) => {
     return (
       prevProps.message.id === nextProps.message.id &&

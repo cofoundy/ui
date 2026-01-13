@@ -231,14 +231,22 @@ export function ChatWidget({
   // Ref to track current streaming message ID
   const streamingMessageIdRef = useRef<string | null>(null);
 
+  // Ref to prevent duplicate greeting in React Strict Mode
+  const greetingAddedRef = useRef(false);
+
   useEffect(() => {
     streamingMessageIdRef.current = streamingMessageId;
   }, [streamingMessageId]);
 
-  // Show initial greeting on mount
+  // Reset store and show greeting on mount (with Strict Mode protection)
   useEffect(() => {
-    if (messages.length === 0 && greeting) {
-      addMessage(greeting);
+    if (!greetingAddedRef.current) {
+      greetingAddedRef.current = true;
+      // Reset store to clear any stale messages from hot reload
+      useChatStore.getState().reset();
+      if (greeting) {
+        addMessage(greeting);
+      }
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

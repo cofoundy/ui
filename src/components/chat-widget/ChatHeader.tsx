@@ -58,9 +58,9 @@ export function ChatHeader({
             title={statusTitle}
           />
         </div>
-        <div>
+        <div className="min-w-0">
           <h1 className="font-semibold text-white">{brandName}</h1>
-          <p className="text-sm text-[var(--chat-muted)]">{brandSubtitle}</p>
+          <p className="text-sm text-[var(--chat-muted)] truncate">{brandSubtitle}</p>
         </div>
       </div>
 

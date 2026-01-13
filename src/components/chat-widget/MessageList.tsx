@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useEffect, useRef, useCallback, useMemo, useState } from "react";
 import type { Message as MessageType } from "../../types";
 import { Message } from "./Message";
 import { ToolGroup } from "./ToolGroup";
@@ -52,33 +52,66 @@ export function MessageList({
   className,
   emptyMessage = "Comienza una conversación...",
 }: MessageListProps) {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Track if user has scrolled up (locked)
+  const [isUserScrollLocked, setIsUserScrollLocked] = useState(false);
+  const lastMessageCountRef = useRef(messages.length);
 
   // Group consecutive tool messages for horizontal display
   const groupedMessages = useMemo(() => groupMessages(messages), [messages]);
 
-  // Debounced scroll to prevent jank during streaming
-  const scrollToBottom = useCallback(() => {
+  // Check if scrolled to bottom (within threshold)
+  const isAtBottom = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return true;
+    const threshold = 50; // pixels from bottom
+    return container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+  }, []);
+
+  // Scroll to bottom using scrollTop (local to container, not global)
+  const scrollToBottom = useCallback((force = false) => {
+    if (!force && isUserScrollLocked) return;
+
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
     }
     scrollTimeoutRef.current = setTimeout(() => {
-      bottomRef.current?.scrollIntoView({ behavior: "instant" });
-    }, 50); // Batch scroll updates every 50ms
-  }, []);
+      const container = containerRef.current;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }, 50);
+  }, [isUserScrollLocked]);
 
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+  // Handle scroll events to detect user scroll lock
+  const handleScroll = useCallback(() => {
+    const atBottom = isAtBottom();
+    setIsUserScrollLocked(!atBottom);
+  }, [isAtBottom]);
 
-  // Also scroll on typing indicator change (but not during streaming)
+  // Auto-scroll when new messages arrive (only if not locked)
   useEffect(() => {
-    if (isTyping) {
+    const isNewMessage = messages.length > lastMessageCountRef.current;
+    lastMessageCountRef.current = messages.length;
+
+    if (isNewMessage && !isUserScrollLocked) {
       scrollToBottom();
     }
-  }, [isTyping, scrollToBottom]);
+  }, [messages, isUserScrollLocked, scrollToBottom]);
+
+  // Scroll to bottom on initial mount
+  useEffect(() => {
+    scrollToBottom(true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Also scroll on typing indicator change (but respect lock)
+  useEffect(() => {
+    if (isTyping && !isUserScrollLocked) {
+      scrollToBottom();
+    }
+  }, [isTyping, isUserScrollLocked, scrollToBottom]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -91,9 +124,11 @@ export function MessageList({
 
   return (
     <div
+      ref={containerRef}
+      onScroll={handleScroll}
       className={cn(
-        "flex-1 overflow-y-auto p-4 space-y-4",
-        "scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent",
+        "flex-1 min-h-0 overflow-y-auto p-4 space-y-4",
+        "chat-scrollbar",
         className
       )}
     >
@@ -115,8 +150,6 @@ export function MessageList({
       })}
 
       {isTyping && <TypingIndicator />}
-
-      <div ref={bottomRef} />
     </div>
   );
 }

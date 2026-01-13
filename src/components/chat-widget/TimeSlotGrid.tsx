@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "../../utils/cn";
 import type { TimeSlot } from "../../types";
 import { TimeSlotButton } from "./TimeSlotButton";
-import { Calendar } from "lucide-react";
 
 interface TimeSlotGridProps {
   slots: TimeSlot[];
@@ -27,14 +26,43 @@ function groupSlotsByDate(slots: TimeSlot[]): Record<string, TimeSlot[]> {
   );
 }
 
+// Normalize date string: "2025/01/15" or "2025-01-15" -> Date object
+function parseDate(dateStr: string): Date {
+  // Replace slashes with dashes for consistent parsing
+  const normalized = dateStr.replace(/\//g, "-");
+  return new Date(normalized + "T12:00:00");
+}
+
+// Format date for tab: "Mié 15"
+function formatTabDate(dateStr: string): string {
+  const date = parseDate(dateStr);
+  const weekday = date.toLocaleDateString("es-ES", { weekday: "short" });
+  const day = date.getDate();
+  // Capitalize first letter
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)} ${day}`;
+}
+
+// Format date for header when single day: "miércoles, 13 de enero"
+function formatFullDate(dateStr: string): string {
+  const date = parseDate(dateStr);
+  return date.toLocaleDateString("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
 export function TimeSlotGrid({
   slots,
   onSelectSlot,
   className,
   title = "Horarios disponibles",
 }: TimeSlotGridProps) {
+  const groupedSlots = useMemo(() => groupSlotsByDate(slots), [slots]);
+  const dates = Object.keys(groupedSlots);
+
+  const [selectedDate, setSelectedDate] = useState<string>(dates[0] || "");
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
-  const groupedSlots = groupSlotsByDate(slots);
 
   const handleSelect = (slot: TimeSlot) => {
     setSelectedSlot(slot);
@@ -45,44 +73,71 @@ export function TimeSlotGrid({
     return null;
   }
 
+  const hasMultipleDays = dates.length > 1;
+  const currentSlots = groupedSlots[selectedDate] || [];
+
   return (
     <div
       className={cn(
-        "bg-white/5 rounded-xl p-4 my-2",
+        "bg-white/[0.03] backdrop-blur-sm rounded-lg p-3 mx-4 my-1",
         "border border-white/10",
-        "chat-animate-fade-in",
+        "shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_4px_20px_rgba(0,0,0,0.3)]",
         className
       )}
     >
-      <div className="flex items-center gap-2 mb-3 text-sm text-white">
-        <Calendar className="w-4 h-4 text-[var(--chat-primary)]" />
-        <span className="font-medium">{title}</span>
-      </div>
+      {/* Header */}
+      <p className="text-[10px] uppercase tracking-wider text-white/40 font-medium mb-2">
+        {hasMultipleDays ? title : formatFullDate(selectedDate)}
+      </p>
 
-      <div className="space-y-4">
-        {Object.entries(groupedSlots).map(([date, dateSlots]) => (
-          <div key={date}>
-            <p className="text-xs text-[var(--chat-muted)] mb-2">
-              {new Date(date).toLocaleDateString("es-ES", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {dateSlots.map((slot, idx) => (
-                <TimeSlotButton
-                  key={`${slot.date}-${slot.time}-${idx}`}
-                  slot={slot}
-                  selected={
-                    selectedSlot?.date === slot.date &&
-                    selectedSlot?.time === slot.time
-                  }
-                  onSelect={handleSelect}
-                />
-              ))}
-            </div>
-          </div>
+      {/* Day tabs - only show if multiple days */}
+      {hasMultipleDays && (
+        <div className="flex gap-1 mb-2 overflow-x-auto -mx-1 px-1">
+          {dates.map((date) => (
+            <button
+              key={date}
+              onClick={() => setSelectedDate(date)}
+              className={cn(
+                "relative px-3 py-1 text-xs font-medium whitespace-nowrap",
+                "transition-all duration-200 ease-out",
+                selectedDate === date
+                  ? "text-white"
+                  : "text-white/50 hover:text-white/80"
+              )}
+            >
+              {formatTabDate(date)}
+              {/* Underline accent */}
+              <span
+                className={cn(
+                  "absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full",
+                  "transition-all duration-200 ease-out",
+                  selectedDate === date
+                    ? "w-full bg-[var(--chat-primary)]"
+                    : "w-0 bg-transparent"
+                )}
+              />
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Divider when multiple days */}
+      {hasMultipleDays && (
+        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-2" />
+      )}
+
+      {/* Time slots for selected day */}
+      <div className="flex flex-wrap gap-1.5">
+        {currentSlots.map((slot, idx) => (
+          <TimeSlotButton
+            key={`${slot.date}-${slot.time}-${idx}`}
+            slot={slot}
+            selected={
+              selectedSlot?.date === slot.date &&
+              selectedSlot?.time === slot.time
+            }
+            onSelect={handleSelect}
+          />
         ))}
       </div>
     </div>

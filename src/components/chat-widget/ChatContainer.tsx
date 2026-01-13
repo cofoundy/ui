@@ -15,6 +15,7 @@ export function ChatContainer({ children, className }: ChatContainerProps) {
         "w-full h-full",
         "chat-glass-card",
         "flex flex-col",
+        "overflow-hidden", // Constrain children so MessageList scrolls
         "shadow-2xl shadow-primary/10",
         "chat-animate-fade-in",
         className

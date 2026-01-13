@@ -20,9 +20,9 @@ export function QuickActions({
   if (actions.length === 0) return null;
 
   return (
-    <div className={cn("px-4 pb-4", className)}>
+    <div className={cn("px-3 sm:px-4 pb-3 sm:pb-4", className)}>
       <p className="text-xs text-[var(--chat-muted)] mb-2 text-center">{label}</p>
-      <div className="flex flex-wrap gap-2 justify-center">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
         {actions.map((action) => (
           <Button
             key={action.id}
@@ -31,7 +31,8 @@ export function QuickActions({
             onClick={() => onSelectAction(action.message)}
             className={cn(
               "chat-glass-button",
-              "text-xs",
+              "text-[11px] sm:text-xs",
+              "px-2.5 py-1.5 sm:px-3 sm:py-2",
               "hover:scale-105 transition-transform"
             )}
           >

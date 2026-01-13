@@ -31,14 +31,14 @@ export const Message = memo(
     return (
       <div
         className={cn(
-          "flex gap-3 chat-animate-fade-in",
+          "flex gap-2 chat-animate-fade-in",
           isUser ? "flex-row-reverse" : "flex-row"
         )}
       >
-        {/* Avatar */}
+        {/* Avatar - hidden on very small screens */}
         <Avatar
           className={cn(
-            "w-8 h-8",
+            "w-8 h-8 shrink-0 hidden sm:flex",
             isUser ? "bg-[var(--chat-primary)]" : "bg-white/10"
           )}
         >
@@ -56,7 +56,7 @@ export const Message = memo(
         {/* Message content */}
         <div
           className={cn(
-            "max-w-[80%] rounded-2xl px-4 py-3",
+            "max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 sm:px-4 sm:py-3",
             isUser
               ? "chat-gradient-primary text-white rounded-tr-sm"
               : "bg-white/10 text-white rounded-tl-sm"

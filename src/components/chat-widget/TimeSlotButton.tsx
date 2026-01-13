@@ -1,9 +1,7 @@
 "use client";
 
 import { cn } from "../../utils/cn";
-import { Button } from "../ui/button";
 import type { TimeSlot } from "../../types";
-import { Clock } from "lucide-react";
 
 interface TimeSlotButtonProps {
   slot: TimeSlot;
@@ -17,21 +15,35 @@ export function TimeSlotButton({
   onSelect,
 }: TimeSlotButtonProps) {
   return (
-    <Button
-      variant={selected ? "default" : "outline"}
-      size="sm"
+    <button
       onClick={() => onSelect(slot)}
       disabled={!slot.available}
       className={cn(
-        "flex items-center gap-2",
-        selected
-          ? "chat-gradient-primary text-white"
-          : "chat-glass-button hover:bg-[var(--chat-primary)]/20",
-        !slot.available && "opacity-50 cursor-not-allowed"
+        // Base: floating card
+        "px-2.5 py-1.5 rounded-md text-xs font-medium",
+        "bg-white/[0.03] border border-white/10",
+        "shadow-[0_2px_6px_rgba(0,0,0,0.25)]",
+        // Transitions
+        "transition-all duration-200 ease-out",
+        // Hover: lift up
+        "hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]",
+        "hover:bg-white/[0.06] hover:border-white/20",
+        // Selected: accent border + glow
+        selected && [
+          "border-l-2 border-l-[var(--chat-primary)]",
+          "bg-white/[0.08]",
+          "shadow-[0_4px_16px_rgba(41,132,173,0.2)]",
+        ],
+        // Disabled
+        !slot.available && "opacity-40 cursor-not-allowed hover:transform-none hover:shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
       )}
     >
-      <Clock className="w-3 h-3" />
-      <span>{slot.time}</span>
-    </Button>
+      <span className={cn(
+        "text-white/90",
+        selected && "text-white"
+      )}>
+        {slot.time}
+      </span>
+    </button>
   );
 }

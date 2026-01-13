@@ -1,0 +1,60 @@
+/* Storybook CSS - Tailwind v4 + Cofoundy Brand */
+@import "tailwindcss";
+@import "../src/styles/index.css";
+
+/* Cofoundy Brand Theme (same as landing page globals.css) */
+@theme {
+  /* Cofoundy Brand Colors */
+  --color-cf-primary: #2984AD;
+  --color-cf-navy: #0D3A59;
+  --color-cf-deep: #072235;
+  --color-cf-slate: #364552;
+  --color-cf-accent: #18597A;
+  --color-cf-mist: #DBE5EB;
+  --color-cf-midnight: #020916;
+  --color-cf-ivory: #E7E8DE;
+  --color-cf-warmgray: #9E9E99;
+
+  /* Legacy support colors */
+  --color-primary: #2984AD;
+  --color-primary-dark: #0D3A59;
+  --color-secondary: #0D3A59;
+  --color-dark: #020916;
+
+  /* Background/Foreground */
+  --color-background: #ffffff;
+  --color-foreground: #171717;
+
+  /* Custom border radius */
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  /* Font family */
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root {
+  /* Cofoundy Brand Colors CSS Variables */
+  --cf-primary: #2984AD;
+  --cf-navy: #0D3A59;
+  --cf-deep: #072235;
+  --cf-slate: #364552;
+  --cf-accent: #18597A;
+  --cf-mist: #DBE5EB;
+  --cf-midnight: #020916;
+  --cf-ivory: #E7E8DE;
+  --cf-warmgray: #9E9E99;
+
+  /* Legacy support */
+  --primary: #2984AD;
+  --primary-dark: #0D3A59;
+  --secondary: #0D3A59;
+  --dark: #020916;
+}
+
+/* Base styles for Storybook */
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
