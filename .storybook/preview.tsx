@@ -2,16 +2,28 @@ import React from 'react';
 import type { Preview } from '@storybook/react';
 import './storybook.css';
 
+// Theme toolbar configuration
+export const globalTypes = {
+  theme: {
+    name: 'Theme',
+    description: 'Global theme for components',
+    defaultValue: 'dark',
+    toolbar: {
+      icon: 'paintbrush',
+      items: [
+        { value: 'dark', title: 'Dark', icon: 'moon' },
+        { value: 'light', title: 'Light', icon: 'sun' },
+      ],
+      showName: true,
+      dynamicTitle: true,
+    },
+  },
+};
+
 const preview: Preview = {
   parameters: {
     backgrounds: {
-      default: 'cofoundy-dark',
-      values: [
-        { name: 'cofoundy-dark', value: '#020916' },   // --cf-midnight
-        { name: 'cofoundy-navy', value: '#0D3A59' },   // --cf-navy
-        { name: 'cofoundy-deep', value: '#072235' },   // --cf-deep
-        { name: 'light', value: '#ffffff' },
-      ],
+      disable: true, // We control background via theme
     },
     controls: {
       matchers: {
@@ -22,19 +34,27 @@ const preview: Preview = {
     layout: 'centered',
   },
   decorators: [
-    (Story) => (
-      <div
-        style={{
-          padding: '2rem',
-          minHeight: '200px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Story />
-      </div>
-    ),
+    (Story, context) => {
+      const theme = context.globals.theme || 'dark';
+      const bgColor = theme === 'light' ? '#f8fafc' : '#020916';
+
+      return (
+        <div
+          data-theme={theme}
+          style={{
+            padding: '2rem',
+            minHeight: '200px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: bgColor,
+            transition: 'background 0.2s ease',
+          }}
+        >
+          <Story />
+        </div>
+      );
+    },
   ],
 };
 

@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { MessageCircle } from 'lucide-react';
 
 // Import individual components to compose manually (bypassing WebSocket)
-import { ChatContainer } from '../../components/chat-widget/ChatContainer';
+import { ChatContainer, type ChatTheme } from '../../components/chat-widget/ChatContainer';
 import { ChatHeader } from '../../components/chat-widget/ChatHeader';
 import { ChatInput } from '../../components/chat-widget/ChatInput';
 import { MessageList } from '../../components/chat-widget/MessageList';
@@ -25,6 +25,7 @@ interface StaticChatWidgetProps {
   confirmedAppointment?: Appointment | null;
   inputPlaceholder?: string;
   inputDisabled?: boolean;
+  theme?: ChatTheme;
 }
 
 function StaticChatWidget({
@@ -42,6 +43,7 @@ function StaticChatWidget({
   confirmedAppointment = null,
   inputPlaceholder,
   inputDisabled,
+  theme = 'dark',
 }: StaticChatWidgetProps) {
   // Derive input state from connection status if not overridden
   const placeholder = inputPlaceholder ?? (
@@ -57,7 +59,7 @@ function StaticChatWidget({
   const hasUserMessage = messages.some((m) => m.role === 'user');
 
   return (
-    <ChatContainer className="h-full">
+    <ChatContainer className="h-full" theme={theme}>
       <ChatHeader
         connectionStatus={connectionStatus}
         brandName="Cofoundy"
@@ -89,7 +91,7 @@ function StaticChatWidget({
           <div className="flex items-center gap-3">
             <MessageCircle className="w-6 h-6 text-green-500" />
             <div className="flex-1">
-              <p className="text-sm text-white font-medium">
+              <p className="text-sm text-[var(--chat-foreground)] font-medium">
                 ¿Problemas de conexión?
               </p>
               <p className="text-xs text-[var(--chat-muted)]">
@@ -117,16 +119,28 @@ const meta: Meta<typeof StaticChatWidget> = {
     layout: 'fullscreen',
   },
   decorators: [
-    (Story) => (
-      <div className="w-full h-[600px] max-w-[500px] mx-auto p-4 bg-[#020916]">
-        <Story />
-      </div>
-    ),
+    (Story, context) => {
+      // Use global theme from toolbar, fallback to args
+      const theme = context.globals.theme || context.args.theme || 'dark';
+      const bgColor = theme === 'light' ? '#f8fafc' : '#020916';
+      return (
+        <div
+          className="w-full h-[600px] max-w-[500px] mx-auto p-4"
+          style={{ background: bgColor }}
+        >
+          <Story args={{ ...context.args, theme }} />
+        </div>
+      );
+    },
   ],
   argTypes: {
     connectionStatus: {
       control: 'select',
       options: ['connected', 'connecting', 'disconnected', 'error'],
+    },
+    theme: {
+      control: 'select',
+      options: ['dark', 'light', 'system'],
     },
   },
 };
@@ -356,32 +370,45 @@ export const WithConfirmation: Story = {
 
 // Showcase different sizes
 export const Sizes: Story = {
+  args: {
+    theme: 'dark',
+  },
   parameters: {
     layout: 'fullscreen',
-    backgrounds: { default: 'dark' },
   },
   decorators: [
-    () => (
-      <div className="flex flex-wrap gap-8 p-8 items-end justify-center min-h-screen">
-        <div>
-          <p className="text-white/60 text-xs mb-2 text-center">Mobile (350px)</p>
-          <div style={{ width: 350, height: 500 }} className="overflow-hidden rounded-xl">
-            <StaticChatWidget
-              connectionStatus="connected"
-              messages={[greetingMessage]}
-            />
+    (Story, context) => {
+      // Use global theme from toolbar, fallback to args
+      const theme = (context.globals.theme || context.args.theme || 'dark') as ChatTheme;
+      const bgColor = theme === 'light' ? '#f8fafc' : '#020916';
+      const labelColor = theme === 'light' ? 'text-gray-600' : 'text-white/60';
+      return (
+        <div
+          className="flex flex-wrap gap-8 p-8 items-end justify-center min-h-screen"
+          style={{ background: bgColor }}
+        >
+          <div>
+            <p className={`${labelColor} text-xs mb-2 text-center`}>Mobile (350px)</p>
+            <div style={{ width: 350, height: 500 }} className="overflow-hidden rounded-xl">
+              <StaticChatWidget
+                connectionStatus="connected"
+                messages={[greetingMessage]}
+                theme={theme}
+              />
+            </div>
+          </div>
+          <div>
+            <p className={`${labelColor} text-xs mb-2 text-center`}>Tablet (450px)</p>
+            <div style={{ width: 450, height: 600 }} className="overflow-hidden rounded-xl">
+              <StaticChatWidget
+                connectionStatus="connected"
+                messages={[greetingMessage]}
+                theme={theme}
+              />
+            </div>
           </div>
         </div>
-        <div>
-          <p className="text-white/60 text-xs mb-2 text-center">Tablet (450px)</p>
-          <div style={{ width: 450, height: 600 }} className="overflow-hidden rounded-xl">
-            <StaticChatWidget
-              connectionStatus="connected"
-              messages={[greetingMessage]}
-            />
-          </div>
-        </div>
-      </div>
-    ),
+      );
+    },
   ],
 };
