@@ -1,0 +1,37 @@
+{
+  "name": "@cofoundy/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./chat-widget": "./src/components/chat-widget/index.ts",
+    "./hooks": "./src/hooks/index.ts",
+    "./styles": "./src/styles/index.css"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "dependencies": {
+    "zustand": "^5.0.9",
+    "lucide-react": "^0.562.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.4.0",
+    "class-variance-authority": "^0.7.1",
+    "@radix-ui/react-avatar": "^1.1.11",
+    "@radix-ui/react-slot": "^1.2.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "typescript": "^5"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/"
+  }
+}

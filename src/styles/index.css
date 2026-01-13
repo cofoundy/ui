@@ -1,0 +1,100 @@
+/* @cofoundy/ui - Base styles */
+
+/* CSS Variable Contract - Consumers must define these or use fallbacks */
+:root {
+  /* Primary color - uses consumer's --color-primary, --cf-primary, or fallback */
+  --chat-primary: var(--color-primary, var(--cf-primary, #46a0d0));
+
+  /* Background - uses consumer's --background, --cf-midnight, or fallback */
+  --chat-background: var(--background, var(--cf-midnight, #020b1b));
+
+  /* Foreground text */
+  --chat-foreground: var(--foreground, #ffffff);
+
+  /* Muted text */
+  --chat-muted: var(--muted-foreground, var(--cf-warmgray, #848386));
+
+  /* Border color */
+  --chat-border: var(--border, rgba(255, 255, 255, 0.1));
+
+  /* Card background */
+  --chat-card: var(--card, rgba(255, 255, 255, 0.05));
+}
+
+/* Animations */
+@keyframes chat-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chat-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.chat-animate-fade-in {
+  animation: chat-fade-in 0.5s ease-out;
+}
+
+.chat-animate-slide-up {
+  animation: chat-slide-up 0.5s ease-out;
+}
+
+/* Glass morphism utilities */
+.chat-glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+}
+
+.chat-glass-button {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.chat-glass-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Gradient utilities */
+.chat-gradient-primary {
+  background: linear-gradient(
+    135deg,
+    var(--chat-primary) 0%,
+    color-mix(in srgb, var(--chat-primary) 70%, black) 100%
+  );
+}
+
+/* Scrollbar styling */
+.scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+.scrollbar-thumb-white\/10::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}

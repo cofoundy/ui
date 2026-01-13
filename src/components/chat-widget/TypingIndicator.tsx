@@ -1,0 +1,34 @@
+"use client";
+
+import { cn } from "../../utils/cn";
+import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Bot } from "lucide-react";
+
+export function TypingIndicator() {
+  return (
+    <div className="flex gap-3 chat-animate-fade-in">
+      {/* Avatar */}
+      <Avatar className="w-8 h-8 bg-white/10">
+        <AvatarFallback className="bg-white/10 text-white">
+          <Bot className="w-4 h-4" />
+        </AvatarFallback>
+      </Avatar>
+
+      {/* Typing dots */}
+      <div className="bg-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
+        <div className="flex gap-1">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className={cn("w-2 h-2 rounded-full bg-white/60", "animate-bounce")}
+              style={{
+                animationDelay: `${i * 0.15}s`,
+                animationDuration: "0.6s",
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
