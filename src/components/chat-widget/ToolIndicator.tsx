@@ -28,7 +28,7 @@ export const ToolIndicator = memo(
           "flex items-center gap-2 text-sm font-mono",
           isRunning && "text-[var(--chat-muted)]",
           isSuccess && "text-[var(--chat-muted)]",
-          isError && "text-red-400/80"
+          isError && "text-[var(--chat-error)]/80"
         )}
       >
         {/* Status symbol */}

@@ -79,14 +79,14 @@ export function TimeSlotGrid({
   return (
     <div
       className={cn(
-        "bg-white/[0.03] backdrop-blur-sm rounded-lg p-3 mx-4 my-1",
-        "border border-white/10",
-        "shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_4px_20px_rgba(0,0,0,0.3)]",
+        "bg-[var(--chat-card)] backdrop-blur-sm rounded-lg p-3 mx-4 my-1",
+        "border border-[var(--chat-border)]",
+        "shadow-[inset_0_1px_0_var(--chat-inset-highlight)] shadow-lg",
         className
       )}
     >
       {/* Header */}
-      <p className="text-[10px] uppercase tracking-wider text-white/40 font-medium mb-2">
+      <p className="text-[10px] uppercase tracking-wider text-[var(--chat-muted)] font-medium mb-2">
         {hasMultipleDays ? title : formatFullDate(selectedDate)}
       </p>
 
@@ -101,8 +101,8 @@ export function TimeSlotGrid({
                 "relative px-3 py-1 text-xs font-medium whitespace-nowrap",
                 "transition-all duration-200 ease-out",
                 selectedDate === date
-                  ? "text-white"
-                  : "text-white/50 hover:text-white/80"
+                  ? "text-[var(--chat-foreground)]"
+                  : "text-[var(--chat-muted)] hover:text-[var(--chat-foreground)]"
               )}
             >
               {formatTabDate(date)}
@@ -123,7 +123,7 @@ export function TimeSlotGrid({
 
       {/* Divider when multiple days */}
       {hasMultipleDays && (
-        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-2" />
+        <div className="h-px bg-gradient-to-r from-transparent via-[var(--chat-border)] to-transparent mb-2" />
       )}
 
       {/* Time slots for selected day */}

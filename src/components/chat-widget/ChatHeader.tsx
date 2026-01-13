@@ -34,7 +34,7 @@ export function ChatHeader({
   }[connectionStatus];
 
   return (
-    <div className="flex items-center justify-between p-4 border-b border-white/10">
+    <div className="flex items-center justify-between p-4 border-b border-[var(--chat-border)]">
       <div className="flex items-center gap-3">
         {/* Logo with status indicator */}
         <div className="relative w-10 h-10">
@@ -45,7 +45,7 @@ export function ChatHeader({
               className="w-full h-full object-contain"
             />
           ) : (
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-[var(--chat-primary)] to-[var(--chat-primary)]/70 flex items-center justify-center text-white font-bold">
+            <div className="w-full h-full rounded-full bg-gradient-to-br from-[var(--chat-primary)] to-[var(--chat-primary)]/70 flex items-center justify-center text-[var(--chat-foreground)] font-bold">
               {brandName.charAt(0)}
             </div>
           )}
@@ -59,7 +59,7 @@ export function ChatHeader({
           />
         </div>
         <div className="min-w-0">
-          <h1 className="font-semibold text-white">{brandName}</h1>
+          <h1 className="font-semibold text-[var(--chat-foreground)]">{brandName}</h1>
           <p className="text-sm text-[var(--chat-muted)] truncate">{brandSubtitle}</p>
         </div>
       </div>
@@ -67,7 +67,7 @@ export function ChatHeader({
       <div className="flex items-center gap-3">
         {/* Calendar authentication status (only show when authenticated) */}
         {isAuthenticated && (
-          <div className="flex items-center gap-1 text-xs text-green-400">
+          <div className="flex items-center gap-1 text-xs text-[var(--chat-success)]">
             <Calendar className="w-4 h-4" />
             <span>Calendario conectado</span>
           </div>

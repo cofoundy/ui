@@ -35,7 +35,7 @@ export function ChatInput({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t border-white/10">
+    <form onSubmit={handleSubmit} className="p-3 sm:p-4 border-t border-[var(--chat-border)]">
       <div className="flex gap-2">
         <Input
           value={message}
@@ -44,7 +44,8 @@ export function ChatInput({
           placeholder={placeholder}
           disabled={disabled}
           className={cn(
-            "flex-1 bg-white/5 border-white/10",
+            "flex-1 bg-[var(--chat-input-bg)] border-[var(--chat-border)]",
+            "text-[var(--chat-foreground)]",
             "focus:border-[var(--chat-primary)]/50 focus:ring-[var(--chat-primary)]/20",
             "placeholder:text-[var(--chat-muted)]"
           )}

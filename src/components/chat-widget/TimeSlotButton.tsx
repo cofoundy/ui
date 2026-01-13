@@ -21,26 +21,26 @@ export function TimeSlotButton({
       className={cn(
         // Base: floating card
         "px-2.5 py-1.5 rounded-md text-xs font-medium",
-        "bg-white/[0.03] border border-white/10",
-        "shadow-[0_2px_6px_rgba(0,0,0,0.25)]",
+        "bg-[var(--chat-card)] border border-[var(--chat-border)]",
+        "shadow-sm",
         // Transitions
         "transition-all duration-200 ease-out",
         // Hover: lift up
-        "hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.4)]",
-        "hover:bg-white/[0.06] hover:border-white/20",
+        "hover:-translate-y-0.5 hover:shadow-md",
+        "hover:bg-[var(--chat-card-hover)]",
         // Selected: accent border + glow
         selected && [
           "border-l-2 border-l-[var(--chat-primary)]",
-          "bg-white/[0.08]",
-          "shadow-[0_4px_16px_rgba(41,132,173,0.2)]",
+          "bg-[var(--chat-card-hover)]",
+          "shadow-[0_4px_16px_var(--chat-primary)/20]",
         ],
         // Disabled
-        !slot.available && "opacity-40 cursor-not-allowed hover:transform-none hover:shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
+        !slot.available && "opacity-40 cursor-not-allowed hover:transform-none hover:shadow-sm"
       )}
     >
       <span className={cn(
-        "text-white/90",
-        selected && "text-white"
+        "text-[var(--chat-foreground)]/90",
+        selected && "text-[var(--chat-foreground)]"
       )}>
         {slot.time}
       </span>

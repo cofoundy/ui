@@ -39,14 +39,14 @@ export const Message = memo(
         <Avatar
           className={cn(
             "w-8 h-8 shrink-0 hidden sm:flex",
-            isUser ? "bg-[var(--chat-primary)]" : "bg-white/10"
+            isUser ? "bg-[var(--chat-primary)]" : "bg-[var(--chat-card-hover)]"
           )}
         >
           <AvatarFallback
             className={cn(
               isUser
                 ? "bg-[var(--chat-primary)] text-white"
-                : "bg-white/10 text-white"
+                : "bg-[var(--chat-card-hover)] text-[var(--chat-foreground)]"
             )}
           >
             {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
@@ -59,10 +59,10 @@ export const Message = memo(
             "max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 sm:px-4 sm:py-3",
             isUser
               ? "chat-gradient-primary text-white rounded-tr-sm"
-              : "bg-white/10 text-white rounded-tl-sm"
+              : "bg-[var(--chat-card-hover)] text-[var(--chat-foreground)] rounded-tl-sm"
           )}
         >
-          <div className="prose prose-sm prose-invert max-w-none">
+          <div className="prose prose-sm max-w-none text-inherit">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
