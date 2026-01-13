@@ -45,7 +45,7 @@ export function ChatInput({
           disabled={disabled}
           className={cn(
             "flex-1 bg-[var(--chat-input-bg)] border-[var(--chat-border)]",
-            "text-[var(--chat-foreground)]",
+            "!text-[var(--chat-foreground,#fff)] caret-[var(--chat-foreground,#fff)]",
             "focus:border-[var(--chat-primary)]/50 focus:ring-[var(--chat-primary)]/20",
             "placeholder:text-[var(--chat-muted)]"
           )}
