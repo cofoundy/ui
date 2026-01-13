@@ -1,24 +1,47 @@
 /* @cofoundy/ui - Base styles */
 
-/* CSS Variable Contract - Consumers must define these or use fallbacks */
+/* ============================================
+   CSS Variable System with Theme Support
+   ============================================
+   Usage: Set data-theme="dark" or data-theme="light" on ChatContainer
+   Default: dark theme (matches Cofoundy brand)
+   ============================================ */
+
 :root {
-  /* Primary color - uses consumer's --color-primary, --cf-primary, or fallback */
+  /* Primary color - brand color, same in both themes */
   --chat-primary: var(--color-primary, var(--cf-primary, #46a0d0));
 
-  /* Background - uses consumer's --background, --cf-midnight, or fallback */
+  /* Semantic colors - same in both themes */
+  --chat-success: #22c55e;
+  --chat-error: #ef4444;
+  --chat-warning: #eab308;
+}
+
+/* Dark theme (default) */
+:root,
+[data-theme="dark"] {
   --chat-background: var(--background, var(--cf-midnight, #020b1b));
-
-  /* Foreground text */
   --chat-foreground: var(--foreground, #ffffff);
-
-  /* Muted text */
   --chat-muted: var(--muted-foreground, var(--cf-warmgray, #848386));
-
-  /* Border color */
   --chat-border: var(--border, rgba(255, 255, 255, 0.1));
-
-  /* Card background */
   --chat-card: var(--card, rgba(255, 255, 255, 0.05));
+  --chat-card-hover: rgba(255, 255, 255, 0.08);
+  --chat-input-bg: rgba(255, 255, 255, 0.05);
+  --chat-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --chat-inset-highlight: rgba(255, 255, 255, 0.05);
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --chat-background: var(--background-light, #ffffff);
+  --chat-foreground: var(--foreground-light, #0f172a);
+  --chat-muted: var(--muted-foreground-light, #64748b);
+  --chat-border: var(--border-light, rgba(0, 0, 0, 0.1));
+  --chat-card: var(--card-light, rgba(0, 0, 0, 0.03));
+  --chat-card-hover: rgba(0, 0, 0, 0.06);
+  --chat-input-bg: rgba(0, 0, 0, 0.03);
+  --chat-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --chat-inset-highlight: rgba(255, 255, 255, 0.5);
 }
 
 /* Animations */
@@ -72,24 +95,25 @@
   animation: chat-slide-up 0.5s ease-out;
 }
 
-/* Glass morphism utilities */
+/* Glass morphism utilities - theme aware */
 .chat-glass-card {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--chat-card);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--chat-border);
   border-radius: 1.5rem;
+  box-shadow: var(--chat-shadow);
 }
 
 .chat-glass-button {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--chat-card);
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
+  border: 1px solid var(--chat-border);
+  color: var(--chat-foreground);
 }
 
 .chat-glass-button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--chat-card-hover);
 }
 
 /* Gradient utilities */
@@ -120,7 +144,7 @@
 }
 
 .chat-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--chat-card);
   border-radius: 3px;
 }
 
@@ -131,7 +155,7 @@
     color-mix(in srgb, var(--chat-primary) 60%, transparent) 100%
   );
   border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--chat-border);
 }
 
 .chat-scrollbar::-webkit-scrollbar-thumb:hover {
