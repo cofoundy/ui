@@ -551,9 +551,9 @@ export function ChatWidget({
 
       {/* WhatsApp fallback when connection fails */}
       {connectionFailed && (
-        <div className="px-4 py-3 mx-4 mb-4 rounded-lg bg-green-500/10 border border-green-500/20">
+        <div className="px-4 py-3 mx-4 mb-4 rounded-lg bg-[var(--channel-whatsapp)]/10 border border-[var(--channel-whatsapp)]/20">
           <div className="flex items-center gap-3">
-            <MessageCircle className="w-6 h-6 text-green-500" />
+            <MessageCircle className="w-6 h-6 text-[var(--channel-whatsapp)]" />
             <div className="flex-1">
               <p className="text-sm text-[var(--chat-foreground)] font-medium">
                 ¿Problemas de conexión?

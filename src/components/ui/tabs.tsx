@@ -45,10 +45,8 @@ function TabsTrigger({
         "inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-[color,box-shadow]",
         // Inactive state - muted text
         "text-muted-foreground",
-        // Active state - both themes
-        "data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
-        // Dark mode active state adjustments
-        "dark:data-[state=active]:bg-input/30 dark:data-[state=active]:border-input",
+        // Active state - works in both themes via CSS variables
+        "data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:border-border",
         // Focus styles
         "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-ring focus-visible:outline-1",
         // Disabled and icon styles

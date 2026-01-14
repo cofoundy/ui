@@ -80,18 +80,18 @@ export function getChannelDisplayName(channel: string): string {
  * Get the color classes for a channel (legacy support)
  * @deprecated Use getChannelBadgeVariant with Badge component instead
  * @param channel - Channel type string
- * @returns Tailwind class string for background and text color
+ * @returns Tailwind class string for background and text color using CSS variables
  */
 export function getChannelColor(channel: string): string {
   const colorMap: Record<string, string> = {
-    telegram: "bg-blue-500/20 text-blue-300",
-    whatsapp: "bg-green-500/20 text-green-300",
-    email: "bg-purple-500/20 text-purple-300",
-    web_chat: "bg-cyan-500/20 text-cyan-300",
-    webchat: "bg-cyan-500/20 text-cyan-300",
-    instagram: "bg-pink-500/20 text-pink-300",
-    messenger: "bg-indigo-500/20 text-indigo-300",
-    sms: "bg-gray-500/20 text-gray-300",
+    telegram: "bg-[var(--channel-telegram)]/20 text-[var(--channel-telegram)]",
+    whatsapp: "bg-[var(--channel-whatsapp)]/20 text-[var(--channel-whatsapp)]",
+    email: "bg-[var(--channel-email)]/20 text-[var(--channel-email)]",
+    web_chat: "bg-[var(--channel-webchat)]/20 text-[var(--channel-webchat)]",
+    webchat: "bg-[var(--channel-webchat)]/20 text-[var(--channel-webchat)]",
+    instagram: "bg-[var(--channel-instagram)]/20 text-[var(--channel-instagram)]",
+    messenger: "bg-[var(--channel-messenger)]/20 text-[var(--channel-messenger)]",
+    sms: "bg-[var(--channel-sms)]/20 text-[var(--channel-sms)]",
   };
-  return colorMap[channel.toLowerCase()] || "bg-gray-500/20 text-gray-300";
+  return colorMap[channel.toLowerCase()] || "bg-[var(--muted)]/20 text-[var(--muted-foreground)]";
 }

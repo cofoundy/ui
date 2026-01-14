@@ -17,30 +17,30 @@ const badgeVariants = cva(
           "border-transparent bg-destructive text-destructive-foreground [a&]:hover:bg-destructive/90",
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-        // Status variants
+        // Status variants - using CSS variables
         success:
-          "border-transparent bg-green-500/20 text-green-500 dark:bg-green-500/20 dark:text-green-400",
+          "border-transparent bg-[var(--status-success)]/20 text-[var(--status-success)]",
         warning:
-          "border-transparent bg-yellow-500/20 text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400",
+          "border-transparent bg-[var(--status-warning)]/20 text-[var(--status-warning)]",
         error:
-          "border-transparent bg-red-500/20 text-red-500 dark:bg-red-500/20 dark:text-red-400",
+          "border-transparent bg-[var(--status-error)]/20 text-[var(--status-error)]",
         info:
-          "border-transparent bg-blue-500/20 text-blue-500 dark:bg-blue-500/20 dark:text-blue-400",
-        // Channel variants for InboxAI omnichannel
+          "border-transparent bg-[var(--status-info)]/20 text-[var(--status-info)]",
+        // Channel variants for InboxAI omnichannel - using CSS variables
         whatsapp:
-          "border-transparent bg-[#25D366]/20 text-[#1a9e4a] dark:text-[#25D366]",
+          "border-transparent bg-[var(--channel-whatsapp)]/20 text-[var(--channel-whatsapp)]",
         telegram:
-          "border-transparent bg-[#0088cc]/20 text-[#006699] dark:text-[#0088cc]",
+          "border-transparent bg-[var(--channel-telegram)]/20 text-[var(--channel-telegram)]",
         email:
-          "border-transparent bg-purple-500/20 text-purple-600 dark:text-purple-400",
+          "border-transparent bg-[var(--channel-email)]/20 text-[var(--channel-email)]",
         webchat:
-          "border-transparent bg-blue-500/20 text-blue-600 dark:text-blue-400",
+          "border-transparent bg-[var(--channel-webchat)]/20 text-[var(--channel-webchat)]",
         instagram:
-          "border-transparent bg-[#E4405F]/20 text-[#c13584] dark:text-[#E4405F]",
+          "border-transparent bg-[var(--channel-instagram)]/20 text-[var(--channel-instagram)]",
         messenger:
-          "border-transparent bg-[#0084FF]/20 text-[#0066cc] dark:text-[#0084FF]",
+          "border-transparent bg-[var(--channel-messenger)]/20 text-[var(--channel-messenger)]",
         sms:
-          "border-transparent bg-orange-500/20 text-orange-600 dark:text-orange-400",
+          "border-transparent bg-[var(--channel-sms)]/20 text-[var(--channel-sms)]",
       },
       size: {
         sm: "px-1.5 py-0 text-[10px]",
