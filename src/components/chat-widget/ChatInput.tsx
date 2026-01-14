@@ -48,7 +48,7 @@ export function ChatInput({
             "focus:border-[var(--chat-primary)]/50 focus:ring-[var(--chat-primary)]/20",
             "placeholder:text-[var(--chat-muted)]"
           )}
-          style={{ color: '#fff', caretColor: '#fff' }}
+          style={{ color: 'var(--chat-foreground)', caretColor: 'var(--chat-foreground)' }}
         />
         <Button
           type="submit"

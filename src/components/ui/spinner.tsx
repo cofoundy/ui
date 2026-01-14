@@ -1,16 +1,15 @@
 import * as React from "react";
-import { Loader2 } from "lucide-react";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "../../utils/cn";
 
-const spinnerVariants = cva("animate-spin text-primary", {
+const spinnerVariants = cva("cf-folding-cube", {
   variants: {
     size: {
-      sm: "size-4",
-      default: "size-6",
-      lg: "size-8",
-      xl: "size-12",
+      sm: "cf-spinner-sm",
+      default: "cf-spinner-default",
+      lg: "cf-spinner-lg",
+      xl: "cf-spinner-xl",
     },
   },
   defaultVariants: {
@@ -18,18 +17,23 @@ const spinnerVariants = cva("animate-spin text-primary", {
   },
 });
 
-function Spinner({
-  className,
-  size = "default",
-  ...props
-}: React.ComponentProps<typeof Loader2> & VariantProps<typeof spinnerVariants>) {
+interface SpinnerProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof spinnerVariants> {}
+
+function Spinner({ className, size = "default", ...props }: SpinnerProps) {
   return (
-    <Loader2
+    <div
       data-slot="spinner"
       data-size={size}
-      className={cn(spinnerVariants({ size, className }))}
+      className={cn(spinnerVariants({ size }), className)}
       {...props}
-    />
+    >
+      <div className="cf-cube cf-cube1" />
+      <div className="cf-cube cf-cube2" />
+      <div className="cf-cube cf-cube4" />
+      <div className="cf-cube cf-cube3" />
+    </div>
   );
 }
 

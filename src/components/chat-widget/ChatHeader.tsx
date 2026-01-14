@@ -20,10 +20,10 @@ export function ChatHeader({
   brandSubtitle = "Consultoría de Software & IA",
 }: ChatHeaderProps) {
   const statusColor = {
-    connected: "bg-green-500",
-    connecting: "bg-yellow-500 animate-pulse",
-    disconnected: "bg-red-500",
-    error: "bg-red-500",
+    connected: "bg-[var(--chat-success)]",
+    connecting: "bg-[var(--chat-warning)] animate-pulse",
+    disconnected: "bg-[var(--chat-error)]",
+    error: "bg-[var(--chat-error)]",
   }[connectionStatus];
 
   const statusTitle = {

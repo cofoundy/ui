@@ -512,7 +512,7 @@ export function ChatWidget({
   if (sessionLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="text-white text-lg">Cargando...</div>
+        <div className="text-[var(--chat-foreground)] text-lg">Cargando...</div>
       </div>
     );
   }
@@ -555,7 +555,7 @@ export function ChatWidget({
           <div className="flex items-center gap-3">
             <MessageCircle className="w-6 h-6 text-green-500" />
             <div className="flex-1">
-              <p className="text-sm text-white font-medium">
+              <p className="text-sm text-[var(--chat-foreground)] font-medium">
                 ¿Problemas de conexión?
               </p>
               <p className="text-xs text-[var(--chat-muted)]">

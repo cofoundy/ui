@@ -14,7 +14,7 @@ const badgeVariants = cva(
         secondary:
           "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
         destructive:
-          "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90",
+          "border-transparent bg-destructive text-destructive-foreground [a&]:hover:bg-destructive/90",
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         // Status variants
@@ -28,19 +28,19 @@ const badgeVariants = cva(
           "border-transparent bg-blue-500/20 text-blue-500 dark:bg-blue-500/20 dark:text-blue-400",
         // Channel variants for InboxAI omnichannel
         whatsapp:
-          "border-transparent bg-[#25D366]/20 text-[#25D366]",
+          "border-transparent bg-[#25D366]/20 text-[#1a9e4a] dark:text-[#25D366]",
         telegram:
-          "border-transparent bg-[#0088cc]/20 text-[#0088cc]",
+          "border-transparent bg-[#0088cc]/20 text-[#006699] dark:text-[#0088cc]",
         email:
-          "border-transparent bg-purple-500/20 text-purple-500 dark:text-purple-400",
+          "border-transparent bg-purple-500/20 text-purple-600 dark:text-purple-400",
         webchat:
-          "border-transparent bg-blue-500/20 text-blue-500 dark:text-blue-400",
+          "border-transparent bg-blue-500/20 text-blue-600 dark:text-blue-400",
         instagram:
-          "border-transparent bg-[#E4405F]/20 text-[#E4405F]",
+          "border-transparent bg-[#E4405F]/20 text-[#c13584] dark:text-[#E4405F]",
         messenger:
-          "border-transparent bg-[#0084FF]/20 text-[#0084FF]",
+          "border-transparent bg-[#0084FF]/20 text-[#0066cc] dark:text-[#0084FF]",
         sms:
-          "border-transparent bg-orange-500/20 text-orange-500 dark:text-orange-400",
+          "border-transparent bg-orange-500/20 text-orange-600 dark:text-orange-400",
       },
       size: {
         sm: "px-1.5 py-0 text-[10px]",

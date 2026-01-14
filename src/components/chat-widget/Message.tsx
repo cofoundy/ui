@@ -45,7 +45,7 @@ export const Message = memo(
           <AvatarFallback
             className={cn(
               isUser
-                ? "bg-[var(--chat-primary)] text-white"
+                ? "bg-[var(--chat-primary)] text-[var(--primary-foreground)]"
                 : "bg-[var(--chat-card-hover)] text-[var(--chat-foreground)]"
             )}
           >
@@ -58,7 +58,7 @@ export const Message = memo(
           className={cn(
             "max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 sm:px-4 sm:py-3",
             isUser
-              ? "chat-gradient-primary text-white rounded-tr-sm"
+              ? "chat-gradient-primary text-[var(--primary-foreground)] rounded-tr-sm"
               : "bg-[var(--chat-card-hover)] text-[var(--chat-foreground)] rounded-tl-sm"
           )}
         >

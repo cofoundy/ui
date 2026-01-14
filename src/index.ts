@@ -13,6 +13,7 @@ export { Toaster, toast } from "./components/ui";
 export { Switch } from "./components/ui";
 export { Badge, badgeVariants } from "./components/ui";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui";
+export { Logo, logoVariants } from "./components/ui";
 
 // Hooks
 export { useWebSocket } from "./hooks";

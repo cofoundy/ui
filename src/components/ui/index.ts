@@ -6,3 +6,4 @@ export { Toaster, toast } from "./sonner";
 export { Switch } from "./switch";
 export { Badge, badgeVariants } from "./badge";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
+export { Logo, logoVariants } from "./logo";
