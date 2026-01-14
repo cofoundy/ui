@@ -125,9 +125,9 @@ export const MonochromeColors: Story = {
 
 export const InHeader: Story = {
   render: () => (
-    <header className="flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-card rounded-xl border border-border">
+    <header className="flex items-center justify-between w-full max-w-4xl px-8 py-4 bg-card rounded-xl border border-border gap-12">
       <LogoHeader size="default" />
-      <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+      <nav className="flex items-center gap-8 text-sm text-muted-foreground">
         <a href="#" className="hover:text-foreground">Products</a>
         <a href="#" className="hover:text-foreground">About</a>
         <a href="#" className="hover:text-foreground">Contact</a>
@@ -136,18 +136,14 @@ export const InHeader: Story = {
   ),
 };
 
-export const OnDarkBackground: Story = {
+export const ThemeAdaptive: Story = {
   render: () => (
-    <div className="p-8 bg-[#072235] rounded-xl">
+    <div className="flex flex-col gap-4">
       <LogoHeader size="lg" />
-    </div>
-  ),
-};
-
-export const OnLightBackground: Story = {
-  render: () => (
-    <div className="p-8 bg-white rounded-xl">
-      <LogoHeader size="lg" mono className="text-[#072235]" />
+      <p className="text-xs text-muted-foreground">
+        El wordmark usa text-foreground y se adapta automáticamente al tema activo.
+        Cambia el tema en Storybook para ver el comportamiento.
+      </p>
     </div>
   ),
 };

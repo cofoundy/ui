@@ -79,7 +79,7 @@ function LogoHeader({
         viewBox="2.38 17.89 311 70"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className={cn(wordmarkSize, "w-auto text-secondary")}
+        className={cn(wordmarkSize, "w-auto text-foreground translate-y-[8%]")}
         aria-label="Cofoundy"
       >
         <path d={wordmarkPath} fill="currentColor" />
@@ -102,7 +102,7 @@ function Wordmark({
       viewBox="2.38 17.89 311 70"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn("h-7 w-auto text-secondary", className)}
+      className={cn("h-7 w-auto text-foreground", className)}
       aria-label="Cofoundy"
       {...props}
     >
