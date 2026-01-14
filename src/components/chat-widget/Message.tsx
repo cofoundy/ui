@@ -31,7 +31,7 @@ export const Message = memo(
     return (
       <div
         className={cn(
-          "flex gap-2 chat-animate-fade-in",
+          "flex gap-2 cf-animate-fade-in",
           isUser ? "flex-row-reverse" : "flex-row"
         )}
       >

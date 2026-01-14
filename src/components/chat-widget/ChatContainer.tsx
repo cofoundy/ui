@@ -51,7 +51,7 @@ export function ChatContainer({
         "chat-glass-card",
         "flex flex-col",
         "overflow-hidden", // Constrain children so MessageList scrolls
-        "chat-animate-fade-in",
+        "cf-animate-fade-in",
         className
       )}
     >

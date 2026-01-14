@@ -55,7 +55,7 @@ export function ConfirmationCard({
             className={cn(
               "flex items-center justify-center w-4 h-4 rounded-full",
               "bg-[var(--chat-success)]/20 text-[var(--chat-success)]",
-              "animate-[scaleIn_0.3s_ease-out,checkPulse_2s_ease-out_0.3s]"
+              "animate-[cf-scale-in_0.3s_ease-out,cf-pulse-success_2s_ease-out_0.3s]"
             )}
           >
             <Check className="w-2.5 h-2.5" strokeWidth={3} />

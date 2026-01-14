@@ -6,7 +6,7 @@ import { Bot } from "lucide-react";
 
 export function TypingIndicator() {
   return (
-    <div className="flex gap-3 chat-animate-fade-in">
+    <div className="flex gap-3 cf-animate-fade-in">
       {/* Avatar */}
       <Avatar className="w-8 h-8 bg-[var(--chat-card-hover)]">
         <AvatarFallback className="bg-[var(--chat-card-hover)] text-[var(--chat-foreground)]">

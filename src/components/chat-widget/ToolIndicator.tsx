@@ -51,7 +51,7 @@ export const ToolIndicator = memo(
     }
 
     return (
-      <div className="pl-4 my-1 chat-animate-fade-in">
+      <div className="pl-4 my-1 cf-animate-fade-in">
         {indicator}
       </div>
     );
