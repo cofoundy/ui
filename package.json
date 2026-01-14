@@ -6,8 +6,6 @@
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./chat-widget": "./src/components/chat-widget/index.ts",
-    "./hooks": "./src/hooks/index.ts",
     "./styles": "./src/styles/index.css",
     "./utils": "./src/utils/index.ts"
   },
