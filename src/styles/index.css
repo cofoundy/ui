@@ -29,7 +29,7 @@
   --accent-foreground: #f8fafc;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: rgba(255, 255, 255, 0.3);
+  --border: rgba(255, 255, 255, 0.15);
   --input: #1e293b;
   --ring: #46a0d0;
   --radius: 0.5rem;
@@ -401,3 +401,10 @@
 .border-input { border-color: var(--input); }
 .border-border { border-color: var(--border); }
 .border-ring { border-color: var(--ring); }
+
+/* --- Switch Component State Utilities --- */
+/* Pre-compiled data-state variants for Switch thumb colors */
+.data-\[state\=unchecked\]\:bg-foreground[data-state="unchecked"] { background-color: var(--foreground); }
+.data-\[state\=checked\]\:bg-primary-foreground[data-state="checked"] { background-color: var(--primary-foreground); }
+.data-\[state\=unchecked\]\:bg-input[data-state="unchecked"] { background-color: var(--input); }
+.data-\[state\=checked\]\:bg-primary[data-state="checked"] { background-color: var(--primary); }
