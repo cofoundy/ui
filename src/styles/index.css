@@ -38,14 +38,14 @@
   --popover: #0f172a;
   --popover-foreground: #ffffff;
 
-  /* Channel brand colors - for badges and icons */
-  --channel-whatsapp: #25D366;
-  --channel-telegram: #0088cc;
-  --channel-instagram: #E4405F;
-  --channel-messenger: #0084FF;
-  --channel-email: #a855f7;
-  --channel-webchat: #3b82f6;
-  --channel-sms: #f97316;
+  /* Channel brand colors - official brand colors */
+  --channel-whatsapp: #25D366;  /* Official WhatsApp Green */
+  --channel-telegram: #0088CC;  /* Official Telegram Blue */
+  --channel-instagram: #E4405F; /* Official Instagram Pink */
+  --channel-messenger: #0084FF; /* Official Messenger Blue */
+  --channel-email: #7C3AED;     /* Purple for email */
+  --channel-webchat: #0EA5E9;   /* Sky blue for web chat */
+  --channel-sms: #F97316;       /* Orange for SMS */
 
   /* Status colors */
   --status-success: #22c55e;
