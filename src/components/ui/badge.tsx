@@ -17,30 +17,30 @@ const badgeVariants = cva(
           "border-transparent bg-destructive text-destructive-foreground [a&]:hover:bg-destructive/90",
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-        // Status variants - using CSS variables
+        // Status variants - white text for visibility
         success:
-          "border-transparent bg-[var(--status-success)]/20 text-[var(--status-success)]",
+          "border-transparent bg-[var(--status-success)] text-white",
         warning:
-          "border-transparent bg-[var(--status-warning)]/20 text-[var(--status-warning)]",
+          "border-transparent bg-[var(--status-warning)] text-white",
         error:
-          "border-transparent bg-[var(--status-error)]/20 text-[var(--status-error)]",
+          "border-transparent bg-[var(--status-error)] text-white",
         info:
-          "border-transparent bg-[var(--status-info)]/20 text-[var(--status-info)]",
-        // Channel variants for InboxAI omnichannel - using CSS variables
+          "border-transparent bg-[var(--status-info)] text-white",
+        // Channel variants for InboxAI omnichannel - white text for visibility
         whatsapp:
-          "border-transparent bg-[var(--channel-whatsapp)]/20 text-[var(--channel-whatsapp)]",
+          "border-transparent bg-[var(--channel-whatsapp)] text-white",
         telegram:
-          "border-transparent bg-[var(--channel-telegram)]/20 text-[var(--channel-telegram)]",
+          "border-transparent bg-[var(--channel-telegram)] text-white",
         email:
-          "border-transparent bg-[var(--channel-email)]/20 text-[var(--channel-email)]",
+          "border-transparent bg-[var(--channel-email)] text-white",
         webchat:
-          "border-transparent bg-[var(--channel-webchat)]/20 text-[var(--channel-webchat)]",
+          "border-transparent bg-[var(--channel-webchat)] text-white",
         instagram:
-          "border-transparent bg-[var(--channel-instagram)]/20 text-[var(--channel-instagram)]",
+          "border-transparent bg-[var(--channel-instagram)] text-white",
         messenger:
-          "border-transparent bg-[var(--channel-messenger)]/20 text-[var(--channel-messenger)]",
+          "border-transparent bg-[var(--channel-messenger)] text-white",
         sms:
-          "border-transparent bg-[var(--channel-sms)]/20 text-[var(--channel-sms)]",
+          "border-transparent bg-[var(--channel-sms)] text-white",
       },
       size: {
         sm: "px-1.5 py-0 text-[10px]",

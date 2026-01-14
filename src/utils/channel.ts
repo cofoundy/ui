@@ -84,14 +84,14 @@ export function getChannelDisplayName(channel: string): string {
  */
 export function getChannelColor(channel: string): string {
   const colorMap: Record<string, string> = {
-    telegram: "bg-[var(--channel-telegram)]/20 text-[var(--channel-telegram)]",
-    whatsapp: "bg-[var(--channel-whatsapp)]/20 text-[var(--channel-whatsapp)]",
-    email: "bg-[var(--channel-email)]/20 text-[var(--channel-email)]",
-    web_chat: "bg-[var(--channel-webchat)]/20 text-[var(--channel-webchat)]",
-    webchat: "bg-[var(--channel-webchat)]/20 text-[var(--channel-webchat)]",
-    instagram: "bg-[var(--channel-instagram)]/20 text-[var(--channel-instagram)]",
-    messenger: "bg-[var(--channel-messenger)]/20 text-[var(--channel-messenger)]",
-    sms: "bg-[var(--channel-sms)]/20 text-[var(--channel-sms)]",
+    telegram: "bg-[var(--channel-telegram)] text-white",
+    whatsapp: "bg-[var(--channel-whatsapp)] text-white",
+    email: "bg-[var(--channel-email)] text-white",
+    web_chat: "bg-[var(--channel-webchat)] text-white",
+    webchat: "bg-[var(--channel-webchat)] text-white",
+    instagram: "bg-[var(--channel-instagram)] text-white",
+    messenger: "bg-[var(--channel-messenger)] text-white",
+    sms: "bg-[var(--channel-sms)] text-white",
   };
-  return colorMap[channel.toLowerCase()] || "bg-[var(--muted)]/20 text-[var(--muted-foreground)]";
+  return colorMap[channel.toLowerCase()] || "bg-[var(--muted)] text-white";
 }
