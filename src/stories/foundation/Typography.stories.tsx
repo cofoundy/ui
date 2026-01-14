@@ -31,46 +31,172 @@ export const FontFamilies: Story = {
     <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
       <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Font Families</h2>
       <p className="text-[var(--chat-muted)] mb-8">
-        From Brand Book: Inter for UI, JetBrains Mono for code
+        Zodiak for headlines (premium), Inter for body (technical), JetBrains Mono for code
       </p>
 
       <div className="space-y-8">
+        {/* Zodiak - Display Font */}
         <div>
           <h3 className="text-lg font-semibold mb-4 text-[var(--chat-foreground)]">
-            Inter - Primary Font
+            Zodiak - Display Font
           </h3>
           <p className="text-[var(--chat-muted)] text-sm mb-4">
-            Used for titles, body text, and all UI elements
+            Used for headlines and brand moments. Premium, warm feel.
           </p>
-          <div className="p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
-            <p className="text-4xl font-bold mb-2 text-[var(--chat-foreground)]" style={{ fontFamily: "Inter, sans-serif" }}>
+          <div className="p-6 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
+            <p
+              className="text-5xl font-bold mb-3 text-[var(--chat-foreground)]"
+              style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", lineHeight: 1.1 }}
+            >
               Cofoundy
             </p>
-            <p className="text-xl text-[var(--chat-foreground)]" style={{ fontFamily: "Inter, sans-serif" }}>
+            <p
+              className="text-2xl text-[var(--chat-foreground)]"
+              style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.01em" }}
+            >
               Productos de software en semanas, no meses.
             </p>
           </div>
+          <p className="text-xs text-[var(--chat-muted)] mt-3 font-mono">
+            var(--font-display) · Fontshare · Free
+          </p>
         </div>
 
+        {/* Inter - Body Font */}
+        <div>
+          <h3 className="text-lg font-semibold mb-4 text-[var(--chat-foreground)]">
+            Inter - Body Font
+          </h3>
+          <p className="text-[var(--chat-muted)] text-sm mb-4">
+            Used for body text, UI elements, and all readable content. Clean, technical.
+          </p>
+          <div className="p-6 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
+            <p
+              className="text-base text-[var(--chat-foreground)] leading-relaxed"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
+              Somos tu cofundador tecnico. Construimos productos de software — landing pages,
+              apps, agentes de IA — en semanas, no meses. Usamos AI para ser 10x mas rapidos
+              que una agencia tradicional, a una fraccion del costo.
+            </p>
+          </div>
+          <p className="text-xs text-[var(--chat-muted)] mt-3 font-mono">
+            var(--font-sans) · Google Fonts · Free
+          </p>
+        </div>
+
+        {/* JetBrains Mono - Code Font */}
         <div>
           <h3 className="text-lg font-semibold mb-4 text-[var(--chat-foreground)]">
             JetBrains Mono - Code Font
           </h3>
           <p className="text-[var(--chat-muted)] text-sm mb-4">
-            Used for code snippets, technical content, monospace text
+            Used for code snippets, technical content, monospace text.
           </p>
           <div className="p-4 bg-[#0f172a] rounded-lg">
             <pre
               className="text-sm text-[#22c55e]"
-              style={{ fontFamily: "JetBrains Mono, monospace" }}
+              style={{ fontFamily: "var(--font-mono)" }}
             >
-{`const startup = {
+{`const cofoundy = {
   speed: "10x",
   stack: "modern",
-  ai: true
+  ai: true,
+  fonts: ["Zodiak", "Inter", "JetBrains Mono"]
 };`}
             </pre>
           </div>
+          <p className="text-xs text-[var(--chat-muted)] mt-3 font-mono">
+            var(--font-mono) · Google Fonts · Free
+          </p>
+        </div>
+      </div>
+    </div>
+  ),
+};
+
+export const HeadlineStyles: Story = {
+  name: "Headline Styles",
+  render: () => (
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Headline Styles</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
+        Use Zodiak for headlines with tight letter-spacing
+      </p>
+
+      <div className="space-y-8">
+        <div>
+          <span className="text-xs text-[var(--chat-muted)] font-mono mb-2 block">.cf-headline-xl (4rem)</span>
+          <p className="cf-headline-xl text-[var(--chat-foreground)]">
+            Build faster
+          </p>
+        </div>
+        <div>
+          <span className="text-xs text-[var(--chat-muted)] font-mono mb-2 block">.cf-headline-lg (3rem)</span>
+          <p className="cf-headline-lg text-[var(--chat-foreground)]">
+            Ship in weeks
+          </p>
+        </div>
+        <div>
+          <span className="text-xs text-[var(--chat-muted)] font-mono mb-2 block">.cf-headline (inherits size)</span>
+          <p className="cf-headline text-4xl text-[var(--chat-foreground)]">
+            Not months
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8 p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
+        <h4 className="font-semibold mb-2 text-[var(--chat-foreground)]">Usage</h4>
+        <pre className="text-xs font-mono text-[var(--chat-muted)]">
+{`<h1 className="cf-headline-xl">Hero Title</h1>
+<h2 className="cf-headline-lg">Section Title</h2>
+<h3 className="cf-headline text-2xl">Subsection</h3>`}
+        </pre>
+      </div>
+    </div>
+  ),
+};
+
+export const FontPairing: Story = {
+  name: "Font Pairing",
+  render: () => (
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Font Pairing</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
+        How Zodiak and Inter work together
+      </p>
+
+      {/* Example Card */}
+      <div className="bg-[var(--chat-background)] rounded-2xl border border-[var(--chat-border)] p-8 mb-6">
+        <p
+          className="text-4xl font-bold mb-4 text-[var(--chat-foreground)]"
+          style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", lineHeight: 1.1 }}
+        >
+          Tu socio tecnico para crecer rapido
+        </p>
+        <p
+          className="text-lg text-[var(--chat-muted)] mb-6"
+          style={{ fontFamily: "var(--font-sans)", lineHeight: 1.6 }}
+        >
+          Construimos landing pages, MVPs y agentes de IA en semanas.
+          Usamos tecnologia de punta para entregar 10x mas rapido que una agencia tradicional.
+        </p>
+        <button
+          className="bg-[var(--chat-primary)] text-white px-6 py-3 rounded-lg font-semibold"
+          style={{ fontFamily: "var(--font-sans)" }}
+        >
+          Agenda una llamada
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
+          <p className="font-semibold text-[var(--chat-foreground)] mb-1">Zodiak</p>
+          <p className="text-[var(--chat-muted)]">Headlines, titles, brand moments</p>
+        </div>
+        <div className="p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
+          <p className="font-semibold text-[var(--chat-foreground)] mb-1">Inter</p>
+          <p className="text-[var(--chat-muted)]">Body, buttons, UI, captions</p>
         </div>
       </div>
     </div>
@@ -106,7 +232,7 @@ export const FontWeights: Story = {
     <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
       <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Font Weights</h2>
       <p className="text-[var(--chat-muted)] mb-8">
-        Available font weights for Inter
+        Available font weights
       </p>
 
       <div className="space-y-4">

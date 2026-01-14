@@ -1,6 +1,18 @@
 /* @cofoundy/ui - Base styles */
 
 /* ============================================
+   FONT IMPORTS (Add to your app's <head>)
+   ============================================
+
+   <!-- Fontshare: Zodiak (display) -->
+   <link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,600,700&display=swap" rel="stylesheet">
+
+   <!-- Google Fonts: Inter + JetBrains Mono -->
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+   ============================================ */
+
+/* ============================================
    CSS Variable System with Theme Support
    ============================================
    Usage: Set data-theme="dark" or data-theme="light" on ChatContainer
@@ -33,6 +45,16 @@
   /* === STAGGER TOKENS === */
   --cf-stagger-fast: 50ms;        /* Lists in products */
   --cf-stagger-normal: 100ms;     /* Grids */
+
+  /* ============================================
+     TYPOGRAPHY SYSTEM
+     Zodiak: Headlines (premium, warm)
+     Inter: Body text (technical, clean)
+     JetBrains Mono: Code (developer-friendly)
+     ============================================ */
+  --font-display: 'Zodiak', Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Primary color - brand color, same in both themes */
   --chat-primary: var(--color-primary, var(--cf-primary, #46a0d0));
@@ -677,6 +699,52 @@
 .data-\[state\=checked\]\:bg-primary-foreground[data-state="checked"] { background-color: var(--primary-foreground); }
 .data-\[state\=unchecked\]\:bg-input[data-state="unchecked"] { background-color: var(--input); }
 .data-\[state\=checked\]\:bg-primary[data-state="checked"] { background-color: var(--primary); }
+
+/* ============================================
+   TYPOGRAPHY UTILITIES
+   ============================================ */
+
+/* Font family utilities */
+.font-display { font-family: var(--font-display); }
+.font-sans { font-family: var(--font-sans); }
+.font-mono { font-family: var(--font-mono); }
+
+/* Headline styles - use Zodiak */
+.cf-headline {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.cf-headline-lg {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 3rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.cf-headline-xl {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 4rem;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+/* Body text - use Inter */
+.cf-body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* Code - use JetBrains Mono */
+.cf-code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
 
 /* ============================================
    ACCESSIBILITY - Reduced Motion Support
