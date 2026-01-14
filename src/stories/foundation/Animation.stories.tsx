@@ -23,18 +23,18 @@ const AnimationDemo = ({
   const [key, setKey] = useState(0);
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+    <div className="flex items-center gap-4 p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
       <div
         key={key}
-        className={`w-16 h-16 bg-[#46A0D0] rounded-lg ${className}`}
+        className={`w-16 h-16 bg-[var(--chat-primary)] rounded-lg ${className}`}
       />
       <div className="flex-1">
-        <span className="font-mono text-sm font-medium">.{name}</span>
-        <p className="text-xs text-gray-500">{description}</p>
+        <span className="font-mono text-sm font-medium text-[var(--chat-foreground)]">.{name}</span>
+        <p className="text-xs text-[var(--chat-muted)]">{description}</p>
       </div>
       <button
         onClick={() => setKey((k) => k + 1)}
-        className="px-3 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300"
+        className="px-3 py-1 text-xs bg-[var(--chat-card-hover)] text-[var(--chat-foreground)] rounded hover:bg-[var(--chat-primary)]/20 border border-[var(--chat-border)]"
       >
         Replay
       </button>
@@ -45,44 +45,44 @@ const AnimationDemo = ({
 export const Principles: Story = {
   name: "Animation Principles",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Animation Principles</h2>
-      <p className="text-gray-600 mb-8">
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Animation Principles</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
         Based on Cofoundy Brand Book personality
       </p>
 
       <div className="grid md:grid-cols-2 gap-4">
-        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h4 className="font-semibold text-blue-800 mb-2">
+        <div className="p-4 bg-[var(--chat-primary)]/10 rounded-lg border border-[var(--chat-primary)]/30">
+          <h4 className="font-semibold text-[var(--chat-primary)] mb-2">
             Velocidad con Proposito
           </h4>
-          <p className="text-sm text-blue-700">
+          <p className="text-sm text-[var(--chat-foreground)]">
             Fast but deliberate. 150-300ms for micro-interactions. No animation
             should feel gratuitous.
           </p>
         </div>
 
-        <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-          <h4 className="font-semibold text-purple-800 mb-2">
+        <div className="p-4 bg-[var(--chat-primary)]/10 rounded-lg border border-[var(--chat-primary)]/30">
+          <h4 className="font-semibold text-[var(--chat-primary)] mb-2">
             Tecnico pero Accesible
           </h4>
-          <p className="text-sm text-purple-700">
+          <p className="text-sm text-[var(--chat-foreground)]">
             Precise mathematical easings (expo, quint). Smooth and controlled,
             not elastic or bouncy.
           </p>
         </div>
 
-        <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-          <h4 className="font-semibold text-green-800 mb-2">Directo</h4>
-          <p className="text-sm text-green-700">
+        <div className="p-4 bg-[var(--chat-success)]/10 rounded-lg border border-[var(--chat-success)]/30">
+          <h4 className="font-semibold text-[var(--chat-success)] mb-2">Directo</h4>
+          <p className="text-sm text-[var(--chat-foreground)]">
             No unnecessary delays. Immediate feedback on interactions. One
             smooth motion, not multi-stage.
           </p>
         </div>
 
-        <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-          <h4 className="font-semibold text-amber-800 mb-2">Cercano (75%)</h4>
-          <p className="text-sm text-amber-700">
+        <div className="p-4 bg-[var(--chat-warning)]/10 rounded-lg border border-[var(--chat-warning)]/30">
+          <h4 className="font-semibold text-[var(--chat-warning)] mb-2">Cercano (75%)</h4>
+          <p className="text-sm text-[var(--chat-foreground)]">
             Warm but not playful. Subtle scale effects (1.02-1.05x). Hover
             states that invite, not jump.
           </p>
@@ -95,51 +95,31 @@ export const Principles: Story = {
 export const DurationTokens: Story = {
   name: "Duration Tokens",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Duration Tokens</h2>
-      <p className="text-gray-600 mb-8">CSS variables for animation timing</p>
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Duration Tokens</h2>
+      <p className="text-[var(--chat-muted)] mb-8">CSS variables for animation timing</p>
 
       <div className="space-y-4">
         {[
-          {
-            name: "--cf-duration-instant",
-            value: "100ms",
-            use: "Toggles, switches",
-          },
-          {
-            name: "--cf-duration-fast",
-            value: "150ms",
-            use: "Hover, focus, micro-interactions",
-          },
-          {
-            name: "--cf-duration-normal",
-            value: "250ms",
-            use: "Modals, tabs, dropdowns",
-          },
-          {
-            name: "--cf-duration-smooth",
-            value: "400ms",
-            use: "Card entrances, messages",
-          },
-          {
-            name: "--cf-duration-slow",
-            value: "600ms",
-            use: "Hero reveals, dramatic effects",
-          },
+          { name: "--cf-duration-instant", value: "100ms", use: "Toggles, switches" },
+          { name: "--cf-duration-fast", value: "150ms", use: "Hover, focus, micro-interactions" },
+          { name: "--cf-duration-normal", value: "250ms", use: "Modals, tabs, dropdowns" },
+          { name: "--cf-duration-smooth", value: "400ms", use: "Card entrances, messages" },
+          { name: "--cf-duration-slow", value: "600ms", use: "Hero reveals, dramatic effects" },
         ].map((token) => (
           <div
             key={token.name}
-            className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
+            className="flex items-center gap-4 p-3 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]"
           >
             <div
-              className="h-2 bg-[#46A0D0] rounded-full transition-all"
+              className="h-2 bg-[var(--chat-primary)] rounded-full"
               style={{ width: parseInt(token.value) / 3 }}
             />
             <div className="flex-1">
-              <span className="font-mono text-sm">{token.name}</span>
-              <span className="text-gray-500 text-sm ml-2">{token.value}</span>
+              <span className="font-mono text-sm text-[var(--chat-foreground)]">{token.name}</span>
+              <span className="text-[var(--chat-muted)] text-sm ml-2">{token.value}</span>
             </div>
-            <span className="text-xs text-gray-500">{token.use}</span>
+            <span className="text-xs text-[var(--chat-muted)]">{token.use}</span>
           </div>
         ))}
       </div>
@@ -186,43 +166,36 @@ export const EasingTokens: Story = {
     ];
 
     return (
-      <div className="p-6 bg-white rounded-xl">
-        <h2 className="text-2xl font-bold mb-2">Easing Tokens</h2>
-        <p className="text-gray-600 mb-8">
-          Click to see easing curve in action
-        </p>
+      <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+        <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Easing Tokens</h2>
+        <p className="text-[var(--chat-muted)] mb-8">Click to see easing curve in action</p>
 
         <div className="space-y-4">
           {easings.map((easing) => (
             <div
               key={easing.name}
-              className="p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
+              className="p-4 bg-[var(--chat-input-bg)] rounded-lg cursor-pointer hover:bg-[var(--chat-card-hover)] border border-[var(--chat-border)]"
               onClick={() => {
                 setPlaying(easing.name);
                 setTimeout(() => setPlaying(null), 1000);
               }}
             >
               <div className="flex items-center gap-4 mb-2">
-                <div className="relative w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="relative w-48 h-2 bg-[var(--chat-card-hover)] rounded-full overflow-hidden">
                   <div
-                    className={`absolute h-full bg-[#46A0D0] rounded-full ${
-                      playing === easing.name
-                        ? "animate-[slideRight_1s_forwards]"
-                        : "w-0"
+                    className={`absolute h-full bg-[var(--chat-primary)] rounded-full ${
+                      playing === easing.name ? "animate-[slideRight_1s_forwards]" : "w-0"
                     }`}
                     style={{
-                      animationTimingFunction:
-                        playing === easing.name ? easing.value : undefined,
+                      animationTimingFunction: playing === easing.name ? easing.value : undefined,
                     }}
                   />
                 </div>
-                <span className="font-mono text-sm">{easing.name}</span>
+                <span className="font-mono text-sm text-[var(--chat-foreground)]">{easing.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm font-medium">{easing.label}</span>
-                <span className="text-xs text-gray-500">
-                  {easing.description}
-                </span>
+                <span className="text-sm font-medium text-[var(--chat-foreground)]">{easing.label}</span>
+                <span className="text-xs text-[var(--chat-muted)]">{easing.description}</span>
               </div>
             </div>
           ))}
@@ -242,11 +215,9 @@ export const EasingTokens: Story = {
 export const EntranceAnimations: Story = {
   name: "Entrance Animations",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Entrance Animations</h2>
-      <p className="text-gray-600 mb-8">
-        Click Replay to see animation again
-      </p>
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Entrance Animations</h2>
+      <p className="text-[var(--chat-muted)] mb-8">Click Replay to see animation again</p>
 
       <div className="space-y-4">
         <AnimationDemo
@@ -282,19 +253,19 @@ export const EntranceAnimations: Story = {
 export const FeedbackAnimations: Story = {
   name: "Feedback Animations",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Feedback Animations</h2>
-      <p className="text-gray-600 mb-8">Animations for user feedback</p>
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Feedback Animations</h2>
+      <p className="text-[var(--chat-muted)] mb-8">Animations for user feedback</p>
 
       <div className="space-y-4">
         <AnimationDemo
           name="cf-animate-success"
-          className="cf-animate-success bg-green-500"
+          className="cf-animate-success !bg-[var(--chat-success)]"
           description="Success pulse - green glow for confirmations."
         />
         <AnimationDemo
           name="cf-animate-error"
-          className="cf-animate-error bg-red-500"
+          className="cf-animate-error !bg-[var(--chat-error)]"
           description="Error shake - horizontal shake for validation errors."
         />
         <AnimationDemo
@@ -310,34 +281,34 @@ export const FeedbackAnimations: Story = {
 export const LoadingAnimations: Story = {
   name: "Loading Animations",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Loading Animations</h2>
-      <p className="text-gray-600 mb-8">Continuous animations for loading states</p>
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Loading Animations</h2>
+      <p className="text-[var(--chat-muted)] mb-8">Continuous animations for loading states</p>
 
       <div className="space-y-6">
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <span className="font-mono text-sm font-medium block mb-4">
+        <div className="p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
+          <span className="font-mono text-sm font-medium block mb-4 text-[var(--chat-foreground)]">
             .cf-animate-spin
           </span>
-          <div className="w-8 h-8 border-2 border-[#46A0D0] border-t-transparent rounded-full cf-animate-spin" />
+          <div className="w-8 h-8 border-2 border-[var(--chat-primary)] border-t-transparent rounded-full cf-animate-spin" />
         </div>
 
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <span className="font-mono text-sm font-medium block mb-4">
+        <div className="p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
+          <span className="font-mono text-sm font-medium block mb-4 text-[var(--chat-foreground)]">
             .cf-animate-shimmer
           </span>
           <div className="w-full h-12 rounded-lg cf-animate-shimmer" />
         </div>
 
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <span className="font-mono text-sm font-medium block mb-4">
+        <div className="p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
+          <span className="font-mono text-sm font-medium block mb-4 text-[var(--chat-foreground)]">
             .cf-animate-glow
           </span>
-          <div className="w-16 h-16 bg-[#46A0D0] rounded-lg cf-animate-glow" />
+          <div className="w-16 h-16 bg-[var(--chat-primary)] rounded-lg cf-animate-glow" />
         </div>
 
-        <div className="p-4 bg-[#020b1b] rounded-lg">
-          <span className="font-mono text-sm font-medium block mb-4 text-white">
+        <div className="p-4 bg-[var(--chat-background)] rounded-lg border border-[var(--chat-border)]">
+          <span className="font-mono text-sm font-medium block mb-4 text-[var(--chat-foreground)]">
             Folding Cube Spinner (Branded)
           </span>
           <div className="cf-folding-cube cf-spinner-default">
@@ -355,60 +326,27 @@ export const LoadingAnimations: Story = {
 export const HoverUtilities: Story = {
   name: "Hover Utilities",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Hover Utilities</h2>
-      <p className="text-gray-600 mb-8">Hover over boxes to see effects</p>
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Hover Utilities</h2>
+      <p className="text-[var(--chat-muted)] mb-8">Hover over boxes to see effects</p>
 
       <div className="flex flex-wrap gap-6">
         <div className="text-center">
-          <div className="w-24 h-24 bg-[#46A0D0] rounded-lg cf-hover-lift cursor-pointer" />
-          <span className="text-xs font-mono mt-2 block">.cf-hover-lift</span>
-          <span className="text-xs text-gray-500">translateY + shadow</span>
+          <div className="w-24 h-24 bg-[var(--chat-primary)] rounded-lg cf-hover-lift cursor-pointer" />
+          <span className="text-xs font-mono mt-2 block text-[var(--chat-foreground)]">.cf-hover-lift</span>
+          <span className="text-xs text-[var(--chat-muted)]">translateY + shadow</span>
         </div>
 
         <div className="text-center">
-          <div className="w-24 h-24 bg-[#46A0D0] rounded-lg cf-hover-scale cursor-pointer" />
-          <span className="text-xs font-mono mt-2 block">.cf-hover-scale</span>
-          <span className="text-xs text-gray-500">scale(1.02)</span>
+          <div className="w-24 h-24 bg-[var(--chat-primary)] rounded-lg cf-hover-scale cursor-pointer" />
+          <span className="text-xs font-mono mt-2 block text-[var(--chat-foreground)]">.cf-hover-scale</span>
+          <span className="text-xs text-[var(--chat-muted)]">scale(1.02)</span>
         </div>
 
         <div className="text-center">
-          <div className="w-24 h-24 bg-[#46A0D0] rounded-lg cf-hover-glow cursor-pointer" />
-          <span className="text-xs font-mono mt-2 block">.cf-hover-glow</span>
-          <span className="text-xs text-gray-500">Primary color glow</span>
-        </div>
-      </div>
-    </div>
-  ),
-};
-
-export const TransitionUtilities: Story = {
-  name: "Transition Utilities",
-  render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Transition Utilities</h2>
-      <p className="text-gray-600 mb-8">
-        Apply to elements for smooth property transitions
-      </p>
-
-      <div className="space-y-4">
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <code className="text-sm font-mono">.cf-transition-fast</code>
-          <p className="text-xs text-gray-500 mt-1">
-            150ms with cf-ease-default. For hover states, focus.
-          </p>
-        </div>
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <code className="text-sm font-mono">.cf-transition-normal</code>
-          <p className="text-xs text-gray-500 mt-1">
-            250ms with cf-ease-default. For UI transitions.
-          </p>
-        </div>
-        <div className="p-4 bg-gray-50 rounded-lg">
-          <code className="text-sm font-mono">.cf-transition-smooth</code>
-          <p className="text-xs text-gray-500 mt-1">
-            400ms with cf-ease-default. For content transitions.
-          </p>
+          <div className="w-24 h-24 bg-[var(--chat-primary)] rounded-lg cf-hover-glow cursor-pointer" />
+          <span className="text-xs font-mono mt-2 block text-[var(--chat-foreground)]">.cf-hover-glow</span>
+          <span className="text-xs text-[var(--chat-muted)]">Primary color glow</span>
         </div>
       </div>
     </div>
@@ -421,16 +359,16 @@ export const StaggerSystem: Story = {
     const [key, setKey] = useState(0);
 
     return (
-      <div className="p-6 bg-white rounded-xl">
-        <h2 className="text-2xl font-bold mb-2">Stagger System</h2>
-        <p className="text-gray-600 mb-4">
-          Use <code>.cf-stagger-item</code> with{" "}
-          <code>--cf-stagger-index</code> for cascading animations
+      <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+        <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Stagger System</h2>
+        <p className="text-[var(--chat-muted)] mb-4">
+          Use <code className="bg-[var(--chat-input-bg)] px-1 rounded">.cf-stagger-item</code> with{" "}
+          <code className="bg-[var(--chat-input-bg)] px-1 rounded">--cf-stagger-index</code> for cascading animations
         </p>
 
         <button
           onClick={() => setKey((k) => k + 1)}
-          className="px-4 py-2 bg-[#46A0D0] text-white rounded-lg mb-6"
+          className="px-4 py-2 bg-[var(--chat-primary)] text-white rounded-lg mb-6"
         >
           Replay Stagger
         </button>
@@ -439,15 +377,15 @@ export const StaggerSystem: Story = {
           {[0, 1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="w-16 h-16 bg-[#46A0D0] rounded-lg cf-stagger-item"
+              className="w-16 h-16 bg-[var(--chat-primary)] rounded-lg cf-stagger-item"
               style={{ "--cf-stagger-index": i } as React.CSSProperties}
             />
           ))}
         </div>
 
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-semibold mb-2">Usage</h4>
-          <pre className="text-xs bg-gray-800 text-green-400 p-3 rounded overflow-x-auto">
+        <div className="mt-6 p-4 bg-[#0f172a] rounded-lg">
+          <h4 className="font-semibold mb-2 text-white">Usage</h4>
+          <pre className="text-xs text-[#22c55e] overflow-x-auto">
 {`{items.map((item, i) => (
   <div
     key={item.id}
@@ -465,37 +403,33 @@ export const StaggerSystem: Story = {
 export const ReducedMotion: Story = {
   name: "Reduced Motion",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Reduced Motion Support</h2>
-      <p className="text-gray-600 mb-8">
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Reduced Motion Support</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
         Accessibility: animations are disabled when user prefers reduced motion
       </p>
 
-      <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-        <h4 className="font-semibold text-amber-800 mb-2">
+      <div className="p-4 bg-[var(--chat-warning)]/10 rounded-lg border border-[var(--chat-warning)]/30">
+        <h4 className="font-semibold text-[var(--chat-warning)] mb-2">
           @media (prefers-reduced-motion: reduce)
         </h4>
-        <ul className="text-sm text-amber-700 space-y-1">
+        <ul className="text-sm text-[var(--chat-foreground)] space-y-1">
           <li>• All animation durations set to 0.01ms</li>
           <li>• Transition durations set to 0.01ms</li>
           <li>• Scroll behavior set to auto</li>
           <li>• Hover transform effects disabled</li>
-          <li>
-            • Essential feedback animations (success, error) kept minimal
-          </li>
+          <li>• Essential feedback animations (success, error) kept minimal</li>
         </ul>
       </div>
 
-      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-        <h4 className="font-semibold mb-2">Testing</h4>
-        <p className="text-sm text-gray-600">
+      <div className="mt-6 p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
+        <h4 className="font-semibold mb-2 text-[var(--chat-foreground)]">Testing</h4>
+        <p className="text-sm text-[var(--chat-muted)]">
           Enable "Reduce motion" in your OS accessibility settings to test.
           <br />
-          <strong>macOS:</strong> System Preferences → Accessibility → Display →
-          Reduce motion
+          <strong className="text-[var(--chat-foreground)]">macOS:</strong> System Preferences → Accessibility → Display → Reduce motion
           <br />
-          <strong>Windows:</strong> Settings → Ease of Access → Display → Show
-          animations
+          <strong className="text-[var(--chat-foreground)]">Windows:</strong> Settings → Ease of Access → Display → Show animations
         </p>
       </div>
     </div>

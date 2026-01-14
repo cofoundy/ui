@@ -21,12 +21,12 @@ const SpacingSwatch = ({
 }) => (
   <div className="flex items-center gap-4 mb-3">
     <div
-      className="bg-[#46A0D0] rounded"
+      className="bg-[var(--chat-primary)] rounded"
       style={{ width: size, height: "24px" }}
     />
     <div className="flex items-baseline gap-2">
-      <span className="font-mono text-sm font-medium w-12">{name}</span>
-      <span className="text-gray-500 text-sm">{pixels}</span>
+      <span className="font-mono text-sm font-medium w-12 text-[var(--chat-foreground)]">{name}</span>
+      <span className="text-[var(--chat-muted)] text-sm">{pixels}</span>
     </div>
   </div>
 );
@@ -34,9 +34,9 @@ const SpacingSwatch = ({
 export const SpacingScale: Story = {
   name: "Spacing Scale",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Spacing Scale</h2>
-      <p className="text-gray-600 mb-8">
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Spacing Scale</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
         Tailwind CSS spacing scale (4px base unit)
       </p>
 
@@ -65,68 +65,42 @@ export const SpacingScale: Story = {
 export const BorderRadius: Story = {
   name: "Border Radius",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Border Radius</h2>
-      <p className="text-gray-600 mb-8">
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Border Radius</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
         Radius tokens used across components
       </p>
 
       <div className="flex flex-wrap gap-6">
-        <div className="text-center">
-          <div className="w-20 h-20 bg-[#46A0D0] rounded-none mb-2" />
-          <span className="text-xs font-mono">rounded-none</span>
-          <span className="text-xs text-gray-500 block">0px</span>
-        </div>
-        <div className="text-center">
-          <div className="w-20 h-20 bg-[#46A0D0] rounded-sm mb-2" />
-          <span className="text-xs font-mono">rounded-sm</span>
-          <span className="text-xs text-gray-500 block">2px</span>
-        </div>
-        <div className="text-center">
-          <div className="w-20 h-20 bg-[#46A0D0] rounded mb-2" />
-          <span className="text-xs font-mono">rounded</span>
-          <span className="text-xs text-gray-500 block">4px</span>
-        </div>
-        <div className="text-center">
-          <div className="w-20 h-20 bg-[#46A0D0] rounded-md mb-2" />
-          <span className="text-xs font-mono">rounded-md</span>
-          <span className="text-xs text-gray-500 block">6px</span>
-        </div>
-        <div className="text-center">
-          <div className="w-20 h-20 bg-[#46A0D0] rounded-lg mb-2" />
-          <span className="text-xs font-mono">rounded-lg</span>
-          <span className="text-xs text-gray-500 block">8px</span>
-        </div>
-        <div className="text-center">
-          <div className="w-20 h-20 bg-[#46A0D0] rounded-xl mb-2" />
-          <span className="text-xs font-mono">rounded-xl</span>
-          <span className="text-xs text-gray-500 block">12px</span>
-        </div>
-        <div className="text-center">
-          <div className="w-20 h-20 bg-[#46A0D0] rounded-2xl mb-2" />
-          <span className="text-xs font-mono">rounded-2xl</span>
-          <span className="text-xs text-gray-500 block">16px</span>
-        </div>
-        <div className="text-center">
-          <div className="w-20 h-20 bg-[#46A0D0] rounded-3xl mb-2" />
-          <span className="text-xs font-mono">rounded-3xl</span>
-          <span className="text-xs text-gray-500 block">24px</span>
-        </div>
-        <div className="text-center">
-          <div className="w-20 h-20 bg-[#46A0D0] rounded-full mb-2" />
-          <span className="text-xs font-mono">rounded-full</span>
-          <span className="text-xs text-gray-500 block">9999px</span>
-        </div>
+        {[
+          { name: "rounded-none", value: "0px" },
+          { name: "rounded-sm", value: "2px" },
+          { name: "rounded", value: "4px" },
+          { name: "rounded-md", value: "6px" },
+          { name: "rounded-lg", value: "8px" },
+          { name: "rounded-xl", value: "12px" },
+          { name: "rounded-2xl", value: "16px" },
+          { name: "rounded-3xl", value: "24px" },
+          { name: "rounded-full", value: "9999px" },
+        ].map((item) => (
+          <div key={item.name} className="text-center">
+            <div
+              className={`w-20 h-20 bg-[var(--chat-primary)] mb-2 ${item.name}`}
+            />
+            <span className="text-xs font-mono text-[var(--chat-foreground)]">{item.name}</span>
+            <span className="text-xs text-[var(--chat-muted)] block">{item.value}</span>
+          </div>
+        ))}
       </div>
 
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-        <h4 className="font-semibold mb-2">Common Usage</h4>
-        <ul className="text-sm text-gray-600 space-y-1">
-          <li>• <strong>Buttons:</strong> rounded-md to rounded-lg</li>
-          <li>• <strong>Cards:</strong> rounded-xl to rounded-2xl</li>
-          <li>• <strong>Chat bubbles:</strong> rounded-2xl with rounded-tl-sm/tr-sm</li>
-          <li>• <strong>Avatars:</strong> rounded-full</li>
-          <li>• <strong>Inputs:</strong> rounded-md</li>
+      <div className="mt-8 p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
+        <h4 className="font-semibold mb-2 text-[var(--chat-foreground)]">Common Usage</h4>
+        <ul className="text-sm text-[var(--chat-muted)] space-y-1">
+          <li>• <strong className="text-[var(--chat-foreground)]">Buttons:</strong> rounded-md to rounded-lg</li>
+          <li>• <strong className="text-[var(--chat-foreground)]">Cards:</strong> rounded-xl to rounded-2xl</li>
+          <li>• <strong className="text-[var(--chat-foreground)]">Chat bubbles:</strong> rounded-2xl with rounded-tl-sm/tr-sm</li>
+          <li>• <strong className="text-[var(--chat-foreground)]">Avatars:</strong> rounded-full</li>
+          <li>• <strong className="text-[var(--chat-foreground)]">Inputs:</strong> rounded-md</li>
         </ul>
       </div>
     </div>
@@ -136,57 +110,40 @@ export const BorderRadius: Story = {
 export const Shadows: Story = {
   name: "Shadows",
   render: () => (
-    <div className="p-6 bg-gray-100 rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Shadows</h2>
-      <p className="text-gray-600 mb-8">
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Shadows</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
         Shadow tokens for depth and elevation
       </p>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <div className="text-center">
-          <div className="w-24 h-24 bg-white rounded-lg shadow-sm mb-2 mx-auto" />
-          <span className="text-xs font-mono">shadow-sm</span>
-        </div>
-        <div className="text-center">
-          <div className="w-24 h-24 bg-white rounded-lg shadow mb-2 mx-auto" />
-          <span className="text-xs font-mono">shadow</span>
-        </div>
-        <div className="text-center">
-          <div className="w-24 h-24 bg-white rounded-lg shadow-md mb-2 mx-auto" />
-          <span className="text-xs font-mono">shadow-md</span>
-        </div>
-        <div className="text-center">
-          <div className="w-24 h-24 bg-white rounded-lg shadow-lg mb-2 mx-auto" />
-          <span className="text-xs font-mono">shadow-lg</span>
-        </div>
-        <div className="text-center">
-          <div className="w-24 h-24 bg-white rounded-lg shadow-xl mb-2 mx-auto" />
-          <span className="text-xs font-mono">shadow-xl</span>
-        </div>
-        <div className="text-center">
-          <div className="w-24 h-24 bg-white rounded-lg shadow-2xl mb-2 mx-auto" />
-          <span className="text-xs font-mono">shadow-2xl</span>
-        </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+        {[
+          { name: "shadow-sm", class: "shadow-sm" },
+          { name: "shadow", class: "shadow" },
+          { name: "shadow-md", class: "shadow-md" },
+          { name: "shadow-lg", class: "shadow-lg" },
+          { name: "shadow-xl", class: "shadow-xl" },
+          { name: "shadow-2xl", class: "shadow-2xl" },
+        ].map((item) => (
+          <div key={item.name} className="text-center">
+            <div
+              className={`w-24 h-24 bg-[var(--chat-card-hover)] rounded-lg mx-auto border border-[var(--chat-border)] ${item.class}`}
+            />
+            <span className="text-xs font-mono text-[var(--chat-foreground)] mt-2 block">{item.name}</span>
+          </div>
+        ))}
       </div>
 
       <div className="mt-8">
-        <h4 className="font-semibold mb-4">Chat Widget Shadow</h4>
+        <h4 className="font-semibold mb-4 text-[var(--chat-foreground)]">Chat Widget Shadow</h4>
         <div className="flex gap-6">
           <div className="text-center">
             <div
-              className="w-32 h-24 bg-[#020b1b] rounded-2xl mb-2"
-              style={{ boxShadow: "0 4px 24px rgba(0, 0, 0, 0.4)" }}
+              className="w-32 h-24 bg-[var(--chat-background)] rounded-2xl border border-[var(--chat-border)]"
+              style={{ boxShadow: "var(--chat-shadow)" }}
             />
-            <span className="text-xs font-mono block">--chat-shadow</span>
-            <span className="text-xs text-gray-500">Dark theme</span>
-          </div>
-          <div className="text-center">
-            <div
-              className="w-32 h-24 bg-white rounded-2xl mb-2"
-              style={{ boxShadow: "0 4px 24px rgba(0, 0, 0, 0.08)" }}
-            />
-            <span className="text-xs font-mono block">--chat-shadow</span>
-            <span className="text-xs text-gray-500">Light theme</span>
+            <span className="text-xs font-mono text-[var(--chat-foreground)] block mt-2">--chat-shadow</span>
+            <span className="text-xs text-[var(--chat-muted)]">Theme aware</span>
           </div>
         </div>
       </div>
@@ -197,61 +154,48 @@ export const Shadows: Story = {
 export const LayoutPatterns: Story = {
   name: "Layout Patterns",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Layout Patterns</h2>
-      <p className="text-gray-600 mb-8">
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Layout Patterns</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
         Common spacing patterns used in components
       </p>
 
       <div className="space-y-8">
         <div>
-          <h4 className="font-semibold mb-4">Card Padding</h4>
+          <h4 className="font-semibold mb-4 text-[var(--chat-foreground)]">Card Padding</h4>
           <div className="flex gap-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg">
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <span className="text-xs">p-3 (12px)</span>
+            {[
+              { name: "p-3", label: "12px" },
+              { name: "p-4", label: "16px" },
+              { name: "p-6", label: "24px" },
+            ].map((item) => (
+              <div key={item.name} className="border-2 border-dashed border-[var(--chat-border)] rounded-lg">
+                <div className={`bg-[var(--chat-input-bg)] rounded-lg ${item.name}`}>
+                  <span className="text-xs text-[var(--chat-foreground)]">{item.name} ({item.label})</span>
+                </div>
               </div>
-            </div>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg">
-              <div className="bg-gray-100 p-4 rounded-lg">
-                <span className="text-xs">p-4 (16px)</span>
-              </div>
-            </div>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg">
-              <div className="bg-gray-100 p-6 rounded-lg">
-                <span className="text-xs">p-6 (24px)</span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
         <div>
-          <h4 className="font-semibold mb-4">Gap Spacing</h4>
+          <h4 className="font-semibold mb-4 text-[var(--chat-foreground)]">Gap Spacing</h4>
           <div className="space-y-4">
-            <div className="flex gap-1 items-center">
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <span className="text-xs text-gray-500 ml-2">gap-1 (4px) - Tight</span>
-            </div>
-            <div className="flex gap-2 items-center">
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <span className="text-xs text-gray-500 ml-2">gap-2 (8px) - Compact</span>
-            </div>
-            <div className="flex gap-4 items-center">
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <span className="text-xs text-gray-500 ml-2">gap-4 (16px) - Default</span>
-            </div>
-            <div className="flex gap-6 items-center">
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <div className="w-8 h-8 bg-[#46A0D0] rounded" />
-              <span className="text-xs text-gray-500 ml-2">gap-6 (24px) - Spacious</span>
-            </div>
+            {[
+              { gap: "gap-1", label: "4px", desc: "Tight" },
+              { gap: "gap-2", label: "8px", desc: "Compact" },
+              { gap: "gap-4", label: "16px", desc: "Default" },
+              { gap: "gap-6", label: "24px", desc: "Spacious" },
+            ].map((item) => (
+              <div key={item.gap} className={`flex ${item.gap} items-center`}>
+                <div className="w-8 h-8 bg-[var(--chat-primary)] rounded" />
+                <div className="w-8 h-8 bg-[var(--chat-primary)] rounded" />
+                <div className="w-8 h-8 bg-[var(--chat-primary)] rounded" />
+                <span className="text-xs text-[var(--chat-muted)] ml-2">
+                  {item.gap} ({item.label}) - {item.desc}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -14,23 +14,23 @@ const ColorSwatch = ({
   name,
   value,
   cssVar,
-  textColor = "white",
+  border = false,
 }: {
   name: string;
   value: string;
   cssVar?: string;
-  textColor?: string;
+  border?: boolean;
 }) => (
   <div className="flex flex-col">
     <div
-      className="w-24 h-24 rounded-lg shadow-md flex items-end p-2"
-      style={{ backgroundColor: value, color: textColor }}
+      className={`w-24 h-24 rounded-lg shadow-md flex items-end p-2 ${border ? "border border-[var(--chat-border)]" : ""}`}
+      style={{ backgroundColor: value }}
     >
-      <span className="text-xs font-mono opacity-80">{value}</span>
+      <span className="text-xs font-mono text-white mix-blend-difference">{value}</span>
     </div>
-    <span className="text-sm font-medium mt-2">{name}</span>
+    <span className="text-sm font-medium mt-2 text-[var(--chat-foreground)]">{name}</span>
     {cssVar && (
-      <span className="text-xs text-gray-500 font-mono">{cssVar}</span>
+      <span className="text-xs text-[var(--chat-muted)] font-mono">{cssVar}</span>
     )}
   </div>
 );
@@ -43,7 +43,7 @@ const ColorRow = ({
   children: React.ReactNode;
 }) => (
   <div className="mb-8">
-    <h3 className="text-lg font-semibold mb-4 text-gray-700">{title}</h3>
+    <h3 className="text-lg font-semibold mb-4 text-[var(--chat-foreground)]">{title}</h3>
     <div className="flex flex-wrap gap-4">{children}</div>
   </div>
 );
@@ -51,9 +51,9 @@ const ColorRow = ({
 export const BrandColors: Story = {
   name: "Brand Colors",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Cofoundy Brand Colors</h2>
-      <p className="text-gray-600 mb-8">
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Cofoundy Brand Colors</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
         Official brand colors from the Brand Book MVP
       </p>
 
@@ -85,7 +85,7 @@ export const BrandColors: Story = {
           name="Card"
           value="rgba(255,255,255,0.05)"
           cssVar="--chat-card"
-          textColor="#46A0D0"
+          border
         />
       </ColorRow>
 
@@ -94,19 +94,17 @@ export const BrandColors: Story = {
           name="Foreground"
           value="#FFFFFF"
           cssVar="--foreground"
-          textColor="#020b1b"
+          border
         />
         <ColorSwatch
           name="Muted"
           value="#94a3b8"
           cssVar="--muted-foreground"
-          textColor="#020b1b"
         />
         <ColorSwatch
           name="Secondary Text"
           value="#B0B0B0"
           cssVar="--chat-muted"
-          textColor="#020b1b"
         />
       </ColorRow>
     </div>
@@ -116,9 +114,9 @@ export const BrandColors: Story = {
 export const SemanticColors: Story = {
   name: "Semantic Colors",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Semantic Colors</h2>
-      <p className="text-gray-600 mb-8">
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Semantic Colors</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
         Status and feedback colors
       </p>
 
@@ -132,7 +130,6 @@ export const SemanticColors: Story = {
           name="Warning"
           value="#eab308"
           cssVar="--status-warning"
-          textColor="#020b1b"
         />
         <ColorSwatch
           name="Error"
@@ -160,9 +157,9 @@ export const SemanticColors: Story = {
 export const ChannelColors: Story = {
   name: "Channel Colors",
   render: () => (
-    <div className="p-6 bg-white rounded-xl">
-      <h2 className="text-2xl font-bold mb-2">Channel Brand Colors</h2>
-      <p className="text-gray-600 mb-8">
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Channel Brand Colors</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
         Official brand colors for messaging platforms (InboxAI)
       </p>
 
@@ -207,55 +204,34 @@ export const ChannelColors: Story = {
   ),
 };
 
-export const DarkTheme: Story = {
-  name: "Dark Theme Preview",
+export const ThemePreview: Story = {
+  name: "Theme Preview",
   render: () => (
-    <div className="p-6 bg-[#020b1b] rounded-xl" data-theme="dark">
-      <h2 className="text-2xl font-bold mb-2 text-white">Dark Theme</h2>
-      <p className="text-gray-400 mb-8">
-        Default theme for Cofoundy products
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Current Theme</h2>
+      <p className="text-[var(--chat-muted)] mb-8">
+        Use the theme toggle in the Storybook toolbar to switch themes
       </p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-lg bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)]">
-          <span className="text-white text-sm">Card</span>
+        <div className="p-4 rounded-lg bg-[var(--chat-card)] border border-[var(--chat-border)]">
+          <span className="text-[var(--chat-foreground)] text-sm">Card</span>
         </div>
-        <div className="p-4 rounded-lg bg-[rgba(255,255,255,0.08)] border border-[rgba(255,255,255,0.1)]">
-          <span className="text-white text-sm">Card Hover</span>
+        <div className="p-4 rounded-lg bg-[var(--chat-card-hover)] border border-[var(--chat-border)]">
+          <span className="text-[var(--chat-foreground)] text-sm">Card Hover</span>
         </div>
-        <div className="p-4 rounded-lg bg-[#46A0D0]">
+        <div className="p-4 rounded-lg bg-[var(--chat-primary)]">
           <span className="text-white text-sm">Primary</span>
         </div>
-        <div className="p-4 rounded-lg bg-[#1e293b]">
+        <div className="p-4 rounded-lg bg-[var(--secondary)]">
           <span className="text-white text-sm">Secondary</span>
         </div>
       </div>
-    </div>
-  ),
-};
 
-export const LightTheme: Story = {
-  name: "Light Theme Preview",
-  render: () => (
-    <div className="p-6 bg-white rounded-xl border" data-theme="light">
-      <h2 className="text-2xl font-bold mb-2 text-gray-900">Light Theme</h2>
-      <p className="text-gray-600 mb-8">
-        Alternative theme for light mode contexts
-      </p>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-          <span className="text-gray-900 text-sm">Card</span>
-        </div>
-        <div className="p-4 rounded-lg bg-gray-100 border border-gray-200">
-          <span className="text-gray-900 text-sm">Card Hover</span>
-        </div>
-        <div className="p-4 rounded-lg bg-[#2984ad]">
-          <span className="text-white text-sm">Primary</span>
-        </div>
-        <div className="p-4 rounded-lg bg-[#1e293b]">
-          <span className="text-white text-sm">Secondary</span>
-        </div>
+      <div className="mt-6 p-4 rounded-lg bg-[var(--chat-input-bg)] border border-[var(--chat-border)]">
+        <p className="text-[var(--chat-muted)] text-sm">
+          All components in @cofoundy/ui automatically adapt to the current theme via CSS variables.
+        </p>
       </div>
     </div>
   ),
