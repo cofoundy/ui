@@ -12,7 +12,7 @@ import { TimeSlotGrid } from "./TimeSlotGrid";
 import { ConfirmationCard } from "./ConfirmationCard";
 
 import { useSession } from "../../hooks/useSession";
-import { useWebSocket } from "../../hooks/useWebSocket";
+import { useWebSocket, type AppointmentConfirmation } from "../../hooks/useWebSocket";
 import { useChatStore } from "../../stores/chatStore";
 import type {
   Message,
@@ -359,6 +359,43 @@ export function ChatWidget({
     [setSuggestedSlots]
   );
 
+  // Handle confirmation from schedule_appointment tool
+  const handleConfirmation = useCallback(
+    (confirmation: AppointmentConfirmation) => {
+      // Parse datetime to extract date and time
+      const datetimeStr = confirmation.datetime;
+      let date = new Date().toISOString().split("T")[0];
+      let time = "Por confirmar";
+
+      // Try to parse the datetime string
+      if (datetimeStr) {
+        // Try ISO format first
+        const isoMatch = datetimeStr.match(/(\d{4}-\d{2}-\d{2})/);
+        if (isoMatch) {
+          date = isoMatch[1];
+        }
+        // Extract time (e.g., "2:00 PM", "14:00")
+        const timeMatch = datetimeStr.match(/(\d{1,2}:\d{2}\s*(?:AM|PM)?)/i);
+        if (timeMatch) {
+          time = timeMatch[1];
+        }
+      }
+
+      const appointment: Appointment = {
+        id: generateId(),
+        date,
+        time,
+        topic: confirmation.topic || "Consultoría",
+        attendees: confirmation.client_email ? [confirmation.client_email] : [],
+        confirmed: true,
+      };
+
+      setConfirmedAppointment(appointment);
+      onAppointmentConfirmed?.(appointment);
+    },
+    [setConfirmedAppointment, onAppointmentConfirmed]
+  );
+
   // Legacy message handler
   const handleMessage = useCallback(
     (data: string) => {
@@ -424,6 +461,7 @@ export function ChatWidget({
     onToolStart: handleToolStart,
     onToolEnd: handleToolEnd,
     onSlots: handleSlots,
+    onConfirmation: handleConfirmation,
     onMessage: handleMessage,
     onConnect: handleConnect,
     onDisconnect: handleDisconnect,

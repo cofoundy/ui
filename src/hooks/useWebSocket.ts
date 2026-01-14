@@ -4,10 +4,22 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import type { ConnectionStatus } from "../types";
 
 /**
+ * Confirmation data from schedule_appointment tool
+ */
+export interface AppointmentConfirmation {
+  datetime: string;
+  client_name: string;
+  client_email: string;
+  topic: string;
+  event_id?: string;
+  event_link?: string;
+}
+
+/**
  * Streaming message types from WebSocket server
  */
 interface StreamMessage {
-  type: "token" | "done" | "error" | "message_end" | "tool_start" | "tool_end" | "slots";
+  type: "token" | "done" | "error" | "message_end" | "tool_start" | "tool_end" | "slots" | "confirmation";
   content?: string;
   // Tool event fields
   tool?: string;
@@ -17,6 +29,13 @@ interface StreamMessage {
   // Slots event fields
   date?: string;
   slots?: string[];
+  // Confirmation event fields
+  datetime?: string;
+  client_name?: string;
+  client_email?: string;
+  topic?: string;
+  event_id?: string;
+  event_link?: string;
 }
 
 export interface UseWebSocketOptions {
@@ -36,6 +55,8 @@ export interface UseWebSocketOptions {
   onToolEnd?: (tool: string, success: boolean) => void;
   /** Called when slots are available from check_availability tool */
   onSlots?: (date: string, slots: string[]) => void;
+  /** Called when appointment is confirmed from schedule_appointment tool */
+  onConfirmation?: (confirmation: AppointmentConfirmation) => void;
   /** Legacy: Called for non-JSON messages (backward compatibility) */
   onMessage?: (message: string) => void;
   onConnect?: () => void;
@@ -70,6 +91,7 @@ export function useWebSocket({
   onToolStart,
   onToolEnd,
   onSlots,
+  onConfirmation,
   onMessage,
   onConnect,
   onDisconnect,
@@ -157,6 +179,18 @@ export function useWebSocket({
               onSlots?.(msg.date, msg.slots);
             }
             break;
+          case "confirmation":
+            if (msg.datetime) {
+              onConfirmation?.({
+                datetime: msg.datetime,
+                client_name: msg.client_name || "",
+                client_email: msg.client_email || "",
+                topic: msg.topic || "",
+                event_id: msg.event_id,
+                event_link: msg.event_link,
+              });
+            }
+            break;
         }
       } catch {
         // Fallback for non-JSON messages (backward compatibility)
@@ -199,6 +233,7 @@ export function useWebSocket({
     onToolStart,
     onToolEnd,
     onSlots,
+    onConfirmation,
     onMessage,
     onConnect,
     onDisconnect,
