@@ -10,13 +10,13 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
+          "border-transparent bg-[var(--primary)] text-white [a&]:hover:bg-[var(--primary)]/90",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
+          "border-transparent bg-[var(--secondary)] text-white [a&]:hover:bg-[var(--secondary)]/90",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground [a&]:hover:bg-destructive/90",
+          "border-transparent bg-[var(--destructive)] text-white [a&]:hover:bg-[var(--destructive)]/90",
         outline:
-          "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+          "border-[var(--border)] text-[var(--foreground)] [a&]:hover:bg-[var(--accent)]",
         // Status variants - white text for visibility
         success:
           "border-transparent bg-[var(--status-success)] text-white",
