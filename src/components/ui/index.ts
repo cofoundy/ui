@@ -7,3 +7,4 @@ export { Switch } from "./switch";
 export { Badge, badgeVariants } from "./badge";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Logo, logoVariants } from "./logo";
+export { LogoHeader, logoHeaderVariants, Wordmark } from "./logo-header";
