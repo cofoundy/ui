@@ -16,7 +16,7 @@ const path = require('path');
 // Configuration
 const CONFIG = {
   text: 'Cofoundy',
-  fontFile: '/Users/styreep/cofoundy/cotizations/resources/fonts/recoleta/Recoleta Bold.otf',
+  fontFile: '/Users/styreep/cofoundy/cotizations/resources/fonts/recoleta/Recoleta Regular.otf',
   fontSize: 72,
   outputFile: 'cofoundy-wordmark.svg',
 };
@@ -55,7 +55,7 @@ async function textToSvg() {
 
     // Also generate a version with the brand color
     const svgBrand = `<svg width="${width}" height="${height}" viewBox="${bbox.x1} ${bbox.y1} ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="${textPath.toPathData()}" fill="#46A0D0"/>
+  <path d="${textPath.toPathData()}" fill="#1e293b"/>
 </svg>`;
 
     // Save files
