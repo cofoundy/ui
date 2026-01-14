@@ -84,7 +84,7 @@ export const AllTokens: Story = {
         <TokenRow name="--primary" value="#46a0d0" description="Brand primary" />
         <TokenRow name="--primary-foreground" value="#ffffff" description="Text on primary" />
         <TokenRow name="--secondary" value="#1e293b" description="Secondary actions" />
-        <TokenRow name="--destructive" value="#ef4444" description="Destructive actions" />
+        <TokenRow name="--destructive" value="#DC2626" description="Destructive actions" />
       </TokenTable>
 
       <TokenTable title="Colors - Semantic">
@@ -99,10 +99,10 @@ export const AllTokens: Story = {
       </TokenTable>
 
       <TokenTable title="Colors - Status">
-        <TokenRow name="--status-success" value="#22c55e" description="Success" />
-        <TokenRow name="--status-warning" value="#eab308" description="Warning" />
-        <TokenRow name="--status-error" value="#ef4444" description="Error" />
-        <TokenRow name="--status-info" value="#3b82f6" description="Info" />
+        <TokenRow name="--status-success" value="#059669" description="Success (emerald-600)" />
+        <TokenRow name="--status-warning" value="#D97706" description="Warning (amber-600)" />
+        <TokenRow name="--status-error" value="#DC2626" description="Error (red-600)" />
+        <TokenRow name="--status-info" value="#46A0D0" description="Info (brand primary)" />
       </TokenTable>
 
       <TokenTable title="Colors - Channels">
@@ -125,9 +125,9 @@ export const AllTokens: Story = {
         <TokenRow name="--chat-card-hover" value="rgba(255,255,255,0.08)" description="Card hover" />
         <TokenRow name="--chat-input-bg" value="rgba(255,255,255,0.05)" description="Input bg" />
         <TokenRow name="--chat-shadow" value="0 4px 24px rgba(0,0,0,0.4)" description="Widget shadow" />
-        <TokenRow name="--chat-success" value="#22c55e" description="Success feedback" />
-        <TokenRow name="--chat-error" value="#ef4444" description="Error feedback" />
-        <TokenRow name="--chat-warning" value="#eab308" description="Warning feedback" />
+        <TokenRow name="--chat-success" value="#059669" description="Success feedback" />
+        <TokenRow name="--chat-error" value="#DC2626" description="Error feedback" />
+        <TokenRow name="--chat-warning" value="#D97706" description="Warning feedback" />
       </TokenTable>
     </div>
   ),

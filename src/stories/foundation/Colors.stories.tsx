@@ -123,22 +123,22 @@ export const SemanticColors: Story = {
       <ColorRow title="Status">
         <ColorSwatch
           name="Success"
-          value="#22c55e"
+          value="#059669"
           cssVar="--status-success"
         />
         <ColorSwatch
           name="Warning"
-          value="#eab308"
+          value="#D97706"
           cssVar="--status-warning"
         />
         <ColorSwatch
           name="Error"
-          value="#ef4444"
+          value="#DC2626"
           cssVar="--status-error"
         />
         <ColorSwatch
           name="Info"
-          value="#3b82f6"
+          value="#46A0D0"
           cssVar="--status-info"
         />
       </ColorRow>
@@ -146,7 +146,7 @@ export const SemanticColors: Story = {
       <ColorRow title="Destructive">
         <ColorSwatch
           name="Destructive"
-          value="#ef4444"
+          value="#DC2626"
           cssVar="--destructive"
         />
       </ColorRow>

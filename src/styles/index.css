@@ -37,10 +37,10 @@
   /* Primary color - brand color, same in both themes */
   --chat-primary: var(--color-primary, var(--cf-primary, #46a0d0));
 
-  /* Semantic colors - same in both themes */
-  --chat-success: #22c55e;
-  --chat-error: #ef4444;
-  --chat-warning: #eab308;
+  /* Semantic colors - sophisticated palette aligned with brand */
+  --chat-success: #059669;  /* Emerald-600: connects to primary teal family */
+  --chat-error: #DC2626;    /* Red-600: deep, professional */
+  --chat-warning: #D97706;  /* Amber-600: warm, sophisticated */
 
   /* UI Component Semantic Tokens (shadcn compatible) */
   --background: #020b1b;
@@ -53,7 +53,7 @@
   --muted-foreground: #94a3b8;
   --accent: #1e293b;
   --accent-foreground: #f8fafc;
-  --destructive: #ef4444;
+  --destructive: #DC2626;
   --destructive-foreground: #ffffff;
   --border: rgba(255, 255, 255, 0.15);
   --input: #1e293b;
@@ -73,11 +73,11 @@
   --channel-webchat: #0EA5E9;   /* Sky blue for web chat */
   --channel-sms: #F97316;       /* Orange for SMS */
 
-  /* Status colors */
-  --status-success: #22c55e;
-  --status-warning: #eab308;
-  --status-error: #ef4444;
-  --status-info: #3b82f6;
+  /* Status colors - cohesive with Cofoundy brand */
+  --status-success: #059669;  /* Emerald-600 */
+  --status-warning: #D97706;  /* Amber-600 */
+  --status-error: #DC2626;    /* Red-600 */
+  --status-info: #46A0D0;     /* Brand primary */
 }
 
 /* Dark theme (default) */
@@ -117,7 +117,7 @@
   --muted-foreground: #64748b;
   --accent: #f1f5f9;
   --accent-foreground: #0f172a;
-  --destructive: #ef4444;
+  --destructive: #DC2626;
   --destructive-foreground: #ffffff;
   --border: rgba(0, 0, 0, 0.1);
   --input: #f1f5f9;
@@ -222,10 +222,10 @@
 /* Success pulse - for confirmations, checkmarks */
 @keyframes cf-pulse-success {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+    box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.4);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+    box-shadow: 0 0 0 8px rgba(5, 150, 105, 0);
   }
 }
 
@@ -291,8 +291,8 @@
 }
 
 @keyframes checkPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-  50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(5, 150, 105, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(5, 150, 105, 0); }
 }
 
 /* Cofoundy Folding Cube Spinner */
