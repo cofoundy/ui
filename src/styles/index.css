@@ -388,3 +388,16 @@
 
 /* --- Shadcn-style bg-muted fallback --- */
 .bg-muted { background-color: var(--chat-card, rgba(255, 255, 255, 0.05)); }
+
+/* --- Shadcn Semantic Color Utilities --- */
+/* These ensure components work correctly with the CSS variable theme system */
+.bg-background { background-color: var(--background); }
+.bg-foreground { background-color: var(--foreground); }
+.bg-primary { background-color: var(--primary); }
+.bg-primary-foreground { background-color: var(--primary-foreground); }
+.bg-input { background-color: var(--input); }
+.text-foreground { color: var(--foreground); }
+.text-muted-foreground { color: var(--muted-foreground); }
+.border-input { border-color: var(--input); }
+.border-border { border-color: var(--border); }
+.border-ring { border-color: var(--ring); }
