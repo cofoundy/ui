@@ -31,7 +31,6 @@ Thumbs.db
 # Test coverage
 coverage/
 
-# Package manager
-package-lock.json
+# Package manager (keep package-lock.json for reproducible builds)
 yarn.lock
 pnpm-lock.yaml
