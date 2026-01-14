@@ -3,6 +3,7 @@
 import { cn } from "../../utils/cn";
 import type { ConnectionStatus } from "../../types";
 import { Calendar } from "lucide-react";
+import { Logo } from "../ui/logo";
 
 interface ChatHeaderProps {
   connectionStatus: ConnectionStatus;
@@ -45,9 +46,7 @@ export function ChatHeader({
               className="w-full h-full object-contain"
             />
           ) : (
-            <div className="w-full h-full rounded-full bg-gradient-to-br from-[var(--chat-primary)] to-[var(--chat-primary)]/70 flex items-center justify-center text-[var(--chat-foreground)] font-bold">
-              {brandName.charAt(0)}
-            </div>
+            <Logo size="default" className="w-full h-full" />
           )}
           {/* Status indicator - bottom right corner of logo */}
           <div
