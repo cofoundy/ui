@@ -3,3 +3,6 @@ export type { UseWebSocketOptions, UseWebSocketReturn, AppointmentConfirmation }
 
 export { useSession } from "./useSession";
 export type { UseSessionOptions } from "./useSession";
+
+export { useAutoScroll } from "./useAutoScroll";
+export type { UseAutoScrollOptions, UseAutoScrollReturn } from "./useAutoScroll";
