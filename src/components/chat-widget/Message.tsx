@@ -1,20 +1,19 @@
 "use client";
 
 import { memo, useMemo } from "react";
-import { cn } from "../../utils/cn";
-import type { Message as MessageType } from "../../types";
-import { Avatar, AvatarFallback } from "../ui/avatar";
 import { User, Bot } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { cn } from "../../utils/cn";
+import { Avatar, AvatarFallback } from "../ui/avatar";
+import { MessageContent } from "../messaging/primitives/MessageContent";
+import type { Message as MessageType } from "../../types";
 
 interface MessageProps {
   message: MessageType;
 }
 
 /**
- * Message component with memoization for streaming performance.
- * Only re-renders when message content or id changes.
+ * Message component using MessageContent primitive.
+ * Visually identical to the original implementation.
  */
 export const Message = memo(
   function Message({ message }: MessageProps) {
@@ -62,37 +61,10 @@ export const Message = memo(
               : "bg-[var(--chat-card-hover)] text-[var(--chat-foreground)] rounded-tl-sm"
           )}
         >
-          <div className="prose prose-sm max-w-none text-inherit">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                p: ({ children }) => (
-                  <p className="mb-2 last:mb-0">{children}</p>
-                ),
-                a: ({ href, children }) => (
-                  <a
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[var(--chat-primary)] underline hover:opacity-80"
-                  >
-                    {children}
-                  </a>
-                ),
-                ul: ({ children }) => (
-                  <ul className="list-disc list-inside mb-2">{children}</ul>
-                ),
-                ol: ({ children }) => (
-                  <ol className="list-decimal list-inside mb-2">{children}</ol>
-                ),
-                strong: ({ children }) => (
-                  <strong className="font-semibold">{children}</strong>
-                ),
-              }}
-            >
-              {message.content}
-            </ReactMarkdown>
-          </div>
+          {/* Use MessageContent primitive with markdown format */}
+          <MessageContent content={message.content} format="markdown" />
+
+          {/* Timestamp - exact same styling as original */}
           <span className="text-[10px] opacity-50 mt-1 block">
             {formattedTime}
           </span>

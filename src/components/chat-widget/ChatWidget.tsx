@@ -177,6 +177,10 @@ function parseConfirmation(message: string): Appointment | null {
   return null;
 }
 
+/**
+ * ChatWidget - Uses MessageContent primitive for better composability
+ * while maintaining visual parity with the original implementation.
+ */
 export function ChatWidget({
   websocketUrl,
   greeting,

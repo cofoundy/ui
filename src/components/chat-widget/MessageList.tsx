@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useMemo, useState } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import type { Message as MessageType } from "../../types";
 import { Message } from "./Message";
 import { ToolGroup } from "./ToolGroup";
 import { TypingIndicator } from "./TypingIndicator";
+import { useAutoScroll } from "../../hooks/useAutoScroll";
 import { cn } from "../../utils/cn";
 
 type MessageOrGroup =
@@ -12,7 +13,7 @@ type MessageOrGroup =
   | { type: "tool_group"; tools: MessageType[] };
 
 /**
- * Groups consecutive tool messages together for horizontal display.
+ * Groups consecutive tool messages together for vertical display.
  */
 function groupMessages(messages: MessageType[]): MessageOrGroup[] {
   const groups: MessageOrGroup[] = [];
@@ -46,50 +47,24 @@ interface MessageListProps {
   emptyMessage?: string;
 }
 
+/**
+ * Message list using shared useAutoScroll hook.
+ * Visually identical to the original implementation.
+ */
 export function MessageList({
   messages,
   isTyping,
   className,
   emptyMessage = "Comienza una conversación...",
 }: MessageListProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Use shared auto-scroll hook
+  const { containerRef, scrollToBottom, isUserScrollLocked, handleScroll } =
+    useAutoScroll();
 
-  // Track if user has scrolled up (locked)
-  const [isUserScrollLocked, setIsUserScrollLocked] = useState(false);
   const lastMessageCountRef = useRef(messages.length);
 
-  // Group consecutive tool messages for horizontal display
+  // Group consecutive tool messages for vertical display
   const groupedMessages = useMemo(() => groupMessages(messages), [messages]);
-
-  // Check if scrolled to bottom (within threshold)
-  const isAtBottom = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return true;
-    const threshold = 50; // pixels from bottom
-    return container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
-  }, []);
-
-  // Scroll to bottom using scrollTop (local to container, not global)
-  const scrollToBottom = useCallback((force = false) => {
-    if (!force && isUserScrollLocked) return;
-
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-    scrollTimeoutRef.current = setTimeout(() => {
-      const container = containerRef.current;
-      if (container) {
-        container.scrollTop = container.scrollHeight;
-      }
-    }, 50);
-  }, [isUserScrollLocked]);
-
-  // Handle scroll events to detect user scroll lock
-  const handleScroll = useCallback(() => {
-    const atBottom = isAtBottom();
-    setIsUserScrollLocked(!atBottom);
-  }, [isAtBottom]);
 
   // Auto-scroll when new messages arrive (only if not locked)
   useEffect(() => {
@@ -113,15 +88,6 @@ export function MessageList({
     }
   }, [isTyping, isUserScrollLocked, scrollToBottom]);
 
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return (
     <div
       ref={containerRef}
@@ -140,7 +106,7 @@ export function MessageList({
       )}
 
       {groupedMessages.map((item, index) => {
-        // Tool group - render horizontally
+        // Tool group - render vertically
         if ("type" in item && item.type === "tool_group") {
           const groupKey = item.tools.map((t) => t.id).join("-");
           return <ToolGroup key={groupKey} tools={item.tools} />;
