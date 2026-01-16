@@ -6,3 +6,5 @@ export type { UseSessionOptions } from "./useSession";
 
 export { useAutoScroll } from "./useAutoScroll";
 export type { UseAutoScrollOptions, UseAutoScrollReturn } from "./useAutoScroll";
+
+export { useIsMobile } from "./useIsMobile";

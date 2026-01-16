@@ -114,6 +114,16 @@
   --chat-input-bg: rgba(255, 255, 255, 0.05);
   --chat-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   --chat-inset-highlight: rgba(255, 255, 255, 0.05);
+
+  /* Sidebar tokens */
+  --sidebar-background: var(--background);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
 }
 
 /* Light theme */
@@ -148,6 +158,16 @@
   --card-foreground: #0f172a;
   --popover: #ffffff;
   --popover-foreground: #0f172a;
+
+  /* Sidebar tokens - Light theme */
+  --sidebar-background: #f8fafc;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #2984ad;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: rgba(0, 0, 0, 0.1);
+  --sidebar-ring: #2984ad;
 }
 
 /* ============================================

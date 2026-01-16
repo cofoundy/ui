@@ -37,7 +37,25 @@ const preview: Preview = {
     (Story, context) => {
       const theme = context.globals.theme || 'dark';
       const bgColor = theme === 'light' ? '#f8fafc' : '#020916';
+      const isFullscreen = context.parameters.layout === 'fullscreen';
 
+      // For fullscreen layouts, use minimal wrapper
+      if (isFullscreen) {
+        return (
+          <div
+            data-theme={theme}
+            style={{
+              height: '100vh',
+              width: '100vw',
+              background: bgColor,
+            }}
+          >
+            <Story />
+          </div>
+        );
+      }
+
+      // Default centered layout with padding
       return (
         <div
           data-theme={theme}

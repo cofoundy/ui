@@ -14,6 +14,79 @@ export { Switch } from "./components/ui";
 export { Badge, badgeVariants } from "./components/ui";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui";
 export { Logo, logoVariants } from "./components/ui";
+export { ThemeSwitcher, themeSwitcherVariants } from "./components/ui";
+
+// Sidebar system components
+export { Separator } from "./components/ui";
+export { Skeleton } from "./components/ui";
+export { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./components/ui";
+export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./components/ui";
+export {
+  DropdownMenu,
+  DropdownMenuPortal,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+} from "./components/ui";
+export {
+  Sheet,
+  SheetPortal,
+  SheetOverlay,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+  sheetVariants,
+} from "./components/ui";
+export {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupAction,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSkeleton,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+  useSidebar,
+  sidebarMenuButtonVariants,
+} from "./components/ui";
+export {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+  BreadcrumbEllipsis,
+} from "./components/ui";
 
 // Messaging Components (Primitives)
 export {
@@ -54,6 +127,7 @@ export { useSession } from "./hooks";
 export type { UseSessionOptions } from "./hooks";
 export { useAutoScroll } from "./hooks";
 export type { UseAutoScrollOptions, UseAutoScrollReturn } from "./hooks";
+export { useIsMobile } from "./hooks";
 
 // Store
 export { useChatStore } from "./stores/chatStore";
