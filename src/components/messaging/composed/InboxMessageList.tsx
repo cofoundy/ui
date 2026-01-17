@@ -73,6 +73,7 @@ export interface InboxMessageListProps {
   messages: UniversalMessage[];
   loading?: boolean;
   emptyMessage?: string;
+  showAvatar?: boolean;
   className?: string;
 }
 
@@ -83,6 +84,7 @@ export function InboxMessageList({
   messages,
   loading = false,
   emptyMessage = "No messages yet",
+  showAvatar = true,
   className,
 }: InboxMessageListProps) {
   const { containerRef, scrollToBottom, isUserScrollLocked, handleScroll } =
@@ -149,7 +151,7 @@ export function InboxMessageList({
 
             {/* Messages for this date */}
             {group.messages.map((message) => (
-              <InboxMessage key={message.id} message={message} />
+              <InboxMessage key={message.id} message={message} showAvatar={showAvatar} />
             ))}
           </div>
         ))}
