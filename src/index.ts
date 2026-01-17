@@ -12,6 +12,8 @@ export { Spinner, spinnerVariants } from "./components/ui";
 export { Toaster, toast } from "./components/ui";
 export { Switch } from "./components/ui";
 export { Badge, badgeVariants } from "./components/ui";
+export { ChannelBadge, channelBadgeVariants } from "./components/ui";
+export type { ChannelBadgeProps } from "./components/ui";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui";
 export { Logo, logoVariants } from "./components/ui";
 export { ThemeSwitcher, themeSwitcherVariants } from "./components/ui";

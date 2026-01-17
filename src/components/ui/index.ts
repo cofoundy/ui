@@ -5,6 +5,8 @@ export { Spinner, spinnerVariants } from "./spinner";
 export { Toaster, toast } from "./sonner";
 export { Switch } from "./switch";
 export { Badge, badgeVariants } from "./badge";
+export { ChannelBadge, channelBadgeVariants } from "./channel-badge";
+export type { ChannelBadgeProps } from "./channel-badge";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Logo, logoVariants } from "./logo";
 export { LogoHeader, logoHeaderVariants, Wordmark } from "./logo-header";
