@@ -7,6 +7,7 @@ import type {
   AppointmentConfirmation,
 } from "./types";
 import type { ConnectionStatus } from "../types";
+import { CircuitBreaker, type CircuitBreakerState } from "./circuitBreaker";
 
 /**
  * Socket.IO message types for InboxAI backend
@@ -75,6 +76,12 @@ async function loadSocketIO(): Promise<SocketIOClient> {
 }
 
 /**
+ * Heartbeat configuration
+ */
+const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+const HEARTBEAT_TIMEOUT = 10000; // 10 seconds to receive pong
+
+/**
  * Creates a Socket.IO transport instance for InboxAI backend
  */
 export async function createSocketIOTransport(
@@ -87,7 +94,29 @@ export async function createSocketIOTransport(
   let socket: ReturnType<typeof io> | null = null;
   let connectionStatus: ConnectionStatus = "disconnected";
   let reconnectAttempts = 0;
-  const messageQueue: string[] = [];
+  const messageQueue: Array<{ message: string; messageId?: string }> = [];
+
+  // Heartbeat state
+  let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+  let heartbeatTimeout: ReturnType<typeof setTimeout> | null = null;
+  let lastPongTime: number = Date.now();
+
+  // Circuit breaker for connection resilience
+  const circuitBreaker = new CircuitBreaker({
+    failureThreshold: 5,
+    resetTimeout: 60000, // 60 seconds
+    halfOpenRequests: 1,
+    name: "SocketIO",
+  });
+
+  // Listen for circuit breaker state changes
+  circuitBreaker.onStateChange((state, stats) => {
+    console.log("[SocketIO] Circuit breaker state:", state, stats);
+    if (state === "OPEN") {
+      setConnectionStatus("error");
+      onError?.(new Error(`Circuit breaker open after ${stats.failures} failures`));
+    }
+  });
 
   const {
     url,
@@ -108,6 +137,7 @@ export async function createSocketIOTransport(
     onSlots,
     onConfirmation,
     onMessage,
+    onMessageAck,
     onConnect,
     onDisconnect,
     onError,
@@ -131,16 +161,76 @@ export async function createSocketIOTransport(
   function flushMessageQueue() {
     if (socket?.connected) {
       while (messageQueue.length > 0) {
-        const message = messageQueue.shift();
-        if (message) {
+        const item = messageQueue.shift();
+        if (item) {
           socket.emit("widget_message", {
-            content: message,
+            content: item.message,
             tenant_id: tenantId,
             session_id: sessionId,
+            client_message_id: item.messageId,
           });
         }
       }
     }
+  }
+
+  /**
+   * Start heartbeat monitoring to detect zombie connections
+   */
+  function startHeartbeat() {
+    stopHeartbeat(); // Clear any existing heartbeat
+
+    lastPongTime = Date.now();
+
+    heartbeatInterval = setInterval(() => {
+      if (!socket?.connected) {
+        stopHeartbeat();
+        return;
+      }
+
+      // Send ping
+      socket.emit("ping", {});
+      console.debug("[SocketIO] Heartbeat ping sent");
+
+      // Set timeout for pong response
+      heartbeatTimeout = setTimeout(() => {
+        const timeSinceLastPong = Date.now() - lastPongTime;
+        if (timeSinceLastPong > HEARTBEAT_INTERVAL + HEARTBEAT_TIMEOUT) {
+          console.warn("[SocketIO] Heartbeat timeout - connection may be dead, forcing reconnect");
+          // Force reconnection
+          if (socket) {
+            socket.disconnect();
+            setTimeout(() => connect(), 1000);
+          }
+        }
+      }, HEARTBEAT_TIMEOUT);
+    }, HEARTBEAT_INTERVAL);
+  }
+
+  /**
+   * Stop heartbeat monitoring
+   */
+  function stopHeartbeat() {
+    if (heartbeatInterval) {
+      clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+    if (heartbeatTimeout) {
+      clearTimeout(heartbeatTimeout);
+      heartbeatTimeout = null;
+    }
+  }
+
+  /**
+   * Handle pong response from server
+   */
+  function handlePong() {
+    lastPongTime = Date.now();
+    if (heartbeatTimeout) {
+      clearTimeout(heartbeatTimeout);
+      heartbeatTimeout = null;
+    }
+    console.debug("[SocketIO] Heartbeat pong received");
   }
 
   function handleAssistantMessage(data: SocketIOMessage) {
@@ -180,6 +270,24 @@ export async function createSocketIOTransport(
   function connect() {
     if (!sessionId) return;
 
+    // Check circuit breaker before attempting connection
+    if (!circuitBreaker.canExecute()) {
+      const stats = circuitBreaker.getStats();
+      console.warn("[SocketIO] Circuit breaker is open, skipping connection attempt. Retry in:", circuitBreaker.getTimeUntilReset(), "ms");
+      setConnectionStatus("error");
+
+      // Schedule retry when circuit breaker resets
+      const retryDelay = circuitBreaker.getTimeUntilReset();
+      if (retryDelay > 0) {
+        setTimeout(() => {
+          if (circuitBreaker.canExecute()) {
+            connect();
+          }
+        }, retryDelay + 1000); // Add 1s buffer
+      }
+      return;
+    }
+
     setConnectionStatus("connecting");
 
     // Get browser timezone
@@ -207,6 +315,9 @@ export async function createSocketIOTransport(
     });
 
     socket.on("connect", () => {
+      // Record successful connection with circuit breaker
+      circuitBreaker.recordSuccess();
+
       // Send widget_init event to initialize the session
       socket?.emit("widget_init", {
         tenant_id: tenantId,
@@ -222,9 +333,18 @@ export async function createSocketIOTransport(
       reconnectAttempts = 0;
       onConnect?.();
       flushMessageQueue();
+
+      // Start heartbeat monitoring
+      startHeartbeat();
     });
 
+    // Listen for pong responses (server should echo back ping)
+    socket.on("pong", handlePong);
+
     socket.on("disconnect", (reason: string) => {
+      // Stop heartbeat on disconnect
+      stopHeartbeat();
+
       setConnectionStatus("disconnected");
       onDisconnect?.();
 
@@ -236,6 +356,9 @@ export async function createSocketIOTransport(
     });
 
     socket.on("connect_error", (error: Error) => {
+      // Record failure with circuit breaker
+      circuitBreaker.recordFailure();
+
       setConnectionStatus("error");
       onError?.(error);
 
@@ -324,18 +447,32 @@ export async function createSocketIOTransport(
       // Could emit a typing event to the UI if needed
       console.log("[SocketIO] Agent typing:", data.active);
     });
+
+    // Message delivery acknowledgment
+    socket.on("message:ack", (data: { messageId: string; status: string; timestamp?: string; error?: string }) => {
+      console.log("[SocketIO] Message acknowledged:", data);
+      onMessageAck?.({
+        messageId: data.messageId,
+        status: data.status as "received" | "delivered" | "failed",
+        timestamp: data.timestamp,
+        error: data.error,
+      });
+    });
   }
 
-  function sendMessage(message: string) {
+  function sendMessage(message: string, messageId?: string) {
     if (socket?.connected) {
       // Use widget_message event for InboxAI backend
+      // Include messageId for delivery acknowledgment
       socket.emit("widget_message", {
         content: message,
         tenant_id: tenantId,
         session_id: sessionId,
+        client_message_id: messageId,
       });
     } else {
-      messageQueue.push(message);
+      // Queue message for sending when connected
+      messageQueue.push({ message, messageId });
     }
   }
 
@@ -348,6 +485,8 @@ export async function createSocketIOTransport(
   }
 
   function disconnect() {
+    stopHeartbeat();
+    circuitBreaker.dispose();
     if (socket) {
       socket.removeAllListeners();
       socket.disconnect();
@@ -385,6 +524,16 @@ export async function createSocketIOTransport(
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       }
       disconnect();
+    },
+    // Circuit breaker access
+    get circuitBreakerState(): CircuitBreakerState {
+      return circuitBreaker.getState();
+    },
+    get circuitBreakerStats() {
+      return circuitBreaker.getStats();
+    },
+    resetCircuitBreaker: () => {
+      circuitBreaker.forceState("CLOSED");
     },
   };
 }

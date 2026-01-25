@@ -7,6 +7,7 @@ import type {
   AppointmentConfirmation,
 } from "./types";
 import type { ConnectionStatus } from "../types";
+import { CircuitBreaker, type CircuitBreakerState } from "./circuitBreaker";
 
 /**
  * Streaming message types from WebSocket server
@@ -52,6 +53,23 @@ export function createWebSocketTransport(
   let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
   const messageQueue: string[] = [];
   let statusListener: ((status: ConnectionStatus) => void) | null = null;
+
+  // Circuit breaker for connection resilience
+  const circuitBreaker = new CircuitBreaker({
+    failureThreshold: 5,
+    resetTimeout: 60000, // 60 seconds
+    halfOpenRequests: 1,
+    name: "WebSocket",
+  });
+
+  // Listen for circuit breaker state changes
+  circuitBreaker.onStateChange((state, stats) => {
+    console.log("[WebSocket] Circuit breaker state:", state, stats);
+    if (state === "OPEN") {
+      setConnectionStatus("error");
+      onError?.(new Error(`Circuit breaker open after ${stats.failures} failures`));
+    }
+  });
 
   const {
     url,
@@ -153,6 +171,23 @@ export function createWebSocketTransport(
   function connect() {
     if (!sessionId) return;
 
+    // Check circuit breaker before attempting connection
+    if (!circuitBreaker.canExecute()) {
+      console.warn("[WebSocket] Circuit breaker is open, skipping connection attempt. Retry in:", circuitBreaker.getTimeUntilReset(), "ms");
+      setConnectionStatus("error");
+
+      // Schedule retry when circuit breaker resets
+      const retryDelay = circuitBreaker.getTimeUntilReset();
+      if (retryDelay > 0) {
+        setTimeout(() => {
+          if (circuitBreaker.canExecute()) {
+            connect();
+          }
+        }, retryDelay + 1000); // Add 1s buffer
+      }
+      return;
+    }
+
     // Close existing connection
     if (ws) {
       ws.close();
@@ -166,6 +201,9 @@ export function createWebSocketTransport(
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
+      // Record successful connection with circuit breaker
+      circuitBreaker.recordSuccess();
+
       setConnectionStatus("connected");
       reconnectAttempts = 0;
       onConnect?.();
@@ -192,12 +230,17 @@ export function createWebSocketTransport(
     };
 
     ws.onerror = (error) => {
+      // Record failure with circuit breaker
+      circuitBreaker.recordFailure();
+
       setConnectionStatus("error");
       onError?.(error);
     };
   }
 
-  function sendMessage(message: string) {
+  function sendMessage(message: string, messageId?: string) {
+    // Note: messageId is accepted for interface compatibility but not used
+    // WebSocket transport would need protocol changes to support ACKs
     if (ws?.readyState === WebSocket.OPEN) {
       ws.send(message);
     } else {
@@ -215,6 +258,7 @@ export function createWebSocketTransport(
       clearTimeout(reconnectTimeout);
       reconnectTimeout = null;
     }
+    circuitBreaker.dispose();
     if (ws) {
       ws.close();
       ws = null;
@@ -250,6 +294,16 @@ export function createWebSocketTransport(
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       }
       disconnect();
+    },
+    // Circuit breaker access
+    get circuitBreakerState(): CircuitBreakerState {
+      return circuitBreaker.getState();
+    },
+    get circuitBreakerStats() {
+      return circuitBreaker.getStats();
+    },
+    resetCircuitBreaker: () => {
+      circuitBreaker.forceState("CLOSED");
     },
   };
 }
