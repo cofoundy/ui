@@ -107,7 +107,11 @@ export async function createSocketIOTransport(
       while (messageQueue.length > 0) {
         const message = messageQueue.shift();
         if (message) {
-          socket.emit("message", { content: message, tenantId });
+          socket.emit("widget_message", {
+            content: message,
+            tenant_id: tenantId,
+            session_id: sessionId,
+          });
         }
       }
     }
@@ -156,12 +160,16 @@ export async function createSocketIOTransport(
     const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     // Create Socket.IO connection
+    // Widget connections use auth: { widget: true } to bypass JWT auth
     socket = io(url, {
       path: "/socket.io",
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: maxReconnectAttempts,
       reconnectionDelay: reconnectDelay,
+      auth: {
+        widget: true,  // Required for InboxAI to allow connection without JWT
+      },
       query: {
         sessionId,
         tenantId,
@@ -170,6 +178,17 @@ export async function createSocketIOTransport(
     });
 
     socket.on("connect", () => {
+      // Send widget_init event to initialize the session
+      socket?.emit("widget_init", {
+        tenant_id: tenantId,
+        session_id: sessionId,
+        visitor_name: "Visitor",
+        metadata: {
+          page_url: typeof window !== "undefined" ? window.location.href : "",
+          page_title: typeof document !== "undefined" ? document.title : "",
+        },
+      });
+
       setConnectionStatus("connected");
       reconnectAttempts = 0;
       onConnect?.();
@@ -197,10 +216,23 @@ export async function createSocketIOTransport(
       }
     });
 
-    // Listen for assistant messages (various event names for compatibility)
+    // InboxAI widget events
+    socket.on("widget:session", (data: { sessionId: string; conversationId: string | null }) => {
+      // Session initialized successfully
+      console.log("[SocketIO] Widget session initialized:", data);
+    });
+
+    // Listen for messages (InboxAI emits message:new)
+    socket.on("message:new", (data: SocketIOMessage) => {
+      // Only handle if it's from AI/agent (not echoed user message)
+      if (data.type !== "user" && (data as { sender?: { type?: string } }).sender?.type !== "visitor") {
+        handleAssistantMessage(data);
+      }
+    });
+
+    // Legacy event names for compatibility with other backends
     socket.on("assistant_message", handleAssistantMessage);
     socket.on("message", (data: SocketIOMessage) => {
-      // Only handle if it's from assistant (not echoed user message)
       if (data.type !== "user") {
         handleAssistantMessage(data);
       }
@@ -208,18 +240,32 @@ export async function createSocketIOTransport(
     socket.on("response", handleAssistantMessage);
     socket.on("stream", handleAssistantMessage);
 
+    // AG-UI streaming events (for AI responses)
+    socket.on("ag_ui:event", (event: Record<string, unknown>) => {
+      // Handle AG-UI protocol events
+      if (event.type === "TEXT_MESSAGE_CONTENT") {
+        onToken?.((event as { delta?: string }).delta || "");
+      } else if (event.type === "TEXT_MESSAGE_END") {
+        onStreamComplete?.();
+      } else if (event.type === "RUN_ERROR") {
+        onStreamError?.((event as { message?: string }).message || "Unknown error");
+      }
+    });
+
     // Typing indicator
-    socket.on("typing", () => {
-      // The store handles typing state, this just triggers an update
+    socket.on("agent:typing", (data: { active: boolean }) => {
+      // Could emit a typing event to the UI if needed
+      console.log("[SocketIO] Agent typing:", data.active);
     });
   }
 
   function sendMessage(message: string) {
     if (socket?.connected) {
-      socket.emit("message", {
+      // Use widget_message event for InboxAI backend
+      socket.emit("widget_message", {
         content: message,
-        tenantId,
-        sessionId,
+        tenant_id: tenantId,
+        session_id: sessionId,
       });
     } else {
       messageQueue.push(message);
