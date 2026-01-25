@@ -13,6 +13,21 @@ export interface AppointmentConfirmation {
 }
 
 /**
+ * Message acknowledgment status
+ */
+export type MessageAckStatus = "received" | "delivered" | "failed";
+
+/**
+ * Message acknowledgment event
+ */
+export interface MessageAck {
+  messageId: string;
+  status: MessageAckStatus;
+  timestamp?: string;
+  error?: string;
+}
+
+/**
  * Transport event callbacks
  */
 export interface TransportCallbacks {
@@ -34,6 +49,8 @@ export interface TransportCallbacks {
   onConfirmation?: (confirmation: AppointmentConfirmation) => void;
   /** Legacy: Called for non-streaming messages */
   onMessage?: (message: string) => void;
+  /** Called when message delivery is acknowledged */
+  onMessageAck?: (ack: MessageAck) => void;
   /** Connection lifecycle callbacks */
   onConnect?: () => void;
   onDisconnect?: () => void;
@@ -54,8 +71,8 @@ export interface TransportOptions extends TransportCallbacks {
  * Transport interface - all transport implementations must conform to this
  */
 export interface Transport {
-  /** Send a message through the transport */
-  sendMessage: (message: string) => void;
+  /** Send a message through the transport with optional message ID for acknowledgment */
+  sendMessage: (message: string, messageId?: string) => void;
   /** Current connection status */
   connectionStatus: ConnectionStatus;
   /** Manually trigger reconnection */

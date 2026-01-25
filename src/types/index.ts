@@ -21,12 +21,17 @@ export type {
   AppointmentConfirmation,
 } from '../transports/types';
 
+// Message send status for optimistic UI
+export type MessageSendStatus = 'sending' | 'sent' | 'delivered' | 'failed';
+
 // Chat message types
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'tool';
   content: string;
   timestamp: Date;
+  // Send status for user messages (optimistic UI)
+  sendStatus?: MessageSendStatus;
   // Tool indicator fields (for role='tool')
   toolName?: string;
   toolIcon?: string;
@@ -94,6 +99,7 @@ export interface ChatState {
 
   // Actions
   addMessage: (message: Message) => void;
+  updateMessageStatus: (messageId: string, status: MessageSendStatus) => void;
   setTyping: (typing: boolean) => void;
   setConnected: (connected: boolean) => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
