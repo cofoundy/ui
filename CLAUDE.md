@@ -146,19 +146,39 @@ All components use CSS variables for theming:
 "@cofoundy/ui": "file:../../packages/ui"
 ```
 
-### Next.js 16 Note
-Turbopack has issues with symlinks. Use webpack:
+### Next.js Configuration
+
+**1. Use Webpack (Turbopack has symlink issues):**
 ```json
 "scripts": {
   "dev": "next dev --webpack"
 }
 ```
 
-### Import styles
+**2. Add to next.config.ts:**
+```typescript
+transpilePackages: ['@cofoundy/ui'],
+```
+
+### Import Styles (REQUIRED)
+
+**⚠️ IMPORTANT: Import via JavaScript, NOT CSS @import**
+
+```typescript
+// In your app/layout.tsx (or _app.tsx)
+import '@cofoundy/ui/styles';  // ← MUST be first
+import './globals.css';         // Then your local styles
+```
+
+**Why JS import instead of CSS @import?**
+- `@import "@cofoundy/ui/styles"` fails with PostCSS + symlinks
+- `import '@cofoundy/ui/styles'` works because bundler uses Node resolution
+
+**DO NOT do this:**
 ```css
+/* ❌ This FAILS with symlinked packages */
 @import "@cofoundy/ui/styles";
 ```
-Or copy the CSS variables to your globals.css if Turbopack issues persist.
 
 ## Development Guidelines
 
