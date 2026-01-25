@@ -55,6 +55,40 @@ Cual te interesa mas?`,
   timestamp: new Date(),
 };
 
+const userMessageWithEmail: MessageType = {
+  id: '5',
+  role: 'user',
+  content: 'andre pacheco apachecotaboada@gmail.com',
+  timestamp: new Date(),
+};
+
+const userMessageWithLink: MessageType = {
+  id: '6',
+  role: 'user',
+  content: 'Mira este sitio: https://cofoundy.dev y dime que opinas',
+  timestamp: new Date(),
+};
+
+const assistantMessageWithEmail: MessageType = {
+  id: '7',
+  role: 'assistant',
+  content: `Tu reunion esta confirmada:
+
+- Dia: Manana, 26 de enero
+- Hora: 5:00 PM
+- Correo: apachecotaboada@gmail.com
+
+Te he enviado una invitacion al calendario.`,
+  timestamp: new Date(),
+};
+
+const assistantMessageWithLink: MessageType = {
+  id: '8',
+  role: 'assistant',
+  content: 'Puedes ver nuestro portfolio en https://cofoundy.dev y contactarnos en info@cofoundy.dev',
+  timestamp: new Date(),
+};
+
 const longMessage: MessageType = {
   id: '4',
   role: 'assistant',
@@ -98,6 +132,41 @@ export const LongMessage: Story = {
   args: {
     message: longMessage,
   },
+};
+
+export const UserWithEmail: Story = {
+  args: {
+    message: userMessageWithEmail,
+  },
+};
+
+export const UserWithLink: Story = {
+  args: {
+    message: userMessageWithLink,
+  },
+};
+
+export const AssistantWithEmail: Story = {
+  args: {
+    message: assistantMessageWithEmail,
+  },
+};
+
+export const AssistantWithLink: Story = {
+  args: {
+    message: assistantMessageWithLink,
+  },
+};
+
+export const LinksComparison: Story = {
+  render: () => (
+    <div className="flex flex-col gap-4">
+      <Message message={userMessageWithEmail} />
+      <Message message={assistantMessageWithEmail} />
+      <Message message={userMessageWithLink} />
+      <Message message={assistantMessageWithLink} />
+    </div>
+  ),
 };
 
 export const Conversation: Story = {

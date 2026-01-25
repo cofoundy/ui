@@ -9,6 +9,8 @@ interface MessageContentProps {
   content: string;
   format?: ContentFormat;
   className?: string;
+  /** Whether the message is from the user (affects link styling) */
+  isUser?: boolean;
 }
 
 /**
@@ -18,6 +20,7 @@ export function MessageContent({
   content,
   format = "text",
   className,
+  isUser = false,
 }: MessageContentProps) {
   if (format === "markdown") {
     return (
@@ -33,7 +36,12 @@ export function MessageContent({
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[var(--chat-primary)] underline hover:opacity-80"
+                className={cn(
+                  "underline hover:opacity-80",
+                  isUser
+                    ? "text-white font-medium"
+                    : "text-[var(--chat-primary)]"
+                )}
               >
                 {children}
               </a>

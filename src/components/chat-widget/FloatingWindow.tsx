@@ -20,27 +20,19 @@ export interface FloatingWindowProps {
   className?: string;
 }
 
-// Position styles for the window (desktop only)
-const getPositionStyles = (
-  position: FloatingPosition,
-  offset: { x?: number; y?: number }
-): Record<string, number | string> => {
-  const x = offset.x ?? 20;
-  const y = offset.y ?? 20;
-  // Window is positioned above the launcher button (launcher is 56px + margin)
-  const launcherHeight = 56 + y + 16; // Button height + offset + gap
-
+// Get Tailwind position classes for desktop
+const getPositionClasses = (position: FloatingPosition): string => {
   switch (position) {
     case "bottom-right":
-      return { bottom: launcherHeight, right: x };
+      return "sm:bottom-[112px] sm:right-5 sm:left-auto sm:top-auto";
     case "bottom-left":
-      return { bottom: launcherHeight, left: x };
+      return "sm:bottom-[112px] sm:left-5 sm:right-auto sm:top-auto";
     case "top-right":
-      return { top: launcherHeight, right: x };
+      return "sm:top-[112px] sm:right-5 sm:left-auto sm:bottom-auto";
     case "top-left":
-      return { top: launcherHeight, left: x };
+      return "sm:top-[112px] sm:left-5 sm:right-auto sm:bottom-auto";
     default:
-      return { bottom: launcherHeight, right: x };
+      return "sm:bottom-[112px] sm:right-5 sm:left-auto sm:top-auto";
   }
 };
 
@@ -53,13 +45,15 @@ const getPositionStyles = (
  *
  * IMPORTANT: Children remain mounted when closed to preserve state (messages, connection).
  * Only visibility and animations change on open/close.
+ *
+ * Position is handled via Tailwind classes (not JS) to avoid hydration mismatches.
  */
 export const FloatingWindow = forwardRef<HTMLDivElement, FloatingWindowProps>(
   function FloatingWindow(
     {
       isOpen,
       position = "bottom-right",
-      offset = { x: 20, y: 20 },
+      offset = {},
       zIndex = 9998,
       children,
       className,
@@ -68,7 +62,7 @@ export const FloatingWindow = forwardRef<HTMLDivElement, FloatingWindowProps>(
   ) {
     const [isMobile, setIsMobile] = useState(false);
 
-    // Detect mobile viewport for animation differences
+    // Detect mobile viewport for animation differences only
     useEffect(() => {
       const checkMobile = () => {
         setIsMobile(window.innerWidth < 640);
@@ -78,7 +72,6 @@ export const FloatingWindow = forwardRef<HTMLDivElement, FloatingWindowProps>(
       return () => window.removeEventListener("resize", checkMobile);
     }, []);
 
-    const positionStyles = getPositionStyles(position, offset);
     const isBottom = position.includes("bottom");
     const isRight = position.includes("right");
 
@@ -109,8 +102,9 @@ export const FloatingWindow = forwardRef<HTMLDivElement, FloatingWindowProps>(
           "fixed",
           // Mobile-first: true full-screen on mobile
           "inset-0",
-          // Desktop: reset inset and apply floating dimensions
+          // Desktop: reset inset and apply position via Tailwind (avoids hydration mismatch)
           "sm:inset-auto",
+          getPositionClasses(position),
           "sm:w-[380px] sm:h-[600px]",
           "sm:max-w-[calc(100vw-40px)] sm:max-h-[calc(100vh-140px)]",
           // Background
@@ -123,11 +117,7 @@ export const FloatingWindow = forwardRef<HTMLDivElement, FloatingWindowProps>(
           "overflow-hidden",
           className
         )}
-        style={{
-          // Desktop position styles (mobile uses inset-0 via Tailwind)
-          ...(isMobile ? {} : positionStyles),
-          zIndex,
-        }}
+        style={{ zIndex }}
         initial={false}
         animate={getAnimateProps()}
         transition={

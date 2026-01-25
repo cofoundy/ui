@@ -62,7 +62,7 @@ export const Message = memo(
           )}
         >
           {/* Use MessageContent primitive with markdown format */}
-          <MessageContent content={message.content} format="markdown" />
+          <MessageContent content={message.content} format="markdown" isUser={isUser} />
 
           {/* Timestamp - exact same styling as original */}
           <span className="text-[10px] opacity-50 mt-1 block">
