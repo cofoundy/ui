@@ -2,156 +2,198 @@
 
 Shared UI component library for the Cofoundy product suite.
 
-## Philosophy
+## Quick Reference
 
-This package provides **shared, reusable UI components** used across multiple Cofoundy products:
+```bash
+# Storybook
+npm run storybook        # http://localhost:6006
 
-- **InboxAI** - Omnichannel inbox (uses Badge, Avatar, channel utils)
-- **TimelyAI** - Scheduling assistant (uses @cofoundy/chat-widget)
-- **PulseAI** - Voice agent
-- **Transcript** - Call intelligence
+# Tests
+npm test                 # Run tests
+npm run test:watch       # Watch mode
+npm run test:coverage    # Coverage report
 
-### Design Principles
-
-1. **Shared only** - Components here must be used by 2+ products
-2. **White-label ready** - All components support theming via CSS variables
-3. **shadcn/ui based** - We adopt shadcn/ui components for quality and accessibility
-4. **Business logic lives elsewhere** - This is pure UI, no API calls or state management
-
-### What belongs here vs. product repos
-
-| Here (@cofoundy/ui) | Product repos |
-|---------------------|---------------|
-| Badge, Button, Input, Avatar | Product-specific layouts |
-| Channel utilities (badge variants) | API integrations |
-| Shared types | State management |
-| Theme tokens | Business logic |
+# Build IIFE (standalone widget)
+npm run build:iife
+```
 
 ## Package Structure
 
 ```
 src/
-├── components/ui/     # shadcn/ui components + customizations
-│   ├── badge.tsx      # With channel variants (whatsapp, telegram, etc.)
-│   ├── button.tsx
-│   ├── input.tsx
-│   ├── avatar.tsx
-│   ├── tabs.tsx
-│   ├── switch.tsx
-│   └── ...
-├── utils/
-│   ├── cn.ts          # Tailwind class merger
-│   ├── channel.ts     # Channel badge/icon/color utilities
-│   └── string.ts      # String utilities (getInitials, truncate)
+├── components/
+│   ├── ui/                    # shadcn/ui primitives
+│   │   ├── button.tsx
+│   │   ├── badge.tsx
+│   │   ├── input.tsx
+│   │   └── ...
+│   │
+│   ├── chat-widget/           # Chat widget system
+│   │   ├── ChatWidget.tsx         # Main embedded widget
+│   │   ├── ChatWidgetFloating.tsx # Floating bubble widget
+│   │   ├── FloatingLauncher.tsx   # Bubble button
+│   │   ├── FloatingWindow.tsx     # Popup window
+│   │   ├── ChatHeader.tsx
+│   │   ├── ChatInput.tsx
+│   │   ├── Message.tsx
+│   │   └── ...
+│   │
+│   └── messaging/             # InboxAI messaging primitives
+│       ├── MessageBubble.tsx
+│       ├── InboxMessage.tsx
+│       └── ...
+│
+├── transports/                # Backend connection adapters
+│   ├── types.ts               # Transport interfaces
+│   ├── WebSocketTransport.ts  # For TimelyAI
+│   └── SocketIOTransport.ts   # For InboxAI (dynamic import)
+│
+├── hooks/
+│   ├── useChatTransport.ts    # Unified transport hook
+│   ├── useWebSocket.ts        # Raw WebSocket hook
+│   ├── useAutoScroll.ts
+│   └── useSession.ts
+│
+├── stores/
+│   └── chatStore.ts           # Zustand chat state
+│
 ├── styles/
-│   └── index.css      # CSS variables + theme tokens
-└── stories/           # Storybook stories
+│   └── index.css              # CSS variables & theme tokens
+│
+├── stories/                   # Storybook stories
+│   ├── chat-widget/           # Chat component stories
+│   ├── messaging/             # Messaging component stories
+│   ├── ui/                    # UI primitive stories
+│   └── foundation/            # Design token stories
+│
+├── iife/                      # Standalone widget build
+│   └── index.tsx              # IIFE entry point
+│
+└── __tests__/                 # Vitest tests
+    ├── components/
+    ├── hooks/
+    └── transports/
 ```
 
-## Theming / White-Labeling
+## Key Exports
 
-Components use CSS variables for theming:
+### Chat Widget (for TimelyAI, Landing Page)
+```typescript
+import {
+  ChatWidget,           // Embedded mode
+  ChatWidgetFloating,   // Floating bubble mode
+  FloatingLauncher,     // Just the bubble button
+  FloatingWindow        // Just the popup container
+} from '@cofoundy/ui'
+```
+
+### Transport Layer
+```typescript
+import {
+  useChatTransport,           // Unified hook
+  createTransportConfigFromUrl
+} from '@cofoundy/ui'
+
+// Config types
+type TransportConfig =
+  | { type: 'websocket', url: string }
+  | { type: 'socketio', url: string, tenantId: string }
+```
+
+### UI Primitives
+```typescript
+import {
+  Button, Badge, Input, Avatar,
+  Tabs, Switch, Spinner, Logo
+} from '@cofoundy/ui'
+```
+
+### Messaging (for InboxAI)
+```typescript
+import {
+  MessageBubble,
+  InboxMessage,
+  InboxMessageList,
+  MessageComposer
+} from '@cofoundy/ui'
+```
+
+## Theming
+
+All components use CSS variables for theming:
 
 ```css
-/* Theme variables - customize per product/client */
---primary: #2984AD;
---background: #072235;
---foreground: #FFFFFF;
---muted: #94A3B8;
---border: #1E3A4C;
-/* ... */
+:root {
+  /* Brand colors */
+  --chat-primary: #2984AD;
+  --chat-background: #020916;
+  --chat-foreground: #ffffff;
+  --chat-muted: #848386;
+  --chat-border: rgba(255, 255, 255, 0.1);
+  --chat-card: rgba(255, 255, 255, 0.05);
+
+  /* Shadcn-compatible tokens */
+  --primary: var(--chat-primary);
+  --background: var(--chat-background);
+  --foreground: var(--chat-foreground);
+}
 ```
 
-### How to white-label
+## Usage in Projects
 
-1. Override CSS variables in your app's global CSS
-2. Or use the `data-theme` attribute for light/dark modes
-3. Brand colors can be customized per deployment
-
-## Channel Utilities
-
-For omnichannel products (InboxAI), we provide channel-specific utilities:
-
-```typescript
-import { getChannelBadgeVariant, getChannelIcon } from "@cofoundy/ui";
-
-// Returns badge variant for channel
-getChannelBadgeVariant("whatsapp"); // "whatsapp"
-getChannelIcon("telegram");          // "T"
+### In package.json
+```json
+"@cofoundy/ui": "file:../../packages/ui"
 ```
 
-Supported channels: telegram, whatsapp, email, webchat, instagram, messenger, sms
-
-## shadcn/ui Adoption
-
-We use [shadcn/ui](https://ui.shadcn.com) as our component foundation because:
-
-1. **Accessibility** - Built on Radix UI primitives
-2. **Quality** - Battle-tested, well-maintained
-3. **Customizable** - We own the source code
-4. **Dark mode** - Built-in support
-
-### Customizations
-
-We extend shadcn components with:
-- **Badge**: Channel variants for messaging platforms
-- **Tabs**: Mobile scroll support
-- All components: Cofoundy theme tokens
-
-## Development Workflow
-
-### Storybook
-
-```bash
-npm run storybook
+### Next.js 16 Note
+Turbopack has issues with symlinks. Use webpack:
+```json
+"scripts": {
+  "dev": "next dev --webpack"
+}
 ```
 
-All components have stories demonstrating variants and states.
-
-### Visual Testing
-
-We use Chromatic for visual regression testing:
-
-```bash
-npm run build-storybook
-# Chromatic runs on push to main
+### Import styles
+```css
+@import "@cofoundy/ui/styles";
 ```
+Or copy the CSS variables to your globals.css if Turbopack issues persist.
+
+## Development Guidelines
 
 ### Adding Components
+1. Check if shadcn/ui has it: `npx shadcn@latest add [component]`
+2. Customize with Cofoundy theme tokens
+3. Add Storybook story in `src/stories/`
+4. Export from `src/index.ts`
+5. Add tests in `src/__tests__/`
 
-1. Check if shadcn/ui has the component: `npx shadcn@latest add [component]`
-2. If yes, install and customize with our theme
-3. If no, create following shadcn patterns (CVA, cn utility)
-4. Add Storybook story
-5. Export from index.ts
+### Story Location
+- UI primitives: `stories/ui/ComponentName.stories.tsx`
+- Chat widget: `stories/chat-widget/ComponentName.stories.tsx`
+- Messaging: `stories/messaging/ComponentName.stories.tsx`
 
-## Exports
-
-```typescript
-// Components
-export { Button, buttonVariants } from "./components/ui/button";
-export { Badge, badgeVariants } from "./components/ui/badge";
-export { Input } from "./components/ui/input";
-export { Avatar, AvatarImage, AvatarFallback } from "./components/ui/avatar";
-export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/tabs";
-export { Switch } from "./components/ui/switch";
-// ... more components
-
-// Utilities
-export { cn } from "./utils/cn";
-export { getChannelBadgeVariant, getChannelIcon, getChannelDisplayName } from "./utils/channel";
-export { getInitials, truncate, capitalize } from "./utils/string";
+### Testing
+```bash
+npm test                    # Run all tests
+npm run test:coverage       # With coverage
 ```
 
-## Related Packages
+## Products Using This Package
 
-- **@cofoundy/chat-widget** - Embeddable chat widget for TimelyAI (separate package)
+| Product | Components Used |
+|---------|-----------------|
+| **TimelyAI** | ChatWidget, ChatWidgetFloating, transports |
+| **InboxAI** | Badge, Avatar, Messaging components |
+| **Landing Page** | ChatWidgetFloating, FloatingLauncher |
+| **PulseAI** | UI primitives |
 
-## Notes for AI Assistants
+## AI Assistant Rules
 
-- Do NOT add product-specific components here
-- Do NOT add state management (Zustand, etc.)
-- Do NOT add API calls or hooks that make requests
-- DO use shadcn/ui patterns for new components
-- DO add Storybook stories for all components
-- DO export variants (buttonVariants, badgeVariants) for consumer customization
+1. **ALWAYS add Storybook stories** for new components
+2. **ALWAYS add tests** for hooks and transports
+3. **Use CSS variables** - never hardcode colors
+4. **Export from index.ts** - all public components must be exported
+5. **Check multiple projects** - changes here affect TimelyAI, InboxAI, Landing
+6. **Run Storybook** to verify visual changes: `npm run storybook`

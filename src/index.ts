@@ -2,7 +2,34 @@
 
 // Chat Widget
 export { ChatWidget } from "./components/chat-widget";
+export {
+  ChatWidgetFloating,
+  FloatingChatWidget,
+  FloatingLauncher,
+  FloatingWindow,
+} from "./components/chat-widget";
+export type {
+  ChatWidgetFloatingProps,
+  FloatingLauncherProps,
+  FloatingWindowProps,
+} from "./components/chat-widget";
 export type { ChatWidgetConfig } from "./types";
+
+// Transport types
+export type {
+  TransportConfig,
+  WebSocketTransportConfig,
+  SocketIOTransportConfig,
+  AGUITransportConfig,
+  TransportType,
+  TransportCallbacks,
+  Transport,
+  FloatingConfig,
+  FloatingPosition,
+  WidgetMode,
+  AppointmentConfirmation,
+} from "./transports";
+export { createWebSocketTransport } from "./transports";
 
 // UI Components
 export { Button, buttonVariants } from "./components/ui";
@@ -125,11 +152,22 @@ export {
 // Hooks
 export { useWebSocket } from "./hooks";
 export type { UseWebSocketOptions, UseWebSocketReturn } from "./hooks";
+export { useChatTransport, createTransportConfigFromUrl } from "./hooks";
+export type { UseChatTransportOptions, UseChatTransportReturn } from "./hooks";
 export { useSession } from "./hooks";
 export type { UseSessionOptions } from "./hooks";
 export { useAutoScroll } from "./hooks";
 export type { UseAutoScrollOptions, UseAutoScrollReturn } from "./hooks";
 export { useIsMobile } from "./hooks";
+export { useAGUI, AGUIEventType } from "./hooks";
+export type {
+  UseAGUIOptions,
+  UseAGUIReturn,
+  AGUIEvent,
+  ToolCallState,
+  RunState,
+  RunStatus,
+} from "./hooks";
 
 // Store
 export { useChatStore } from "./stores/chatStore";

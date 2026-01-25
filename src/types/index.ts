@@ -1,3 +1,26 @@
+// Import transport types for local use
+import type {
+  TransportConfig as TransportConfigType,
+  FloatingConfig as FloatingConfigType,
+  WidgetMode as WidgetModeType,
+} from '../transports/types';
+
+// Re-export transport types
+export type {
+  TransportConfig,
+  WebSocketTransportConfig,
+  SocketIOTransportConfig,
+  AGUITransportConfig,
+  TransportType,
+  TransportCallbacks,
+  TransportOptions,
+  Transport,
+  FloatingConfig,
+  FloatingPosition,
+  WidgetMode,
+  AppointmentConfirmation,
+} from '../transports/types';
+
 // Chat message types
 export interface Message {
   id: string;
@@ -112,8 +135,29 @@ export interface QuickAction {
 
 // ChatWidget configuration
 export interface ChatWidgetConfig {
-  /** WebSocket server URL (e.g., "wss://api.timelyai.com") */
-  websocketUrl: string;
+  /**
+   * @deprecated Use `transport` prop instead
+   * WebSocket server URL (e.g., "wss://api.timelyai.com")
+   */
+  websocketUrl?: string;
+
+  /**
+   * Transport configuration (new API)
+   * If not provided, falls back to websocketUrl
+   */
+  transport?: TransportConfigType;
+
+  /**
+   * Widget display mode
+   * - 'embedded': Renders inline within container (default)
+   * - 'floating': Renders as floating button + popup window
+   */
+  mode?: WidgetModeType;
+
+  /**
+   * Floating mode configuration (only used when mode='floating')
+   */
+  floating?: FloatingConfigType;
 
   /** API URL for auth endpoints (optional) */
   apiUrl?: string;
@@ -140,6 +184,8 @@ export interface ChatWidgetConfig {
     brandName?: string;
     brandLogo?: string;
     brandSubtitle?: string;
+    /** Primary color for theming */
+    primaryColor?: string;
   };
 
   /** Callbacks */
@@ -147,4 +193,6 @@ export interface ChatWidgetConfig {
   onConnectionStatusChange?: (status: ConnectionStatus) => void;
   onMessageSent?: (message: string) => void;
   onMaxRetriesReached?: () => void;
+  /** Called when floating widget opens/closes */
+  onOpenChange?: (open: boolean) => void;
 }

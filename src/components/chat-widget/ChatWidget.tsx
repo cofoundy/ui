@@ -12,7 +12,7 @@ import { TimeSlotGrid } from "./TimeSlotGrid";
 import { ConfirmationCard } from "./ConfirmationCard";
 
 import { useSession } from "../../hooks/useSession";
-import { useWebSocket, type AppointmentConfirmation } from "../../hooks/useWebSocket";
+import { useChatTransport, createTransportConfigFromUrl } from "../../hooks/useChatTransport";
 import { useChatStore } from "../../stores/chatStore";
 import type {
   Message,
@@ -20,6 +20,8 @@ import type {
   Appointment,
   QuickAction,
   ChatWidgetConfig,
+  TransportConfig,
+  AppointmentConfirmation,
 } from "../../types";
 
 // Simple UUID generator
@@ -178,11 +180,21 @@ function parseConfirmation(message: string): Appointment | null {
 }
 
 /**
- * ChatWidget - Uses MessageContent primitive for better composability
- * while maintaining visual parity with the original implementation.
+ * ChatWidget - Unified chat widget supporting multiple transports and modes.
+ *
+ * Supports:
+ * - Embedded mode (default): Renders inline within container
+ * - Floating mode: Renders as floating button + popup (use ChatWidgetFloating)
+ *
+ * Transports:
+ * - WebSocket (default): For TimelyAI backend
+ * - Socket.IO: For InboxAI backend
+ * - AG-UI: For SSE streaming
  */
 export function ChatWidget({
   websocketUrl,
+  transport,
+  mode = "embedded",
   greeting,
   quickActions = [],
   session = {},
@@ -454,9 +466,12 @@ export function ChatWidget({
     onMaxRetriesReached?.();
   }, [onMaxRetriesReached]);
 
-  // WebSocket connection
-  const { sendMessage, connectionStatus: wsStatus } = useWebSocket({
-    url: websocketUrl,
+  // Resolve transport config (support legacy websocketUrl)
+  const resolvedTransport: TransportConfig = transport ?? createTransportConfigFromUrl(websocketUrl ?? "");
+
+  // Transport connection (unified for WebSocket, Socket.IO, AG-UI)
+  const { sendMessage, connectionStatus: wsStatus } = useChatTransport({
+    config: resolvedTransport,
     sessionId,
     onToken: handleToken,
     onStreamComplete: handleStreamComplete,
