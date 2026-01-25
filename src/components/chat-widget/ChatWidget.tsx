@@ -14,6 +14,7 @@ import { ConfirmationCard } from "./ConfirmationCard";
 import { useSession } from "../../hooks/useSession";
 import { useChatTransport, createTransportConfigFromUrl } from "../../hooks/useChatTransport";
 import { useChatStore } from "../../stores/chatStore";
+import { getMessageQueue, generateMessageId } from "../../services/messageQueue";
 import type {
   Message,
   TimeSlot,
@@ -22,12 +23,12 @@ import type {
   ChatWidgetConfig,
   TransportConfig,
   AppointmentConfirmation,
+  MessageSendStatus,
 } from "../../types";
+import type { MessageAck } from "../../transports/types";
 
-// Simple UUID generator
-function generateId(): string {
-  return crypto.randomUUID();
-}
+// Use generateMessageId from services for consistent UUID generation
+const generateId = generateMessageId;
 
 // Convert date string from tool output to actual Date
 function parseDateFromTool(dateStr: string): Date {
@@ -118,6 +119,7 @@ export function ChatWidget({
     isStreaming,
     activeToolId,
     addMessage,
+    updateMessageStatus,
     setTyping,
     setConnectionStatus,
     setSuggestedSlots,
@@ -129,6 +131,9 @@ export function ChatWidget({
     startTool,
     endTool,
   } = useChatStore();
+
+  // Initialize message queue
+  const messageQueueRef = useRef(getMessageQueue());
 
   // Track if connection permanently failed
   const [connectionFailed, setConnectionFailed] = useState(false);
@@ -320,6 +325,37 @@ export function ChatWidget({
     onMaxRetriesReached?.();
   }, [onMaxRetriesReached]);
 
+  // Handle message delivery acknowledgment
+  const handleMessageAck = useCallback(
+    async (ack: MessageAck) => {
+      console.log("[ChatWidget] Message ack received:", ack);
+
+      // Map ACK status to MessageSendStatus
+      const statusMap: Record<string, MessageSendStatus> = {
+        received: "sent",
+        delivered: "delivered",
+        failed: "failed",
+      };
+      const newStatus = statusMap[ack.status] || "sent";
+
+      // Update message in UI
+      updateMessageStatus(ack.messageId, newStatus);
+
+      // Update message queue
+      const messageQueue = messageQueueRef.current;
+      try {
+        if (ack.status === "delivered") {
+          await messageQueue.markDelivered(ack.messageId);
+        } else if (ack.status === "failed") {
+          await messageQueue.markFailed(ack.messageId, ack.error || "Delivery failed");
+        }
+      } catch (error) {
+        console.warn("[ChatWidget] Failed to update message queue:", error);
+      }
+    },
+    [updateMessageStatus]
+  );
+
   // Resolve transport config (support legacy websocketUrl)
   const resolvedTransport: TransportConfig = transport ?? createTransportConfigFromUrl(websocketUrl ?? "");
 
@@ -336,6 +372,7 @@ export function ChatWidget({
     onSlots: handleSlots,
     onConfirmation: handleConfirmation,
     onMessage: handleMessage,
+    onMessageAck: handleMessageAck,
     onConnect: handleConnect,
     onDisconnect: handleDisconnect,
     onError: handleError,
@@ -346,22 +383,78 @@ export function ChatWidget({
     setConnectionStatus(wsStatus);
   }, [wsStatus, setConnectionStatus]);
 
-  // Handle sending messages
+  // Flush pending messages when connection is restored
+  useEffect(() => {
+    if (connectionStatus === "connected" && sessionId) {
+      const flushPendingMessages = async () => {
+        const messageQueue = messageQueueRef.current;
+        try {
+          await messageQueue.init();
+          const result = await messageQueue.flush(sessionId, async (msg) => {
+            try {
+              sendMessage(msg.content);
+              updateMessageStatus(msg.id, "sent");
+              return true;
+            } catch {
+              return false;
+            }
+          });
+          if (result.sent > 0) {
+            console.log("[ChatWidget] Flushed pending messages:", result);
+          }
+        } catch (error) {
+          console.warn("[ChatWidget] Failed to flush pending messages:", error);
+        }
+      };
+      flushPendingMessages();
+    }
+  }, [connectionStatus, sessionId, sendMessage, updateMessageStatus]);
+
+  // Handle sending messages with optimistic UI
   const handleSendMessage = useCallback(
-    (content: string) => {
+    async (content: string) => {
+      const messageId = generateId();
+
+      // 1. Optimistic UI update - add message immediately with 'sending' status
       const userMessage: Message = {
-        id: generateId(),
+        id: messageId,
         role: "user",
         content,
         timestamp: new Date(),
+        sendStatus: "sending",
       };
       addMessage(userMessage);
       setTyping(true);
       setSuggestedSlots([]);
-      sendMessage(content);
+
+      // 2. Queue message for offline persistence
+      const messageQueue = messageQueueRef.current;
+      try {
+        await messageQueue.init();
+        await messageQueue.enqueue({
+          id: messageId,
+          content,
+          sessionId,
+          tenantId: (resolvedTransport as { tenantId?: string }).tenantId,
+        });
+      } catch (error) {
+        console.warn("[ChatWidget] Failed to queue message:", error);
+      }
+
+      // 3. Send message via transport with messageId for acknowledgment
+      try {
+        sendMessage(content, messageId);
+        // Mark as sending in queue (will be updated to sent/delivered on ACK)
+        await messageQueue.markSending(messageId);
+      } catch (error) {
+        console.error("[ChatWidget] Failed to send message:", error);
+        updateMessageStatus(messageId, "failed");
+        await messageQueue.markFailed(messageId, error instanceof Error ? error.message : "Unknown error");
+      }
+
       onMessageSent?.(content);
     },
-    [addMessage, setTyping, setSuggestedSlots, sendMessage, onMessageSent]
+    [addMessage, updateMessageStatus, setTyping, setSuggestedSlots, sendMessage, onMessageSent, sessionId, resolvedTransport]
   );
 
   // Handle quick action selection

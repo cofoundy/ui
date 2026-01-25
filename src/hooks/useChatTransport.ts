@@ -18,8 +18,8 @@ export interface UseChatTransportOptions extends TransportCallbacks {
 }
 
 export interface UseChatTransportReturn {
-  /** Send a message through the transport */
-  sendMessage: (message: string) => void;
+  /** Send a message through the transport with optional message ID for acknowledgment */
+  sendMessage: (message: string, messageId?: string) => void;
   /** Current connection status */
   connectionStatus: ConnectionStatus;
   /** Manually trigger reconnection */
@@ -44,6 +44,7 @@ export function useChatTransport({
   onSlots,
   onConfirmation,
   onMessage,
+  onMessageAck,
   onConnect,
   onDisconnect,
   onError,
@@ -66,6 +67,7 @@ export function useChatTransport({
     onSlots,
     onConfirmation,
     onMessage,
+    onMessageAck,
     onConnect,
     onDisconnect,
     onError,
@@ -84,6 +86,7 @@ export function useChatTransport({
       onSlots,
       onConfirmation,
       onMessage,
+      onMessageAck,
       onConnect,
       onDisconnect,
       onError,
@@ -99,6 +102,7 @@ export function useChatTransport({
     onSlots,
     onConfirmation,
     onMessage,
+    onMessageAck,
     onConnect,
     onDisconnect,
     onError,
@@ -123,6 +127,7 @@ export function useChatTransport({
       onConfirmation: (confirmation) =>
         callbacksRef.current.onConfirmation?.(confirmation),
       onMessage: (message) => callbacksRef.current.onMessage?.(message),
+      onMessageAck: (ack) => callbacksRef.current.onMessageAck?.(ack),
       onConnect: () => {
         setConnectionStatus("connected");
         callbacksRef.current.onConnect?.();
@@ -204,10 +209,10 @@ export function useChatTransport({
     };
   }, [config.type, config.url, sessionId]); // Only recreate on transport type/url/session change
 
-  // Send message
-  const sendMessage = useCallback((message: string) => {
+  // Send message with optional messageId for acknowledgment
+  const sendMessage = useCallback((message: string, messageId?: string) => {
     if (transportRef.current) {
-      transportRef.current.sendMessage(message);
+      transportRef.current.sendMessage(message, messageId);
     } else {
       console.warn("[useChatTransport] No transport available to send message");
     }
