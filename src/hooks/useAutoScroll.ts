@@ -11,7 +11,7 @@ export interface UseAutoScrollOptions {
 
 export interface UseAutoScrollReturn {
   /** Ref to attach to the scrollable container */
-  containerRef: RefObject<HTMLDivElement>;
+  containerRef: RefObject<HTMLDivElement | null>;
   /** Scroll to bottom of container */
   scrollToBottom: (force?: boolean) => void;
   /** Whether user has scrolled up and locked auto-scroll */
