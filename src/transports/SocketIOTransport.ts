@@ -49,6 +49,22 @@ interface SocketInstance {
 }
 
 /**
+ * Map tool names to icons
+ */
+function getToolIcon(toolName: string): string {
+  const toolIcons: Record<string, string> = {
+    schedule_appointment: "📅",
+    get_available_slots: "🕐",
+    search: "🔍",
+    web_search: "🌐",
+    calculator: "🔢",
+    send_email: "📧",
+    create_task: "✅",
+  };
+  return toolIcons[toolName.toLowerCase()] || "⚡";
+}
+
+/**
  * Dynamic import for socket.io-client
  * This ensures the library is only loaded when Socket.IO transport is used
  */
@@ -242,13 +258,51 @@ export async function createSocketIOTransport(
 
     // AG-UI streaming events (for AI responses)
     socket.on("ag_ui:event", (event: Record<string, unknown>) => {
-      // Handle AG-UI protocol events
-      if (event.type === "TEXT_MESSAGE_CONTENT") {
+      const eventType = event.type as string;
+
+      // Message events
+      if (eventType === "TEXT_MESSAGE_CONTENT") {
         onToken?.((event as { delta?: string }).delta || "");
-      } else if (event.type === "TEXT_MESSAGE_END") {
+      } else if (eventType === "TEXT_MESSAGE_END") {
         onStreamComplete?.();
-      } else if (event.type === "RUN_ERROR") {
+      } else if (eventType === "RUN_ERROR") {
         onStreamError?.((event as { message?: string }).message || "Unknown error");
+      }
+      // Tool events
+      else if (eventType === "TOOL_CALL_START") {
+        const toolName = (event as { toolCallName?: string }).toolCallName || "tool";
+        const toolIcon = getToolIcon(toolName);
+        onToolStart?.(toolName, toolIcon, `Ejecutando ${toolName}...`);
+      } else if (eventType === "TOOL_CALL_END") {
+        const toolName = (event as { toolCallName?: string }).toolCallName;
+        if (toolName) {
+          onToolEnd?.(toolName, true);
+        }
+      } else if (eventType === "TOOL_CALL_RESULT") {
+        const toolCallId = (event as { toolCallId?: string }).toolCallId || "";
+        const resultStr = (event as { result?: string }).result || "";
+
+        // Try to parse the result to check for scheduling confirmation
+        try {
+          const result = typeof resultStr === "string" ? JSON.parse(resultStr) : resultStr;
+
+          // Check if this is a scheduling confirmation
+          // Look for common scheduling result patterns
+          if (result && (result.scheduled_for || result.datetime || result.event_id || result.confirmed)) {
+            const confirmation: AppointmentConfirmation = {
+              datetime: result.scheduled_for || result.datetime || result.start_time || "",
+              client_name: result.client_name || result.attendee_name || "",
+              client_email: result.client_email || result.attendee_email || "",
+              topic: result.topic || result.summary || result.title || "Consultoría",
+              event_id: result.event_id || result.id,
+              event_link: result.event_link || result.meeting_link || result.calendar_link,
+            };
+            onConfirmation?.(confirmation);
+          }
+        } catch {
+          // Result wasn't JSON or couldn't be parsed - that's OK
+          console.log("[SocketIO] Tool result not parseable:", toolCallId);
+        }
       }
     });
 
