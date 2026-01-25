@@ -254,13 +254,15 @@ export function ChatWidget({
     streamingMessageIdRef.current = streamingMessageId;
   }, [streamingMessageId]);
 
-  // Reset store and show greeting on mount (with Strict Mode protection)
+  // Initialize greeting on first mount only
+  // IMPORTANT: Do NOT reset if messages already exist (preserves history on toggle)
   useEffect(() => {
     if (!greetingAddedRef.current) {
       greetingAddedRef.current = true;
-      // Reset store to clear any stale messages from hot reload
-      useChatStore.getState().reset();
-      if (greeting) {
+      const currentMessages = useChatStore.getState().messages;
+
+      // Only add greeting if no messages exist yet
+      if (currentMessages.length === 0 && greeting) {
         addMessage(greeting);
       }
     }

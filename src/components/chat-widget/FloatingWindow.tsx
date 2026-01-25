@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef, type ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "../../utils";
 import type { FloatingPosition } from "../../transports/types";
 
@@ -44,43 +44,11 @@ const getPositionStyles = (
   }
 };
 
-// Animation variants based on position
-const getAnimationVariants = (position: FloatingPosition) => {
-  const isBottom = position.includes("bottom");
-  const isRight = position.includes("right");
-
-  return {
-    hidden: {
-      opacity: 0,
-      scale: 0.9,
-      y: isBottom ? 20 : -20,
-      x: isRight ? 20 : -20,
-    },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      x: 0,
-      transition: {
-        type: "spring" as const,
-        stiffness: 300,
-        damping: 25,
-      },
-    },
-    exit: {
-      opacity: 0,
-      scale: 0.9,
-      y: isBottom ? 20 : -20,
-      x: isRight ? 20 : -20,
-      transition: {
-        duration: 0.15,
-      },
-    },
-  };
-};
-
 /**
  * FloatingWindow - Modal window container for floating chat widget
+ *
+ * IMPORTANT: Children remain mounted when closed to preserve state (messages, connection).
+ * Only visibility and animations change on open/close.
  */
 export const FloatingWindow = forwardRef<HTMLDivElement, FloatingWindowProps>(
   function FloatingWindow(
@@ -95,39 +63,47 @@ export const FloatingWindow = forwardRef<HTMLDivElement, FloatingWindowProps>(
     ref
   ) {
     const positionStyles = getPositionStyles(position, offset);
-    const variants = getAnimationVariants(position);
+    const isBottom = position.includes("bottom");
+    const isRight = position.includes("right");
 
     return (
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            ref={ref}
-            className={cn(
-              "fixed",
-              "w-[380px] h-[600px]",
-              "max-w-[calc(100vw-40px)] max-h-[calc(100vh-140px)]",
-              "bg-[var(--chat-background,#0a0f1a)]",
-              "rounded-2xl",
-              "shadow-2xl",
-              "overflow-hidden",
-              "border border-[var(--chat-border,rgba(255,255,255,0.1))]",
-              // Mobile responsive
-              "sm:w-[380px] sm:h-[600px]",
-              className
-            )}
-            style={{
-              ...positionStyles,
-              zIndex,
-            }}
-            variants={variants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-          >
-            {children}
-          </motion.div>
+      <motion.div
+        ref={ref}
+        className={cn(
+          "fixed",
+          "w-[380px] h-[600px]",
+          "max-w-[calc(100vw-40px)] max-h-[calc(100vh-140px)]",
+          "bg-[var(--chat-background,#0a0f1a)]",
+          "rounded-2xl",
+          "shadow-2xl",
+          "overflow-hidden",
+          "border border-[var(--chat-border,rgba(255,255,255,0.1))]",
+          // Mobile responsive
+          "sm:w-[380px] sm:h-[600px]",
+          className
         )}
-      </AnimatePresence>
+        style={{
+          ...positionStyles,
+          zIndex,
+        }}
+        initial={false}
+        animate={{
+          opacity: isOpen ? 1 : 0,
+          scale: isOpen ? 1 : 0.9,
+          y: isOpen ? 0 : (isBottom ? 20 : -20),
+          x: isOpen ? 0 : (isRight ? 20 : -20),
+          pointerEvents: isOpen ? "auto" : "none",
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 300,
+          damping: 25,
+          duration: isOpen ? undefined : 0.15,
+        }}
+        aria-hidden={!isOpen}
+      >
+        {children}
+      </motion.div>
     );
   }
 );

@@ -4,18 +4,22 @@ import { FloatingWindow } from '../../components/chat-widget/FloatingWindow'
 
 describe('FloatingWindow', () => {
   describe('Rendering', () => {
-    it('should not render children when closed', () => {
+    it('should keep children mounted but hidden when closed', () => {
+      // Children stay mounted to preserve state (messages, connection)
+      // Only visibility changes on open/close
       render(
         <FloatingWindow isOpen={false}>
           <div data-testid="content">Chat Content</div>
         </FloatingWindow>
       )
 
-      const content = screen.queryByTestId('content')
-      expect(content).not.toBeInTheDocument()
+      const content = screen.getByTestId('content')
+      expect(content).toBeInTheDocument()
+      // Parent should be aria-hidden when closed
+      expect(content.parentElement).toHaveAttribute('aria-hidden', 'true')
     })
 
-    it('should render children when open', () => {
+    it('should render children visibly when open', () => {
       render(
         <FloatingWindow isOpen={true}>
           <div data-testid="content">Chat Content</div>
@@ -24,6 +28,8 @@ describe('FloatingWindow', () => {
 
       const content = screen.getByTestId('content')
       expect(content).toBeInTheDocument()
+      // Parent should not be aria-hidden when open
+      expect(content.parentElement).toHaveAttribute('aria-hidden', 'false')
     })
   })
 
