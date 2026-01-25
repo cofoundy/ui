@@ -198,86 +198,100 @@ describe("SocketIOTransport", () => {
     });
 
     describe("TOOL_CALL_RESULT - Appointment Confirmation", () => {
-      it("should parse and emit confirmation for scheduled_for format", async () => {
+      it("should parse and emit confirmation from schedule_appointment tool", async () => {
         const options = createMockOptions();
         await createSocketIOTransport(defaultConfig, options);
 
+        // Exact schema from TimelyAI schedule_appointment tool
         eventHandlers["ag_ui:event"]?.({
           type: "TOOL_CALL_RESULT",
           toolCallId: "call_123",
           result: JSON.stringify({
-            scheduled_for: "2025-01-27T10:00:00Z",
-            event_id: "evt_abc123",
-            event_link: "https://cal.com/meeting/abc",
-            topic: "Consultoría técnica",
+            success: true,
+            datetime: "2025-01-27 10:00 AM PST",
             client_name: "John Doe",
             client_email: "john@example.com",
+            topic: "Consultoría técnica",
+            event_id: "evt_abc123",
+            event_link: "https://calendar.google.com/meeting/abc",
+            invitation_mode: "resend",
+            email_sent: true,
+            message: "Appointment confirmed for John Doe.",
           }),
         });
 
         expect(options.onConfirmation).toHaveBeenCalledWith({
-          datetime: "2025-01-27T10:00:00Z",
-          event_id: "evt_abc123",
-          event_link: "https://cal.com/meeting/abc",
-          topic: "Consultoría técnica",
+          datetime: "2025-01-27 10:00 AM PST",
           client_name: "John Doe",
           client_email: "john@example.com",
+          topic: "Consultoría técnica",
+          event_id: "evt_abc123",
+          event_link: "https://calendar.google.com/meeting/abc",
         });
       });
 
-      it("should parse and emit confirmation for datetime format", async () => {
+      it("should emit confirmation with optional fields as undefined", async () => {
         const options = createMockOptions();
         await createSocketIOTransport(defaultConfig, options);
 
+        // Backend may not have event_id/event_link if calendar creation failed
         eventHandlers["ag_ui:event"]?.({
           type: "TOOL_CALL_RESULT",
           toolCallId: "call_123",
           result: JSON.stringify({
-            datetime: "2025-01-28T14:30:00",
-            event_id: "evt_xyz789",
-          }),
-        });
-
-        expect(options.onConfirmation).toHaveBeenCalledWith(
-          expect.objectContaining({
-            datetime: "2025-01-28T14:30:00",
-            event_id: "evt_xyz789",
-          })
-        );
-      });
-
-      it("should parse confirmation with confirmed flag", async () => {
-        const options = createMockOptions();
-        await createSocketIOTransport(defaultConfig, options);
-
-        eventHandlers["ag_ui:event"]?.({
-          type: "TOOL_CALL_RESULT",
-          toolCallId: "call_123",
-          result: JSON.stringify({
-            confirmed: true,
-            start_time: "2025-01-29T09:00:00",
-            summary: "Product Demo",
-          }),
-        });
-
-        expect(options.onConfirmation).toHaveBeenCalledWith(
-          expect.objectContaining({
-            datetime: "2025-01-29T09:00:00",
+            success: true,
+            datetime: "2025-01-28 2:30 PM EST",
+            client_name: "Jane Doe",
+            client_email: "jane@example.com",
             topic: "Product Demo",
-          })
-        );
+            event_id: null,
+            event_link: null,
+            invitation_mode: "resend",
+            email_sent: true,
+            message: "Appointment confirmed.",
+          }),
+        });
+
+        expect(options.onConfirmation).toHaveBeenCalledWith({
+          datetime: "2025-01-28 2:30 PM EST",
+          client_name: "Jane Doe",
+          client_email: "jane@example.com",
+          topic: "Product Demo",
+          event_id: null,
+          event_link: null,
+        });
+      });
+
+      it("should NOT emit confirmation when success is false", async () => {
+        const options = createMockOptions();
+        await createSocketIOTransport(defaultConfig, options);
+
+        eventHandlers["ag_ui:event"]?.({
+          type: "TOOL_CALL_RESULT",
+          toolCallId: "call_123",
+          result: JSON.stringify({
+            success: false,
+            error: "Calendar service unavailable",
+            message: "Unable to schedule appointment.",
+          }),
+        });
+
+        expect(options.onConfirmation).not.toHaveBeenCalled();
       });
 
       it("should NOT emit confirmation for non-scheduling tool results", async () => {
         const options = createMockOptions();
         await createSocketIOTransport(defaultConfig, options);
 
+        // check_availability tool result
         eventHandlers["ag_ui:event"]?.({
           type: "TOOL_CALL_RESULT",
           toolCallId: "call_123",
           result: JSON.stringify({
-            results: ["item1", "item2"],
-            total: 2,
+            success: true,
+            date: "2025-01-27",
+            available_slots: ["10:00 AM", "2:00 PM"],
+            source: "google_calendar",
           }),
         });
 

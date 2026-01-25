@@ -286,16 +286,16 @@ export async function createSocketIOTransport(
         try {
           const result = typeof resultStr === "string" ? JSON.parse(resultStr) : resultStr;
 
-          // Check if this is a scheduling confirmation
-          // Look for common scheduling result patterns
-          if (result && (result.scheduled_for || result.datetime || result.event_id || result.confirmed)) {
+          // Check if this is a scheduling confirmation from schedule_appointment tool
+          // Backend schema: { success: true, datetime, client_name, client_email, topic, event_id?, event_link? }
+          if (result?.success === true && result.datetime) {
             const confirmation: AppointmentConfirmation = {
-              datetime: result.scheduled_for || result.datetime || result.start_time || "",
-              client_name: result.client_name || result.attendee_name || "",
-              client_email: result.client_email || result.attendee_email || "",
-              topic: result.topic || result.summary || result.title || "Consultoría",
-              event_id: result.event_id || result.id,
-              event_link: result.event_link || result.meeting_link || result.calendar_link,
+              datetime: result.datetime,
+              client_name: result.client_name || "",
+              client_email: result.client_email || "",
+              topic: result.topic || "",
+              event_id: result.event_id,
+              event_link: result.event_link,
             };
             onConfirmation?.(confirmation);
           }
