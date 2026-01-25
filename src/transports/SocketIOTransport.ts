@@ -115,7 +115,17 @@ export async function createSocketIOTransport(
   } = options;
 
   function setConnectionStatus(status: ConnectionStatus) {
+    const previousStatus = connectionStatus;
     connectionStatus = status;
+
+    // Fire callbacks on status changes
+    if (status === "connected" && previousStatus !== "connected") {
+      onConnect?.();
+    } else if (status === "disconnected" && previousStatus === "connected") {
+      onDisconnect?.();
+    } else if (status === "error") {
+      onError?.(new Error("Connection error"));
+    }
   }
 
   function flushMessageQueue() {
@@ -183,6 +193,9 @@ export async function createSocketIOTransport(
       reconnection: true,
       reconnectionAttempts: maxReconnectAttempts,
       reconnectionDelay: reconnectDelay,
+      reconnectionDelayMax: 30000,  // Max 30s between retries
+      randomizationFactor: 0.5,     // Jitter to avoid thundering herd
+      timeout: 10000,               // 10s timeout per connection attempt
       auth: {
         widget: true,  // Required for InboxAI to allow connection without JWT
       },
@@ -347,7 +360,7 @@ export async function createSocketIOTransport(
     if (
       typeof document !== "undefined" &&
       document.visibilityState === "visible" &&
-      connectionStatus === "disconnected"
+      (connectionStatus === "disconnected" || connectionStatus === "error")
     ) {
       reconnect();
     }
