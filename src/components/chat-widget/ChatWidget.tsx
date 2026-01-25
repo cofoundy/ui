@@ -67,117 +67,6 @@ function parseDateFromTool(dateStr: string): Date {
   return isNaN(parsed.getTime()) ? today : parsed;
 }
 
-// Parse time slots from assistant message
-function parseTimeSlots(message: string): TimeSlot[] {
-  const slots: TimeSlot[] = [];
-  const today = new Date();
-
-  const dayLabels: Record<string, number> = {
-    hoy: 0,
-    today: 0,
-    mañana: 1,
-    tomorrow: 1,
-    "pasado mañana": 2,
-    "day after tomorrow": 2,
-  };
-
-  const lines = message.split("\n");
-  let currentDayOffset = 0;
-
-  for (const line of lines) {
-    const lowerLine = line.toLowerCase();
-
-    for (const [label, offset] of Object.entries(dayLabels)) {
-      if (lowerLine.startsWith(label) || lowerLine.includes(label + ":")) {
-        currentDayOffset = offset;
-        break;
-      }
-    }
-
-    const timePattern = /(\d{1,2}:\d{2}\s*(?:AM|PM))/gi;
-    let match;
-    while ((match = timePattern.exec(line)) !== null) {
-      const timeStr = match[1];
-      const date = new Date(today);
-      date.setDate(today.getDate() + currentDayOffset);
-
-      slots.push({
-        date: date.toISOString().split("T")[0],
-        time: timeStr.trim(),
-        available: true,
-      });
-    }
-  }
-
-  return slots;
-}
-
-// Check if message contains appointment confirmation
-function parseConfirmation(message: string): Appointment | null {
-  const confirmationPatterns = [
-    /(?:confirmad[ao]|agendad[ao]|reservad[ao])/i,
-    /(?:confirmed|scheduled|booked)/i,
-    /(?:cita|reunión|llamada).*(?:confirmad[ao]|agendad[ao])/i,
-    /(?:listo|all set|your call is)/i,
-  ];
-
-  const hasConfirmation = confirmationPatterns.some((pattern) =>
-    pattern.test(message)
-  );
-
-  if (hasConfirmation) {
-    let dateStr: string;
-
-    const isoMatch = message.match(/(\d{4}-\d{2}-\d{2})/);
-    if (isoMatch) {
-      dateStr = isoMatch[1];
-    } else {
-      const spanishDateMatch = message.match(/(\d{1,2})\s+de\s+(\w+)/i);
-      if (spanishDateMatch) {
-        const day = parseInt(spanishDateMatch[1]);
-        const monthName = spanishDateMatch[2].toLowerCase();
-        const months: Record<string, number> = {
-          enero: 0,
-          febrero: 1,
-          marzo: 2,
-          abril: 3,
-          mayo: 4,
-          junio: 5,
-          julio: 6,
-          agosto: 7,
-          septiembre: 8,
-          octubre: 9,
-          noviembre: 10,
-          diciembre: 11,
-        };
-        const month = months[monthName] ?? new Date().getMonth();
-        const year = new Date().getFullYear();
-        dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      } else {
-        const today = new Date();
-        if (/mañana|tomorrow/i.test(message)) {
-          today.setDate(today.getDate() + 1);
-        } else if (/pasado mañana|day after/i.test(message)) {
-          today.setDate(today.getDate() + 2);
-        }
-        dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-      }
-    }
-
-    const timeMatch = message.match(/(\d{1,2}:\d{2}\s*(?:AM|PM)?)/i);
-
-    return {
-      id: generateId(),
-      date: dateStr,
-      time: timeMatch ? timeMatch[1] : "Por confirmar",
-      topic: "Consultoría",
-      attendees: [],
-      confirmed: true,
-    };
-  }
-
-  return null;
-}
 
 /**
  * ChatWidget - Unified chat widget supporting multiple transports and modes.
@@ -303,32 +192,11 @@ export function ChatWidget({
   );
 
   // Handle stream completion
+  // Note: Slots and confirmations now come via structured events (onSlots, onConfirmation)
   const handleStreamComplete = useCallback(() => {
-    const currentMsgId = streamingMessageIdRef.current;
-    if (currentMsgId) {
-      const currentMessages = useChatStore.getState().messages;
-      const lastMessage = currentMessages.find((m) => m.id === currentMsgId);
-      if (lastMessage) {
-        const slots = parseTimeSlots(lastMessage.content);
-        if (slots.length > 0) {
-          setSuggestedSlots(slots);
-        }
-
-        const confirmation = parseConfirmation(lastMessage.content);
-        if (confirmation) {
-          setConfirmedAppointment(confirmation);
-          onAppointmentConfirmed?.(confirmation);
-        }
-      }
-    }
     streamingMessageIdRef.current = null;
     finishStreaming();
-  }, [
-    setSuggestedSlots,
-    setConfirmedAppointment,
-    finishStreaming,
-    onAppointmentConfirmed,
-  ]);
+  }, [finishStreaming]);
 
   // Handle streaming errors
   const handleStreamError = useCallback(() => {
@@ -414,7 +282,8 @@ export function ChatWidget({
     [setConfirmedAppointment, onAppointmentConfirmed]
   );
 
-  // Legacy message handler
+  // Legacy message handler (for non-streaming complete messages)
+  // Note: Slots and confirmations now come via structured events (onSlots, onConfirmation)
   const handleMessage = useCallback(
     (data: string) => {
       setTyping(false);
@@ -426,25 +295,8 @@ export function ChatWidget({
         timestamp: new Date(),
       };
       addMessage(assistantMessage);
-
-      const slots = parseTimeSlots(data);
-      if (slots.length > 0) {
-        setSuggestedSlots(slots);
-      }
-
-      const confirmation = parseConfirmation(data);
-      if (confirmation) {
-        setConfirmedAppointment(confirmation);
-        onAppointmentConfirmed?.(confirmation);
-      }
     },
-    [
-      addMessage,
-      setTyping,
-      setSuggestedSlots,
-      setConfirmedAppointment,
-      onAppointmentConfirmed,
-    ]
+    [addMessage, setTyping]
   );
 
   // Connection callbacks
