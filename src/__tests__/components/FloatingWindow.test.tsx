@@ -103,7 +103,7 @@ describe('FloatingWindow', () => {
       expect(window).toHaveClass('custom-window')
     })
 
-    it('should have rounded corners', () => {
+    it('should have rounded corners on desktop (sm: breakpoint)', () => {
       render(
         <FloatingWindow isOpen={true}>
           <div data-testid="content">Content</div>
@@ -111,10 +111,12 @@ describe('FloatingWindow', () => {
       )
 
       const window = screen.getByTestId('content').parentElement
-      expect(window).toHaveClass('rounded-2xl')
+      // Mobile-first: no rounded corners on mobile, rounded on desktop (sm:)
+      expect(window).toHaveClass('rounded-none')
+      expect(window).toHaveClass('sm:rounded-2xl')
     })
 
-    it('should have shadow', () => {
+    it('should have shadow on desktop (sm: breakpoint)', () => {
       render(
         <FloatingWindow isOpen={true}>
           <div data-testid="content">Content</div>
@@ -122,12 +124,13 @@ describe('FloatingWindow', () => {
       )
 
       const window = screen.getByTestId('content').parentElement
-      expect(window).toHaveClass('shadow-2xl')
+      // Mobile-first: shadow only on desktop (sm:)
+      expect(window).toHaveClass('sm:shadow-2xl')
     })
   })
 
   describe('Dimensions', () => {
-    it('should have default width and height', () => {
+    it('should be full-screen on mobile, fixed size on desktop', () => {
       render(
         <FloatingWindow isOpen={true}>
           <div data-testid="content">Content</div>
@@ -135,11 +138,14 @@ describe('FloatingWindow', () => {
       )
 
       const window = screen.getByTestId('content').parentElement
-      expect(window).toHaveClass('w-[380px]')
-      expect(window).toHaveClass('h-[600px]')
+      // Mobile-first: full-screen on mobile (inset-0), fixed dimensions on desktop
+      expect(window).toHaveClass('inset-0')
+      expect(window).toHaveClass('sm:inset-auto')
+      expect(window).toHaveClass('sm:w-[380px]')
+      expect(window).toHaveClass('sm:h-[600px]')
     })
 
-    it('should have max dimensions for mobile', () => {
+    it('should have max dimensions for desktop viewport', () => {
       render(
         <FloatingWindow isOpen={true}>
           <div data-testid="content">Content</div>
@@ -147,8 +153,9 @@ describe('FloatingWindow', () => {
       )
 
       const window = screen.getByTestId('content').parentElement
-      expect(window).toHaveClass('max-w-[calc(100vw-40px)]')
-      expect(window).toHaveClass('max-h-[calc(100vh-140px)]')
+      // Mobile-first: max dimensions only apply on desktop
+      expect(window).toHaveClass('sm:max-w-[calc(100vw-40px)]')
+      expect(window).toHaveClass('sm:max-h-[calc(100vh-140px)]')
     })
   })
 

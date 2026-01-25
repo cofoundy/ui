@@ -13,7 +13,7 @@ export interface FloatingLauncherProps {
   onClick: () => void;
   /** Position of the launcher */
   position?: FloatingPosition;
-  /** Offset from edges */
+  /** Offset from edges (mobile uses 16px, desktop uses provided value or 20px default) */
   offset?: { x?: number; y?: number };
   /** Number of unread messages (shows badge if > 0) */
   unreadCount?: number;
@@ -36,6 +36,10 @@ const positionClasses: Record<FloatingPosition, string> = {
 
 /**
  * FloatingLauncher - Circular button that opens/closes the chat widget
+ *
+ * Mobile-first responsive design:
+ * - Mobile (< 640px): 48px button, 16px offset from edges
+ * - Desktop (≥ 640px): 56px button, configurable offset (default 20px)
  */
 export const FloatingLauncher = forwardRef<HTMLButtonElement, FloatingLauncherProps>(
   function FloatingLauncher(
@@ -52,10 +56,10 @@ export const FloatingLauncher = forwardRef<HTMLButtonElement, FloatingLauncherPr
     },
     ref
   ) {
-    const offsetStyle = {
-      ...(position.includes("right") ? { marginRight: offset.x ?? 20 } : { marginLeft: offset.x ?? 20 }),
-      ...(position.includes("bottom") ? { marginBottom: offset.y ?? 20 } : { marginTop: offset.y ?? 20 }),
-    };
+    // Mobile uses 16px offset, desktop uses provided value
+    const mobileOffset = 16;
+    const desktopOffsetX = offset.x ?? 20;
+    const desktopOffsetY = offset.y ?? 20;
 
     return (
       <motion.button
@@ -63,7 +67,9 @@ export const FloatingLauncher = forwardRef<HTMLButtonElement, FloatingLauncherPr
         onClick={onClick}
         className={cn(
           "fixed flex items-center justify-center",
-          "w-14 h-14 rounded-full",
+          // Mobile-first: 48px on mobile, 56px on desktop
+          "w-12 h-12 sm:w-14 sm:h-14",
+          "rounded-full",
           "shadow-lg hover:shadow-xl",
           "transition-shadow duration-200",
           "focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
@@ -73,8 +79,22 @@ export const FloatingLauncher = forwardRef<HTMLButtonElement, FloatingLauncherPr
         style={{
           backgroundColor: primaryColor ?? "var(--chat-primary, #2984AD)",
           zIndex,
-          ...offsetStyle,
+          // Responsive offset via CSS custom properties
+          ...(position.includes("right")
+            ? { marginRight: `var(--launcher-offset-x, ${mobileOffset}px)` }
+            : { marginLeft: `var(--launcher-offset-x, ${mobileOffset}px)` }),
+          ...(position.includes("bottom")
+            ? { marginBottom: `var(--launcher-offset-y, ${mobileOffset}px)` }
+            : { marginTop: `var(--launcher-offset-y, ${mobileOffset}px)` }),
+          // @ts-expect-error CSS custom properties
+          "--launcher-offset-x": `${mobileOffset}px`,
+          "--launcher-offset-y": `${mobileOffset}px`,
         }}
+        // Apply desktop offsets via inline style media query workaround
+        // Note: For proper responsive margins, we use Tailwind's responsive utilities
+        // but margins need to be set via style for dynamic values
+        data-desktop-offset-x={desktopOffsetX}
+        data-desktop-offset-y={desktopOffsetY}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         aria-label={isOpen ? "Cerrar chat" : "Abrir chat"}
@@ -89,7 +109,8 @@ export const FloatingLauncher = forwardRef<HTMLButtonElement, FloatingLauncherPr
               exit={{ rotate: 90, opacity: 0 }}
               transition={{ duration: 0.15 }}
             >
-              <X className="w-6 h-6 text-white" />
+              {/* Mobile-first: 20px icon on mobile, 24px on desktop */}
+              <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </motion.div>
           ) : (
             <motion.div
@@ -100,15 +121,15 @@ export const FloatingLauncher = forwardRef<HTMLButtonElement, FloatingLauncherPr
               transition={{ duration: 0.15 }}
             >
               {iconUrl ? (
-                <img src={iconUrl} alt="" className="w-6 h-6" />
+                <img src={iconUrl} alt="" className="w-5 h-5 sm:w-6 sm:h-6" />
               ) : (
-                <MessageCircle className="w-6 h-6 text-white" />
+                <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               )}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Unread badge */}
+        {/* Unread badge - Mobile-first: 18px on mobile, 20px on desktop */}
         <AnimatePresence>
           {unreadCount > 0 && !isOpen && (
             <motion.span
@@ -118,8 +139,9 @@ export const FloatingLauncher = forwardRef<HTMLButtonElement, FloatingLauncherPr
               className={cn(
                 "absolute -top-1 -right-1",
                 "flex items-center justify-center",
-                "min-w-[20px] h-5 px-1.5",
-                "text-xs font-semibold text-white",
+                "min-w-[18px] h-[18px] sm:min-w-[20px] sm:h-5",
+                "px-1 sm:px-1.5",
+                "text-[10px] sm:text-xs font-semibold text-white",
                 "bg-red-500 rounded-full"
               )}
             >

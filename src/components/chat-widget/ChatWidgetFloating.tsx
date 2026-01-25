@@ -87,7 +87,7 @@ export function ChatWidgetFloating({
         />
       </FloatingWindow>
 
-      {/* Launcher Button */}
+      {/* Launcher Button - Hidden on mobile when chat is open (full-screen covers it) */}
       <FloatingLauncher
         isOpen={isOpen}
         onClick={handleToggle}
@@ -97,6 +97,7 @@ export function ChatWidgetFloating({
         iconUrl={launcherIcon}
         primaryColor={primaryColor}
         zIndex={zIndex}
+        className={isOpen ? "hidden sm:flex" : undefined}
       />
     </>,
     document.body
