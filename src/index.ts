@@ -172,9 +172,41 @@ export type {
 // Store
 export { useChatStore } from "./stores/chatStore";
 
+// Services
+export {
+  MessageQueue,
+  getMessageQueue,
+  generateMessageId,
+  type QueuedMessage,
+  type MessageStatus,
+  type MessageQueueConfig,
+} from "./services";
+
+// Circuit Breaker
+export {
+  CircuitBreaker,
+  CircuitBreakerOpenError,
+  createCircuitBreaker,
+  type CircuitBreakerState,
+  type CircuitBreakerConfig,
+  type CircuitBreakerStats,
+  type CircuitBreakerListener,
+} from "./transports";
+
+// Connection Metrics
+export {
+  ConnectionMetricsCollector,
+  getMetricsCollector,
+  createMetricsCollector,
+  type ConnectionMetrics,
+  type MetricsEvent,
+  type MetricsListener,
+} from "./transports";
+
 // Types (Chat Widget)
 export type {
   Message,
+  MessageSendStatus,
   TimeSlot,
   Appointment,
   QuickAction,
