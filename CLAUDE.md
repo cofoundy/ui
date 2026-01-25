@@ -209,6 +209,95 @@ npm run test:coverage       # With coverage
 | **Landing Page** | ChatWidgetFloating, FloatingLauncher |
 | **PulseAI** | UI primitives |
 
+## Transport Layer API
+
+### Supported Transports
+
+| Type | Backend | Protocol |
+|------|---------|----------|
+| `websocket` | TimelyAI | Raw WebSocket + AG-UI events |
+| `socketio` | InboxAI | Socket.IO + AG-UI relay |
+
+### AG-UI Event Protocol
+
+The frontend expects these AG-UI events from the backend:
+
+```typescript
+// Message streaming
+{ type: "TEXT_MESSAGE_CONTENT", delta: "Hello..." }
+{ type: "TEXT_MESSAGE_END" }
+{ type: "RUN_ERROR", message: "Error description" }
+
+// Tool execution
+{ type: "TOOL_CALL_START", toolCallName: "schedule_appointment", toolCallId: "..." }
+{ type: "TOOL_CALL_END", toolCallId: "..." }
+{ type: "TOOL_CALL_RESULT", toolCallId: "...", result: "<JSON string>" }
+```
+
+### TimelyAI Tool Output Schemas
+
+#### `schedule_appointment` (triggers ConfirmationCard)
+
+```json
+{
+  "success": true,           // ← REQUIRED for confirmation trigger
+  "datetime": "2025-01-27 10:00 AM PST",
+  "client_name": "John Doe",
+  "client_email": "john@example.com",
+  "topic": "Consultoría técnica",
+  "event_id": "calendar_event_id",   // optional
+  "event_link": "https://calendar.google.com/...",  // optional
+  "invitation_mode": "resend",       // not used by frontend
+  "email_sent": true,                // not used by frontend
+  "message": "Appointment confirmed" // not used by frontend
+}
+```
+
+#### `check_availability` (triggers TimeSlotGrid)
+
+```json
+{
+  "success": true,
+  "date": "2025-01-27",
+  "available_slots": ["10:00 AM EST", "2:00 PM EST", "4:00 PM EST"],
+  "source": "google_calendar",
+  "message": "Found 3 available time slots"
+}
+```
+
+### Frontend Types (must match backend)
+
+```typescript
+// AppointmentConfirmation - parsed from schedule_appointment result
+interface AppointmentConfirmation {
+  datetime: string;      // from result.datetime
+  client_name: string;   // from result.client_name
+  client_email: string;  // from result.client_email
+  topic: string;         // from result.topic
+  event_id?: string;     // from result.event_id
+  event_link?: string;   // from result.event_link
+}
+```
+
+### Socket.IO Transport (InboxAI)
+
+```typescript
+// Connection config
+{
+  type: 'socketio',
+  url: 'https://inbox.cofoundy.dev',
+  tenantId: 'ten_xxx',
+  namespace: '/'  // optional
+}
+
+// Auth: Widgets use { auth: { widget: true } } to bypass JWT
+// Init: Sends 'widget_init' event on connect
+// Messages: Sends 'widget_message' event
+// Receives: 'ag_ui:event', 'message:new', 'widget:session'
+```
+
+---
+
 ## AI Assistant Rules
 
 1. **ALWAYS add Storybook stories** for new components
@@ -217,3 +306,4 @@ npm run test:coverage       # With coverage
 4. **Export from index.ts** - all public components must be exported
 5. **Check multiple projects** - changes here affect TimelyAI, InboxAI, Landing
 6. **Run Storybook** to verify visual changes: `npm run storybook`
+7. **Keep schemas synced** - frontend types MUST match backend tool outputs
