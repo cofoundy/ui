@@ -6,7 +6,7 @@
  * is restored.
  */
 
-export type MessageStatus = "pending" | "sending" | "sent" | "delivered" | "failed";
+export type QueueMessageStatus = "pending" | "sending" | "sent" | "delivered" | "failed";
 
 export interface QueuedMessage {
   /** Unique message ID (UUID) */
@@ -16,7 +16,7 @@ export interface QueuedMessage {
   /** When the message was queued */
   timestamp: number;
   /** Current status */
-  status: MessageStatus;
+  status: QueueMessageStatus;
   /** Number of send attempts */
   retryCount: number;
   /** Session ID for this message */
@@ -155,7 +155,7 @@ export class MessageQueue {
   /**
    * Update message status
    */
-  async updateStatus(id: string, status: MessageStatus, error?: string): Promise<void> {
+  async updateStatus(id: string, status: QueueMessageStatus, error?: string): Promise<void> {
     const db = await this.ensureDb();
     if (!db) return;
 

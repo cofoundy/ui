@@ -3,6 +3,6 @@ export {
   getMessageQueue,
   generateMessageId,
   type QueuedMessage,
-  type MessageStatus,
+  type QueueMessageStatus,
   type MessageQueueConfig,
 } from "./messageQueue";
