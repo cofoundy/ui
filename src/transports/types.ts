@@ -76,10 +76,11 @@ export type TransportCircuitBreakerState = "CLOSED" | "OPEN" | "HALF_OPEN";
  * Circuit breaker statistics
  */
 export interface TransportCircuitBreakerStats {
-  failureCount: number;
-  successCount: number;
-  lastFailure: number | null;
-  lastSuccess: number | null;
+  state: TransportCircuitBreakerState;
+  failures: number;
+  successes: number;
+  lastFailureTime: number | null;
+  lastStateChange: number;
 }
 
 /**
