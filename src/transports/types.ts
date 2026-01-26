@@ -68,6 +68,21 @@ export interface TransportOptions extends TransportCallbacks {
 }
 
 /**
+ * Circuit breaker state
+ */
+export type TransportCircuitBreakerState = "CLOSED" | "OPEN" | "HALF_OPEN";
+
+/**
+ * Circuit breaker statistics
+ */
+export interface TransportCircuitBreakerStats {
+  failureCount: number;
+  successCount: number;
+  lastFailure: number | null;
+  lastSuccess: number | null;
+}
+
+/**
  * Transport interface - all transport implementations must conform to this
  */
 export interface Transport {
@@ -79,6 +94,12 @@ export interface Transport {
   reconnect: () => void;
   /** Cleanup resources */
   disconnect: () => void;
+  /** Circuit breaker state (optional, for transports with circuit breaker) */
+  readonly circuitBreakerState?: TransportCircuitBreakerState;
+  /** Circuit breaker statistics (optional) */
+  readonly circuitBreakerStats?: TransportCircuitBreakerStats;
+  /** Reset circuit breaker (optional) */
+  resetCircuitBreaker?: () => void;
 }
 
 /**
