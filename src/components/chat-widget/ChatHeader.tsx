@@ -2,7 +2,7 @@
 
 import { cn } from "../../utils/cn";
 import type { ConnectionStatus } from "../../types";
-import { Calendar } from "lucide-react";
+import { Calendar, RotateCcw } from "lucide-react";
 import { Logo } from "../ui/logo";
 
 interface ChatHeaderProps {
@@ -11,6 +11,7 @@ interface ChatHeaderProps {
   brandName?: string;
   brandLogo?: string;
   brandSubtitle?: string;
+  onNewConversation?: () => void;
 }
 
 export function ChatHeader({
@@ -19,6 +20,7 @@ export function ChatHeader({
   brandName = "Cofoundy",
   brandLogo,
   brandSubtitle = "Consultoría de Software & IA",
+  onNewConversation,
 }: ChatHeaderProps) {
   const statusColor = {
     connected: "bg-[var(--chat-success)]",
@@ -63,13 +65,30 @@ export function ChatHeader({
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {/* Calendar authentication status (only show when authenticated) */}
         {isAuthenticated && (
           <div className="flex items-center gap-1 text-xs text-[var(--chat-success)]">
             <Calendar className="w-4 h-4" />
             <span>Calendario conectado</span>
           </div>
+        )}
+
+        {/* New conversation button */}
+        {onNewConversation && (
+          <button
+            onClick={onNewConversation}
+            className={cn(
+              "p-2 rounded-lg transition-colors",
+              "text-[var(--chat-muted)] hover:text-[var(--chat-foreground)]",
+              "hover:bg-[var(--chat-muted)]/10",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--chat-primary)]/50"
+            )}
+            title="Nueva conversación"
+            aria-label="Iniciar nueva conversación"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
         )}
       </div>
     </div>

@@ -103,7 +103,7 @@ export function ChatWidget({
   } = theme;
 
   // Session management
-  const { sessionId, isLoading: sessionLoading } = useSession({
+  const { sessionId, isLoading: sessionLoading, resetSession } = useSession({
     newSessionOnReload,
     storageKey,
   });
@@ -130,6 +130,7 @@ export function ChatWidget({
     endCurrentMessage,
     startTool,
     endTool,
+    clearMessages,
   } = useChatStore();
 
   // Initialize message queue
@@ -474,6 +475,21 @@ export function ChatWidget({
     [handleSendMessage]
   );
 
+  // Handle new conversation - reset session and clear messages
+  const handleNewConversation = useCallback(() => {
+    // Reset session ID (generates new UUID)
+    resetSession();
+    // Clear all messages and state
+    clearMessages();
+    // Reset greeting flag to allow new greeting
+    greetingAddedRef.current = false;
+    // Add greeting if configured
+    if (greeting) {
+      addMessage(greeting);
+      greetingAddedRef.current = true;
+    }
+  }, [resetSession, clearMessages, greeting, addMessage]);
+
   // Loading state
   if (sessionLoading) {
     return (
@@ -491,6 +507,7 @@ export function ChatWidget({
         brandName={brandName}
         brandLogo={brandLogo}
         brandSubtitle={brandSubtitle}
+        onNewConversation={handleNewConversation}
       />
 
       {/* Messages */}
