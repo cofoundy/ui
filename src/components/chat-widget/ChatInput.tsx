@@ -8,13 +8,17 @@ import { Send } from "lucide-react";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
+  /** Disables sending (button + Enter key) but input remains typeable */
   disabled?: boolean;
+  /** Disables the input field entirely (e.g., when disconnected) */
+  inputDisabled?: boolean;
   placeholder?: string;
 }
 
 export function ChatInput({
   onSendMessage,
   disabled = false,
+  inputDisabled = false,
   placeholder = "Escribe tu mensaje...",
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
@@ -42,7 +46,7 @@ export function ChatInput({
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          disabled={disabled}
+          disabled={inputDisabled}
           className={cn(
             "flex-1 bg-[var(--chat-input-bg)] border-[var(--chat-border)]",
             "focus:border-[var(--chat-primary)]/50 focus:ring-[var(--chat-primary)]/20",

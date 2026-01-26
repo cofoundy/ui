@@ -552,20 +552,14 @@ export function ChatWidget({
       {/* Input */}
       <ChatInput
         onSendMessage={handleSendMessage}
-        disabled={
-          connectionStatus !== "connected" ||
-          isTyping ||
-          isStreaming ||
-          !!activeToolId
-        }
+        inputDisabled={connectionStatus !== "connected" || connectionFailed}
+        disabled={isTyping || isStreaming || !!activeToolId}
         placeholder={
           connectionFailed
             ? "Chat no disponible"
             : connectionStatus !== "connected"
               ? "Conectando..."
-              : isStreaming || activeToolId
-                ? "Procesando..."
-                : "Escribe tu mensaje..."
+              : "Escribe tu mensaje..."
         }
       />
     </ChatContainer>
