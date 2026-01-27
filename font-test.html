@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cofoundy Font Test</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&family=Urbanist:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Fontshare -->
+  <link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,600,700&f[]=satoshi@400,500,700&f[]=general-sans@400,500,600,700&f[]=clash-display@400,500,600,700&f[]=cabinet-grotesk@400,500,700,800&f[]=switzer@400,500,600,700&f[]=synonym@400,500,600,700&f[]=author@400,500,600,700&display=swap" rel="stylesheet">
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #020916;
+      color: #ffffff;
+      font-family: Inter, sans-serif;
+      padding: 40px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      color: #2984AD;
+    }
+
+    .subtitle {
+      color: #848386;
+      margin-bottom: 40px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 32px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      background: #ffffff;
+      border-color: #2984AD;
+      transform: translateY(-2px);
+    }
+
+    .card:hover .brand-name,
+    .card:hover .tagline,
+    .card:hover .weights span {
+      color: #0D3A59;
+    }
+
+    .card:hover .font-info {
+      color: #5a5a5a;
+    }
+
+    .card.selected {
+      border-color: #2984AD;
+      box-shadow: 0 0 20px rgba(41,132,173,0.3);
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+    }
+
+    .brand-name {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .font-info {
+      font-size: 12px;
+      color: #848386;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 12px;
+    }
+
+    .tagline {
+      font-size: 16px;
+      color: #b0b0b0;
+      line-height: 1.5;
+    }
+
+    .weights {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      gap: 16px;
+      font-size: 14px;
+    }
+
+    .weights span {
+      color: #848386;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .weights span:hover {
+      background: rgba(41,132,173,0.2);
+      color: #2984AD;
+    }
+
+    .weights span.active {
+      background: #2984AD;
+      color: white;
+    }
+
+    .card:hover .weights span {
+      color: #0D3A59;
+    }
+
+    .card:hover .weights span:hover {
+      background: rgba(41,132,173,0.2);
+      color: #2984AD;
+    }
+
+    .card:hover .weights span.active {
+      background: #2984AD;
+      color: white;
+    }
+
+    .section-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #2984AD;
+      margin: 40px 0 20px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(41,132,173,0.3);
+    }
+
+    .winner-banner {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #2984AD;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 600;
+      display: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cofoundy Font Test</h1>
+  <p class="subtitle">Click en una card para seleccionarla. Busca la combinación que mejor represente: técnico, moderno, confiable.</p>
+
+  <div class="section-title">Fontshare (Premium Free)</div>
+  <div class="grid" id="fontshare-grid"></div>
+
+  <div class="section-title">Google Fonts</div>
+  <div class="grid" id="google-grid"></div>
+
+  <div class="winner-banner" id="winner">Selected: <span id="winner-font"></span></div>
+
+  <!-- Isologo SVG -->
+  <svg id="logo-template" style="display:none" viewBox="0 0 701 701" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M653.012 426.724L516.512 347.79C510.318 344.208 502.682 344.208 496.488 347.79L359.988 426.724C356.86 428.533 354.34 431.117 352.613 434.153L496.5 517.227C499.594 519.013 503.047 519.906 506.5 519.906C509.953 519.906 513.406 519.013 516.5 517.227L660.387 434.153C658.661 431.117 656.14 428.533 653.012 426.724Z" fill="#2885AE"/>
+    <path d="M663 601.962V444.038C663 440.511 662.071 437.117 660.387 434.153L516.5 517.227C513.406 519.013 509.953 519.906 506.5 519.906V700.897C509.957 700.897 513.415 700.001 516.512 698.21L653.012 619.276C659.193 615.701 663 609.103 663 601.962Z" fill="#17597B"/>
+    <path d="M359.988 619.276L496.488 698.21C499.585 700.001 503.043 700.897 506.5 700.897V519.906C503.047 519.906 499.594 519.013 496.5 517.227L352.613 434.153C350.929 437.117 350 440.511 350 444.038V601.962C350 609.103 353.807 615.701 359.988 619.276Z" fill="#0B3957"/>
+    <path d="M307.012 426.621L170.512 347.686C164.318 344.105 156.682 344.105 150.488 347.686L13.988 426.621C10.8596 428.43 8.3395 431.014 6.61323 434.05L150.5 517.123C153.594 518.91 157.047 519.803 160.5 519.803C163.953 519.803 167.406 518.91 170.5 517.123L314.387 434.05C312.661 431.014 310.14 428.43 307.012 426.621Z" fill="#0B3957"/>
+    <path d="M317 601.859V443.935C317 440.408 316.071 437.013 314.387 434.05L170.5 517.123C167.406 518.91 163.953 519.803 160.5 519.803V700.793C163.957 700.793 167.415 699.898 170.512 698.107L307.012 619.173C313.193 615.598 317 608.999 317 601.859Z" fill="#0B3049"/>
+    <path d="M13.988 619.173L150.488 698.107C153.585 699.898 157.043 700.793 160.5 700.793V519.803C157.047 519.803 153.594 518.91 150.5 517.123L6.61323 434.05C4.9286 437.013 4 440.408 4 443.935V601.859C4 608.999 7.80673 615.598 13.988 619.173Z" fill="#072135"/>
+    <path d="M687 164.58C700.333 172.278 700.333 191.523 687 199.221L540 284.091C526.667 291.789 510 282.167 510 266.771V97.0298C510 81.6338 526.667 72.0113 540 79.7093L687 164.58Z" fill="#354552"/>
+    <path d="M49 204.176C35.6667 211.874 35.6667 231.119 49 238.817L127.75 284.283C141.083 291.981 157.75 282.359 157.75 266.963V176.03C157.75 160.634 141.083 151.011 127.75 158.709L49 204.176Z" fill="#354552"/>
+    <path d="M483 300.454V149.984V116.719C483 116.719 481 139.219 466.5 160.219C457.126 173.794 438.474 186.719 438.474 186.719L354.5 235.542C354.5 235.542 345.25 239.219 338.5 251.219C334 259.219 334 277.219 334 277.219V394.719C337.292 394.719 340.584 393.866 343.532 392.16L473.491 316.951C479.376 313.545 483 307.258 483 300.454Z" fill="#072135"/>
+    <path d="M194.509 316.951L324.468 392.16C327.416 393.866 330.708 394.719 334 394.719V277.219C334 277.219 334 259.219 338.5 251.219C345.25 239.219 354.5 235.542 354.5 235.542L438.474 186.719C438.474 186.719 457.126 173.794 466.5 160.219C481 139.219 483 116.719 483 116.719V21.7188C483 21.7188 482.5 8.11886 471.5 3.71875C459 -1.28137 448 6.21883 448 6.21883L353 66.7191C353 66.7191 338.447 75.9747 332 86.7191C326 96.7191 322.5 104.43 322.5 116.719V211.219L209 146.219C209 146.219 199.778 140.219 192 145.219C185 149.719 185 155.359 185 158.719V300.454C185 307.258 188.624 313.545 194.509 316.951Z" fill="#103D5C"/>
+  </svg>
+
+  <script>
+    const fontshare = [
+      { name: 'Zodiak', family: 'Zodiak', note: 'Current display font - warm, premium' },
+      { name: 'Satoshi', family: 'Satoshi', note: 'Modern geometric - tech-forward' },
+      { name: 'General Sans', family: 'General Sans', note: 'Clean, versatile - professional' },
+      { name: 'Clash Display', family: 'Clash Display', note: 'Bold, contemporary - startup vibe' },
+      { name: 'Cabinet Grotesk', family: 'Cabinet Grotesk', note: 'Friendly geometric - approachable' },
+      { name: 'Switzer', family: 'Switzer', note: 'Swiss precision - technical' },
+      { name: 'Synonym', family: 'Synonym', note: 'Unique character - distinctive' },
+      { name: 'Author', family: 'Author', note: 'Editorial feel - sophisticated' },
+    ];
+
+    const google = [
+      { name: 'Inter', family: 'Inter', note: 'Current body font - clean tech' },
+      { name: 'Space Grotesk', family: 'Space Grotesk', note: 'Techy, modern - dev-focused' },
+      { name: 'Plus Jakarta Sans', family: 'Plus Jakarta Sans', note: 'Friendly modern - SaaS favorite' },
+      { name: 'Outfit', family: 'Outfit', note: 'Geometric, clean - minimal' },
+      { name: 'DM Sans', family: 'DM Sans', note: 'Geometric, low contrast - modern' },
+      { name: 'Manrope', family: 'Manrope', note: 'Semi-rounded - friendly tech' },
+      { name: 'Sora', family: 'Sora', note: 'Geometric with personality' },
+      { name: 'Urbanist', family: 'Urbanist', note: 'Modern, geometric - startup' },
+      { name: 'Poppins', family: 'Poppins', note: 'Geometric, popular - reliable' },
+      { name: 'Montserrat', family: 'Montserrat', note: 'Classic geometric - established' },
+    ];
+
+    const logoSvg = document.getElementById('logo-template').outerHTML.replace('id="logo-template"', '').replace('style="display:none"', 'class="logo"');
+
+    function createCard(font) {
+      return `
+        <div class="card" data-font="${font.family}" onclick="selectFont(this, '${font.family}')">
+          <div class="brand-row">
+            ${logoSvg}
+            <span class="brand-name" style="font-family: '${font.family}', sans-serif">Cofoundy</span>
+          </div>
+          <div class="font-info">${font.name} — ${font.note}</div>
+          <div class="tagline" style="font-family: '${font.family}', sans-serif">
+            Tu socio técnico. Software en semanas, no meses.
+          </div>
+          <div class="weights">
+            <span data-weight="400" style="font-weight: 400; font-family: '${font.family}'" onclick="setWeight(event, 400)">Regular</span>
+            <span data-weight="500" style="font-weight: 500; font-family: '${font.family}'" onclick="setWeight(event, 500)">Medium</span>
+            <span data-weight="600" style="font-weight: 600; font-family: '${font.family}'" onclick="setWeight(event, 600)">Semibold</span>
+            <span data-weight="700" class="active" style="font-weight: 700; font-family: '${font.family}'" onclick="setWeight(event, 700)">Bold</span>
+          </div>
+        </div>
+      `;
+    }
+
+    document.getElementById('fontshare-grid').innerHTML = fontshare.map(createCard).join('');
+    document.getElementById('google-grid').innerHTML = google.map(createCard).join('');
+
+    function selectFont(el, fontName) {
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('winner').style.display = 'block';
+      document.getElementById('winner-font').textContent = fontName;
+    }
+
+    function setWeight(event, weight) {
+      event.stopPropagation();
+      const card = event.target.closest('.card');
+      const brandName = card.querySelector('.brand-name');
+      const weights = card.querySelectorAll('.weights span');
+
+      weights.forEach(w => w.classList.remove('active'));
+      event.target.classList.add('active');
+      brandName.style.fontWeight = weight;
+    }
+  </script>
+</body>
+</html>
