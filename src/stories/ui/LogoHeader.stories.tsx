@@ -27,7 +27,7 @@ const meta: Meta<typeof LogoHeader> = {
   parameters: {
     docs: {
       description: {
-        component: 'Cofoundy Logo Header - Horizontal layout combining the 3D isologo with the Recoleta Bold wordmark.',
+        component: 'Cofoundy Logo Header - Horizontal layout combining the 3D isologo with the Space Grotesk Semibold wordmark.',
       },
     },
   },

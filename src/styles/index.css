@@ -4,11 +4,8 @@
    FONT IMPORTS (Add to your app's <head>)
    ============================================
 
-   <!-- Fontshare: Zodiak (display) -->
-   <link href="https://api.fontshare.com/v2/css?f[]=zodiak@400,500,600,700&display=swap" rel="stylesheet">
-
-   <!-- Google Fonts: Inter + JetBrains Mono -->
-   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+   <!-- Google Fonts: Space Grotesk (brand), Inter (body), JetBrains Mono (code) -->
+   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
    ============================================ */
 
@@ -48,11 +45,12 @@
 
   /* ============================================
      TYPOGRAPHY SYSTEM
-     Zodiak: Headlines (premium, warm)
+     Space Grotesk: Brand name (techy, modern)
      Inter: Body text (technical, clean)
      JetBrains Mono: Code (developer-friendly)
      ============================================ */
-  --font-display: 'Zodiak', Georgia, serif;
+  --font-brand: 'Space Grotesk', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
@@ -725,11 +723,19 @@
    ============================================ */
 
 /* Font family utilities */
+.font-brand { font-family: var(--font-brand); }
 .font-display { font-family: var(--font-display); }
 .font-sans { font-family: var(--font-sans); }
 .font-mono { font-family: var(--font-mono); }
 
-/* Headline styles - use Zodiak */
+/* Brand name utility - Space Grotesk Semibold */
+.cf-brand-name {
+  font-family: var(--font-brand);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Headline styles - use Space Grotesk */
 .cf-headline {
   font-family: var(--font-display);
   font-weight: 700;

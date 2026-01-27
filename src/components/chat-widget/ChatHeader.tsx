@@ -60,7 +60,12 @@ export function ChatHeader({
           />
         </div>
         <div className="min-w-0">
-          <h1 className="font-semibold text-[var(--chat-foreground)]">{brandName}</h1>
+          <h1
+            className="font-semibold text-[var(--chat-foreground)]"
+            style={{ fontFamily: "var(--font-brand, 'Space Grotesk', sans-serif)", letterSpacing: "-0.02em" }}
+          >
+            {brandName}
+          </h1>
           <p className="text-sm text-[var(--chat-muted)] truncate">{brandSubtitle}</p>
         </div>
       </div>

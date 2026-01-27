@@ -31,34 +31,34 @@ export const FontFamilies: Story = {
     <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
       <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Font Families</h2>
       <p className="text-[var(--chat-muted)] mb-8">
-        Zodiak for headlines (premium), Inter for body (technical), JetBrains Mono for code
+        Space Grotesk for brand name (techy, modern), Inter for body (technical), JetBrains Mono for code
       </p>
 
       <div className="space-y-8">
-        {/* Zodiak - Display Font */}
+        {/* Space Grotesk - Brand Font */}
         <div>
           <h3 className="text-lg font-semibold mb-4 text-[var(--chat-foreground)]">
-            Zodiak - Display Font
+            Space Grotesk - Brand Font
           </h3>
           <p className="text-[var(--chat-muted)] text-sm mb-4">
-            Used for headlines and brand moments. Premium, warm feel.
+            Used for brand name and headlines. Techy, modern, dev-focused.
           </p>
           <div className="p-6 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
             <p
-              className="text-5xl font-bold mb-3 text-[var(--chat-foreground)]"
-              style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", lineHeight: 1.1 }}
+              className="text-5xl font-semibold mb-3 text-[var(--chat-foreground)]"
+              style={{ fontFamily: "var(--font-brand)", letterSpacing: "-0.02em", lineHeight: 1.1 }}
             >
               Cofoundy
             </p>
             <p
               className="text-2xl text-[var(--chat-foreground)]"
-              style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.01em" }}
+              style={{ fontFamily: "var(--font-brand)", letterSpacing: "-0.01em" }}
             >
               Productos de software en semanas, no meses.
             </p>
           </div>
           <p className="text-xs text-[var(--chat-muted)] mt-3 font-mono">
-            var(--font-display) · Fontshare · Free
+            var(--font-brand) · Google Fonts · Free
           </p>
         </div>
 
@@ -102,7 +102,7 @@ export const FontFamilies: Story = {
   speed: "10x",
   stack: "modern",
   ai: true,
-  fonts: ["Zodiak", "Inter", "JetBrains Mono"]
+  fonts: ["Space Grotesk", "Inter", "JetBrains Mono"]
 };`}
             </pre>
           </div>
@@ -121,7 +121,7 @@ export const HeadlineStyles: Story = {
     <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
       <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Headline Styles</h2>
       <p className="text-[var(--chat-muted)] mb-8">
-        Use Zodiak for headlines with tight letter-spacing
+        Use Space Grotesk Semibold for headlines with tight letter-spacing
       </p>
 
       <div className="space-y-8">
@@ -163,14 +163,14 @@ export const FontPairing: Story = {
     <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
       <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Font Pairing</h2>
       <p className="text-[var(--chat-muted)] mb-8">
-        How Zodiak and Inter work together
+        How Space Grotesk and Inter work together
       </p>
 
       {/* Example Card */}
       <div className="bg-[var(--chat-background)] rounded-2xl border border-[var(--chat-border)] p-8 mb-6">
         <p
-          className="text-4xl font-bold mb-4 text-[var(--chat-foreground)]"
-          style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em", lineHeight: 1.1 }}
+          className="text-4xl font-semibold mb-4 text-[var(--chat-foreground)]"
+          style={{ fontFamily: "var(--font-brand)", letterSpacing: "-0.02em", lineHeight: 1.1 }}
         >
           Tu socio tecnico para crecer rapido
         </p>
@@ -191,8 +191,8 @@ export const FontPairing: Story = {
 
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div className="p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
-          <p className="font-semibold text-[var(--chat-foreground)] mb-1">Zodiak</p>
-          <p className="text-[var(--chat-muted)]">Headlines, titles, brand moments</p>
+          <p className="font-semibold text-[var(--chat-foreground)] mb-1">Space Grotesk</p>
+          <p className="text-[var(--chat-muted)]">Brand name, headlines, titles</p>
         </div>
         <div className="p-4 bg-[var(--chat-input-bg)] rounded-lg border border-[var(--chat-border)]">
           <p className="font-semibold text-[var(--chat-foreground)] mb-1">Inter</p>

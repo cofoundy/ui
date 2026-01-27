@@ -120,7 +120,7 @@ export const WithBrandName: Story = {
     <div className="flex items-center gap-3">
       <Logo size="lg" />
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Cofoundy</h1>
+        <h1 className="text-2xl font-semibold text-foreground" style={{ fontFamily: "var(--font-brand)", letterSpacing: "-0.02em" }}>Cofoundy</h1>
         <p className="text-sm text-muted-foreground">Build with AI</p>
       </div>
     </div>
@@ -132,7 +132,7 @@ export const InHeader: Story = {
     <header className="flex items-center justify-between w-full max-w-4xl px-6 py-4 bg-card rounded-xl border border-border">
       <div className="flex items-center gap-3">
         <Logo size="default" />
-        <span className="text-lg font-semibold text-foreground">Cofoundy</span>
+        <span className="text-lg font-semibold text-foreground" style={{ fontFamily: "var(--font-brand)", letterSpacing: "-0.02em" }}>Cofoundy</span>
       </div>
       <nav className="flex items-center gap-6 text-sm text-muted-foreground">
         <a href="#" className="hover:text-foreground">Products</a>
