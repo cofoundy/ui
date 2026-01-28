@@ -119,8 +119,8 @@ function getFeaturedStyles(
           <>
             <style>{`
               @keyframes nav-rotate-gradient {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
+                0% { transform: translate(-50%, -50%) rotate(0deg); }
+                100% { transform: translate(-50%, -50%) rotate(360deg); }
               }
             `}</style>
             <div
@@ -128,8 +128,12 @@ function getFeaturedStyles(
               aria-hidden="true"
             >
               <div
-                className="absolute inset-[-50%] w-[200%] h-[200%]"
+                className="absolute"
                 style={{
+                  width: "300%",
+                  height: "300%",
+                  top: "50%",
+                  left: "50%",
                   background: "conic-gradient(from 0deg, #2984AD, #46a0d0, #0D3A59, #2984AD)",
                   animation: "nav-rotate-gradient 3s linear infinite",
                 }}

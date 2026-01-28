@@ -67,8 +67,8 @@ export function GradientBorder({
       <style>
         {`
           @keyframes rotate-gradient-${id.replace(/:/g, "")} {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
           }
         `}
       </style>
@@ -80,7 +80,7 @@ export function GradientBorder({
         }}
         {...props}
       >
-        {/* Animated gradient background */}
+        {/* Animated gradient background - large square to cover corners during rotation */}
         <div
           className={cn(
             "absolute inset-0 overflow-hidden",
@@ -89,8 +89,12 @@ export function GradientBorder({
           aria-hidden="true"
         >
           <div
-            className="absolute inset-[-50%] w-[200%] h-[200%]"
+            className="absolute"
             style={{
+              width: "300%",
+              height: "300%",
+              top: "50%",
+              left: "50%",
               background: gradientColors[variant],
               animation: `rotate-gradient-${id.replace(/:/g, "")} ${duration}s linear infinite`,
             }}
