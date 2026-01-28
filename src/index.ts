@@ -240,6 +240,14 @@ export {
   type FeaturedEffect,
 } from "./components/navigation";
 
+// Effect Components
+export {
+  ShimmerText,
+  type ShimmerTextProps,
+  GradientBorder,
+  type GradientBorderProps,
+} from "./components/effects";
+
 // Utils
 export { cn } from "./utils/cn";
 export { getInitials, truncate, capitalize, toTitleCase } from "./utils/string";

@@ -9,11 +9,8 @@ import { cn } from "../../utils/cn";
 // ============================================
 
 export type FeaturedEffect =
-  | "gold-glow"      // Pulsing gold glow
-  | "shimmer"        // Horizontal light sweep
-  | "gradient-border" // Animated gradient border
-  | "spotlight"      // Moving spotlight
-  | "rainbow";       // Rainbow gradient
+  | "shimmer"        // Gold shimmer sweep on card
+  | "gradient-border"; // Brand color animated border
 
 export interface NavDropdownItem {
   key: string;
@@ -77,52 +74,18 @@ function getFeaturedStyles(
 } {
   if (!effect) return { base: "" };
 
-  const goldColors = {
-    dark: {
-      bg: "rgba(251, 191, 36, 0.1)",
-      border: "rgba(251, 191, 36, 0.3)",
-      glow: "rgba(251, 191, 36, 0.4)",
-      gradient: "linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.3), transparent)",
-    },
-    light: {
-      bg: "rgba(251, 191, 36, 0.15)",
-      border: "rgba(180, 83, 9, 0.3)",
-      glow: "rgba(251, 191, 36, 0.5)",
-      gradient: "linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.4), transparent)",
-    },
-  };
-
-  const colors = isDark ? goldColors.dark : goldColors.light;
-
   switch (effect) {
-    case "gold-glow":
+    // Gold shimmer sweep effect
+    case "shimmer":
       return {
         base: "border border-[#fbbf24]/30",
         style: {
-          background: colors.bg,
-          boxShadow: `0 0 20px ${colors.glow}, inset 0 1px 0 rgba(255,255,255,0.1)`,
-          animation: "pulse-gold 2s ease-in-out infinite",
-        },
-        overlay: (
-          <style>{`
-            @keyframes pulse-gold {
-              0%, 100% { box-shadow: 0 0 15px ${colors.glow}, inset 0 1px 0 rgba(255,255,255,0.1); }
-              50% { box-shadow: 0 0 25px ${colors.glow}, 0 0 40px ${colors.glow}, inset 0 1px 0 rgba(255,255,255,0.1); }
-            }
-          `}</style>
-        ),
-      };
-
-    case "shimmer":
-      return {
-        base: "border border-[#fbbf24]/20",
-        style: {
-          background: colors.bg,
+          background: isDark ? "rgba(251, 191, 36, 0.1)" : "rgba(251, 191, 36, 0.15)",
         },
         overlay: (
           <>
             <style>{`
-              @keyframes shimmer {
+              @keyframes nav-shimmer {
                 0% { transform: translateX(-100%); }
                 100% { transform: translateX(100%); }
               }
@@ -134,8 +97,10 @@ function getFeaturedStyles(
               <div
                 className="absolute inset-0 w-full"
                 style={{
-                  background: colors.gradient,
-                  animation: "shimmer 2s ease-in-out infinite",
+                  background: isDark
+                    ? "linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.4), transparent)"
+                    : "linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.5), transparent)",
+                  animation: "nav-shimmer 2s ease-in-out infinite",
                 }}
               />
             </div>
@@ -143,18 +108,17 @@ function getFeaturedStyles(
         ),
       };
 
+    // Brand color animated border
     case "gradient-border":
       return {
         base: "",
         style: {
-          background: colors.bg,
           border: "2px solid transparent",
-          backgroundClip: "padding-box",
         },
         overlay: (
           <>
             <style>{`
-              @keyframes rotate-gradient {
+              @keyframes nav-rotate-gradient {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
               }
@@ -164,75 +128,10 @@ function getFeaturedStyles(
               aria-hidden="true"
             >
               <div
-                className="absolute inset-0"
+                className="absolute inset-[-50%] w-[200%] h-[200%]"
                 style={{
-                  background: "conic-gradient(from 0deg, #fbbf24, #f59e0b, #d97706, #fbbf24)",
-                  animation: "rotate-gradient 3s linear infinite",
-                }}
-              />
-            </div>
-            <div
-              className="absolute inset-[2px] rounded-md pointer-events-none"
-              style={{ background: isDark ? "#020916" : "#ffffff" }}
-            />
-          </>
-        ),
-      };
-
-    case "spotlight":
-      return {
-        base: "border border-[#fbbf24]/20",
-        style: {
-          background: colors.bg,
-        },
-        overlay: (
-          <>
-            <style>{`
-              @keyframes spotlight {
-                0%, 100% { transform: translateX(-50%) translateY(-50%) scale(1); opacity: 0.5; }
-                50% { transform: translateX(50%) translateY(-50%) scale(1.5); opacity: 0.8; }
-              }
-            `}</style>
-            <div
-              className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none"
-              aria-hidden="true"
-            >
-              <div
-                className="absolute top-1/2 left-0 w-16 h-16 rounded-full blur-xl"
-                style={{
-                  background: "radial-gradient(circle, rgba(251, 191, 36, 0.6) 0%, transparent 70%)",
-                  animation: "spotlight 3s ease-in-out infinite",
-                }}
-              />
-            </div>
-          </>
-        ),
-      };
-
-    case "rainbow":
-      return {
-        base: "",
-        style: {
-          border: "2px solid transparent",
-        },
-        overlay: (
-          <>
-            <style>{`
-              @keyframes rainbow-shift {
-                0%, 100% { filter: hue-rotate(0deg); }
-                50% { filter: hue-rotate(60deg); }
-              }
-            `}</style>
-            <div
-              className="absolute -inset-[2px] rounded-lg overflow-hidden pointer-events-none"
-              aria-hidden="true"
-              style={{ animation: "rainbow-shift 4s ease-in-out infinite" }}
-            >
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: "linear-gradient(135deg, #f59e0b, #fbbf24, #84cc16, #22c55e, #06b6d4, #3b82f6, #8b5cf6, #f59e0b)",
-                  backgroundSize: "200% 200%",
+                  background: "conic-gradient(from 0deg, #2984AD, #46a0d0, #0D3A59, #2984AD)",
+                  animation: "nav-rotate-gradient 3s linear infinite",
                 }}
               />
             </div>

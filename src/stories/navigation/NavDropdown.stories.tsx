@@ -358,44 +358,7 @@ export const WithBadge: Story = {
   },
 };
 
-// Gold Glow Effect
-export const FeaturedGoldGlow: Story = {
-  args: {
-    label: "Servicios",
-    variant: "dark",
-    items: [
-      {
-        key: "landing",
-        href: "/servicios/landing-pages",
-        label: "Landing Pages",
-        description: "Tu landing lista en 7 días",
-      },
-      {
-        key: "pollada",
-        href: "/servicios/pollada",
-        label: "🍗 Pollada Virtual",
-        description: "¡Apoya al equipo! Desde S/.50",
-        badge: "Nuevo",
-        featured: "gold-glow",
-      },
-      {
-        key: "chatbot",
-        href: "/servicios/chatbot",
-        label: "AI Chatbot",
-        description: "Automatiza tu atención 24/7",
-      },
-    ],
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: "**Gold Glow** - Pulsing gold glow effect that draws attention.",
-      },
-    },
-  },
-};
-
-// Shimmer Effect
+// Gold Shimmer Effect (card)
 export const FeaturedShimmer: Story = {
   args: {
     label: "Servicios",
@@ -426,13 +389,13 @@ export const FeaturedShimmer: Story = {
   parameters: {
     docs: {
       description: {
-        story: "**Shimmer** - Horizontal light sweep animation.",
+        story: "**Gold Shimmer** - Horizontal gold light sweep animation on the card.",
       },
     },
   },
 };
 
-// Gradient Border Effect
+// Brand Gradient Border Effect (card)
 export const FeaturedGradientBorder: Story = {
   args: {
     label: "Servicios",
@@ -463,102 +426,18 @@ export const FeaturedGradientBorder: Story = {
   parameters: {
     docs: {
       description: {
-        story: "**Gradient Border** - Animated rotating gradient border.",
+        story: "**Brand Gradient Border** - Animated rotating border with Cofoundy brand colors.",
       },
     },
   },
 };
 
-// Spotlight Effect
-export const FeaturedSpotlight: Story = {
-  args: {
-    label: "Servicios",
-    variant: "dark",
-    items: [
-      {
-        key: "landing",
-        href: "/servicios/landing-pages",
-        label: "Landing Pages",
-        description: "Tu landing lista en 7 días",
-      },
-      {
-        key: "pollada",
-        href: "/servicios/pollada",
-        label: "🍗 Pollada Virtual",
-        description: "¡Apoya al equipo! Desde S/.50",
-        badge: "Nuevo",
-        featured: "spotlight",
-      },
-      {
-        key: "chatbot",
-        href: "/servicios/chatbot",
-        label: "AI Chatbot",
-        description: "Automatiza tu atención 24/7",
-      },
-    ],
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: "**Spotlight** - Moving spotlight/glow effect.",
-      },
-    },
-  },
-};
-
-// Rainbow Effect
-export const FeaturedRainbow: Story = {
-  args: {
-    label: "Servicios",
-    variant: "dark",
-    items: [
-      {
-        key: "landing",
-        href: "/servicios/landing-pages",
-        label: "Landing Pages",
-        description: "Tu landing lista en 7 días",
-      },
-      {
-        key: "pollada",
-        href: "/servicios/pollada",
-        label: "🍗 Pollada Virtual",
-        description: "¡Apoya al equipo! Desde S/.50",
-        badge: "Nuevo",
-        featured: "rainbow",
-      },
-      {
-        key: "chatbot",
-        href: "/servicios/chatbot",
-        label: "AI Chatbot",
-        description: "Automatiza tu atención 24/7",
-      },
-    ],
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: "**Rainbow** - Colorful animated gradient border.",
-      },
-    },
-  },
-};
-
-// All effects comparison
+// Both effects comparison
 export const AllFeaturedEffects: Story = {
   render: () => (
     <div className="flex flex-col gap-8">
       <div>
-        <h3 className="text-white text-sm font-medium mb-3">Gold Glow</h3>
-        <NavDropdown
-          label="Ver efecto"
-          variant="dark"
-          items={[
-            { key: "item", href: "#", label: "🍗 Pollada Virtual", description: "¡Apoya al equipo!", badge: "Nuevo", featured: "gold-glow" },
-          ]}
-        />
-      </div>
-      <div>
-        <h3 className="text-white text-sm font-medium mb-3">Shimmer</h3>
+        <h3 className="text-white text-sm font-medium mb-3">Gold Shimmer (Card)</h3>
         <NavDropdown
           label="Ver efecto"
           variant="dark"
@@ -568,7 +447,7 @@ export const AllFeaturedEffects: Story = {
         />
       </div>
       <div>
-        <h3 className="text-white text-sm font-medium mb-3">Gradient Border</h3>
+        <h3 className="text-white text-sm font-medium mb-3">Brand Gradient Border (Card)</h3>
         <NavDropdown
           label="Ver efecto"
           variant="dark"
@@ -577,32 +456,12 @@ export const AllFeaturedEffects: Story = {
           ]}
         />
       </div>
-      <div>
-        <h3 className="text-white text-sm font-medium mb-3">Spotlight</h3>
-        <NavDropdown
-          label="Ver efecto"
-          variant="dark"
-          items={[
-            { key: "item", href: "#", label: "🍗 Pollada Virtual", description: "¡Apoya al equipo!", badge: "Nuevo", featured: "spotlight" },
-          ]}
-        />
-      </div>
-      <div>
-        <h3 className="text-white text-sm font-medium mb-3">Rainbow</h3>
-        <NavDropdown
-          label="Ver efecto"
-          variant="dark"
-          items={[
-            { key: "item", href: "#", label: "🍗 Pollada Virtual", description: "¡Apoya al equipo!", badge: "Nuevo", featured: "rainbow" },
-          ]}
-        />
-      </div>
     </div>
   ),
   parameters: {
     docs: {
       description: {
-        story: "Comparison of all featured effects side by side.",
+        story: "Comparison of both featured effects side by side.",
       },
     },
   },
@@ -626,7 +485,7 @@ export const FeaturedLightMode: Story = {
         label: "🍗 Pollada Virtual",
         description: "¡Apoya al equipo! Desde S/.50",
         badge: "Nuevo",
-        featured: "gold-glow",
+        featured: "shimmer",
       },
       {
         key: "chatbot",
