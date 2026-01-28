@@ -231,6 +231,14 @@ export type {
   MessageGroup,
 } from "./types/message";
 
+// Navigation Components
+export {
+  NavDropdown,
+  navDropdownVariants,
+  type NavDropdownProps,
+  type NavDropdownItem,
+} from "./components/navigation";
+
 // Utils
 export { cn } from "./utils/cn";
 export { getInitials, truncate, capitalize, toTitleCase } from "./utils/string";
