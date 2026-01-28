@@ -32,12 +32,13 @@ const roundedMap = {
   full: "rounded-full",
 };
 
-const innerRoundedMap = {
-  sm: "rounded-[calc(0.125rem-1px)]",
-  md: "rounded-[calc(0.375rem-1px)]",
-  lg: "rounded-[calc(0.5rem-1px)]",
-  xl: "rounded-[calc(0.75rem-1px)]",
-  full: "rounded-full",
+// Border radius values in pixels for each size
+const radiusValues = {
+  sm: 2,    // 0.125rem
+  md: 6,    // 0.375rem
+  lg: 8,    // 0.5rem
+  xl: 12,   // 0.75rem
+  full: 9999,
 };
 
 export function GradientBorder({
@@ -102,8 +103,11 @@ export function GradientBorder({
         </div>
         {/* Inner content */}
         <div
-          className={cn("relative", innerRoundedMap[rounded])}
-          style={{ background }}
+          className="relative"
+          style={{
+            background,
+            borderRadius: Math.max(0, radiusValues[rounded] - borderWidth),
+          }}
         >
           {children}
         </div>
