@@ -274,11 +274,11 @@ export function NavDropdown({
           isDark
             ? [
                 "text-white/90 hover:text-white",
-                "focus-visible:ring-sky-500 focus-visible:ring-offset-slate-950",
+                "focus-visible:ring-[#46a0d0] focus-visible:ring-offset-[#020916]",
               ]
             : [
-                "text-slate-800 hover:text-slate-900",
-                "focus-visible:ring-sky-500 focus-visible:ring-offset-white",
+                "text-[#1e293b] hover:text-[#0f172a]",
+                "focus-visible:ring-[#46a0d0] focus-visible:ring-offset-white",
               ]
         )}
       >
@@ -317,12 +317,12 @@ export function NavDropdown({
           // Theme - solid backgrounds for better visibility
           isDark
             ? [
-                "bg-slate-950",
+                "bg-[#020916]",
                 "border-white/15",
               ]
             : [
                 "bg-white",
-                "border-slate-200",
+                "border-[#e2e8f0]",
               ],
           menuClassName
         )}
@@ -354,11 +354,11 @@ export function NavDropdown({
                     "block text-sm font-medium whitespace-nowrap",
                     isDark
                       ? isItemActive
-                        ? "text-sky-400"
+                        ? "text-[#46a0d0]"
                         : "text-white"
                       : isItemActive
-                        ? "text-sky-600"
-                        : "text-slate-900"
+                        ? "text-[#2984AD]"
+                        : "text-[#0f172a]"
                   )}
                 >
                   {item.label}
@@ -367,7 +367,7 @@ export function NavDropdown({
                   <span
                     className={cn(
                       "block text-xs mt-0.5 whitespace-nowrap",
-                      isDark ? "text-white/60" : "text-slate-500"
+                      isDark ? "text-white/60" : "text-[#64748b]"
                     )}
                   >
                     {item.description}
@@ -388,13 +388,13 @@ export function NavDropdown({
               // Active indicator
               isItemActive && [
                 "relative",
-                isDark ? "bg-sky-500/10" : "bg-sky-500/5",
+                isDark ? "bg-[#46a0d0]/10" : "bg-[#2984AD]/5",
               ],
               // Hover/keyboard active state
               (isKeyboardActive || !isItemActive) &&
                 (isDark
-                  ? "hover:bg-white/5 focus-visible:bg-white/5 focus-visible:ring-sky-500/50"
-                  : "hover:bg-slate-100 focus-visible:bg-slate-100 focus-visible:ring-sky-500/50")
+                  ? "hover:bg-white/5 focus-visible:bg-white/5 focus-visible:ring-[#46a0d0]/50"
+                  : "hover:bg-[#f1f5f9] focus-visible:bg-[#f1f5f9] focus-visible:ring-[#2984AD]/50")
             );
 
             const linkElement = (
@@ -415,7 +415,7 @@ export function NavDropdown({
                   <span
                     className={cn(
                       "absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-full",
-                      isDark ? "bg-sky-400" : "bg-sky-600"
+                      isDark ? "bg-[#46a0d0]" : "bg-[#2984AD]"
                     )}
                   />
                 )}
