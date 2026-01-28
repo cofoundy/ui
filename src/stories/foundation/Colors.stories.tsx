@@ -133,7 +133,7 @@ export const SemanticColors: Story = {
         />
         <ColorSwatch
           name="Error"
-          value="#DC2626"
+          value="#BE123C"
           cssVar="--status-error"
         />
         <ColorSwatch
@@ -146,7 +146,7 @@ export const SemanticColors: Story = {
       <ColorRow title="Destructive">
         <ColorSwatch
           name="Destructive"
-          value="#DC2626"
+          value="#BE123C"
           cssVar="--destructive"
         />
       </ColorRow>
@@ -207,30 +207,134 @@ export const ChannelColors: Story = {
 export const ThemePreview: Story = {
   name: "Theme Preview",
   render: () => (
-    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
-      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Current Theme</h2>
-      <p className="text-[var(--chat-muted)] mb-8">
-        Use the theme toggle in the Storybook toolbar to switch themes
-      </p>
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)] space-y-8">
+      <div>
+        <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Design System Overview</h2>
+        <p className="text-[var(--chat-muted)]">
+          Complete color palette available via CSS variables. Use the theme toggle to switch themes.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 rounded-lg bg-[var(--chat-card)] border border-[var(--chat-border)]">
-          <span className="text-[var(--chat-foreground)] text-sm">Card</span>
-        </div>
-        <div className="p-4 rounded-lg bg-[var(--chat-card-hover)] border border-[var(--chat-border)]">
-          <span className="text-[var(--chat-foreground)] text-sm">Card Hover</span>
-        </div>
-        <div className="p-4 rounded-lg bg-[var(--chat-primary)]">
-          <span className="text-white text-sm">Primary</span>
-        </div>
-        <div className="p-4 rounded-lg bg-[var(--secondary)]">
-          <span className="text-white text-sm">Secondary</span>
+      {/* Brand Colors */}
+      <div>
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--chat-muted)] mb-3">Brand</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="p-4 rounded-lg bg-[var(--chat-primary)] text-white">
+            <span className="text-sm font-medium">Primary</span>
+            <span className="block text-xs opacity-70 font-mono">--chat-primary</span>
+          </div>
+          <div className="p-4 rounded-lg bg-[var(--secondary)] text-white">
+            <span className="text-sm font-medium">Secondary</span>
+            <span className="block text-xs opacity-70 font-mono">--secondary</span>
+          </div>
+          <div className="p-4 rounded-lg bg-[var(--chat-card)] border border-[var(--chat-border)]">
+            <span className="text-sm font-medium text-[var(--chat-foreground)]">Card</span>
+            <span className="block text-xs text-[var(--chat-muted)] font-mono">--chat-card</span>
+          </div>
+          <div className="p-4 rounded-lg bg-[var(--chat-card-hover)] border border-[var(--chat-border)]">
+            <span className="text-sm font-medium text-[var(--chat-foreground)]">Card Hover</span>
+            <span className="block text-xs text-[var(--chat-muted)] font-mono">--chat-card-hover</span>
+          </div>
         </div>
       </div>
 
-      <div className="mt-6 p-4 rounded-lg bg-[var(--chat-input-bg)] border border-[var(--chat-border)]">
+      {/* Semantic Colors */}
+      <div>
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--chat-muted)] mb-3">Semantic Status</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="p-4 rounded-lg bg-[var(--status-success)] text-white">
+            <span className="text-sm font-medium">Success</span>
+            <span className="block text-xs opacity-70 font-mono">--status-success</span>
+          </div>
+          <div className="p-4 rounded-lg bg-[var(--status-warning)] text-white">
+            <span className="text-sm font-medium">Warning</span>
+            <span className="block text-xs opacity-70 font-mono">--status-warning</span>
+          </div>
+          <div className="p-4 rounded-lg bg-[var(--status-error)] text-white">
+            <span className="text-sm font-medium">Error</span>
+            <span className="block text-xs opacity-70 font-mono">--status-error</span>
+          </div>
+          <div className="p-4 rounded-lg bg-[var(--status-info)] text-white">
+            <span className="text-sm font-medium">Info</span>
+            <span className="block text-xs opacity-70 font-mono">--status-info</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Channel Colors */}
+      <div>
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--chat-muted)] mb-3">Channel Brands</h3>
+        <div className="grid grid-cols-3 md:grid-cols-7 gap-2">
+          <div className="p-3 rounded-lg bg-[var(--channel-whatsapp)] text-white text-center">
+            <span className="text-xs font-medium">WhatsApp</span>
+          </div>
+          <div className="p-3 rounded-lg bg-[var(--channel-telegram)] text-white text-center">
+            <span className="text-xs font-medium">Telegram</span>
+          </div>
+          <div className="p-3 rounded-lg bg-[var(--channel-instagram)] text-white text-center">
+            <span className="text-xs font-medium">Instagram</span>
+          </div>
+          <div className="p-3 rounded-lg bg-[var(--channel-messenger)] text-white text-center">
+            <span className="text-xs font-medium">Messenger</span>
+          </div>
+          <div className="p-3 rounded-lg bg-[var(--channel-email)] text-white text-center">
+            <span className="text-xs font-medium">Email</span>
+          </div>
+          <div className="p-3 rounded-lg bg-[var(--channel-webchat)] text-white text-center">
+            <span className="text-xs font-medium">Webchat</span>
+          </div>
+          <div className="p-3 rounded-lg bg-[var(--channel-sms)] text-white text-center">
+            <span className="text-xs font-medium">SMS</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Text Colors */}
+      <div>
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--chat-muted)] mb-3">Typography</h3>
+        <div className="space-y-2 p-4 rounded-lg bg-[var(--chat-input-bg)] border border-[var(--chat-border)]">
+          <p className="text-[var(--chat-foreground)] font-medium">
+            Foreground <span className="text-xs font-mono text-[var(--chat-muted)] ml-2">--chat-foreground</span>
+          </p>
+          <p className="text-[var(--chat-muted)]">
+            Muted text <span className="text-xs font-mono ml-2">--chat-muted</span>
+          </p>
+          <p className="text-[var(--chat-primary)]">
+            Primary accent <span className="text-xs font-mono text-[var(--chat-muted)] ml-2">--chat-primary</span>
+          </p>
+          <p className="text-[var(--status-success)]">
+            Success text <span className="text-xs font-mono text-[var(--chat-muted)] ml-2">--status-success</span>
+          </p>
+          <p className="text-[var(--status-error)]">
+            Error text <span className="text-xs font-mono text-[var(--chat-muted)] ml-2">--status-error</span>
+          </p>
+        </div>
+      </div>
+
+      {/* Usage Examples */}
+      <div>
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--chat-muted)] mb-3">Usage Examples</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Problem/Solution Pattern */}
+          <div className="space-y-2">
+            <span className="text-xs text-[var(--chat-muted)]">Problem indicator</span>
+            <div className="p-3 rounded-lg border-l-4 border-[var(--status-error)] bg-[var(--chat-card)]">
+              <span className="text-[var(--status-error)] text-sm">No apareces en Google</span>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <span className="text-xs text-[var(--chat-muted)]">Solution indicator</span>
+            <div className="p-3 rounded-lg border-l-4 border-[var(--status-success)] bg-[var(--chat-card)]">
+              <span className="text-[var(--status-success)] text-sm">Apareces en Google Maps</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 rounded-lg bg-[var(--chat-input-bg)] border border-[var(--chat-border)]">
         <p className="text-[var(--chat-muted)] text-sm">
           All components in @cofoundy/ui automatically adapt to the current theme via CSS variables.
+          Use these tokens instead of hardcoded colors for consistency.
         </p>
       </div>
     </div>

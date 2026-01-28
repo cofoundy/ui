@@ -59,7 +59,7 @@
 
   /* Semantic colors - sophisticated palette aligned with brand */
   --chat-success: #059669;  /* Emerald-600: connects to primary teal family */
-  --chat-error: #DC2626;    /* Red-600: deep, professional */
+  --chat-error: #BE123C;    /* Rose-700: elegant, complements teal */
   --chat-warning: #D97706;  /* Amber-600: warm, sophisticated */
 
   /* UI Component Semantic Tokens (shadcn compatible) */
@@ -73,7 +73,7 @@
   --muted-foreground: #94a3b8;
   --accent: #1e293b;
   --accent-foreground: #f8fafc;
-  --destructive: #DC2626;
+  --destructive: #BE123C;
   --destructive-foreground: #ffffff;
   --border: rgba(255, 255, 255, 0.15);
   --input: #1e293b;
@@ -96,7 +96,7 @@
   /* Status colors - cohesive with Cofoundy brand */
   --status-success: #059669;  /* Emerald-600 */
   --status-warning: #D97706;  /* Amber-600 */
-  --status-error: #DC2626;    /* Red-600 */
+  --status-error: #BE123C;    /* Rose-700: elegant, complements teal */
   --status-info: #46A0D0;     /* Brand primary */
 }
 
@@ -147,7 +147,7 @@
   --muted-foreground: #64748b;
   --accent: #f1f5f9;
   --accent-foreground: #0f172a;
-  --destructive: #DC2626;
+  --destructive: #BE123C;
   --destructive-foreground: #ffffff;
   --border: rgba(0, 0, 0, 0.1);
   --input: #f1f5f9;
