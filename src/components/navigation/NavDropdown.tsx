@@ -108,42 +108,46 @@ function getFeaturedStyles(
         ),
       };
 
-    // Brand color animated border
+    // Brand color animated border using mask-composite technique
     case "gradient-border":
       return {
-        base: "",
+        base: "nav-gradient-border",
         style: {
-          border: "2px solid transparent",
+          background: isDark ? "#020916" : "#ffffff",
         },
         overlay: (
-          <>
-            <style>{`
-              @keyframes nav-rotate-gradient {
-                0% { transform: translate(-50%, -50%) rotate(0deg); }
-                100% { transform: translate(-50%, -50%) rotate(360deg); }
-              }
-            `}</style>
-            <div
-              className="absolute -inset-[2px] rounded-lg overflow-hidden pointer-events-none"
-              aria-hidden="true"
-            >
-              <div
-                className="absolute"
-                style={{
-                  width: "300%",
-                  height: "300%",
-                  top: "50%",
-                  left: "50%",
-                  background: "conic-gradient(from 0deg, #2984AD, #46a0d0, #0D3A59, #2984AD)",
-                  animation: "nav-rotate-gradient 3s linear infinite",
-                }}
-              />
-            </div>
-            <div
-              className="absolute inset-[2px] rounded-md pointer-events-none"
-              style={{ background: isDark ? "#020916" : "#ffffff" }}
-            />
-          </>
+          <style>{`
+            @property --nav-angle {
+              syntax: '<angle>';
+              initial-value: 0deg;
+              inherits: false;
+            }
+            .nav-gradient-border {
+              --nav-angle: 0deg;
+              position: relative;
+              animation: nav-gradient-rotate 3s linear infinite;
+            }
+            .nav-gradient-border::before {
+              content: '';
+              position: absolute;
+              inset: 0;
+              border-radius: inherit;
+              padding: 2px;
+              background: conic-gradient(from var(--nav-angle), #2984AD, #46a0d0, #0D3A59, #2984AD);
+              -webkit-mask:
+                linear-gradient(#fff 0 0) content-box,
+                linear-gradient(#fff 0 0);
+              mask:
+                linear-gradient(#fff 0 0) content-box,
+                linear-gradient(#fff 0 0);
+              -webkit-mask-composite: xor;
+              mask-composite: exclude;
+              pointer-events: none;
+            }
+            @keyframes nav-gradient-rotate {
+              to { --nav-angle: 360deg; }
+            }
+          `}</style>
         ),
       };
 

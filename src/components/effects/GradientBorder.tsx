@@ -8,52 +8,36 @@ export interface GradientBorderProps
   variant?: "brand" | "gold" | "rainbow";
   /** Border width in pixels */
   borderWidth?: number;
-  /** Border radius */
-  rounded?: "sm" | "md" | "lg" | "xl" | "full";
+  /** Border radius in pixels */
+  borderRadius?: number;
   /** Animation duration in seconds */
   duration?: number;
   /** Disable animation */
   disabled?: boolean;
-  /** Background color (for the inner content) */
+  /** Background color for the content area */
   background?: string;
 }
 
 const gradientColors = {
-  brand: "conic-gradient(from 0deg, #2984AD, #46a0d0, #0D3A59, #2984AD)",
-  gold: "conic-gradient(from 0deg, #fbbf24, #fef3c7, #b45309, #fbbf24)",
-  rainbow: "conic-gradient(from 0deg, #f59e0b, #22c55e, #06b6d4, #3b82f6, #8b5cf6, #f59e0b)",
-};
-
-const roundedMap = {
-  sm: "rounded-sm",
-  md: "rounded-md",
-  lg: "rounded-lg",
-  xl: "rounded-xl",
-  full: "rounded-full",
-};
-
-// Border radius values in pixels for each size
-const radiusValues = {
-  sm: 2,    // 0.125rem
-  md: 6,    // 0.375rem
-  lg: 8,    // 0.5rem
-  xl: 12,   // 0.75rem
-  full: 9999,
+  brand: "conic-gradient(from var(--angle), #2984AD, #46a0d0, #0D3A59, #2984AD)",
+  gold: "conic-gradient(from var(--angle), #fbbf24, #fef3c7, #b45309, #fbbf24)",
+  rainbow: "conic-gradient(from var(--angle), #f59e0b, #22c55e, #06b6d4, #3b82f6, #8b5cf6, #f59e0b)",
 };
 
 export function GradientBorder({
   children,
   variant = "brand",
   borderWidth = 2,
-  rounded = "lg",
+  borderRadius = 12,
   duration = 3,
   disabled = false,
-  background = "#020916",
+  background,
   className,
   style,
   ...props
 }: GradientBorderProps) {
   const id = React.useId();
+  const safeId = id.replace(/:/g, "");
 
   if (disabled) {
     return (
@@ -67,50 +51,48 @@ export function GradientBorder({
     <>
       <style>
         {`
-          @keyframes rotate-gradient-${id.replace(/:/g, "")} {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+          @property --angle {
+            syntax: '<angle>';
+            initial-value: 0deg;
+            inherits: false;
+          }
+
+          .gradient-border-${safeId} {
+            --angle: 0deg;
+            position: relative;
+            border-radius: ${borderRadius}px;
+            animation: gradient-rotate-${safeId} ${duration}s linear infinite;
+          }
+
+          .gradient-border-${safeId}::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: ${borderWidth}px;
+            background: ${gradientColors[variant]};
+            -webkit-mask:
+              linear-gradient(#fff 0 0) content-box,
+              linear-gradient(#fff 0 0);
+            mask:
+              linear-gradient(#fff 0 0) content-box,
+              linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+          }
+
+          @keyframes gradient-rotate-${safeId} {
+            to { --angle: 360deg; }
           }
         `}
       </style>
       <div
-        className={cn("relative", roundedMap[rounded], className)}
-        style={{
-          padding: borderWidth,
-          ...style,
-        }}
+        className={cn(`gradient-border-${safeId}`, className)}
+        style={{ background, ...style }}
         {...props}
       >
-        {/* Animated gradient background - large square to cover corners during rotation */}
-        <div
-          className={cn(
-            "absolute inset-0 overflow-hidden",
-            roundedMap[rounded]
-          )}
-          aria-hidden="true"
-        >
-          <div
-            className="absolute"
-            style={{
-              width: "300%",
-              height: "300%",
-              top: "50%",
-              left: "50%",
-              background: gradientColors[variant],
-              animation: `rotate-gradient-${id.replace(/:/g, "")} ${duration}s linear infinite`,
-            }}
-          />
-        </div>
-        {/* Inner content */}
-        <div
-          className="relative"
-          style={{
-            background,
-            borderRadius: Math.max(0, radiusValues[rounded] - borderWidth),
-          }}
-        >
-          {children}
-        </div>
+        {children}
       </div>
     </>
   );
