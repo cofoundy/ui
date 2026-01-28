@@ -135,8 +135,7 @@ function getFeaturedStyles(
               }
               @keyframes nav-gradient-move {
                 0% { background-position: 0% 50%; }
-                50% { background-position: 100% 50%; }
-                100% { background-position: 0% 50%; }
+                100% { background-position: 300% 50%; }
               }
             `}</style>
             {/* Inner background to cover gradient middle */}
