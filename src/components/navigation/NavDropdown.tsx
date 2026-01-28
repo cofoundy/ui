@@ -304,24 +304,24 @@ export function NavDropdown({
         aria-orientation="vertical"
         aria-labelledby="nav-dropdown-trigger"
         className={cn(
-          "absolute left-0 top-full z-50 mt-2 min-w-[280px] origin-top-left",
+          "absolute left-0 top-full z-[100] mt-2 min-w-[320px] origin-top-left",
           // Glassmorphism
           "rounded-xl border backdrop-blur-xl",
           // Shadow
-          "shadow-lg shadow-black/10",
+          "shadow-xl shadow-black/20",
           // Animation
           "transition-all",
           isOpen
             ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
             : "opacity-0 scale-95 -translate-y-2 pointer-events-none",
-          // Theme
+          // Theme - solid backgrounds for better visibility
           isDark
             ? [
-                "bg-slate-950/95",
-                "border-white/10",
+                "bg-slate-950",
+                "border-white/15",
               ]
             : [
-                "bg-white/95",
+                "bg-white",
                 "border-slate-200",
               ],
           menuClassName
@@ -351,7 +351,7 @@ export function NavDropdown({
               <>
                 <span
                   className={cn(
-                    "block text-sm font-medium",
+                    "block text-sm font-medium whitespace-nowrap",
                     isDark
                       ? isItemActive
                         ? "text-sky-400"
@@ -366,7 +366,7 @@ export function NavDropdown({
                 {item.description && (
                   <span
                     className={cn(
-                      "block text-xs mt-0.5",
+                      "block text-xs mt-0.5 whitespace-nowrap",
                       isDark ? "text-white/60" : "text-slate-500"
                     )}
                   >
