@@ -237,6 +237,7 @@ export {
   navDropdownVariants,
   type NavDropdownProps,
   type NavDropdownItem,
+  type FeaturedEffect,
 } from "./components/navigation";
 
 // Utils

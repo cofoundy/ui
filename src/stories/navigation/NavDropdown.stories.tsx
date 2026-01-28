@@ -315,3 +315,332 @@ export const TouchBehavior: Story = {
     },
   },
 };
+
+// ============================================
+// Featured Effects Stories
+// ============================================
+
+// Items with badge
+const itemsWithBadge: NavDropdownItem[] = [
+  {
+    key: "landing",
+    href: "/servicios/landing-pages",
+    label: "Landing Pages",
+    description: "Tu landing lista en 7 días",
+  },
+  {
+    key: "pollada",
+    href: "/servicios/pollada",
+    label: "🍗 Pollada Virtual",
+    description: "¡Apoya al equipo! Desde S/.50",
+    badge: "Nuevo",
+  },
+  {
+    key: "chatbot",
+    href: "/servicios/chatbot",
+    label: "AI Chatbot",
+    description: "Automatiza tu atención 24/7",
+  },
+];
+
+export const WithBadge: Story = {
+  args: {
+    label: "Servicios",
+    variant: "dark",
+    items: itemsWithBadge,
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Items can have a `badge` prop to display a small tag (e.g., 'Nuevo', '🔥').",
+      },
+    },
+  },
+};
+
+// Gold Glow Effect
+export const FeaturedGoldGlow: Story = {
+  args: {
+    label: "Servicios",
+    variant: "dark",
+    items: [
+      {
+        key: "landing",
+        href: "/servicios/landing-pages",
+        label: "Landing Pages",
+        description: "Tu landing lista en 7 días",
+      },
+      {
+        key: "pollada",
+        href: "/servicios/pollada",
+        label: "🍗 Pollada Virtual",
+        description: "¡Apoya al equipo! Desde S/.50",
+        badge: "Nuevo",
+        featured: "gold-glow",
+      },
+      {
+        key: "chatbot",
+        href: "/servicios/chatbot",
+        label: "AI Chatbot",
+        description: "Automatiza tu atención 24/7",
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "**Gold Glow** - Pulsing gold glow effect that draws attention.",
+      },
+    },
+  },
+};
+
+// Shimmer Effect
+export const FeaturedShimmer: Story = {
+  args: {
+    label: "Servicios",
+    variant: "dark",
+    items: [
+      {
+        key: "landing",
+        href: "/servicios/landing-pages",
+        label: "Landing Pages",
+        description: "Tu landing lista en 7 días",
+      },
+      {
+        key: "pollada",
+        href: "/servicios/pollada",
+        label: "🍗 Pollada Virtual",
+        description: "¡Apoya al equipo! Desde S/.50",
+        badge: "Nuevo",
+        featured: "shimmer",
+      },
+      {
+        key: "chatbot",
+        href: "/servicios/chatbot",
+        label: "AI Chatbot",
+        description: "Automatiza tu atención 24/7",
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "**Shimmer** - Horizontal light sweep animation.",
+      },
+    },
+  },
+};
+
+// Gradient Border Effect
+export const FeaturedGradientBorder: Story = {
+  args: {
+    label: "Servicios",
+    variant: "dark",
+    items: [
+      {
+        key: "landing",
+        href: "/servicios/landing-pages",
+        label: "Landing Pages",
+        description: "Tu landing lista en 7 días",
+      },
+      {
+        key: "pollada",
+        href: "/servicios/pollada",
+        label: "🍗 Pollada Virtual",
+        description: "¡Apoya al equipo! Desde S/.50",
+        badge: "Nuevo",
+        featured: "gradient-border",
+      },
+      {
+        key: "chatbot",
+        href: "/servicios/chatbot",
+        label: "AI Chatbot",
+        description: "Automatiza tu atención 24/7",
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "**Gradient Border** - Animated rotating gradient border.",
+      },
+    },
+  },
+};
+
+// Spotlight Effect
+export const FeaturedSpotlight: Story = {
+  args: {
+    label: "Servicios",
+    variant: "dark",
+    items: [
+      {
+        key: "landing",
+        href: "/servicios/landing-pages",
+        label: "Landing Pages",
+        description: "Tu landing lista en 7 días",
+      },
+      {
+        key: "pollada",
+        href: "/servicios/pollada",
+        label: "🍗 Pollada Virtual",
+        description: "¡Apoya al equipo! Desde S/.50",
+        badge: "Nuevo",
+        featured: "spotlight",
+      },
+      {
+        key: "chatbot",
+        href: "/servicios/chatbot",
+        label: "AI Chatbot",
+        description: "Automatiza tu atención 24/7",
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "**Spotlight** - Moving spotlight/glow effect.",
+      },
+    },
+  },
+};
+
+// Rainbow Effect
+export const FeaturedRainbow: Story = {
+  args: {
+    label: "Servicios",
+    variant: "dark",
+    items: [
+      {
+        key: "landing",
+        href: "/servicios/landing-pages",
+        label: "Landing Pages",
+        description: "Tu landing lista en 7 días",
+      },
+      {
+        key: "pollada",
+        href: "/servicios/pollada",
+        label: "🍗 Pollada Virtual",
+        description: "¡Apoya al equipo! Desde S/.50",
+        badge: "Nuevo",
+        featured: "rainbow",
+      },
+      {
+        key: "chatbot",
+        href: "/servicios/chatbot",
+        label: "AI Chatbot",
+        description: "Automatiza tu atención 24/7",
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "**Rainbow** - Colorful animated gradient border.",
+      },
+    },
+  },
+};
+
+// All effects comparison
+export const AllFeaturedEffects: Story = {
+  render: () => (
+    <div className="flex flex-col gap-8">
+      <div>
+        <h3 className="text-white text-sm font-medium mb-3">Gold Glow</h3>
+        <NavDropdown
+          label="Ver efecto"
+          variant="dark"
+          items={[
+            { key: "item", href: "#", label: "🍗 Pollada Virtual", description: "¡Apoya al equipo!", badge: "Nuevo", featured: "gold-glow" },
+          ]}
+        />
+      </div>
+      <div>
+        <h3 className="text-white text-sm font-medium mb-3">Shimmer</h3>
+        <NavDropdown
+          label="Ver efecto"
+          variant="dark"
+          items={[
+            { key: "item", href: "#", label: "🍗 Pollada Virtual", description: "¡Apoya al equipo!", badge: "Nuevo", featured: "shimmer" },
+          ]}
+        />
+      </div>
+      <div>
+        <h3 className="text-white text-sm font-medium mb-3">Gradient Border</h3>
+        <NavDropdown
+          label="Ver efecto"
+          variant="dark"
+          items={[
+            { key: "item", href: "#", label: "🍗 Pollada Virtual", description: "¡Apoya al equipo!", badge: "Nuevo", featured: "gradient-border" },
+          ]}
+        />
+      </div>
+      <div>
+        <h3 className="text-white text-sm font-medium mb-3">Spotlight</h3>
+        <NavDropdown
+          label="Ver efecto"
+          variant="dark"
+          items={[
+            { key: "item", href: "#", label: "🍗 Pollada Virtual", description: "¡Apoya al equipo!", badge: "Nuevo", featured: "spotlight" },
+          ]}
+        />
+      </div>
+      <div>
+        <h3 className="text-white text-sm font-medium mb-3">Rainbow</h3>
+        <NavDropdown
+          label="Ver efecto"
+          variant="dark"
+          items={[
+            { key: "item", href: "#", label: "🍗 Pollada Virtual", description: "¡Apoya al equipo!", badge: "Nuevo", featured: "rainbow" },
+          ]}
+        />
+      </div>
+    </div>
+  ),
+  parameters: {
+    docs: {
+      description: {
+        story: "Comparison of all featured effects side by side.",
+      },
+    },
+  },
+};
+
+// Light mode featured
+export const FeaturedLightMode: Story = {
+  args: {
+    label: "Servicios",
+    variant: "light",
+    items: [
+      {
+        key: "landing",
+        href: "/servicios/landing-pages",
+        label: "Landing Pages",
+        description: "Tu landing lista en 7 días",
+      },
+      {
+        key: "pollada",
+        href: "/servicios/pollada",
+        label: "🍗 Pollada Virtual",
+        description: "¡Apoya al equipo! Desde S/.50",
+        badge: "Nuevo",
+        featured: "gold-glow",
+      },
+      {
+        key: "chatbot",
+        href: "/servicios/chatbot",
+        label: "AI Chatbot",
+        description: "Automatiza tu atención 24/7",
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "Featured effects also work in light mode.",
+      },
+    },
+  },
+};

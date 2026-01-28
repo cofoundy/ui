@@ -3,4 +3,5 @@ export {
   navDropdownVariants,
   type NavDropdownProps,
   type NavDropdownItem,
+  type FeaturedEffect,
 } from "./NavDropdown";

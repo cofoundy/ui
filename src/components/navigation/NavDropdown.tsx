@@ -8,12 +8,23 @@ import { cn } from "../../utils/cn";
 // Types
 // ============================================
 
+export type FeaturedEffect =
+  | "gold-glow"      // Pulsing gold glow
+  | "shimmer"        // Horizontal light sweep
+  | "gradient-border" // Animated gradient border
+  | "spotlight"      // Moving spotlight
+  | "rainbow";       // Rainbow gradient
+
 export interface NavDropdownItem {
   key: string;
   href: string;
   label: string;
   description?: string;
   isActive?: boolean;
+  /** Badge text to display (e.g., "Nuevo", "🔥") */
+  badge?: string;
+  /** Featured effect for highlighting special items */
+  featured?: FeaturedEffect;
 }
 
 export interface NavDropdownProps
@@ -52,6 +63,191 @@ const navDropdownVariants = cva("", {
 const ANIMATION_DURATION = 250; // --cf-duration-normal
 const CLOSE_DELAY = 150;
 const EASING = "cubic-bezier(0.16, 1, 0.3, 1)"; // Premium easing
+
+// ============================================
+// Featured Effect Styles
+// ============================================
+function getFeaturedStyles(
+  effect: FeaturedEffect | undefined,
+  isDark: boolean
+): {
+  base: string;
+  style?: React.CSSProperties;
+  overlay?: React.ReactNode;
+} {
+  if (!effect) return { base: "" };
+
+  const goldColors = {
+    dark: {
+      bg: "rgba(251, 191, 36, 0.1)",
+      border: "rgba(251, 191, 36, 0.3)",
+      glow: "rgba(251, 191, 36, 0.4)",
+      gradient: "linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.3), transparent)",
+    },
+    light: {
+      bg: "rgba(251, 191, 36, 0.15)",
+      border: "rgba(180, 83, 9, 0.3)",
+      glow: "rgba(251, 191, 36, 0.5)",
+      gradient: "linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.4), transparent)",
+    },
+  };
+
+  const colors = isDark ? goldColors.dark : goldColors.light;
+
+  switch (effect) {
+    case "gold-glow":
+      return {
+        base: "border border-[#fbbf24]/30",
+        style: {
+          background: colors.bg,
+          boxShadow: `0 0 20px ${colors.glow}, inset 0 1px 0 rgba(255,255,255,0.1)`,
+          animation: "pulse-gold 2s ease-in-out infinite",
+        },
+        overlay: (
+          <style>{`
+            @keyframes pulse-gold {
+              0%, 100% { box-shadow: 0 0 15px ${colors.glow}, inset 0 1px 0 rgba(255,255,255,0.1); }
+              50% { box-shadow: 0 0 25px ${colors.glow}, 0 0 40px ${colors.glow}, inset 0 1px 0 rgba(255,255,255,0.1); }
+            }
+          `}</style>
+        ),
+      };
+
+    case "shimmer":
+      return {
+        base: "border border-[#fbbf24]/20",
+        style: {
+          background: colors.bg,
+        },
+        overlay: (
+          <>
+            <style>{`
+              @keyframes shimmer {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
+              }
+            `}</style>
+            <div
+              className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none"
+              aria-hidden="true"
+            >
+              <div
+                className="absolute inset-0 w-full"
+                style={{
+                  background: colors.gradient,
+                  animation: "shimmer 2s ease-in-out infinite",
+                }}
+              />
+            </div>
+          </>
+        ),
+      };
+
+    case "gradient-border":
+      return {
+        base: "",
+        style: {
+          background: colors.bg,
+          border: "2px solid transparent",
+          backgroundClip: "padding-box",
+        },
+        overlay: (
+          <>
+            <style>{`
+              @keyframes rotate-gradient {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}</style>
+            <div
+              className="absolute -inset-[2px] rounded-lg overflow-hidden pointer-events-none"
+              aria-hidden="true"
+            >
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: "conic-gradient(from 0deg, #fbbf24, #f59e0b, #d97706, #fbbf24)",
+                  animation: "rotate-gradient 3s linear infinite",
+                }}
+              />
+            </div>
+            <div
+              className="absolute inset-[2px] rounded-md pointer-events-none"
+              style={{ background: isDark ? "#020916" : "#ffffff" }}
+            />
+          </>
+        ),
+      };
+
+    case "spotlight":
+      return {
+        base: "border border-[#fbbf24]/20",
+        style: {
+          background: colors.bg,
+        },
+        overlay: (
+          <>
+            <style>{`
+              @keyframes spotlight {
+                0%, 100% { transform: translateX(-50%) translateY(-50%) scale(1); opacity: 0.5; }
+                50% { transform: translateX(50%) translateY(-50%) scale(1.5); opacity: 0.8; }
+              }
+            `}</style>
+            <div
+              className="absolute inset-0 overflow-hidden rounded-lg pointer-events-none"
+              aria-hidden="true"
+            >
+              <div
+                className="absolute top-1/2 left-0 w-16 h-16 rounded-full blur-xl"
+                style={{
+                  background: "radial-gradient(circle, rgba(251, 191, 36, 0.6) 0%, transparent 70%)",
+                  animation: "spotlight 3s ease-in-out infinite",
+                }}
+              />
+            </div>
+          </>
+        ),
+      };
+
+    case "rainbow":
+      return {
+        base: "",
+        style: {
+          border: "2px solid transparent",
+        },
+        overlay: (
+          <>
+            <style>{`
+              @keyframes rainbow-shift {
+                0%, 100% { filter: hue-rotate(0deg); }
+                50% { filter: hue-rotate(60deg); }
+              }
+            `}</style>
+            <div
+              className="absolute -inset-[2px] rounded-lg overflow-hidden pointer-events-none"
+              aria-hidden="true"
+              style={{ animation: "rainbow-shift 4s ease-in-out infinite" }}
+            >
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: "linear-gradient(135deg, #f59e0b, #fbbf24, #84cc16, #22c55e, #06b6d4, #3b82f6, #8b5cf6, #f59e0b)",
+                  backgroundSize: "200% 200%",
+                }}
+              />
+            </div>
+            <div
+              className="absolute inset-[2px] rounded-md pointer-events-none"
+              style={{ background: isDark ? "#020916" : "#ffffff" }}
+            />
+          </>
+        ),
+      };
+
+    default:
+      return { base: "" };
+  }
+}
 
 // ============================================
 // Component
@@ -346,52 +542,82 @@ export function NavDropdown({
           {items.map((item, index) => {
             const isItemActive = item.isActive;
             const isKeyboardActive = activeIndex === index;
+            const isFeatured = !!item.featured;
+
+            // Featured effect styles
+            const featuredStyles = getFeaturedStyles(item.featured, isDark);
 
             const itemContent = (
-              <>
-                <span
-                  className={cn(
-                    "block text-sm font-medium whitespace-nowrap",
-                    isDark
-                      ? isItemActive
-                        ? "text-[#46a0d0]"
-                        : "text-white"
-                      : isItemActive
-                        ? "text-[#2984AD]"
-                        : "text-[#0f172a]"
-                  )}
-                >
-                  {item.label}
-                </span>
-                {item.description && (
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
                   <span
                     className={cn(
-                      "block text-xs mt-0.5 whitespace-nowrap",
-                      isDark ? "text-white/60" : "text-[#64748b]"
+                      "block text-sm font-medium whitespace-nowrap",
+                      isFeatured && "font-semibold",
+                      isDark
+                        ? isItemActive
+                          ? "text-[#46a0d0]"
+                          : isFeatured
+                            ? "text-[#fbbf24]" // Gold for featured
+                            : "text-white"
+                        : isItemActive
+                          ? "text-[#2984AD]"
+                          : isFeatured
+                            ? "text-[#b45309]" // Amber for featured light
+                            : "text-[#0f172a]"
                     )}
                   >
-                    {item.description}
+                    {item.label}
+                  </span>
+                  {item.description && (
+                    <span
+                      className={cn(
+                        "block text-xs mt-0.5 whitespace-nowrap",
+                        isDark
+                          ? isFeatured
+                            ? "text-[#fcd34d]/80"
+                            : "text-white/60"
+                          : isFeatured
+                            ? "text-[#92400e]/80"
+                            : "text-[#64748b]"
+                      )}
+                    >
+                      {item.description}
+                    </span>
+                  )}
+                </div>
+                {item.badge && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide shrink-0",
+                      isDark
+                        ? "bg-[#fbbf24]/20 text-[#fbbf24]"
+                        : "bg-[#fbbf24]/20 text-[#b45309]"
+                    )}
+                  >
+                    {item.badge}
                   </span>
                 )}
-              </>
+              </div>
             );
 
             const itemClasses = cn(
               // Base styles
               "block w-full text-left px-4 py-3 rounded-lg",
-              "transition-colors",
-              "outline-none",
+              "transition-all duration-300",
+              "outline-none relative overflow-hidden",
               // Min touch target (44px)
               "min-h-[44px]",
               // Focus ring
               "focus-visible:ring-2 focus-visible:ring-inset",
               // Active indicator
               isItemActive && [
-                "relative",
                 isDark ? "bg-[#46a0d0]/10" : "bg-[#2984AD]/5",
               ],
+              // Featured base styles
+              isFeatured && !isItemActive && featuredStyles.base,
               // Hover/keyboard active state
-              (isKeyboardActive || !isItemActive) &&
+              !isFeatured && (isKeyboardActive || !isItemActive) &&
                 (isDark
                   ? "hover:bg-white/5 focus-visible:bg-white/5 focus-visible:ring-[#46a0d0]/50"
                   : "hover:bg-[#f1f5f9] focus-visible:bg-[#f1f5f9] focus-visible:ring-[#2984AD]/50")
@@ -409,17 +635,21 @@ export function NavDropdown({
                 onKeyDown={handleKeyDown}
                 onMouseEnter={() => setActiveIndex(index)}
                 className={itemClasses}
+                style={featuredStyles.style}
               >
+                {/* Featured effect overlay */}
+                {isFeatured && featuredStyles.overlay}
+
                 {/* Active indicator bar */}
                 {isItemActive && (
                   <span
                     className={cn(
-                      "absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-full",
+                      "absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-full z-10",
                       isDark ? "bg-[#46a0d0]" : "bg-[#2984AD]"
                     )}
                   />
                 )}
-                {itemContent}
+                <div className="relative z-10">{itemContent}</div>
               </a>
             );
 
