@@ -25,7 +25,7 @@ export function AIBadge({
         className={cn(
           "inline-flex items-center justify-center",
           "w-5 h-5 rounded-full",
-          "bg-purple-500/20 text-purple-400",
+          "bg-[#a855f7]/20 text-[#c084fc]",
           className
         )}
         title={label}
@@ -39,7 +39,7 @@ export function AIBadge({
     <span
       className={cn(
         "inline-flex items-center gap-1",
-        "text-xs text-purple-300",
+        "text-xs text-[#d8b4fe]",
         className
       )}
     >

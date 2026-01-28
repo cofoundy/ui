@@ -142,7 +142,7 @@ export const FloatingLauncher = forwardRef<HTMLButtonElement, FloatingLauncherPr
                 "min-w-[18px] h-[18px] sm:min-w-[20px] sm:h-5",
                 "px-1 sm:px-1.5",
                 "text-[10px] sm:text-xs font-semibold text-white",
-                "bg-red-500 rounded-full"
+                "bg-[#ef4444] rounded-full"
               )}
             >
               {unreadCount > 99 ? "99+" : unreadCount}

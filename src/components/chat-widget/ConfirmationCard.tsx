@@ -31,7 +31,7 @@ export function ConfirmationCard({
       )}
     >
       {/* Top accent bar - gradient */}
-      <div className="h-1 bg-gradient-to-r from-[var(--chat-success)] via-emerald-400 to-[var(--chat-success)]" />
+      <div className="h-1 bg-gradient-to-r from-[var(--chat-success)] via-[#34d399] to-[var(--chat-success)]" />
 
       <div className="px-4 py-3">
         {/* Date & time - prominent */}
