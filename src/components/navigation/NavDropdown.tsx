@@ -3,6 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { ChevronDown } from "lucide-react";
 
 import { cn } from "../../utils/cn";
+import { ShimmerText } from "../effects/ShimmerText";
 
 // ============================================
 // Types
@@ -10,7 +11,8 @@ import { cn } from "../../utils/cn";
 
 export type FeaturedEffect =
   | "shimmer"        // Gold shimmer sweep on card
-  | "gradient-border"; // Brand color animated border
+  | "gradient-border" // Brand color animated border
+  | "gold-glow";     // Gold shimmer text effect (uses ShimmerText)
 
 export interface NavDropdownItem {
   key: string;
@@ -146,6 +148,10 @@ function getFeaturedStyles(
           </>
         ),
       };
+
+    // Gold shimmer text effect - handled separately via ShimmerText component
+    case "gold-glow":
+      return { base: "" };
 
     default:
       return { base: "" };
@@ -450,28 +456,40 @@ export function NavDropdown({
             // Featured effect styles
             const featuredStyles = getFeaturedStyles(item.featured, isDark);
 
+            // Check if we should use ShimmerText for gold-glow effect
+            const useGoldGlow = item.featured === "gold-glow";
+
             const itemContent = (
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <span
-                    className={cn(
-                      "block text-sm font-medium whitespace-nowrap",
-                      isFeatured && "font-semibold",
-                      isDark
-                        ? isItemActive
-                          ? "text-[#46a0d0]"
-                          : isFeatured
-                            ? "text-[#fbbf24]" // Gold for featured
-                            : "text-white"
-                        : isItemActive
-                          ? "text-[#2984AD]"
-                          : isFeatured
-                            ? "text-[#b45309]" // Amber for featured light
-                            : "text-[#0f172a]"
-                    )}
-                  >
-                    {item.label}
-                  </span>
+                  {useGoldGlow ? (
+                    <ShimmerText
+                      variant="gold"
+                      className="block text-sm font-semibold whitespace-nowrap"
+                    >
+                      {item.label}
+                    </ShimmerText>
+                  ) : (
+                    <span
+                      className={cn(
+                        "block text-sm font-medium whitespace-nowrap",
+                        isFeatured && "font-semibold",
+                        isDark
+                          ? isItemActive
+                            ? "text-[#46a0d0]"
+                            : isFeatured
+                              ? "text-[#fbbf24]" // Gold for featured
+                              : "text-white"
+                          : isItemActive
+                            ? "text-[#2984AD]"
+                            : isFeatured
+                              ? "text-[#b45309]" // Amber for featured light
+                              : "text-[#0f172a]"
+                      )}
+                    >
+                      {item.label}
+                    </span>
+                  )}
                   {item.description && (
                     <span
                       className={cn(
