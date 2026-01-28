@@ -108,46 +108,43 @@ function getFeaturedStyles(
         ),
       };
 
-    // Brand color animated border using mask-composite technique
+    // Brand color animated border
     case "gradient-border":
       return {
         base: "nav-gradient-border",
-        style: {
-          background: isDark ? "#020916" : "#ffffff",
-        },
+        style: {},
         overlay: (
-          <style>{`
-            @property --nav-angle {
-              syntax: '<angle>';
-              initial-value: 0deg;
-              inherits: false;
-            }
-            .nav-gradient-border {
-              --nav-angle: 0deg;
-              position: relative;
-              animation: nav-gradient-rotate 3s linear infinite;
-            }
-            .nav-gradient-border::before {
-              content: '';
-              position: absolute;
-              inset: 0;
-              border-radius: inherit;
-              padding: 2px;
-              background: conic-gradient(from var(--nav-angle), #2984AD, #46a0d0, #0D3A59, #2984AD);
-              -webkit-mask:
-                linear-gradient(#fff 0 0) content-box,
-                linear-gradient(#fff 0 0);
-              mask:
-                linear-gradient(#fff 0 0) content-box,
-                linear-gradient(#fff 0 0);
-              -webkit-mask-composite: xor;
-              mask-composite: exclude;
-              pointer-events: none;
-            }
-            @keyframes nav-gradient-rotate {
-              to { --nav-angle: 360deg; }
-            }
-          `}</style>
+          <>
+            <style>{`
+              .nav-gradient-border {
+                position: relative;
+                z-index: 0;
+              }
+              .nav-gradient-border::before {
+                content: '';
+                position: absolute;
+                left: -2px;
+                top: -2px;
+                border-radius: 10px;
+                background: linear-gradient(90deg, #2984AD, #46a0d0, #0D3A59, #2984AD, #46a0d0, #0D3A59, #2984AD);
+                background-size: 300%;
+                width: calc(100% + 4px);
+                height: calc(100% + 4px);
+                z-index: -1;
+                animation: nav-gradient-move 3s linear infinite;
+              }
+              @keyframes nav-gradient-move {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+              }
+            `}</style>
+            {/* Inner background to cover gradient middle */}
+            <div
+              className="absolute inset-0 rounded-lg pointer-events-none"
+              style={{ background: isDark ? "#020916" : "#ffffff" }}
+            />
+          </>
         ),
       };
 

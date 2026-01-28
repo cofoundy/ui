@@ -14,14 +14,17 @@ export interface GradientBorderProps
   duration?: number;
   /** Disable animation */
   disabled?: boolean;
-  /** Background color for the content area */
+  /** Add glow effect */
+  glow?: boolean;
+  /** Background color for content area (required to hide the gradient middle) */
   background?: string;
 }
 
+// Gradient colors that repeat for seamless animation
 const gradientColors = {
-  brand: "conic-gradient(from var(--angle), #2984AD, #46a0d0, #0D3A59, #2984AD)",
-  gold: "conic-gradient(from var(--angle), #fbbf24, #fef3c7, #b45309, #fbbf24)",
-  rainbow: "conic-gradient(from var(--angle), #f59e0b, #22c55e, #06b6d4, #3b82f6, #8b5cf6, #f59e0b)",
+  brand: "linear-gradient(90deg, #2984AD, #46a0d0, #0D3A59, #2984AD, #46a0d0, #0D3A59, #2984AD)",
+  gold: "linear-gradient(90deg, #fbbf24, #fef3c7, #b45309, #fbbf24, #fef3c7, #b45309, #fbbf24)",
+  rainbow: "linear-gradient(90deg, #fb0094, #0000ff, #00ff00, #ffff00, #ff0000, #fb0094, #0000ff, #00ff00, #ffff00, #ff0000)",
 };
 
 export function GradientBorder({
@@ -31,7 +34,8 @@ export function GradientBorder({
   borderRadius = 12,
   duration = 3,
   disabled = false,
-  background,
+  glow = false,
+  background = "#020916",
   className,
   style,
   ...props
@@ -47,52 +51,66 @@ export function GradientBorder({
     );
   }
 
+  // Inner radius is outer radius minus border width
+  const innerRadius = Math.max(0, borderRadius - borderWidth);
+
   return (
     <>
       <style>
         {`
-          @property --angle {
-            syntax: '<angle>';
-            initial-value: 0deg;
-            inherits: false;
-          }
-
           .gradient-border-${safeId} {
-            --angle: 0deg;
             position: relative;
             border-radius: ${borderRadius}px;
-            animation: gradient-rotate-${safeId} ${duration}s linear infinite;
+            z-index: 0;
           }
 
-          .gradient-border-${safeId}::before {
+          .gradient-border-${safeId}::before,
+          .gradient-border-${safeId}::after {
             content: '';
             position: absolute;
-            inset: 0;
-            border-radius: inherit;
-            padding: ${borderWidth}px;
+            left: -${borderWidth}px;
+            top: -${borderWidth}px;
+            border-radius: ${borderRadius}px;
             background: ${gradientColors[variant]};
-            -webkit-mask:
-              linear-gradient(#fff 0 0) content-box,
-              linear-gradient(#fff 0 0);
-            mask:
-              linear-gradient(#fff 0 0) content-box,
-              linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
+            background-size: 300%;
+            width: calc(100% + ${borderWidth * 2}px);
+            height: calc(100% + ${borderWidth * 2}px);
+            z-index: -1;
+            animation: gradient-move-${safeId} ${duration}s linear infinite;
           }
 
-          @keyframes gradient-rotate-${safeId} {
-            to { --angle: 360deg; }
+          ${glow ? `
+          .gradient-border-${safeId}::after {
+            filter: blur(20px);
+            opacity: 0.6;
+          }
+          ` : `
+          .gradient-border-${safeId}::after {
+            display: none;
+          }
+          `}
+
+          @keyframes gradient-move-${safeId} {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
           }
         `}
       </style>
       <div
         className={cn(`gradient-border-${safeId}`, className)}
-        style={{ background, ...style }}
+        style={style}
         {...props}
       >
-        {children}
+        {/* Inner content with solid background to cover gradient middle */}
+        <div
+          style={{
+            background,
+            borderRadius: innerRadius,
+          }}
+        >
+          {children}
+        </div>
       </div>
     </>
   );

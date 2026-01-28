@@ -128,6 +128,31 @@ export const RainbowGradientBorder: StoryObj<typeof GradientBorder> = {
   ),
 };
 
+export const WithGlow: StoryObj<typeof GradientBorder> = {
+  render: () => (
+    <div className="flex flex-col gap-8">
+      <GradientBorder variant="brand" borderRadius={12} glow className="inline-block">
+        <div className="px-6 py-4">
+          <p className="text-white font-semibold">Brand Glow</p>
+          <p className="text-white/60 text-sm">With blur glow effect</p>
+        </div>
+      </GradientBorder>
+      <GradientBorder variant="gold" borderRadius={12} glow className="inline-block">
+        <div className="px-6 py-4">
+          <p className="text-[#fbbf24] font-semibold">Gold Glow</p>
+          <p className="text-[#fbbf24]/60 text-sm">With blur glow effect</p>
+        </div>
+      </GradientBorder>
+      <GradientBorder variant="rainbow" borderRadius={12} glow className="inline-block">
+        <div className="px-6 py-4">
+          <p className="text-white font-semibold">Rainbow Glow</p>
+          <p className="text-white/60 text-sm">With blur glow effect</p>
+        </div>
+      </GradientBorder>
+    </div>
+  ),
+};
+
 export const GradientBorderSizes: StoryObj<typeof GradientBorder> = {
   render: () => (
     <div className="flex flex-col gap-6">
