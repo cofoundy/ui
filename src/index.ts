@@ -33,6 +33,8 @@ export { createWebSocketTransport } from "./transports";
 
 // UI Components
 export { Button, buttonVariants } from "./components/ui";
+export { CalendlyButton, calendlyButtonVariants } from "./components/ui";
+export type { CalendlyButtonProps } from "./components/ui";
 export { Input } from "./components/ui";
 export { Avatar, AvatarImage, AvatarFallback } from "./components/ui";
 export { Spinner, spinnerVariants } from "./components/ui";

@@ -1,4 +1,6 @@
 export { Button, buttonVariants } from "./button";
+export { CalendlyButton, calendlyButtonVariants } from "./calendly-button";
+export type { CalendlyButtonProps } from "./calendly-button";
 export { Input } from "./input";
 export { Avatar, AvatarImage, AvatarFallback } from "./avatar";
 export { Spinner, spinnerVariants } from "./spinner";
