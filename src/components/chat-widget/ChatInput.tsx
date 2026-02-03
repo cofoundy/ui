@@ -57,13 +57,14 @@ export function ChatInput({
         <Button
           type="submit"
           disabled={disabled || !message.trim()}
+          aria-label="Enviar mensaje"
           className={cn(
             "chat-gradient-primary",
             "hover:opacity-90 transition-opacity",
             "disabled:opacity-50 disabled:cursor-not-allowed"
           )}
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4" aria-hidden="true" />
         </Button>
       </div>
     </form>
