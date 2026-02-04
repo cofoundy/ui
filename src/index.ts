@@ -1,18 +1,18 @@
 // @cofoundy/ui - Shared UI Components & Chat Widget
 
 // Chat Widget
-export { ChatWidget } from "./components/chat-widget";
+export { ChatWidget } from "./components/chat-widget/index.js";
 export {
   ChatWidgetFloating,
   FloatingChatWidget,
   FloatingLauncher,
   FloatingWindow,
-} from "./components/chat-widget";
+} from "./components/chat-widget/index.js";
 export type {
   ChatWidgetFloatingProps,
   FloatingLauncherProps,
   FloatingWindowProps,
-} from "./components/chat-widget";
+} from "./components/chat-widget/index.js";
 export type { ChatWidgetConfig } from "./types";
 
 // Transport types
@@ -28,30 +28,30 @@ export type {
   FloatingPosition,
   WidgetMode,
   AppointmentConfirmation,
-} from "./transports";
-export { createWebSocketTransport } from "./transports";
+} from "./transports/index.js";
+export { createWebSocketTransport } from "./transports/index.js";
 
 // UI Components
-export { Button, buttonVariants } from "./components/ui";
-export { CalendlyButton, calendlyButtonVariants } from "./components/ui";
-export type { CalendlyButtonProps } from "./components/ui";
-export { Input } from "./components/ui";
-export { Avatar, AvatarImage, AvatarFallback } from "./components/ui";
-export { Spinner, spinnerVariants } from "./components/ui";
-export { Toaster, toast } from "./components/ui";
-export { Switch } from "./components/ui";
-export { Badge, badgeVariants } from "./components/ui";
-export { ChannelBadge, channelBadgeVariants } from "./components/ui";
-export type { ChannelBadgeProps } from "./components/ui";
-export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui";
-export { Logo, logoVariants } from "./components/ui";
-export { ThemeSwitcher, themeSwitcherVariants } from "./components/ui";
+export { Button, buttonVariants } from "./components/ui/index.js";
+export { CalendlyButton, calendlyButtonVariants } from "./components/ui/index.js";
+export type { CalendlyButtonProps } from "./components/ui/index.js";
+export { Input } from "./components/ui/index.js";
+export { Avatar, AvatarImage, AvatarFallback } from "./components/ui/index.js";
+export { Spinner, spinnerVariants } from "./components/ui/index.js";
+export { Toaster, toast } from "./components/ui/index.js";
+export { Switch } from "./components/ui/index.js";
+export { Badge, badgeVariants } from "./components/ui/index.js";
+export { ChannelBadge, channelBadgeVariants } from "./components/ui/index.js";
+export type { ChannelBadgeProps } from "./components/ui/index.js";
+export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/index.js";
+export { Logo, logoVariants } from "./components/ui/index.js";
+export { ThemeSwitcher, themeSwitcherVariants } from "./components/ui/index.js";
 
 // Sidebar system components
-export { Separator } from "./components/ui";
-export { Skeleton } from "./components/ui";
-export { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./components/ui";
-export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./components/ui";
+export { Separator } from "./components/ui/index.js";
+export { Skeleton } from "./components/ui/index.js";
+export { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./components/ui/index.js";
+export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./components/ui/index.js";
 export {
   DropdownMenu,
   DropdownMenuPortal,
@@ -68,7 +68,7 @@ export {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-} from "./components/ui";
+} from "./components/ui/index.js";
 export {
   Sheet,
   SheetPortal,
@@ -81,7 +81,7 @@ export {
   SheetTitle,
   SheetDescription,
   sheetVariants,
-} from "./components/ui";
+} from "./components/ui/index.js";
 export {
   Sidebar,
   SidebarContent,
@@ -108,7 +108,7 @@ export {
   SidebarTrigger,
   useSidebar,
   sidebarMenuButtonVariants,
-} from "./components/ui";
+} from "./components/ui/index.js";
 export {
   Breadcrumb,
   BreadcrumbList,
@@ -117,7 +117,7 @@ export {
   BreadcrumbPage,
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
-} from "./components/ui";
+} from "./components/ui/index.js";
 
 // Messaging Components (Primitives)
 export {
@@ -131,10 +131,10 @@ export {
   MessageStatus,
   MessageContent,
   MessageMedia,
-} from "./components/messaging";
+} from "./components/messaging/index.js";
 
 // Messaging Components (Indicators)
-export { AIBadge } from "./components/messaging";
+export { AIBadge } from "./components/messaging/index.js";
 
 // Messaging Components (Composed)
 export {
@@ -142,26 +142,26 @@ export {
   type InboxMessageProps,
   InboxMessageList,
   type InboxMessageListProps,
-} from "./components/messaging";
+} from "./components/messaging/index.js";
 
 // Messaging Components (Inputs)
 export {
   MessageComposer,
   type MessageComposerProps,
   type QuickAction as ComposerQuickAction,
-} from "./components/messaging";
+} from "./components/messaging/index.js";
 
 // Hooks
-export { useWebSocket } from "./hooks";
-export type { UseWebSocketOptions, UseWebSocketReturn } from "./hooks";
-export { useChatTransport, createTransportConfigFromUrl } from "./hooks";
-export type { UseChatTransportOptions, UseChatTransportReturn } from "./hooks";
-export { useSession } from "./hooks";
-export type { UseSessionOptions } from "./hooks";
-export { useAutoScroll } from "./hooks";
-export type { UseAutoScrollOptions, UseAutoScrollReturn } from "./hooks";
-export { useIsMobile } from "./hooks";
-export { useAGUI, AGUIEventType } from "./hooks";
+export { useWebSocket } from "./hooks/index.js";
+export type { UseWebSocketOptions, UseWebSocketReturn } from "./hooks/index.js";
+export { useChatTransport, createTransportConfigFromUrl } from "./hooks/index.js";
+export type { UseChatTransportOptions, UseChatTransportReturn } from "./hooks/index.js";
+export { useSession } from "./hooks/index.js";
+export type { UseSessionOptions } from "./hooks/index.js";
+export { useAutoScroll } from "./hooks/index.js";
+export type { UseAutoScrollOptions, UseAutoScrollReturn } from "./hooks/index.js";
+export { useIsMobile } from "./hooks/index.js";
+export { useAGUI, AGUIEventType } from "./hooks/index.js";
 export type {
   UseAGUIOptions,
   UseAGUIReturn,
@@ -169,7 +169,7 @@ export type {
   ToolCallState,
   RunState,
   RunStatus,
-} from "./hooks";
+} from "./hooks/index.js";
 
 // Store
 export { useChatStore } from "./stores/chatStore";
@@ -182,7 +182,7 @@ export {
   type QueuedMessage,
   type QueueMessageStatus,
   type MessageQueueConfig,
-} from "./services";
+} from "./services/index.js";
 
 // Circuit Breaker
 export {
@@ -193,7 +193,7 @@ export {
   type CircuitBreakerConfig,
   type CircuitBreakerStats,
   type CircuitBreakerListener,
-} from "./transports";
+} from "./transports/index.js";
 
 // Connection Metrics
 export {
@@ -203,7 +203,7 @@ export {
   type ConnectionMetrics,
   type MetricsEvent,
   type MetricsListener,
-} from "./transports";
+} from "./transports/index.js";
 
 // Types (Chat Widget)
 export type {
@@ -240,7 +240,7 @@ export {
   type NavDropdownProps,
   type NavDropdownItem,
   type FeaturedEffect,
-} from "./components/navigation";
+} from "./components/navigation/index.js";
 
 // Effect Components
 export {
@@ -248,7 +248,7 @@ export {
   type ShimmerTextProps,
   GradientBorder,
   type GradientBorderProps,
-} from "./components/effects";
+} from "./components/effects/index.js";
 
 // Utils
 export { cn } from "./utils/cn";
