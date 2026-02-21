@@ -467,6 +467,43 @@ export const AllFeaturedEffects: Story = {
   },
 };
 
+// Gold Glow Text Effect (ShimmerText on label)
+export const FeaturedGoldGlow: Story = {
+  args: {
+    label: "Servicios",
+    variant: "dark",
+    items: [
+      {
+        key: "landing",
+        href: "/servicios/landing-pages",
+        label: "Landing Pages",
+        description: "Tu landing lista en 7 días",
+      },
+      {
+        key: "pollada",
+        href: "/servicios/pollada",
+        label: "🍗 Pollada Virtual",
+        description: "¡Apoya al equipo! Desde S/.50",
+        badge: "Nuevo",
+        featured: "gold-glow",
+      },
+      {
+        key: "chatbot",
+        href: "/servicios/chatbot",
+        label: "AI Chatbot",
+        description: "Automatiza tu atención 24/7",
+      },
+    ],
+  },
+  parameters: {
+    docs: {
+      description: {
+        story: "**Gold Glow** - Animated shimmer effect on the text itself using ShimmerText component.",
+      },
+    },
+  },
+};
+
 // Light mode featured
 export const FeaturedLightMode: Story = {
   args: {

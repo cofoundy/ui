@@ -1,18 +1,18 @@
 // @cofoundy/ui - Shared UI Components & Chat Widget
 
 // Chat Widget
-export { ChatWidget } from "./components/chat-widget/index";
+export { ChatWidget } from "./components/chat-widget";
 export {
   ChatWidgetFloating,
   FloatingChatWidget,
   FloatingLauncher,
   FloatingWindow,
-} from "./components/chat-widget/index";
+} from "./components/chat-widget";
 export type {
   ChatWidgetFloatingProps,
   FloatingLauncherProps,
   FloatingWindowProps,
-} from "./components/chat-widget/index";
+} from "./components/chat-widget";
 export type { ChatWidgetConfig } from "./types";
 
 // Transport types
@@ -28,30 +28,33 @@ export type {
   FloatingPosition,
   WidgetMode,
   AppointmentConfirmation,
-} from "./transports/index";
-export { createWebSocketTransport } from "./transports/index";
+} from "./transports";
+export { createWebSocketTransport } from "./transports";
 
 // UI Components
-export { Button, buttonVariants } from "./components/ui/index";
-export { CalendlyButton, calendlyButtonVariants } from "./components/ui/index";
-export type { CalendlyButtonProps } from "./components/ui/index";
-export { Input } from "./components/ui/index";
-export { Avatar, AvatarImage, AvatarFallback } from "./components/ui/index";
-export { Spinner, spinnerVariants } from "./components/ui/index";
-export { Toaster, toast } from "./components/ui/index";
-export { Switch } from "./components/ui/index";
-export { Badge, badgeVariants } from "./components/ui/index";
-export { ChannelBadge, channelBadgeVariants } from "./components/ui/index";
-export type { ChannelBadgeProps } from "./components/ui/index";
-export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/index";
-export { Logo, logoVariants } from "./components/ui/index";
-export { ThemeSwitcher, themeSwitcherVariants } from "./components/ui/index";
+export { Button, buttonVariants } from "./components/ui";
+export { CalBookingButton, calBookingButtonVariants, CalendlyButton, calendlyButtonVariants } from "./components/ui";
+export type { CalBookingButtonProps, CalendlyButtonProps } from "./components/ui";
+export { Input } from "./components/ui";
+export { Avatar, AvatarImage, AvatarFallback } from "./components/ui";
+export { Spinner, spinnerVariants } from "./components/ui";
+export { Toaster, toast } from "./components/ui";
+export { Switch } from "./components/ui";
+export { Badge, badgeVariants } from "./components/ui";
+export { ChannelBadge, channelBadgeVariants } from "./components/ui";
+export type { ChannelBadgeProps } from "./components/ui";
+export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui";
+export { Logo, logoVariants } from "./components/ui";
+export { LogoHeader, logoHeaderVariants, Wordmark } from "./components/ui";
+export { CofoundyBadge, cofoundyBadgeVariants } from "./components/ui";
+export type { CofoundyBadgeProps } from "./components/ui";
+export { ThemeSwitcher, themeSwitcherVariants } from "./components/ui";
 
 // Sidebar system components
-export { Separator } from "./components/ui/index";
-export { Skeleton } from "./components/ui/index";
-export { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./components/ui/index";
-export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./components/ui/index";
+export { Separator } from "./components/ui";
+export { Skeleton } from "./components/ui";
+export { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./components/ui";
+export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./components/ui";
 export {
   DropdownMenu,
   DropdownMenuPortal,
@@ -68,7 +71,7 @@ export {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-} from "./components/ui/index";
+} from "./components/ui";
 export {
   Sheet,
   SheetPortal,
@@ -81,7 +84,7 @@ export {
   SheetTitle,
   SheetDescription,
   sheetVariants,
-} from "./components/ui/index";
+} from "./components/ui";
 export {
   Sidebar,
   SidebarContent,
@@ -108,7 +111,7 @@ export {
   SidebarTrigger,
   useSidebar,
   sidebarMenuButtonVariants,
-} from "./components/ui/index";
+} from "./components/ui";
 export {
   Breadcrumb,
   BreadcrumbList,
@@ -117,7 +120,7 @@ export {
   BreadcrumbPage,
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
-} from "./components/ui/index";
+} from "./components/ui";
 
 // Messaging Components (Primitives)
 export {
@@ -131,10 +134,10 @@ export {
   MessageStatus,
   MessageContent,
   MessageMedia,
-} from "./components/messaging/index";
+} from "./components/messaging";
 
 // Messaging Components (Indicators)
-export { AIBadge } from "./components/messaging/index";
+export { AIBadge } from "./components/messaging";
 
 // Messaging Components (Composed)
 export {
@@ -142,26 +145,26 @@ export {
   type InboxMessageProps,
   InboxMessageList,
   type InboxMessageListProps,
-} from "./components/messaging/index";
+} from "./components/messaging";
 
 // Messaging Components (Inputs)
 export {
   MessageComposer,
   type MessageComposerProps,
   type QuickAction as ComposerQuickAction,
-} from "./components/messaging/index";
+} from "./components/messaging";
 
 // Hooks
-export { useWebSocket } from "./hooks/index";
-export type { UseWebSocketOptions, UseWebSocketReturn } from "./hooks/index";
-export { useChatTransport, createTransportConfigFromUrl } from "./hooks/index";
-export type { UseChatTransportOptions, UseChatTransportReturn } from "./hooks/index";
-export { useSession } from "./hooks/index";
-export type { UseSessionOptions } from "./hooks/index";
-export { useAutoScroll } from "./hooks/index";
-export type { UseAutoScrollOptions, UseAutoScrollReturn } from "./hooks/index";
-export { useIsMobile } from "./hooks/index";
-export { useAGUI, AGUIEventType } from "./hooks/index";
+export { useWebSocket } from "./hooks";
+export type { UseWebSocketOptions, UseWebSocketReturn } from "./hooks";
+export { useChatTransport, createTransportConfigFromUrl } from "./hooks";
+export type { UseChatTransportOptions, UseChatTransportReturn } from "./hooks";
+export { useSession } from "./hooks";
+export type { UseSessionOptions } from "./hooks";
+export { useAutoScroll } from "./hooks";
+export type { UseAutoScrollOptions, UseAutoScrollReturn } from "./hooks";
+export { useIsMobile } from "./hooks";
+export { useAGUI, AGUIEventType } from "./hooks";
 export type {
   UseAGUIOptions,
   UseAGUIReturn,
@@ -169,7 +172,7 @@ export type {
   ToolCallState,
   RunState,
   RunStatus,
-} from "./hooks/index";
+} from "./hooks";
 
 // Store
 export { useChatStore } from "./stores/chatStore";
@@ -182,7 +185,7 @@ export {
   type QueuedMessage,
   type QueueMessageStatus,
   type MessageQueueConfig,
-} from "./services/index";
+} from "./services";
 
 // Circuit Breaker
 export {
@@ -193,7 +196,7 @@ export {
   type CircuitBreakerConfig,
   type CircuitBreakerStats,
   type CircuitBreakerListener,
-} from "./transports/index";
+} from "./transports";
 
 // Connection Metrics
 export {
@@ -203,7 +206,7 @@ export {
   type ConnectionMetrics,
   type MetricsEvent,
   type MetricsListener,
-} from "./transports/index";
+} from "./transports";
 
 // Types (Chat Widget)
 export type {
@@ -240,7 +243,7 @@ export {
   type NavDropdownProps,
   type NavDropdownItem,
   type FeaturedEffect,
-} from "./components/navigation/index";
+} from "./components/navigation";
 
 // Effect Components
 export {
@@ -248,7 +251,7 @@ export {
   type ShimmerTextProps,
   GradientBorder,
   type GradientBorderProps,
-} from "./components/effects/index";
+} from "./components/effects";
 
 // Utils
 export { cn } from "./utils/cn";

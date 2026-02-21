@@ -5,22 +5,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { Calendar } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
-// Calendly types
-declare global {
-  interface Window {
-    Calendly?: {
-      initPopupWidget: (options: { url: string; prefill?: CalendlyPrefill }) => void;
-    };
-  }
-}
-
-interface CalendlyPrefill {
-  name?: string;
-  email?: string;
-  customAnswers?: Record<string, string>;
-}
-
-const calendlyButtonVariants = cva(
+const calBookingButtonVariants = cva(
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--primary)]/30 cursor-pointer',
   {
     variants: {
@@ -47,115 +32,105 @@ const calendlyButtonVariants = cva(
   }
 );
 
-export interface CalendlyButtonProps
+export interface CalBookingButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof calendlyButtonVariants> {
-  /**
-   * Your Calendly event URL
-   * @example "https://calendly.com/cofoundy/intro"
-   */
+    VariantProps<typeof calBookingButtonVariants> {
+  /** Cal.com booking URL (e.g. "https://cal.cofoundy.dev/team/cofoundy/discovery") */
   url: string;
-  /**
-   * Prefill visitor information
-   */
-  prefill?: CalendlyPrefill;
-  /**
-   * Show calendar icon
-   * @default true
-   */
+  /** Prefill guest name */
+  name?: string;
+  /** Prefill guest email */
+  email?: string;
+  /** Show calendar icon @default true */
   showIcon?: boolean;
-  /**
-   * Icon position
-   * @default "left"
-   */
+  /** Icon position @default "left" */
   iconPosition?: 'left' | 'right';
 }
 
+/** @deprecated Use CalBookingButton instead */
+export type CalendlyButtonProps = CalBookingButtonProps;
+
 /**
- * CalendlyButton - Opens Calendly popup modal on click
+ * CalBookingButton - Opens Cal.com popup modal on click
  *
- * Uses Calendly's official popup widget for seamless scheduling.
- * Loads Calendly script lazily on first interaction.
+ * Loads Cal.com embed script lazily on first interaction.
+ * Falls back to opening URL in new tab if embed fails.
  *
  * @example
  * ```tsx
- * <CalendlyButton url="https://calendly.com/cofoundy/intro">
+ * <CalBookingButton url="https://cal.cofoundy.dev/team/cofoundy/discovery">
  *   Agendar llamada gratis
- * </CalendlyButton>
+ * </CalBookingButton>
  * ```
  */
-export function CalendlyButton({
+export function CalBookingButton({
   className,
   variant,
   size,
   url,
-  prefill,
+  name,
+  email,
   showIcon = true,
   iconPosition = 'left',
   children,
   onClick,
   ...props
-}: CalendlyButtonProps) {
-  const [isScriptLoaded, setIsScriptLoaded] = React.useState(false);
+}: CalBookingButtonProps) {
   const [isLoading, setIsLoading] = React.useState(false);
 
-  // Load Calendly script lazily
-  const loadCalendlyScript = React.useCallback(() => {
+  const loadCalEmbed = React.useCallback(() => {
     return new Promise<void>((resolve, reject) => {
-      // Check if already loaded
-      if (window.Calendly) {
+      if ((window as any).Cal) {
         resolve();
         return;
       }
 
-      // Check if script tag exists
       const existingScript = document.querySelector(
-        'script[src*="calendly.com/assets/external/widget.js"]'
+        'script[src*="cal.com/embed"]'
       );
       if (existingScript) {
         existingScript.addEventListener('load', () => resolve());
         return;
       }
 
-      // Load CSS
-      const link = document.createElement('link');
-      link.href = 'https://assets.calendly.com/assets/external/widget.css';
-      link.rel = 'stylesheet';
-      document.head.appendChild(link);
-
-      // Load JS
       const script = document.createElement('script');
-      script.src = 'https://assets.calendly.com/assets/external/widget.js';
+      script.src = 'https://app.cal.com/embed/embed.js';
       script.async = true;
-      script.onload = () => {
-        setIsScriptLoaded(true);
-        resolve();
-      };
-      script.onerror = () => reject(new Error('Failed to load Calendly widget'));
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Cal.com embed'));
       document.body.appendChild(script);
     });
   }, []);
 
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Call original onClick if provided
     onClick?.(e);
-
     if (e.defaultPrevented) return;
 
     setIsLoading(true);
 
     try {
-      await loadCalendlyScript();
+      await loadCalEmbed();
 
-      if (window.Calendly) {
-        window.Calendly.initPopupWidget({
-          url,
-          prefill,
+      const Cal = (window as any).Cal;
+      if (Cal) {
+        // Extract the path from the full URL
+        // e.g. "https://cal.cofoundy.dev/team/cofoundy/discovery" -> "team/cofoundy/discovery"
+        const calUrl = new URL(url);
+        const calLink = calUrl.pathname.replace(/^\//, '');
+
+        Cal('init', { origin: calUrl.origin });
+        Cal('modal', {
+          calLink,
+          config: {
+            layout: 'month_view',
+            theme: 'dark',
+            ...(name && { name }),
+            ...(email && { email }),
+          },
         });
       }
     } catch (error) {
-      console.error('CalendlyButton: Failed to open popup', error);
-      // Fallback: open in new tab
+      console.error('CalBookingButton: Failed to open popup', error);
       window.open(url, '_blank', 'noopener,noreferrer');
     } finally {
       setIsLoading(false);
@@ -176,7 +151,7 @@ export function CalendlyButton({
   return (
     <button
       type="button"
-      className={cn(calendlyButtonVariants({ variant, size, className }))}
+      className={cn(calBookingButtonVariants({ variant, size, className }))}
       onClick={handleClick}
       disabled={isLoading}
       {...props}
@@ -188,4 +163,9 @@ export function CalendlyButton({
   );
 }
 
-export { calendlyButtonVariants };
+/** @deprecated Use CalBookingButton instead */
+export const CalendlyButton = CalBookingButton;
+
+/** @deprecated Use calBookingButtonVariants instead */
+export const calendlyButtonVariants = calBookingButtonVariants;
+export { calBookingButtonVariants };

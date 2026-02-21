@@ -1,6 +1,6 @@
 export { Button, buttonVariants } from "./button";
-export { CalendlyButton, calendlyButtonVariants } from "./calendly-button";
-export type { CalendlyButtonProps } from "./calendly-button";
+export { CalBookingButton, calBookingButtonVariants, CalendlyButton, calendlyButtonVariants } from "./calendly-button";
+export type { CalBookingButtonProps, CalendlyButtonProps } from "./calendly-button";
 export { Input } from "./input";
 export { Avatar, AvatarImage, AvatarFallback } from "./avatar";
 export { Spinner, spinnerVariants } from "./spinner";
@@ -12,6 +12,8 @@ export type { ChannelBadgeProps } from "./channel-badge";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Logo, logoVariants } from "./logo";
 export { LogoHeader, logoHeaderVariants, Wordmark } from "./logo-header";
+export { CofoundyBadge, cofoundyBadgeVariants } from "./cofoundy-badge";
+export type { CofoundyBadgeProps } from "./cofoundy-badge";
 export { ThemeSwitcher, themeSwitcherVariants } from "./theme-switcher";
 
 // Sidebar system components
