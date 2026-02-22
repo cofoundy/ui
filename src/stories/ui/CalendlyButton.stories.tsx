@@ -1,15 +1,15 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { CalendlyButton } from '../../components/ui/calendly-button';
+import { CalBookingButton } from '../../components/ui/calendly-button';
 
-const meta: Meta<typeof CalendlyButton> = {
-  title: 'UI/CalendlyButton',
-  component: CalendlyButton,
+const meta: Meta<typeof CalBookingButton> = {
+  title: 'UI/CalBookingButton',
+  component: CalBookingButton,
   parameters: {
     layout: 'centered',
     docs: {
       description: {
         component:
-          'A button that opens a Calendly popup modal for scheduling appointments. Loads Calendly script lazily on first click.',
+          'A button that opens a Cal.com popup modal for scheduling appointments. Loads Cal.com embed script lazily on first click.',
       },
     },
   },
@@ -36,16 +36,15 @@ const meta: Meta<typeof CalendlyButton> = {
     },
     url: {
       control: 'text',
-      description: 'Calendly event URL',
+      description: 'Cal.com booking URL',
     },
   },
 };
 
 export default meta;
-type Story = StoryObj<typeof CalendlyButton>;
+type Story = StoryObj<typeof CalBookingButton>;
 
-// Demo URL - replace with actual Calendly link
-const DEMO_URL = 'https://calendly.com/d/demo';
+const DEMO_URL = 'https://cal.cofoundy.dev/team/cofoundy/discovery';
 
 export const Primary: Story = {
   args: {
@@ -125,28 +124,28 @@ export const AllVariants: Story = {
   render: () => (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-4">
-        <CalendlyButton url={DEMO_URL} variant="primary" size="lg">
+        <CalBookingButton url={DEMO_URL} variant="primary" size="lg">
           Primary Large
-        </CalendlyButton>
-        <CalendlyButton url={DEMO_URL} variant="secondary" size="lg">
+        </CalBookingButton>
+        <CalBookingButton url={DEMO_URL} variant="secondary" size="lg">
           Secondary Large
-        </CalendlyButton>
+        </CalBookingButton>
       </div>
       <div className="flex items-center gap-4">
-        <CalendlyButton url={DEMO_URL} variant="outline" size="md">
+        <CalBookingButton url={DEMO_URL} variant="outline" size="md">
           Outline Medium
-        </CalendlyButton>
-        <CalendlyButton url={DEMO_URL} variant="ghost" size="md">
+        </CalBookingButton>
+        <CalBookingButton url={DEMO_URL} variant="ghost" size="md">
           Ghost Medium
-        </CalendlyButton>
+        </CalBookingButton>
       </div>
       <div className="flex items-center gap-4">
-        <CalendlyButton url={DEMO_URL} variant="primary" size="sm">
+        <CalBookingButton url={DEMO_URL} variant="primary" size="sm">
           Small
-        </CalendlyButton>
-        <CalendlyButton url={DEMO_URL} variant="primary" size="sm" showIcon={false}>
+        </CalBookingButton>
+        <CalBookingButton url={DEMO_URL} variant="primary" size="sm" showIcon={false}>
           No Icon
-        </CalendlyButton>
+        </CalBookingButton>
       </div>
     </div>
   ),
@@ -162,9 +161,9 @@ export const InContext: Story = {
       <p className="text-[var(--muted-foreground)] mb-6">
         Agenda una llamada de 30 minutos para discutir tu proyecto.
       </p>
-      <CalendlyButton url={DEMO_URL} variant="primary" size="lg" className="w-full">
+      <CalBookingButton url={DEMO_URL} variant="primary" size="lg" className="w-full">
         Agendar llamada gratis
-      </CalendlyButton>
+      </CalBookingButton>
     </div>
   ),
 };

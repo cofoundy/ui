@@ -78,30 +78,6 @@ export function CalBookingButton({
 }: CalBookingButtonProps) {
   const [isLoading, setIsLoading] = React.useState(false);
 
-  const loadCalEmbed = React.useCallback(() => {
-    return new Promise<void>((resolve, reject) => {
-      if ((window as any).Cal) {
-        resolve();
-        return;
-      }
-
-      const existingScript = document.querySelector(
-        'script[src*="cal.com/embed"]'
-      );
-      if (existingScript) {
-        existingScript.addEventListener('load', () => resolve());
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://app.cal.com/embed/embed.js';
-      script.async = true;
-      script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Failed to load Cal.com embed'));
-      document.body.appendChild(script);
-    });
-  }, []);
-
   const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
     onClick?.(e);
     if (e.defaultPrevented) return;
@@ -109,26 +85,52 @@ export function CalBookingButton({
     setIsLoading(true);
 
     try {
-      await loadCalEmbed();
+      const win = window as any;
+      const calUrl = new URL(url);
+      const calLink = calUrl.pathname.replace(/^\//, '');
+      const embedSrc = `${calUrl.origin}/embed/embed.js`;
 
-      const Cal = (window as any).Cal;
-      if (Cal) {
-        // Extract the path from the full URL
-        // e.g. "https://cal.cofoundy.dev/team/cofoundy/discovery" -> "team/cofoundy/discovery"
-        const calUrl = new URL(url);
-        const calLink = calUrl.pathname.replace(/^\//, '');
-
-        Cal('init', { origin: calUrl.origin });
-        Cal('modal', {
-          calLink,
-          config: {
-            layout: 'month_view',
-            theme: 'dark',
-            ...(name && { name }),
-            ...(email && { email }),
-          },
-        });
+      // Cal.com official embed snippet: create queue function, it auto-loads the script
+      if (!win.Cal) {
+        (function (C: any, A: string, L: string) {
+          const p = function (a: any, ar: any) { a.q.push(ar); };
+          const d = C.document;
+          C.Cal = C.Cal || function () {
+            const cal = C.Cal;
+            const ar = arguments;
+            if (!cal.loaded) {
+              cal.ns = {};
+              cal.q = cal.q || [];
+              d.head.appendChild(d.createElement('script')).src = A;
+              cal.loaded = true;
+            }
+            if (ar[0] === L) {
+              const api = function () { p(api, arguments); } as any;
+              const namespace = ar[1];
+              api.q = api.q || [];
+              if (typeof namespace === 'string') {
+                cal.ns[namespace] = cal.ns[namespace] || api;
+                p(cal.ns[namespace], ar);
+                p(cal, ['initNamespace', namespace]);
+              } else p(cal, ar);
+              return;
+            }
+            p(cal, ar);
+          };
+        })(win, embedSrc, 'init');
       }
+
+      const Cal = win.Cal;
+      Cal('init', { origin: calUrl.origin });
+      Cal('modal', {
+        calLink,
+        config: {
+          layout: 'month_view',
+          theme: 'dark',
+          ...(name && { name }),
+          ...(email && { email }),
+        },
+      });
     } catch (error) {
       console.error('CalBookingButton: Failed to open popup', error);
       window.open(url, '_blank', 'noopener,noreferrer');
