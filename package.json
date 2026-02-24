@@ -72,7 +72,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "build": "storybook build",
-    "start": "serve storybook-static -s -l ${PORT:-3000}",
+    "start": "serve storybook-static -l ${PORT:-3000}",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "build:iife": "vite build --config vite.config.iife.ts",
