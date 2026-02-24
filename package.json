@@ -71,7 +71,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "build": "storybook build",
+    "build": "storybook build && cp serve.json storybook-static/",
     "start": "serve storybook-static -l ${PORT:-3000}",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
