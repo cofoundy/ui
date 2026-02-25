@@ -45,6 +45,8 @@ export interface CalBookingButtonProps
   showIcon?: boolean;
   /** Icon position @default "left" */
   iconPosition?: 'left' | 'right';
+  /** Locale for Cal.com embed @default auto-detects from browser, falls back to "es" */
+  locale?: string;
 }
 
 /** @deprecated Use CalBookingButton instead */
@@ -72,6 +74,7 @@ export function CalBookingButton({
   email,
   showIcon = true,
   iconPosition = 'left',
+  locale,
   children,
   onClick,
   ...props
@@ -121,12 +124,14 @@ export function CalBookingButton({
       }
 
       const Cal = win.Cal;
+      const detectedLocale = locale || navigator.language?.split('-')[0] || 'es';
       Cal('init', { origin: calUrl.origin });
       Cal('modal', {
         calLink,
         config: {
           layout: 'month_view',
           theme: 'dark',
+          locale: detectedLocale,
           ...(name && { name }),
           ...(email && { email }),
         },
