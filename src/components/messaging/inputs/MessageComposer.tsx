@@ -7,6 +7,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
   type ChangeEvent,
+  type ClipboardEvent,
   type ReactNode,
 } from "react";
 import { Send, Paperclip, Smile } from "lucide-react";
@@ -37,6 +38,8 @@ export interface MessageComposerProps {
   showEmoji?: boolean;
   /** Show attachment button */
   showAttachment?: boolean;
+  /** Called when user pastes files (e.g. images from clipboard) */
+  onPaste?: (files: File[]) => void;
   className?: string;
 }
 
@@ -53,6 +56,7 @@ export function MessageComposer({
   maxHeight = 120,
   showEmoji = false,
   showAttachment = true,
+  onPaste,
   className,
 }: MessageComposerProps) {
   const [message, setMessage] = useState("");
@@ -112,6 +116,28 @@ export function MessageComposer({
       }
     },
     [onAttach]
+  );
+
+  // Handle paste (images from clipboard)
+  const handlePaste = useCallback(
+    (e: ClipboardEvent<HTMLTextAreaElement>) => {
+      if (!onPaste) return;
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (const item of Array.from(items)) {
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      }
+      if (files.length > 0) {
+        e.preventDefault();
+        onPaste(files);
+      }
+    },
+    [onPaste]
   );
 
   // Open file picker
@@ -178,6 +204,7 @@ export function MessageComposer({
               value={message}
               onChange={handleInput}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
               placeholder={placeholder}
               disabled={disabled}
               rows={1}
