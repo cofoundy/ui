@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { useState } from "react";
 import { MessageComposer } from "../../components/messaging/inputs/MessageComposer";
-import { Calendar, Phone, XCircle } from "lucide-react";
+import { MessageSquareText, Smile, StickyNote, Reply } from "lucide-react";
 
 const meta: Meta<typeof MessageComposer> = {
   title: "Messaging/MessageComposer",
@@ -8,16 +9,11 @@ const meta: Meta<typeof MessageComposer> = {
   tags: ["autodocs"],
   decorators: [
     (Story) => (
-      <div className="w-[500px] bg-[var(--chat-background)]">
+      <div className="w-[500px] bg-[var(--chat-background)] p-4">
         <Story />
       </div>
     ),
   ],
-  argTypes: {
-    disabled: { control: "boolean" },
-    showAttachment: { control: "boolean" },
-    showEmoji: { control: "boolean" },
-  },
 };
 
 export default meta;
@@ -30,32 +26,6 @@ export const Default: Story = {
   },
 };
 
-export const WithQuickActions: Story = {
-  args: {
-    onSend: (message) => console.log("Send:", message),
-    quickActions: [
-      {
-        id: "schedule",
-        label: "/schedule",
-        icon: <Calendar className="w-3 h-3" />,
-        onClick: () => console.log("Schedule clicked"),
-      },
-      {
-        id: "call",
-        label: "/call",
-        icon: <Phone className="w-3 h-3" />,
-        onClick: () => console.log("Call clicked"),
-      },
-      {
-        id: "close",
-        label: "/close",
-        icon: <XCircle className="w-3 h-3" />,
-        onClick: () => console.log("Close clicked"),
-      },
-    ],
-  },
-};
-
 export const WithAttachment: Story = {
   args: {
     onSend: (message) => console.log("Send:", message),
@@ -64,35 +34,74 @@ export const WithAttachment: Story = {
   },
 };
 
-export const WithEmoji: Story = {
-  args: {
-    onSend: (message) => console.log("Send:", message),
-    showEmoji: true,
-  },
-};
-
-export const FullFeatured: Story = {
+export const WithToolbarItems: Story = {
   args: {
     onSend: (message) => console.log("Send:", message),
     onAttach: (files) => console.log("Attach:", files),
     showAttachment: true,
-    showEmoji: true,
-    quickActions: [
+    toolbarItems: [
       {
-        id: "schedule",
-        label: "/schedule",
-        icon: <Calendar className="w-3 h-3" />,
-        onClick: () => console.log("Schedule clicked"),
+        id: "emoji",
+        icon: <Smile className="w-[18px] h-[18px]" />,
+        label: "Emojis",
+        onClick: () => console.log("Emoji clicked"),
       },
       {
-        id: "call",
-        label: "/call",
-        icon: <Phone className="w-3 h-3" />,
-        onClick: () => console.log("Call clicked"),
+        id: "template",
+        icon: <MessageSquareText className="w-[18px] h-[18px]" />,
+        label: "WhatsApp Template",
+        onClick: () => console.log("Template clicked"),
+        hideInModes: ["note"],
       },
     ],
-    placeholder: "Type your message or use quick actions...",
   },
+};
+
+/** Intercom/Front pattern: tabs to switch between Reply and Internal Note */
+export const WithModeTabs = () => {
+  const [mode, setMode] = useState("reply");
+
+  return (
+    <MessageComposer
+      onSend={(msg) => console.log(`[${mode}] Send:`, msg)}
+      onAttach={(files) => console.log("Attach:", files)}
+      showAttachment={true}
+      modes={[
+        {
+          id: "reply",
+          label: "Responder",
+          icon: <Reply className="w-3.5 h-3.5" />,
+          placeholder: "Escribe un mensaje...",
+          sendLabel: "Enviar",
+        },
+        {
+          id: "note",
+          label: "Nota interna",
+          icon: <StickyNote className="w-3.5 h-3.5" />,
+          placeholder: "Escribe una nota interna...",
+          sendLabel: "Añadir",
+          activeClass: "text-amber-400 border-amber-400",
+        },
+      ]}
+      activeMode={mode}
+      onModeChange={setMode}
+      toolbarItems={[
+        {
+          id: "emoji",
+          icon: <Smile className="w-[18px] h-[18px]" />,
+          label: "Emojis",
+          onClick: () => console.log("Emoji"),
+        },
+        {
+          id: "template",
+          icon: <MessageSquareText className="w-[18px] h-[18px]" />,
+          label: "Plantilla WhatsApp",
+          onClick: () => console.log("Template"),
+          hideInModes: ["note"],
+        },
+      ]}
+    />
+  );
 };
 
 export const Disabled: Story = {
@@ -100,12 +109,5 @@ export const Disabled: Story = {
     onSend: (message) => console.log("Send:", message),
     disabled: true,
     placeholder: "Conversation closed",
-  },
-};
-
-export const CustomPlaceholder: Story = {
-  args: {
-    onSend: (message) => console.log("Send:", message),
-    placeholder: "Reply to customer...",
   },
 };

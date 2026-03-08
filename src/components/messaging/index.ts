@@ -27,5 +27,7 @@ export {
 export {
   MessageComposer,
   type MessageComposerProps,
+  type ComposerMode,
+  type ComposerToolbarItem,
   type QuickAction,
 } from "./inputs";

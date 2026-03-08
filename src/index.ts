@@ -151,6 +151,8 @@ export {
 export {
   MessageComposer,
   type MessageComposerProps,
+  type ComposerMode,
+  type ComposerToolbarItem,
   type QuickAction as ComposerQuickAction,
 } from "./components/messaging";
 
