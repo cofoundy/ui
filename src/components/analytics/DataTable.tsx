@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "../../utils/cn";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 type ColumnFormat = "number" | "duration" | "percentage" | "text";
 
@@ -16,6 +17,7 @@ export interface DataTableProps {
   rows: Record<string, unknown>[];
   emptyText?: string;
   highlight?: "best" | "none";
+  animate?: boolean;
   className?: string;
 }
 
@@ -74,6 +76,7 @@ export function DataTable({
   rows,
   emptyText = "Sin datos",
   highlight = "none",
+  animate = true,
   className,
 }: DataTableProps) {
   const bestValues = highlight === "best" ? findBestValues(columns, rows) : {};
@@ -145,7 +148,15 @@ export function DataTable({
                         : "text-[var(--chat-foreground)]"
                     )}
                   >
-                    {formatCell(row[col.key], format)}
+                    {isNumeric ? (
+                      <AnimatedNumber
+                        value={Number(row[col.key])}
+                        format={format as "number" | "duration" | "percentage"}
+                        animate={animate}
+                      />
+                    ) : (
+                      formatCell(row[col.key], format)
+                    )}
                   </td>
                 );
               })}

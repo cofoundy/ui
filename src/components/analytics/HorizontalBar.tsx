@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 import { cn } from "../../utils/cn";
+import { useMountTransition } from "../../hooks/useMountTransition";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 export interface HorizontalBarItem {
   label: string;
@@ -23,6 +25,7 @@ export function HorizontalBar({
   animate = true,
   className,
 }: HorizontalBarProps) {
+  const mounted = useMountTransition(animate);
   const maxValue = Math.max(...items.map((d) => d.value), 1);
 
   return (
@@ -44,9 +47,9 @@ export function HorizontalBar({
 
             <div className="flex-1 h-6 rounded-md overflow-hidden bg-[var(--chat-border)]">
               <div
-                className="h-full rounded-md transition-[width]"
+                className="h-full rounded-md"
                 style={{
-                  width: `${pct}%`,
+                  width: mounted ? `${pct}%` : "0%",
                   backgroundColor: item.color,
                   transition: animate
                     ? `width var(--cf-duration-smooth) var(--cf-ease-default) ${i * 80}ms`
@@ -57,7 +60,7 @@ export function HorizontalBar({
 
             {showCounts && (
               <span className="text-xs font-mono text-[var(--chat-muted)] w-12 text-right shrink-0">
-                {item.value.toLocaleString()}
+                <AnimatedNumber value={item.value} animate={animate} />
               </span>
             )}
           </div>

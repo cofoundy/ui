@@ -1,6 +1,8 @@
 "use client";
 
 import { cn } from "../../utils/cn";
+import { useMountTransition } from "../../hooks/useMountTransition";
+import { useAnimatedValue } from "../../hooks/useAnimatedValue";
 
 type ProgressFormat = "number" | "percentage" | "fraction";
 
@@ -16,14 +18,15 @@ export interface ProgressBarProps {
 }
 
 function formatProgress(value: number, max: number, format: ProgressFormat): string {
+  const rounded = Math.round(value);
   switch (format) {
     case "percentage":
-      return `${Math.round((value / max) * 100)}%`;
+      return `${Math.round((rounded / max) * 100)}%`;
     case "fraction":
-      return `${value.toLocaleString()} / ${max.toLocaleString()}`;
+      return `${rounded.toLocaleString()} / ${max.toLocaleString()}`;
     case "number":
     default:
-      return value.toLocaleString();
+      return rounded.toLocaleString();
   }
 }
 
@@ -37,6 +40,8 @@ export function ProgressBar({
   animate = true,
   className,
 }: ProgressBarProps) {
+  const mounted = useMountTransition(animate);
+  const animatedValue = useAnimatedValue({ value, enabled: animate });
   const pct = Math.min((value / Math.max(max, 1)) * 100, 100);
 
   return (
@@ -45,15 +50,15 @@ export function ProgressBar({
         <div className="flex items-center justify-between">
           <span className="text-xs font-sans text-[var(--chat-foreground)]">{label}</span>
           <span className="text-xs font-mono text-[var(--chat-muted)]">
-            {formatProgress(value, max, format)}
+            {formatProgress(animatedValue, max, format)}
           </span>
         </div>
       )}
       <div className="h-2 w-full rounded-full overflow-hidden bg-[var(--chat-border)]">
         <div
-          className="h-full rounded-full transition-[width]"
+          className="h-full rounded-full"
           style={{
-            width: `${pct}%`,
+            width: mounted ? `${pct}%` : "0%",
             backgroundColor: color,
             transition: animate
               ? `width var(--cf-duration-smooth) var(--cf-ease-default)`

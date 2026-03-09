@@ -193,6 +193,9 @@ export type { UseSessionOptions } from "./hooks";
 export { useAutoScroll } from "./hooks";
 export type { UseAutoScrollOptions, UseAutoScrollReturn } from "./hooks";
 export { useIsMobile } from "./hooks";
+export { useAnimatedValue } from "./hooks";
+export type { UseAnimatedValueOptions } from "./hooks";
+export { useMountTransition } from "./hooks";
 export { useAGUI, AGUIEventType } from "./hooks";
 export type {
   UseAGUIOptions,
@@ -300,6 +303,7 @@ export {
   Leaderboard,
   FunnelChart,
   ActivityFeed,
+  AnimatedNumber,
 } from "./components/analytics";
 export type {
   StatCardProps,
@@ -329,6 +333,7 @@ export type {
   FunnelStep,
   ActivityFeedProps,
   ActivityFeedItem,
+  AnimatedNumberProps,
 } from "./components/analytics";
 
 // Utils

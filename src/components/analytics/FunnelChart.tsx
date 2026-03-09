@@ -1,6 +1,8 @@
 "use client";
 
 import { cn } from "../../utils/cn";
+import { useMountTransition } from "../../hooks/useMountTransition";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 export interface FunnelStep {
   label: string;
@@ -23,6 +25,8 @@ export function FunnelChart({
   animate = true,
   className,
 }: FunnelChartProps) {
+  const mounted = useMountTransition(animate);
+
   if (steps.length === 0) return null;
 
   const maxValue = steps[0].value;
@@ -31,14 +35,13 @@ export function FunnelChart({
     <div data-slot="funnel-chart" className={cn("flex flex-col gap-1", className)}>
       {steps.map((step, i) => {
         const pct = maxValue > 0 ? (step.value / maxValue) * 100 : 0;
-        const widthPct = Math.max(pct, 8); // min width so labels fit
+        const widthPct = Math.max(pct, 8);
         const prevValue = i > 0 ? steps[i - 1].value : step.value;
         const dropoff = prevValue > 0 ? Math.round(((prevValue - step.value) / prevValue) * 100) : 0;
         const color = step.color ?? "var(--chat-primary)";
 
         return (
           <div key={i} className="flex flex-col">
-            {/* Dropoff indicator */}
             {showDropoff && i > 0 && dropoff > 0 && (
               <div className="flex items-center gap-2 py-0.5 pl-4">
                 <span className="text-[10px] font-mono text-[var(--chat-error)]">
@@ -50,13 +53,12 @@ export function FunnelChart({
               </div>
             )}
 
-            {/* Funnel bar */}
             <div className="flex items-center gap-3">
               <div className="flex-1 flex justify-center">
                 <div
-                  className="h-10 rounded-lg flex items-center justify-between px-3 transition-[width]"
+                  className="h-10 rounded-lg flex items-center justify-between px-3"
                   style={{
-                    width: `${widthPct}%`,
+                    width: mounted ? `${widthPct}%` : "0%",
                     backgroundColor: color,
                     opacity: 0.15 + (pct / 100) * 0.85,
                     transition: animate
@@ -68,7 +70,7 @@ export function FunnelChart({
                     {step.label}
                   </span>
                   <span className="text-xs font-mono text-[var(--chat-foreground)] shrink-0 ml-2">
-                    {step.value.toLocaleString()}
+                    <AnimatedNumber value={step.value} animate={animate} />
                     {showPercentages && i > 0 && (
                       <span className="text-[var(--chat-muted)] ml-1">
                         ({Math.round(pct)}%)

@@ -3,26 +3,7 @@
 import type { ReactNode } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../utils/cn";
-
-function formatValue(value: number, format: StatCardFormat): string {
-  switch (format) {
-    case "duration": {
-      if (value >= 3600) {
-        const h = Math.floor(value / 3600);
-        const m = Math.floor((value % 3600) / 60);
-        return `${h}h ${String(m).padStart(2, "0")}m`;
-      }
-      const m = Math.floor(value / 60);
-      const s = value % 60;
-      return `${m}m ${String(s).padStart(2, "0")}s`;
-    }
-    case "percentage":
-      return `${value}%`;
-    case "number":
-    default:
-      return value.toLocaleString();
-  }
-}
+import { AnimatedNumber } from "./AnimatedNumber";
 
 const statCardVariants = cva(
   "relative overflow-hidden bg-[var(--chat-card)] border border-[var(--chat-border)] rounded-xl cf-animate-fade-in",
@@ -56,6 +37,7 @@ export interface StatCardProps extends VariantProps<typeof statCardVariants> {
   icon?: ReactNode;
   muted?: boolean;
   mutedText?: string;
+  animate?: boolean;
   className?: string;
 }
 
@@ -68,6 +50,7 @@ export function StatCard({
   icon,
   muted = false,
   mutedText = "< 10 datos",
+  animate = true,
   size,
   className,
 }: StatCardProps) {
@@ -99,7 +82,9 @@ export function StatCard({
           muted && "text-[var(--chat-muted)]"
         )}
       >
-        {muted ? "---" : formatValue(value, format)}
+        {muted ? "---" : (
+          <AnimatedNumber value={value} format={format} animate={animate} />
+        )}
       </div>
 
       {muted && mutedText && (

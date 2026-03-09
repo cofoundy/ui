@@ -1,6 +1,8 @@
 "use client";
 
 import { cn } from "../../utils/cn";
+import { useMountTransition } from "../../hooks/useMountTransition";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 export interface StackedBarSegment {
   label: string;
@@ -27,6 +29,7 @@ export function StackedBar({
   animate = true,
   className,
 }: StackedBarProps) {
+  const mounted = useMountTransition(animate);
   const computedTotal = total ?? segments.reduce((sum, s) => sum + s.value, 0);
 
   if (computedTotal === 0) return null;
@@ -42,9 +45,9 @@ export function StackedBar({
           return (
             <div
               key={i}
-              className="relative flex items-center justify-center transition-[width]"
+              className="relative flex items-center justify-center"
               style={{
-                width: `${pct}%`,
+                width: mounted ? `${pct}%` : "0%",
                 backgroundColor: seg.color,
                 transition: animate
                   ? `width var(--cf-duration-smooth) var(--cf-ease-default) ${i * 80}ms`
@@ -75,7 +78,7 @@ export function StackedBar({
                   {seg.label}
                 </span>
                 <span className="font-mono text-[var(--chat-muted)]">
-                  {seg.value.toLocaleString()} ({Math.round(pct)}%)
+                  <AnimatedNumber value={seg.value} animate={animate} /> ({Math.round(pct)}%)
                 </span>
               </div>
             );

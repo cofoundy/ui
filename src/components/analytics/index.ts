@@ -42,3 +42,6 @@ export type { FunnelChartProps, FunnelStep } from "./FunnelChart";
 
 export { ActivityFeed } from "./ActivityFeed";
 export type { ActivityFeedProps, ActivityFeedItem } from "./ActivityFeed";
+
+export { AnimatedNumber } from "./AnimatedNumber";
+export type { AnimatedNumberProps } from "./AnimatedNumber";

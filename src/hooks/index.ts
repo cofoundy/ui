@@ -21,3 +21,8 @@ export type {
   RunState,
   RunStatus,
 } from "./useAGUI";
+
+export { useAnimatedValue } from "./useAnimatedValue";
+export type { UseAnimatedValueOptions } from "./useAnimatedValue";
+
+export { useMountTransition } from "./useMountTransition";

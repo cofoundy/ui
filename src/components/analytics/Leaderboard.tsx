@@ -2,6 +2,8 @@
 
 import type { ReactNode } from "react";
 import { cn } from "../../utils/cn";
+import { useMountTransition } from "../../hooks/useMountTransition";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 type LeaderboardFormat = "number" | "duration" | "percentage";
 
@@ -18,27 +20,8 @@ export interface LeaderboardProps {
   format?: LeaderboardFormat;
   showBars?: boolean;
   podiumStyle?: boolean;
+  animate?: boolean;
   className?: string;
-}
-
-function formatScore(value: number, format: LeaderboardFormat): string {
-  switch (format) {
-    case "duration": {
-      if (value >= 3600) {
-        const h = Math.floor(value / 3600);
-        const m = Math.floor((value % 3600) / 60);
-        return `${h}h ${String(m).padStart(2, "0")}m`;
-      }
-      const m = Math.floor(value / 60);
-      const s = value % 60;
-      return `${m}m ${String(s).padStart(2, "0")}s`;
-    }
-    case "percentage":
-      return `${value}%`;
-    case "number":
-    default:
-      return value.toLocaleString();
-  }
 }
 
 const rankColors = [
@@ -53,8 +36,10 @@ export function Leaderboard({
   format = "number",
   showBars = true,
   podiumStyle = true,
+  animate = true,
   className,
 }: LeaderboardProps) {
+  const mounted = useMountTransition(animate);
   const maxScore = Math.max(...items.map((i) => i.score), 1);
 
   return (
@@ -79,7 +64,6 @@ export function Leaderboard({
                 : "hover:bg-[var(--chat-card)]"
             )}
           >
-            {/* Rank */}
             <span
               className={cn(
                 "w-6 text-center font-mono text-sm font-semibold shrink-0",
@@ -92,14 +76,12 @@ export function Leaderboard({
               {rank}
             </span>
 
-            {/* Avatar */}
             {item.avatar && (
               <span className="shrink-0 [&>*]:size-7 [&>svg]:size-5">
                 {item.avatar}
               </span>
             )}
 
-            {/* Name + subtitle */}
             <div className="flex flex-col flex-1 min-w-0">
               <span className="text-sm font-sans text-[var(--chat-foreground)] truncate">
                 {item.name}
@@ -111,14 +93,13 @@ export function Leaderboard({
               )}
             </div>
 
-            {/* Bar + score */}
             <div className="flex items-center gap-2 shrink-0">
               {showBars && (
                 <div className="w-20 h-1.5 rounded-full overflow-hidden bg-[var(--chat-border)]">
                   <div
-                    className="h-full rounded-full transition-[width]"
+                    className="h-full rounded-full"
                     style={{
-                      width: `${barPct}%`,
+                      width: mounted ? `${barPct}%` : "0%",
                       backgroundColor: isPodium
                         ? rankColors[i] ?? "var(--chat-primary)"
                         : "var(--chat-primary)",
@@ -128,7 +109,7 @@ export function Leaderboard({
                 </div>
               )}
               <span className="font-mono text-sm text-[var(--chat-foreground)] w-14 text-right">
-                {formatScore(item.score, format)}
+                <AnimatedNumber value={item.score} format={format} animate={animate} />
               </span>
             </div>
           </div>
