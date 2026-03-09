@@ -25,9 +25,9 @@ export interface LeaderboardProps {
 }
 
 const rankColors = [
-  "var(--chat-warning)",   // #1 gold
-  "var(--chat-muted)",     // #2 silver
-  "#CD7F32",               // #3 bronze
+  "var(--rank-gold)",      // #1 gold
+  "var(--rank-silver)",    // #2 silver
+  "var(--rank-bronze)",    // #3 bronze
 ];
 
 export function Leaderboard({

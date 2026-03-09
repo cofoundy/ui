@@ -35,7 +35,7 @@ export function GradientBorder({
   duration = 3,
   disabled = false,
   glow = false,
-  background = "#020916",
+  background = "var(--chat-background, #020916)",
   className,
   style,
   ...props

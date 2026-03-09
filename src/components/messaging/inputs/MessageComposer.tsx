@@ -237,7 +237,7 @@ export function MessageComposer({
         className={cn(
           "mx-3 mb-3 mt-2 rounded-xl border transition-colors",
           isAccented
-            ? "border-amber-500/40 bg-amber-500/5"
+            ? "border-[var(--chat-warning)]/40 bg-[var(--chat-warning)]/5"
             : "border-[var(--chat-border)] bg-[var(--chat-input-bg,var(--chat-card-hover))]"
         )}
       >
@@ -325,8 +325,8 @@ export function MessageComposer({
                 "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                 "disabled:opacity-30 disabled:cursor-not-allowed",
                 isAccented
-                  ? "bg-amber-500 hover:bg-amber-600 text-black"
-                  : "bg-[var(--chat-primary)] hover:bg-[var(--chat-primary)]/80 text-white"
+                  ? "bg-[var(--chat-warning)] hover:bg-[var(--chat-warning)]/90 text-[var(--chat-on-primary)]"
+                  : "bg-[var(--chat-primary)] hover:bg-[var(--chat-primary)]/80 text-[var(--chat-on-primary)]"
               )}
             >
               <Send className="w-3.5 h-3.5" />

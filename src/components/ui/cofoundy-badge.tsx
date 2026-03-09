@@ -13,11 +13,11 @@ const cofoundyBadgeVariants = cva(
       variant: {
         /** Full-color cube + brand blue text + hover glow. */
         professional:
-          "hover:drop-shadow-[0_0_8px_rgba(70,160,208,0.4)]",
+          "hover:drop-shadow-[0_0_8px_var(--chat-primary)]",
         /** Full-color cube + shimmer brand text. Animated premium feel. */
-        shimmer: "hover:drop-shadow-[0_0_8px_rgba(70,160,208,0.4)]",
+        shimmer: "hover:drop-shadow-[0_0_8px_var(--chat-primary)]",
         /** Pill badge with mono cube + hover shimmer & brand color reveal. */
-        pill: "px-4 py-1.5 rounded-full border border-white/10 hover:border-white/20 hover:-translate-y-px",
+        pill: "px-4 py-1.5 rounded-full border border-[var(--chat-border)] hover:border-[var(--chat-foreground)]/20 hover:-translate-y-px",
         /** Friendly with separator lines, cube, heart icon. Warm and approachable. */
         friendly: "gap-2.5",
       },
@@ -67,7 +67,7 @@ function CofoundyBadge({
       {variant === "professional" && (
         <>
           <Logo size="sm" className="w-4 h-4 shrink-0" />
-          <span className="text-[#46A0D0]/60 group-hover/cf-badge:text-[#46A0D0] transition-colors">
+          <span className="text-[var(--chat-primary)]/60 group-hover/cf-badge:text-[var(--chat-primary)] transition-colors">
             {resolvedPrefix}{" "}
             <span className="font-semibold">Cofoundy</span>
           </span>
@@ -76,7 +76,7 @@ function CofoundyBadge({
       {variant === "shimmer" && (
         <>
           <Logo size="sm" className="w-4 h-4 shrink-0" />
-          <span className="text-white/40 group-hover/cf-badge:text-white/60 transition-colors">
+          <span className="text-[var(--chat-muted)]/60 group-hover/cf-badge:text-[var(--chat-muted)] transition-colors">
             {resolvedPrefix}
           </span>
           <ShimmerText variant="brand" duration={3} className="font-semibold">
@@ -89,13 +89,13 @@ function CofoundyBadge({
           <Logo
             mono
             size="sm"
-            className="w-3.5 h-3.5 shrink-0 text-white/30 group-hover/cf-badge:text-[#46A0D0] transition-colors duration-300"
+            className="w-3.5 h-3.5 shrink-0 text-[var(--chat-muted)]/50 group-hover/cf-badge:text-[var(--chat-primary)] transition-colors duration-300"
           />
-          <span className="text-white/40 group-hover/cf-badge:text-white/60 transition-colors">
+          <span className="text-[var(--chat-muted)]/60 group-hover/cf-badge:text-[var(--chat-muted)] transition-colors">
             {resolvedPrefix}
           </span>
           <span className="relative font-semibold">
-            <span className="text-white/40 transition-opacity duration-300 group-hover/cf-badge:opacity-0">
+            <span className="text-[var(--chat-muted)]/60 transition-opacity duration-300 group-hover/cf-badge:opacity-0">
               Cofoundy
             </span>
             <span className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover/cf-badge:opacity-100">
@@ -108,19 +108,19 @@ function CofoundyBadge({
       )}
       {variant === "friendly" && (
         <>
-          <span className="block w-8 h-px bg-white/10 group-hover/cf-badge:bg-white/20 transition-colors" />
+          <span className="block w-8 h-px bg-[var(--chat-border)] group-hover/cf-badge:bg-[var(--chat-foreground)]/20 transition-colors" />
           <Logo
             size="sm"
             className="w-4 h-4 shrink-0"
           />
-          <span className="text-white/30 group-hover/cf-badge:text-white/50 transition-colors">
+          <span className="text-[var(--chat-muted)]/50 group-hover/cf-badge:text-[var(--chat-muted)] transition-colors">
             {resolvedPrefix}{" "}
-            <span className="font-semibold text-white/40 group-hover/cf-badge:text-[#46A0D0] transition-colors">
+            <span className="font-semibold text-[var(--chat-muted)]/60 group-hover/cf-badge:text-[var(--chat-primary)] transition-colors">
               Cofoundy
             </span>
           </span>
-          <Heart className="w-3 h-3 text-[#46A0D0]/50 group-hover/cf-badge:text-[#46A0D0] group-hover/cf-badge:fill-[#46A0D0] group-hover/cf-badge:scale-110 transition-all duration-300" />
-          <span className="block w-8 h-px bg-white/10 group-hover/cf-badge:bg-white/20 transition-colors" />
+          <Heart className="w-3 h-3 text-[var(--chat-primary)]/50 group-hover/cf-badge:text-[var(--chat-primary)] group-hover/cf-badge:fill-[var(--chat-primary)] group-hover/cf-badge:scale-110 transition-all duration-300" />
+          <span className="block w-8 h-px bg-[var(--chat-border)] group-hover/cf-badge:bg-[var(--chat-foreground)]/20 transition-colors" />
         </>
       )}
     </a>

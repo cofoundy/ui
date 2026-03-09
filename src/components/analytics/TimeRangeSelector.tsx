@@ -44,7 +44,7 @@ export function TimeRangeSelector({
             className={cn(
               "px-3 py-1 text-xs font-mono rounded-md transition-all",
               isActive
-                ? "bg-[var(--chat-primary)] text-white"
+                ? "bg-[var(--chat-primary)] text-[var(--chat-on-primary)]"
                 : "text-[var(--chat-muted)] hover:text-[var(--chat-foreground)]",
               isDisabled && "opacity-40 cursor-not-allowed hover:text-[var(--chat-muted)]"
             )}

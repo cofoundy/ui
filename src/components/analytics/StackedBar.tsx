@@ -55,7 +55,7 @@ export function StackedBar({
               }}
             >
               {showPercentages && pct >= 5 && (
-                <span className="text-[11px] font-mono font-medium text-white drop-shadow-sm">
+                <span className="text-[11px] font-mono font-medium text-[var(--chat-on-primary)] drop-shadow-sm">
                   {Math.round(pct)}%
                 </span>
               )}

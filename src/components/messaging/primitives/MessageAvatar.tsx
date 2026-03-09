@@ -36,8 +36,8 @@ function getAvatarColors(
   if (direction === "outbound") {
     if (senderType === "ai") {
       return {
-        bg: "bg-[#a855f7]/20",
-        text: "text-[#c084fc]",
+        bg: "bg-[var(--chat-ai-muted)]/20",
+        text: "text-[var(--chat-ai-muted)]",
       };
     }
     return {

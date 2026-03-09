@@ -59,8 +59,33 @@
 
   /* Semantic colors - sophisticated palette aligned with brand */
   --chat-success: #059669;  /* Emerald-600: connects to primary teal family */
+  --chat-success-light: #34d399; /* Emerald-400: gradient accent */
   --chat-error: #BE123C;    /* Rose-700: elegant, complements teal */
   --chat-warning: #D97706;  /* Amber-600: warm, sophisticated */
+
+  /* AI accent — purple identity for AI-generated content */
+  --chat-ai: #9333ea;           /* Purple-600 */
+  --chat-ai-muted: #a855f7;     /* Purple-500, for badges/avatars */
+  --chat-ai-foreground: #ffffff; /* Text on AI backgrounds */
+
+  /* On-primary — text color when on top of --chat-primary background */
+  --chat-on-primary: #ffffff;
+
+  /* Rank colors for leaderboards */
+  --rank-gold: var(--chat-warning);
+  --rank-silver: var(--chat-muted);
+  --rank-bronze: #CD7F32;
+
+  /* Shimmer/effect colors */
+  --shimmer-gold: #fbbf24;
+  --shimmer-gold-light: #fef3c7;
+  --shimmer-gold-dark: #b45309;
+  --shimmer-brand: var(--chat-primary);
+  --shimmer-brand-light: #7dd3fc;
+  --shimmer-brand-dark: #0c4a6e;
+  --shimmer-silver: #94a3b8;
+  --shimmer-silver-light: #f1f5f9;
+  --shimmer-silver-dark: #475569;
 
   /* UI Component Semantic Tokens (shadcn compatible) */
   --background: #020b1b;
@@ -156,6 +181,30 @@
   --card-foreground: #0f172a;
   --popover: #ffffff;
   --popover-foreground: #0f172a;
+
+  /* Success light variant for gradients */
+  --chat-success-light: #6ee7b7; /* Emerald-300: lighter for light bg */
+
+  /* AI accent - darker purple on light bg for contrast */
+  --chat-ai: #7c3aed;
+  --chat-ai-muted: #8b5cf6;
+  --chat-ai-foreground: #ffffff;
+
+  /* On-primary stays white since primary bg is still blue */
+  --chat-on-primary: #ffffff;
+
+  /* Rank colors */
+  --rank-bronze: #92400e;
+
+  /* Shimmer — adjust for light backgrounds */
+  --shimmer-gold: #d97706;
+  --shimmer-gold-light: #fef3c7;
+  --shimmer-gold-dark: #92400e;
+  --shimmer-brand-light: #bae6fd;
+  --shimmer-brand-dark: #0369a1;
+  --shimmer-silver: #64748b;
+  --shimmer-silver-light: #e2e8f0;
+  --shimmer-silver-dark: #334155;
 
   /* Sidebar tokens - Light theme */
   --sidebar-background: #f8fafc;
@@ -650,6 +699,9 @@
 .bg-\[var\(--chat-primary\)\] { background-color: var(--chat-primary); }
 .bg-\[var\(--chat-background\)\] { background-color: var(--chat-background); }
 .bg-\[var\(--chat-success\)\]\/20 { background-color: color-mix(in srgb, var(--chat-success) 20%, transparent); }
+.bg-\[var\(--chat-error\,\#ef4444\)\] { background-color: var(--chat-error, #ef4444); }
+.bg-\[var\(--chat-warning\)\]\/5 { background-color: color-mix(in srgb, var(--chat-warning) 5%, transparent); }
+.bg-\[var\(--chat-warning\)\]\/40 { background-color: color-mix(in srgb, var(--chat-warning) 40%, transparent); }
 
 /* --- Text Colors --- */
 .text-\[var\(--chat-foreground\)\] { color: var(--chat-foreground); }
@@ -659,6 +711,10 @@
 .text-\[var\(--chat-success\)\] { color: var(--chat-success); }
 .text-\[var\(--chat-error\)\] { color: var(--chat-error); }
 .text-\[var\(--chat-error\)\]\/80 { color: color-mix(in srgb, var(--chat-error) 80%, transparent); }
+.text-\[var\(--chat-muted\)\]\/50 { color: color-mix(in srgb, var(--chat-muted) 50%, transparent); }
+.text-\[var\(--chat-muted\)\]\/60 { color: color-mix(in srgb, var(--chat-muted) 60%, transparent); }
+.text-\[var\(--chat-primary\)\]\/50 { color: color-mix(in srgb, var(--chat-primary) 50%, transparent); }
+.text-\[var\(--chat-primary\)\]\/60 { color: color-mix(in srgb, var(--chat-primary) 60%, transparent); }
 
 /* --- Border Colors --- */
 .border-\[var\(--chat-border\)\] { border-color: var(--chat-border); }
@@ -667,6 +723,7 @@
 .border-b-\[var\(--chat-border\)\] { border-bottom-color: var(--chat-border); }
 .border-t-\[var\(--chat-border\)\] { border-top-color: var(--chat-border); }
 .border-l-\[var\(--chat-primary\)\] { border-left-color: var(--chat-primary); }
+.border-\[var\(--chat-warning\)\]\/40 { border-color: color-mix(in srgb, var(--chat-warning) 40%, transparent); }
 
 /* --- Focus States --- */
 .focus\:border-\[var\(--chat-primary\)\]\/50:focus { border-color: color-mix(in srgb, var(--chat-primary) 50%, transparent); }
@@ -685,6 +742,7 @@
 .from-\[var\(--chat-success\)\] { --tw-gradient-from: var(--chat-success); --tw-gradient-to: transparent; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
 .to-\[var\(--chat-success\)\] { --tw-gradient-to: var(--chat-success); }
 .via-\[var\(--chat-border\)\] { --tw-gradient-via: var(--chat-border); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to); }
+.via-\[var\(--chat-success-light\,\#34d399\)\] { --tw-gradient-via: var(--chat-success-light, #34d399); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to); }
 .from-transparent { --tw-gradient-from: transparent; --tw-gradient-to: transparent; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
 
 /* --- Complex Shadows --- */

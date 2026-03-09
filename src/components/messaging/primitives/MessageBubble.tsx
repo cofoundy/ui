@@ -53,7 +53,7 @@ const messageBubbleVariants = cva(
         variant: "inbox",
         direction: "outbound",
         aiGenerated: true,
-        className: "bg-[#9333ea] text-white",
+        className: "bg-[var(--chat-ai)] text-[var(--chat-ai-foreground)]",
       },
       // Minimal variant
       {

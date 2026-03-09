@@ -39,7 +39,7 @@ export function MessageContent({
                 className={cn(
                   "underline hover:opacity-80",
                   isUser
-                    ? "text-white font-medium"
+                    ? "text-[var(--chat-on-primary)] font-medium"
                     : "text-[var(--chat-primary)]"
                 )}
               >

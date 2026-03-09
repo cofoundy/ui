@@ -14,19 +14,19 @@ export interface ShimmerTextProps
 
 const shimmerColors = {
   gold: {
-    base: "#fbbf24",
-    light: "#fef3c7",
-    dark: "#b45309",
+    base: "var(--shimmer-gold, #fbbf24)",
+    light: "var(--shimmer-gold-light, #fef3c7)",
+    dark: "var(--shimmer-gold-dark, #b45309)",
   },
   brand: {
-    base: "#2984AD",
-    light: "#7dd3fc",
-    dark: "#0c4a6e",
+    base: "var(--shimmer-brand, #2984AD)",
+    light: "var(--shimmer-brand-light, #7dd3fc)",
+    dark: "var(--shimmer-brand-dark, #0c4a6e)",
   },
   silver: {
-    base: "#94a3b8",
-    light: "#f1f5f9",
-    dark: "#475569",
+    base: "var(--shimmer-silver, #94a3b8)",
+    light: "var(--shimmer-silver-light, #f1f5f9)",
+    dark: "var(--shimmer-silver-dark, #475569)",
   },
 };
 

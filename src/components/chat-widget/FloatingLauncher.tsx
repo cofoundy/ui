@@ -110,7 +110,7 @@ export const FloatingLauncher = forwardRef<HTMLButtonElement, FloatingLauncherPr
               transition={{ duration: 0.15 }}
             >
               {/* Mobile-first: 20px icon on mobile, 24px on desktop */}
-              <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--chat-on-primary)]" />
             </motion.div>
           ) : (
             <motion.div
@@ -123,7 +123,7 @@ export const FloatingLauncher = forwardRef<HTMLButtonElement, FloatingLauncherPr
               {iconUrl ? (
                 <img src={iconUrl} alt="" className="w-5 h-5 sm:w-6 sm:h-6" />
               ) : (
-                <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--chat-on-primary)]" />
               )}
             </motion.div>
           )}
@@ -141,8 +141,8 @@ export const FloatingLauncher = forwardRef<HTMLButtonElement, FloatingLauncherPr
                 "flex items-center justify-center",
                 "min-w-[18px] h-[18px] sm:min-w-[20px] sm:h-5",
                 "px-1 sm:px-1.5",
-                "text-[10px] sm:text-xs font-semibold text-white",
-                "bg-[#ef4444] rounded-full"
+                "text-[10px] sm:text-xs font-semibold text-[var(--chat-on-primary)]",
+                "bg-[var(--chat-error,#ef4444)] rounded-full"
               )}
             >
               {unreadCount > 99 ? "99+" : unreadCount}
