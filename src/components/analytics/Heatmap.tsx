@@ -90,12 +90,12 @@ export function Heatmap({
         </div>
       ))}
 
-      {/* Tooltip */}
-      {hovered && hovered.value > 0 && (
-        <div className="text-[10px] font-mono text-[var(--chat-muted)] text-center mt-1">
-          {rows[hovered.row]} {cols[hovered.col]}: {hovered.value} conversaciones
-        </div>
-      )}
+      {/* Tooltip — fixed height to avoid layout shift */}
+      <div className="h-4 text-[10px] font-mono text-[var(--chat-muted)] text-center mt-1">
+        {hovered && hovered.value > 0
+          ? `${rows[hovered.row]} ${cols[hovered.col]}: ${hovered.value} conversaciones`
+          : "\u00A0"}
+      </div>
     </div>
   );
 }
