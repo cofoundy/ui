@@ -282,6 +282,36 @@ export {
   type GradientBorderProps,
 } from "./components/effects";
 
+// Analytics Components
+export {
+  StatCard,
+  statCardVariants,
+  BarChart,
+  StackedBar,
+  DataTable,
+  HorizontalBar,
+  EmptyState,
+  TimeRangeSelector,
+  AnalyticsSectionHeader,
+} from "./components/analytics";
+export type {
+  StatCardProps,
+  StatCardTrend,
+  BarChartProps,
+  BarChartItem,
+  StackedBarProps,
+  StackedBarSegment,
+  DataTableProps,
+  DataTableColumn,
+  HorizontalBarProps,
+  HorizontalBarItem,
+  EmptyStateProps,
+  EmptyStateAction,
+  TimeRangeSelectorProps,
+  TimeRangeOption,
+  AnalyticsSectionHeaderProps,
+} from "./components/analytics";
+
 // Utils
 export { cn } from "./utils/cn";
 export { getInitials, truncate, capitalize, toTitleCase } from "./utils/string";
