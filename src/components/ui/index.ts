@@ -87,3 +87,30 @@ export {
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
 } from "./breadcrumb";
+
+// Dialog
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogTrigger,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "./dialog";
+
+// Danger Zone
+export {
+  DangerZone,
+  DangerZoneHeader,
+  DangerZoneItem,
+  ConfirmDialog,
+} from "./danger-zone";
+export type {
+  DangerZoneProps,
+  DangerZoneItemProps,
+  ConfirmDialogProps,
+} from "./danger-zone";

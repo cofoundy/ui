@@ -122,6 +122,33 @@ export {
   BreadcrumbEllipsis,
 } from "./components/ui";
 
+// Dialog
+export {
+  Dialog,
+  DialogPortal,
+  DialogOverlay,
+  DialogTrigger,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+} from "./components/ui";
+
+// Danger Zone
+export {
+  DangerZone,
+  DangerZoneHeader,
+  DangerZoneItem,
+  ConfirmDialog,
+} from "./components/ui";
+export type {
+  DangerZoneProps,
+  DangerZoneItemProps,
+  ConfirmDialogProps,
+} from "./components/ui";
+
 // Messaging Components (Primitives)
 export {
   MessageContainer,
