@@ -43,12 +43,19 @@ src/
 │   │   ├── InboxMessage.tsx
 │   │   └── ...
 │   │
-│   └── analytics/             # Pure CSS data visualization
+│   └── analytics/             # Pure CSS data visualization (15 components)
 │       ├── StatCard.tsx           # KPI metric card (CVA: size)
+│       ├── SparkLine.tsx          # Inline SVG mini trend line
 │       ├── BarChart.tsx           # Vertical bar chart
 │       ├── StackedBar.tsx         # Horizontal segmented bar
+│       ├── DonutChart.tsx         # Circular ring chart (conic-gradient)
+│       ├── ProgressBar.tsx        # Progress bar with target
+│       ├── Heatmap.tsx            # Day/hour grid (GitHub-style)
+│       ├── FunnelChart.tsx        # Conversion funnel
 │       ├── DataTable.tsx          # Minimal stats table
+│       ├── Leaderboard.tsx        # Ranked list with bars
 │       ├── HorizontalBar.tsx      # Horizontal bar breakdown
+│       ├── ActivityFeed.tsx       # Timeline of recent events
 │       ├── EmptyState.tsx         # Analytics empty state
 │       ├── TimeRangeSelector.tsx  # Segmented time picker
 │       ├── AnalyticsSectionHeader.tsx
@@ -132,14 +139,28 @@ import {
 ### Analytics (for PulseAI, dashboards)
 ```typescript
 import {
+  // KPI & Metrics
   StatCard,              // KPI metric card (number/duration/percentage, trend arrows)
+  SparkLine,             // Inline SVG mini trend line (fits in StatCard/DataTable)
+  DonutChart,            // Circular ring chart (CSAT, resolution rate)
+  ProgressBar,           // Progress bar with label + target
+
+  // Charts
   BarChart,              // Vertical bar chart (pure CSS, animated)
   StackedBar,            // Horizontal segmented bar (AI vs Agent)
-  DataTable,             // Minimal stats table with best-value highlighting
   HorizontalBar,         // Horizontal bars (channel breakdown)
-  EmptyState,            // Centered empty state with CTA
+  Heatmap,               // Day/hour grid (peak hours analysis)
+  FunnelChart,           // Conversion funnel with dropoff indicators
+
+  // Tables & Lists
+  DataTable,             // Minimal stats table with best-value highlighting
+  Leaderboard,           // Ranked list with podium styling + bars
+  ActivityFeed,          // Timeline of recent events with actors
+
+  // Layout & Controls
+  AnalyticsSectionHeader,// Section title + action slot
   TimeRangeSelector,     // Segmented pill control (7d/30d/90d)
-  AnalyticsSectionHeader // Section title + action slot
+  EmptyState,            // Centered empty state with CTA
 } from '@cofoundy/ui'
 ```
 
@@ -218,7 +239,7 @@ import './globals.css';         // Then your local styles
 - UI primitives: `stories/ui/ComponentName.stories.tsx`
 - Chat widget: `stories/chat-widget/ComponentName.stories.tsx`
 - Messaging: `stories/messaging/ComponentName.stories.tsx`
-- Analytics: `stories/Analytics.stories.tsx` (all analytics components in one file)
+- Analytics: `stories/analytics/ComponentName.stories.tsx` (individual files + Dashboard.stories.tsx for composed views)
 
 ### Testing
 ```bash

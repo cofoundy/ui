@@ -293,6 +293,13 @@ export {
   EmptyState,
   TimeRangeSelector,
   AnalyticsSectionHeader,
+  SparkLine,
+  DonutChart,
+  ProgressBar,
+  Heatmap,
+  Leaderboard,
+  FunnelChart,
+  ActivityFeed,
 } from "./components/analytics";
 export type {
   StatCardProps,
@@ -310,6 +317,18 @@ export type {
   TimeRangeSelectorProps,
   TimeRangeOption,
   AnalyticsSectionHeaderProps,
+  SparkLineProps,
+  DonutChartProps,
+  DonutSegment,
+  ProgressBarProps,
+  HeatmapProps,
+  HeatmapCell,
+  LeaderboardProps,
+  LeaderboardItem,
+  FunnelChartProps,
+  FunnelStep,
+  ActivityFeedProps,
+  ActivityFeedItem,
 } from "./components/analytics";
 
 // Utils

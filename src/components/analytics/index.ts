@@ -21,3 +21,24 @@ export type { TimeRangeSelectorProps, TimeRangeOption } from "./TimeRangeSelecto
 
 export { AnalyticsSectionHeader } from "./AnalyticsSectionHeader";
 export type { AnalyticsSectionHeaderProps } from "./AnalyticsSectionHeader";
+
+export { SparkLine } from "./SparkLine";
+export type { SparkLineProps } from "./SparkLine";
+
+export { DonutChart } from "./DonutChart";
+export type { DonutChartProps, DonutSegment } from "./DonutChart";
+
+export { ProgressBar } from "./ProgressBar";
+export type { ProgressBarProps } from "./ProgressBar";
+
+export { Heatmap } from "./Heatmap";
+export type { HeatmapProps, HeatmapCell } from "./Heatmap";
+
+export { Leaderboard } from "./Leaderboard";
+export type { LeaderboardProps, LeaderboardItem } from "./Leaderboard";
+
+export { FunnelChart } from "./FunnelChart";
+export type { FunnelChartProps, FunnelStep } from "./FunnelChart";
+
+export { ActivityFeed } from "./ActivityFeed";
+export type { ActivityFeedProps, ActivityFeedItem } from "./ActivityFeed";
