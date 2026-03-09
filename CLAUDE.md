@@ -38,10 +38,21 @@ src/
 │   │   ├── Message.tsx
 │   │   └── ...
 │   │
-│   └── messaging/             # InboxAI messaging primitives
-│       ├── MessageBubble.tsx
-│       ├── InboxMessage.tsx
-│       └── ...
+│   ├── messaging/             # InboxAI messaging primitives
+│   │   ├── MessageBubble.tsx
+│   │   ├── InboxMessage.tsx
+│   │   └── ...
+│   │
+│   └── analytics/             # Pure CSS data visualization
+│       ├── StatCard.tsx           # KPI metric card (CVA: size)
+│       ├── BarChart.tsx           # Vertical bar chart
+│       ├── StackedBar.tsx         # Horizontal segmented bar
+│       ├── DataTable.tsx          # Minimal stats table
+│       ├── HorizontalBar.tsx      # Horizontal bar breakdown
+│       ├── EmptyState.tsx         # Analytics empty state
+│       ├── TimeRangeSelector.tsx  # Segmented time picker
+│       ├── AnalyticsSectionHeader.tsx
+│       └── index.ts
 │
 ├── transports/                # Backend connection adapters
 │   ├── types.ts               # Transport interfaces
@@ -115,6 +126,20 @@ import {
   InboxMessage,
   InboxMessageList,
   MessageComposer
+} from '@cofoundy/ui'
+```
+
+### Analytics (for PulseAI, dashboards)
+```typescript
+import {
+  StatCard,              // KPI metric card (number/duration/percentage, trend arrows)
+  BarChart,              // Vertical bar chart (pure CSS, animated)
+  StackedBar,            // Horizontal segmented bar (AI vs Agent)
+  DataTable,             // Minimal stats table with best-value highlighting
+  HorizontalBar,         // Horizontal bars (channel breakdown)
+  EmptyState,            // Centered empty state with CTA
+  TimeRangeSelector,     // Segmented pill control (7d/30d/90d)
+  AnalyticsSectionHeader // Section title + action slot
 } from '@cofoundy/ui'
 ```
 
@@ -193,12 +218,20 @@ import './globals.css';         // Then your local styles
 - UI primitives: `stories/ui/ComponentName.stories.tsx`
 - Chat widget: `stories/chat-widget/ComponentName.stories.tsx`
 - Messaging: `stories/messaging/ComponentName.stories.tsx`
+- Analytics: `stories/Analytics.stories.tsx` (all analytics components in one file)
 
 ### Testing
 ```bash
 npm test                    # Run all tests
 npm run test:coverage       # With coverage
 ```
+
+## Deployment
+
+Storybook is deployed to **Cloudflare Pages** (not Railway) at **ui.cofoundy.dev**.
+- **Auto-deploy on push to `main`** via GitHub Actions (`.github/workflows/deploy.yml`)
+- Chromatic visual testing also runs on push
+- No manual deploy needed — just push
 
 ## Products Using This Package
 
@@ -207,7 +240,7 @@ npm run test:coverage       # With coverage
 | **TimelyAI** | ChatWidget, ChatWidgetFloating, transports |
 | **InboxAI** | Badge, Avatar, Messaging components |
 | **Landing Page** | ChatWidgetFloating, FloatingLauncher |
-| **PulseAI** | UI primitives |
+| **PulseAI** | UI primitives, Analytics components |
 
 ## Transport Layer API
 
@@ -298,6 +331,32 @@ interface AppointmentConfirmation {
 
 ---
 
+## Component Patterns
+
+Every component in this library follows these conventions:
+
+```typescript
+// 1. CVA for variants
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "../../utils/cn";
+
+const fooVariants = cva("base-classes", { variants: { ... }, defaultVariants: { ... } });
+
+// 2. Props interface extends VariantProps
+export interface FooProps extends VariantProps<typeof fooVariants> { ... }
+
+// 3. data-slot on root element
+<div data-slot="foo" className={cn(fooVariants({ size }), className)}>
+
+// 4. Export both component and variants
+export { fooVariants };
+```
+
+- All colors via CSS variables (`var(--chat-*)`, `var(--channel-*)`, `var(--status-*)`)
+- `font-mono` for numbers/stats, `font-sans` for labels, `font-display` for headings
+- Animations use `cf-animate-*` utility classes or `var(--cf-duration-*)` / `var(--cf-ease-*)` tokens
+- Light/dark mode via `[data-theme="light"]` / `[data-theme="dark"]` selectors in `styles/index.css`
+
 ## AI Assistant Rules
 
 1. **ALWAYS add Storybook stories** for new components
@@ -307,3 +366,5 @@ interface AppointmentConfirmation {
 5. **Check multiple projects** - changes here affect TimelyAI, InboxAI, Landing
 6. **Run Storybook** to verify visual changes: `npm run storybook`
 7. **Keep schemas synced** - frontend types MUST match backend tool outputs
+8. **No external charting libraries** - analytics components use pure CSS/Tailwind
+9. **Push to main auto-deploys** Storybook to ui.cofoundy.dev via Cloudflare Pages
