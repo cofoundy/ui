@@ -56,6 +56,18 @@ export { Skeleton } from "./components/ui";
 export { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "./components/ui";
 export { Collapsible, CollapsibleContent, CollapsibleTrigger } from "./components/ui";
 export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+  SelectScrollUpButton,
+  SelectScrollDownButton,
+} from "./components/ui";
+export {
   DropdownMenu,
   DropdownMenuPortal,
   DropdownMenuTrigger,
