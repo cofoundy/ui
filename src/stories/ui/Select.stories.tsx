@@ -6,6 +6,7 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectItemText,
   SelectLabel,
   SelectSeparator,
   SelectTrigger,
@@ -32,9 +33,15 @@ export const Default: Story = {
           <SelectValue placeholder="Selecciona un rol" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="agent">Agente</SelectItem>
-          <SelectItem value="supervisor">Supervisor</SelectItem>
-          <SelectItem value="admin">Admin</SelectItem>
+          <SelectItem value="agent">
+            <SelectItemText>Agente</SelectItemText>
+          </SelectItem>
+          <SelectItem value="supervisor">
+            <SelectItemText>Supervisor</SelectItemText>
+          </SelectItem>
+          <SelectItem value="admin">
+            <SelectItemText>Admin</SelectItemText>
+          </SelectItem>
         </SelectContent>
       </Select>
     </div>
@@ -43,7 +50,7 @@ export const Default: Story = {
 
 export const WithIconsAndDescriptions: Story = {
   render: () => (
-    <div className="w-80">
+    <div className="w-48">
       <Select defaultValue="supervisor">
         <SelectTrigger>
           <SelectValue />
@@ -53,7 +60,9 @@ export const WithIconsAndDescriptions: Story = {
             <div className="flex items-start gap-2.5">
               <Headphones className="size-4 mt-0.5 text-[var(--text-muted)]" />
               <div className="flex flex-col gap-0.5">
-                <span className="font-medium">Agente</span>
+                <SelectItemText>
+                  <span className="font-medium">Agente</span>
+                </SelectItemText>
                 <span className="text-xs text-[var(--text-muted)]">
                   Atiende conversaciones asignadas
                 </span>
@@ -64,7 +73,9 @@ export const WithIconsAndDescriptions: Story = {
             <div className="flex items-start gap-2.5">
               <Eye className="size-4 mt-0.5 text-[var(--text-muted)]" />
               <div className="flex flex-col gap-0.5">
-                <span className="font-medium">Supervisor</span>
+                <SelectItemText>
+                  <span className="font-medium">Supervisor</span>
+                </SelectItemText>
                 <span className="text-xs text-[var(--text-muted)]">
                   Supervisa conversaciones y analytics
                 </span>
@@ -75,7 +86,9 @@ export const WithIconsAndDescriptions: Story = {
             <div className="flex items-start gap-2.5">
               <Shield className="size-4 mt-0.5 text-[var(--text-muted)]" />
               <div className="flex flex-col gap-0.5">
-                <span className="font-medium">Admin</span>
+                <SelectItemText>
+                  <span className="font-medium">Admin</span>
+                </SelectItemText>
                 <span className="text-xs text-[var(--text-muted)]">
                   Gestiona equipo, canales e IA
                 </span>
