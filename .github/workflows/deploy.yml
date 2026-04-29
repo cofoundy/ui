@@ -26,8 +26,9 @@ jobs:
         run: npx storybook build
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy storybook-static --project-name=ui-storybook
+          projectName: ui-storybook
+          directory: storybook-static
