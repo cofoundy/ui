@@ -23,6 +23,7 @@ import { BienvenidaCliente } from '../src/components/email/templates/BienvenidaC
 import { CierreProyecto } from '../src/components/email/templates/CierreProyecto';
 import { DevEntrega } from '../src/components/email/templates/DevEntrega';
 import { ReminderPago } from '../src/components/email/templates/ReminderPago';
+import { EnvioContrato } from '../src/components/email/templates/EnvioContrato';
 
 type TemplateFn = (props: Record<string, unknown>) => ReactElement;
 
@@ -32,6 +33,7 @@ const TEMPLATES: Record<string, TemplateFn> = {
   'bienvenida-cliente': BienvenidaCliente as unknown as TemplateFn,
   'cierre-proyecto': CierreProyecto as unknown as TemplateFn,
   'dev-entrega': DevEntrega as unknown as TemplateFn,
+  'envio-contrato': EnvioContrato as unknown as TemplateFn,
   'reminder-pago': ReminderPago as unknown as TemplateFn,
 };
 
