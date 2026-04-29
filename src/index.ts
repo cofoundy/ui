@@ -379,6 +379,7 @@ export {
   DevEntrega,
   ReminderPago,
   EnvioContrato,
+  PersonalNote,
   renderEmail,
   renderEmailPlainText,
   emailColors,
@@ -401,4 +402,5 @@ export type {
   DevEntregaProps,
   ReminderPagoProps,
   EnvioContratoProps,
+  PersonalNoteProps,
 } from "./components/email";

@@ -7,6 +7,8 @@ import { CierreProyecto } from '../../../components/email/templates/CierreProyec
 import { DevEntrega } from '../../../components/email/templates/DevEntrega';
 import { ReminderPago } from '../../../components/email/templates/ReminderPago';
 import { EnvioContrato } from '../../../components/email/templates/EnvioContrato';
+import { PersonalNote } from '../../../components/email/templates/PersonalNote';
+import { EmailText } from '../../../components/email/components/EmailText';
 
 describe('Email template rendering', () => {
   it('renders CotizacionFollowup to valid HTML', async () => {
@@ -111,6 +113,34 @@ describe('Email template rendering', () => {
     expect(html).toContain('NDA');
     expect(html).toContain('Vigencia de 2 años');
     expect(html).toContain('5 de mayo, 2026');
+  });
+
+  it('renders PersonalNote to valid HTML', async () => {
+    const html = await render(
+      PersonalNote({
+        greeting: 'Hola Diana,',
+        signOff: 'Un abrazo,',
+        children: EmailText({ children: 'Fue un gusto conversar contigo.' }),
+      })
+    );
+    expect(html).toContain('<!DOCTYPE html');
+    expect(html).toContain('Hola Diana,');
+    expect(html).toContain('Un abrazo,');
+    expect(html).toContain('Andre Pacheco Taboada');
+    expect(html).toContain('cofoundy.dev');
+  });
+
+  it('renders PersonalNote with calLink', async () => {
+    const html = await render(
+      PersonalNote({
+        greeting: 'Hola Carlos,',
+        calLink: 'https://cal.cofoundy.dev/andre/meet',
+        calLabel: 'Revisar propuesta juntos',
+        children: EmailText({ children: 'Test body.' }),
+      })
+    );
+    expect(html).toContain('Revisar propuesta juntos');
+    expect(html).toContain('cal.cofoundy.dev');
   });
 
   it('includes test banner when testMode is true', async () => {

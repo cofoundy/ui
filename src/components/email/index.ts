@@ -34,6 +34,8 @@ export { ReminderPago } from './templates/ReminderPago';
 export type { ReminderPagoProps } from './templates/ReminderPago';
 export { EnvioContrato } from './templates/EnvioContrato';
 export type { EnvioContratoProps } from './templates/EnvioContrato';
+export { PersonalNote } from './templates/PersonalNote';
+export type { PersonalNoteProps } from './templates/PersonalNote';
 
 // Render utilities
 export { renderEmail, renderEmailPlainText } from './render';
