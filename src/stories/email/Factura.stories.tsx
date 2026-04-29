@@ -1,51 +1,52 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Factura } from '../../components/email/templates/Factura';
+import { Factura, type FacturaProps } from '../../components/email/templates/Factura';
+import { EmailPreview } from './EmailPreview';
 
-const meta: Meta<typeof Factura> = {
+const meta: Meta<FacturaProps> = {
   title: 'Email/Factura',
-  component: Factura,
   parameters: { layout: 'fullscreen' },
-  decorators: [
-    (Story) => (
-      <div style={{ background: '#e5e7eb', minHeight: '100vh', padding: '0' }}>
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;
-type Story = StoryObj<typeof Factura>;
+type Story = StoryObj<FacturaProps>;
+
+const defaultArgs: FacturaProps = {
+  clientName: 'Diana',
+  invoiceNumber: 'F001-00042',
+  amount: 'S/2,600.00',
+  dueDate: '15 de mayo, 2026',
+  hasXml: true,
+  hasCdr: true,
+};
 
 export const Default: Story = {
-  args: {
-    clientName: 'Diana',
-    invoiceNumber: 'F001-00042',
-    amount: 'S/2,600.00',
-    dueDate: '15 de mayo, 2026',
-    hasXml: true,
-    hasCdr: true,
-  },
+  render: () => (
+    <EmailPreview>
+      <Factura {...defaultArgs} />
+    </EmailPreview>
+  ),
 };
 
 export const WithDetraction: Story = {
-  args: {
-    ...Default.args,
-    detractionAmount: 'S/312.00',
-    bdnAccount: '00-028-152698',
-  },
+  render: () => (
+    <EmailPreview>
+      <Factura {...defaultArgs} detractionAmount="S/312.00" bdnAccount="00-028-152698" />
+    </EmailPreview>
+  ),
 };
 
 export const Minimal: Story = {
-  args: {
-    invoiceNumber: 'F001-00043',
-    amount: 'S/800.00',
-  },
+  render: () => (
+    <EmailPreview>
+      <Factura invoiceNumber="F001-00043" amount="S/800.00" />
+    </EmailPreview>
+  ),
 };
 
 export const TestMode: Story = {
-  args: {
-    ...Default.args,
-    testMode: true,
-  },
+  render: () => (
+    <EmailPreview>
+      <Factura {...defaultArgs} testMode />
+    </EmailPreview>
+  ),
 };

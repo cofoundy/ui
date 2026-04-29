@@ -1,53 +1,56 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { CierreProyecto } from '../../components/email/templates/CierreProyecto';
+import { CierreProyecto, type CierreProyectoProps } from '../../components/email/templates/CierreProyecto';
+import { EmailPreview } from './EmailPreview';
 
-const meta: Meta<typeof CierreProyecto> = {
+const meta: Meta<CierreProyectoProps> = {
   title: 'Email/Cierre Proyecto',
-  component: CierreProyecto,
   parameters: { layout: 'fullscreen' },
-  decorators: [
-    (Story) => (
-      <div style={{ background: '#e5e7eb', minHeight: '100vh', padding: '0' }}>
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;
-type Story = StoryObj<typeof CierreProyecto>;
+type Story = StoryObj<CierreProyectoProps>;
+
+const defaultArgs: CierreProyectoProps = {
+  clientName: 'Diana',
+  projectName: 'Portal Web NeoSer',
+  deliverables: [
+    'Portal web corporativo (neoser.pe)',
+    'Panel admin con CMS',
+    'API de servicios integrada',
+    'Documentación técnica',
+  ],
+  liveUrl: 'https://neoser.pe',
+  calLink: 'https://cal.cofoundy.dev/andre/meet',
+};
 
 export const Default: Story = {
-  args: {
-    clientName: 'Diana',
-    projectName: 'Portal Web NeoSer',
-    deliverables: [
-      'Portal web corporativo (neoser.pe)',
-      'Panel admin con CMS',
-      'API de servicios integrada',
-      'Documentación técnica',
-    ],
-    liveUrl: 'https://neoser.pe',
-    calLink: 'https://cal.cofoundy.dev/andre/meet',
-  },
+  render: () => (
+    <EmailPreview>
+      <CierreProyecto {...defaultArgs} />
+    </EmailPreview>
+  ),
 };
 
 export const WithCaseStudy: Story = {
-  args: {
-    ...Default.args,
-    caseStudyUrl: 'https://cofoundy.dev/cases/neoser',
-  },
+  render: () => (
+    <EmailPreview>
+      <CierreProyecto {...defaultArgs} caseStudyUrl="https://cofoundy.dev/cases/neoser" />
+    </EmailPreview>
+  ),
 };
 
 export const Minimal: Story = {
-  args: {
-    projectName: 'App Delivery',
-  },
+  render: () => (
+    <EmailPreview>
+      <CierreProyecto projectName="App Delivery" />
+    </EmailPreview>
+  ),
 };
 
 export const TestMode: Story = {
-  args: {
-    ...Default.args,
-    testMode: true,
-  },
+  render: () => (
+    <EmailPreview>
+      <CierreProyecto {...defaultArgs} testMode />
+    </EmailPreview>
+  ),
 };

@@ -1,48 +1,50 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { CotizacionFollowup } from '../../components/email/templates/CotizacionFollowup';
+import { CotizacionFollowup, type CotizacionFollowupProps } from '../../components/email/templates/CotizacionFollowup';
+import { EmailPreview } from './EmailPreview';
 
-const meta: Meta<typeof CotizacionFollowup> = {
+const meta: Meta<CotizacionFollowupProps> = {
   title: 'Email/Cotización Followup',
-  component: CotizacionFollowup,
   parameters: { layout: 'fullscreen' },
-  decorators: [
-    (Story) => (
-      <div style={{ background: '#e5e7eb', minHeight: '100vh', padding: '0' }}>
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;
-type Story = StoryObj<typeof CotizacionFollowup>;
+type Story = StoryObj<CotizacionFollowupProps>;
+
+const defaultArgs: CotizacionFollowupProps = {
+  clientName: 'Diana',
+  projectName: 'Portal Web NeoSer',
+  scopeBullets: [
+    'Diseño y desarrollo del portal web corporativo',
+    'Integración con API de servicios existente',
+    'Panel administrativo para gestión de contenido',
+    'Optimización SEO y performance',
+  ],
+  amount: 'S/2,600.00',
+  timeline: '8 semanas',
+  nextStep: 'Revisa la propuesta adjunta y confirmanos tu disponibilidad para arrancar',
+  calLink: 'https://cal.cofoundy.dev/andre/meet',
+};
 
 export const Default: Story = {
-  args: {
-    clientName: 'Diana',
-    projectName: 'Portal Web NeoSer',
-    scopeBullets: [
-      'Diseño y desarrollo del portal web corporativo',
-      'Integración con API de servicios existente',
-      'Panel administrativo para gestión de contenido',
-      'Optimización SEO y performance',
-    ],
-    amount: 'S/2,600.00',
-    timeline: '8 semanas',
-    nextStep: 'Revisa la propuesta adjunta y confirmanos tu disponibilidad para arrancar',
-    calLink: 'https://cal.cofoundy.dev/andre/meet',
-  },
+  render: () => (
+    <EmailPreview>
+      <CotizacionFollowup {...defaultArgs} />
+    </EmailPreview>
+  ),
 };
 
 export const Minimal: Story = {
-  args: {
-    clientName: 'Carlos',
-  },
+  render: () => (
+    <EmailPreview>
+      <CotizacionFollowup clientName="Carlos" />
+    </EmailPreview>
+  ),
 };
 
 export const TestMode: Story = {
-  args: {
-    ...Default.args,
-    testMode: true,
-  },
+  render: () => (
+    <EmailPreview>
+      <CotizacionFollowup {...defaultArgs} testMode />
+    </EmailPreview>
+  ),
 };

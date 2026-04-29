@@ -1,56 +1,61 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { BienvenidaCliente } from '../../components/email/templates/BienvenidaCliente';
+import { BienvenidaCliente, type BienvenidaClienteProps } from '../../components/email/templates/BienvenidaCliente';
+import { EmailPreview } from './EmailPreview';
 
-const meta: Meta<typeof BienvenidaCliente> = {
+const meta: Meta<BienvenidaClienteProps> = {
   title: 'Email/Bienvenida Cliente',
-  component: BienvenidaCliente,
   parameters: { layout: 'fullscreen' },
-  decorators: [
-    (Story) => (
-      <div style={{ background: '#e5e7eb', minHeight: '100vh', padding: '0' }}>
-        <Story />
-      </div>
-    ),
-  ],
 };
 
 export default meta;
-type Story = StoryObj<typeof BienvenidaCliente>;
+type Story = StoryObj<BienvenidaClienteProps>;
+
+const defaultArgs: BienvenidaClienteProps = {
+  clientName: 'Diana',
+  projectName: 'Portal Web NeoSer',
+  kickoffDate: '5 de mayo, 2026',
+  pmName: 'André Pacheco',
+  senderEmail: 'andre@cofoundy.dev',
+  calLink: 'https://cal.cofoundy.dev/andre/meet',
+};
 
 export const Default: Story = {
-  args: {
-    clientName: 'Diana',
-    projectName: 'Portal Web NeoSer',
-    kickoffDate: '5 de mayo, 2026',
-    pmName: 'André Pacheco',
-    senderEmail: 'andre@cofoundy.dev',
-    calLink: 'https://cal.cofoundy.dev/andre/meet',
-  },
+  render: () => (
+    <EmailPreview>
+      <BienvenidaCliente {...defaultArgs} />
+    </EmailPreview>
+  ),
 };
 
 export const WithCustomSteps: Story = {
-  args: {
-    ...Default.args,
-    nextStepsBullets: [
-      'Reunión de kickoff el lunes 5 de mayo a las 10am',
-      'Acceso al repositorio GitHub compartido',
-      'Canal de WhatsApp para comunicación rápida',
-      'Primer sprint: diseño de wireframes (1 semana)',
-    ],
-    vikunjaUrl: 'https://vikunja.cofoundy.dev/projects/42',
-  },
+  render: () => (
+    <EmailPreview>
+      <BienvenidaCliente
+        {...defaultArgs}
+        nextStepsBullets={[
+          'Reunión de kickoff el lunes 5 de mayo a las 10am',
+          'Acceso al repositorio GitHub compartido',
+          'Canal de WhatsApp para comunicación rápida',
+          'Primer sprint: diseño de wireframes (1 semana)',
+        ]}
+        vikunjaUrl="https://vikunja.cofoundy.dev/projects/42"
+      />
+    </EmailPreview>
+  ),
 };
 
 export const Minimal: Story = {
-  args: {
-    clientName: 'Carlos',
-    projectName: 'App Delivery',
-  },
+  render: () => (
+    <EmailPreview>
+      <BienvenidaCliente clientName="Carlos" projectName="App Delivery" />
+    </EmailPreview>
+  ),
 };
 
 export const TestMode: Story = {
-  args: {
-    ...Default.args,
-    testMode: true,
-  },
+  render: () => (
+    <EmailPreview>
+      <BienvenidaCliente {...defaultArgs} testMode />
+    </EmailPreview>
+  ),
 };
