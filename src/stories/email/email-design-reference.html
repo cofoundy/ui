@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cofoundy — Tu propuesta está lista</title>
+<!--
+  Cofoundy Transactional Email Design Reference
+  =============================================
+  Design system: Navy gradient header + teal accent + white body
+  Max width: 600px, all inline styles for email compatibility
+  Typography: Inter (with system fallbacks)
+  Brand colors: Navy #23435F, Teal #46A0D0, Body #4B4E54
+
+  Reusable sections:
+  - Dark header with isologo + title + date
+  - Teal gradient accent line (3px)
+  - White body with greeting + content
+  - Checklist in light card
+  - Navy info cards (side-by-side)
+  - Left-bordered "next step" callout
+  - CTA button with shadow
+  - Light footer with 2-column layout
+-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#EDF1F5;font-family:'Inter',-apple-system,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;">
+
+<!-- Preheader text (hidden, shows in email client preview) -->
+<div style="display:none;font-size:1px;color:#EDF1F5;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
+  Tu propuesta formal est&aacute; lista para revisar. Inversi&oacute;n: S/2,600 &middot; 8 semanas.
+</div>
+
+<!-- Outer wrapper -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#EDF1F5;">
+<tr><td align="center" style="padding:48px 24px;">
+
+<!-- Main card: 600px max -->
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" align="center" style="border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.04),0 8px 32px rgba(0,0,0,0.08);">
+
+  <!-- ============================================ -->
+  <!-- HEADER: Dark navy gradient                   -->
+  <!-- ============================================ -->
+  <tr>
+    <td style="background:linear-gradient(145deg, #162638 0%, #1E3A52 40%, #23435F 100%);padding:52px 48px 48px 48px;">
+      <!-- Isologo (white) -->
+      <img src="file:///Users/styreep/cofoundy/handbook/positioning/BRAND/assets/isologo-pure-white.png" alt="Cofoundy" width="40" style="display:block;height:auto;opacity:0.85;">
+      <!-- Title -->
+      <h1 style="margin:32px 0 10px 0;font-size:36px;font-weight:700;color:#FFFFFF;line-height:1.15;letter-spacing:-0.03em;">Tu propuesta está lista</h1>
+      <!-- Date / subtitle -->
+      <p style="margin:0;font-size:13px;color:rgba(255,255,255,0.45);font-weight:400;letter-spacing:0.01em;">Cotización enviada el 28 de abril, 2026</p>
+    </td>
+  </tr>
+
+  <!-- Teal accent line -->
+  <tr>
+    <td style="background:linear-gradient(90deg,#46A0D0,#5BB8E0);height:3px;font-size:0;line-height:0;">&nbsp;</td>
+  </tr>
+
+  <!-- ============================================ -->
+  <!-- BODY: White content area                     -->
+  <!-- ============================================ -->
+
+  <!-- Greeting + intro -->
+  <tr>
+    <td style="background-color:#FFFFFF;padding:40px 48px 0 48px;">
+      <p style="margin:0 0 20px 0;font-size:17px;font-weight:500;line-height:1.7;color:#1A1D23;">
+        Hola Diana,
+      </p>
+      <p style="margin:0 0 40px 0;font-size:15px;line-height:1.75;color:#4B4E54;">
+        Gracias por la conversación. Quedamos bien alineados en los objetivos y te comparto la propuesta formal que resume lo que acordamos.
+      </p>
+    </td>
+  </tr>
+
+  <!-- Section label: Lo que incluye -->
+  <tr>
+    <td style="background-color:#FFFFFF;padding:0 48px 14px 48px;">
+      <p style="margin:0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#46A0D0;">Lo que incluye</p>
+    </td>
+  </tr>
+
+  <!-- Checklist card -->
+  <tr>
+    <td style="background-color:#FFFFFF;padding:0 48px 32px 48px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F8FAFC;border-radius:10px;border:1px solid #EDF0F3;">
+        <!-- Item 1 -->
+        <tr>
+          <td style="padding:15px 20px;border-bottom:1px solid #EDF0F3;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="28" style="vertical-align:top;padding-top:1px;">
+                  <div style="width:20px;height:20px;border-radius:50%;background-color:#46A0D0;text-align:center;line-height:20px;font-size:11px;color:#fff;">&#10003;</div>
+                </td>
+                <td style="padding-left:12px;font-size:14px;color:#4B4E54;line-height:1.5;">Diseño y desarrollo del portal web corporativo</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Item 2 -->
+        <tr>
+          <td style="padding:15px 20px;border-bottom:1px solid #EDF0F3;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="28" style="vertical-align:top;padding-top:1px;">
+                  <div style="width:20px;height:20px;border-radius:50%;background-color:#46A0D0;text-align:center;line-height:20px;font-size:11px;color:#fff;">&#10003;</div>
+                </td>
+                <td style="padding-left:12px;font-size:14px;color:#4B4E54;line-height:1.5;">Integración con API de servicios existente</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Item 3 -->
+        <tr>
+          <td style="padding:15px 20px;border-bottom:1px solid #EDF0F3;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="28" style="vertical-align:top;padding-top:1px;">
+                  <div style="width:20px;height:20px;border-radius:50%;background-color:#46A0D0;text-align:center;line-height:20px;font-size:11px;color:#fff;">&#10003;</div>
+                </td>
+                <td style="padding-left:12px;font-size:14px;color:#4B4E54;line-height:1.5;">Panel administrativo para gestión de contenido</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <!-- Item 4 -->
+        <tr>
+          <td style="padding:15px 20px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="28" style="vertical-align:top;padding-top:1px;">
+                  <div style="width:20px;height:20px;border-radius:50%;background-color:#46A0D0;text-align:center;line-height:20px;font-size:11px;color:#fff;">&#10003;</div>
+                </td>
+                <td style="padding-left:12px;font-size:14px;color:#4B4E54;line-height:1.5;">Optimización SEO y performance</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- ============================================ -->
+  <!-- INFO CARDS: Navy gradient, side by side      -->
+  <!-- ============================================ -->
+  <tr>
+    <td style="background-color:#FFFFFF;padding:0 48px 36px 48px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <!-- Card 1: Investment -->
+          <td width="48%" style="background:linear-gradient(145deg,#1E3A52,#265270);border-radius:10px;padding:24px 24px 22px 24px;">
+            <p style="margin:0 0 8px 0;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.5);">Inversión total</p>
+            <p style="margin:0;font-size:26px;font-weight:700;color:#FFFFFF;letter-spacing:-0.02em;">S/2,600<span style="font-size:15px;font-weight:500;color:rgba(255,255,255,0.45);">.00</span></p>
+          </td>
+          <td width="4%"></td>
+          <!-- Card 2: Timeline -->
+          <td width="48%" style="background:linear-gradient(145deg,#1E3A52,#265270);border-radius:10px;padding:24px 24px 22px 24px;">
+            <p style="margin:0 0 8px 0;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;color:rgba(255,255,255,0.5);">Tiempo estimado</p>
+            <p style="margin:0;font-size:26px;font-weight:700;color:#FFFFFF;letter-spacing:-0.02em;">8 <span style="font-size:15px;font-weight:500;color:rgba(255,255,255,0.65);">semanas</span></p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- Closing body text -->
+  <tr>
+    <td style="background-color:#FFFFFF;padding:0 48px 40px 48px;">
+      <p style="margin:0;font-size:15px;line-height:1.75;color:#4B4E54;">
+        En el adjunto encontrarás el documento completo con el detalle de fases, entregables y condiciones de pago.
+      </p>
+    </td>
+  </tr>
+
+  <!-- Divider -->
+  <tr>
+    <td style="background-color:#FFFFFF;padding:0 48px;">
+      <div style="height:1px;background-color:#E8ECF0;"></div>
+    </td>
+  </tr>
+
+  <!-- ============================================ -->
+  <!-- NEXT STEP: Left-bordered callout             -->
+  <!-- ============================================ -->
+  <tr>
+    <td style="background-color:#FFFFFF;padding:40px 48px 0 48px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="border-left:3px solid #46A0D0;padding-left:20px;">
+            <p style="margin:0 0 4px 0;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.1em;color:#46A0D0;">Siguiente paso</p>
+            <p style="margin:0;font-size:15px;line-height:1.7;color:#4B4E54;">
+              Revisa la propuesta adjunta y confirmanos tu disponibilidad para arrancar.
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+
+  <!-- ============================================ -->
+  <!-- CTA: Question + Button                       -->
+  <!-- ============================================ -->
+  <tr>
+    <td style="background-color:#FFFFFF;padding:32px 48px 44px 48px;">
+      <p style="margin:0 0 16px 0;font-size:15px;line-height:1.7;color:#4B4E54;">¿Tienes preguntas?</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="background-color:#46A0D0;border-radius:8px;box-shadow:0 1px 3px rgba(70,160,208,0.3),0 4px 12px rgba(70,160,208,0.15);">
+            <a href="https://cal.cofoundy.dev/andre/meet" style="display:inline-block;padding:14px 32px;font-size:14px;font-weight:600;color:#FFFFFF;text-decoration:none;letter-spacing:0.01em;">Agendar llamada &#8594;</a>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:16px 0 0 0;font-size:13px;line-height:1.6;color:#A8AAAD;">
+        También puedes responder a este correo y te contesto a la brevedad.
+      </p>
+    </td>
+  </tr>
+
+  <!-- ============================================ -->
+  <!-- FOOTER: Light bg, 2-column layout            -->
+  <!-- ============================================ -->
+  <tr>
+    <td style="background-color:#F8FAFC;padding:28px 48px;border-top:1px solid #EEF1F4;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td style="vertical-align:top;">
+            <p style="margin:0 0 2px 0;font-size:12px;color:#848386;line-height:1.5;">Cofoundy S.A.C. · RUC 20614413566</p>
+            <p style="margin:0;font-size:12px;color:#A8AAAD;line-height:1.5;">info@cofoundy.dev · cofoundy.dev</p>
+          </td>
+          <td style="text-align:right;vertical-align:top;">
+            <p style="margin:0;font-size:11px;color:#A8AAAD;line-height:1.5;font-style:italic;">"Productos de software<br>en semanas, no meses."</p>
+          </td>
+        </tr>
+      </table>
+      <p style="margin:12px 0 0 0;font-size:10px;color:#C4C6CA;">&copy; 2026 Cofoundy S.A.C. · Lima, Perú</p>
+    </td>
+  </tr>
+
+</table>
+<!-- End main card -->
+
+</td></tr>
+</table>
+<!-- End outer wrapper -->
+
+</body>
+</html>
