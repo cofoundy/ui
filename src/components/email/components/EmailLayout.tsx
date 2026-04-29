@@ -13,7 +13,7 @@ import {
   Preview,
   Heading,
 } from '@react-email/components';
-import { colors, fontFamily, isologoWhiteDataUri, cofoundyInfo } from '../constants';
+import { colors, fontFamily, logoWhiteUrl, cofoundyInfo } from '../constants';
 import { TestBanner } from './TestBanner';
 
 export interface EmailLayoutProps {
@@ -60,10 +60,11 @@ export function EmailLayout({
             {/* Header: navy gradient with isologo + heading + subtitle */}
             <Section style={headerStyle}>
               <Img
-                src={isologoWhiteDataUri}
+                src={logoWhiteUrl}
                 alt="Cofoundy"
-                width={40}
-                style={{ display: 'block', height: 'auto', opacity: 0.85 }}
+                width={48}
+                height={48}
+                style={{ display: 'block' }}
               />
               {heading && (
                 <Heading
