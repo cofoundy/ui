@@ -24,6 +24,7 @@ import { CierreProyecto } from '../src/components/email/templates/CierreProyecto
 import { DevEntrega } from '../src/components/email/templates/DevEntrega';
 import { ReminderPago } from '../src/components/email/templates/ReminderPago';
 import { EnvioContrato } from '../src/components/email/templates/EnvioContrato';
+import { PersonalNote } from '../src/components/email/templates/PersonalNote';
 
 type TemplateFn = (props: Record<string, unknown>) => ReactElement;
 
@@ -35,6 +36,7 @@ const TEMPLATES: Record<string, TemplateFn> = {
   'dev-entrega': DevEntrega as unknown as TemplateFn,
   'envio-contrato': EnvioContrato as unknown as TemplateFn,
   'reminder-pago': ReminderPago as unknown as TemplateFn,
+  'personal-note': PersonalNote as unknown as TemplateFn,
 };
 
 function snakeToCamel(s: string): string {
