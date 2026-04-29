@@ -21,37 +21,39 @@ export function InfoBox({ label, value, href }: InfoBoxProps) {
 }
 
 const boxStyle: React.CSSProperties = {
-  backgroundColor: colors.bgLight,
-  borderLeft: `3px solid ${colors.primary}`,
-  borderRadius: '6px',
-  padding: '14px 18px',
+  backgroundColor: colors.navyMid,
+  background: `linear-gradient(145deg, ${colors.navyMid}, ${colors.navyLight})`,
+  borderRadius: '10px',
+  padding: '24px 24px 22px 24px',
   margin: '14px 0',
 };
 
 const labelStyle: React.CSSProperties = {
   fontSize: '11px',
-  color: colors.textMuted,
+  color: 'rgba(255,255,255,0.5)',
   textTransform: 'uppercase' as const,
-  letterSpacing: '0.06em',
-  fontWeight: 600,
+  letterSpacing: '0.08em',
+  fontWeight: 500,
   fontFamily,
-  margin: '0 0 4px',
+  margin: '0 0 8px',
   lineHeight: '1.4',
 };
 
 const valueStyle: React.CSSProperties = {
-  fontSize: '16px',
-  color: colors.navy,
-  fontWeight: 600,
+  fontSize: '26px',
+  color: '#FFFFFF',
+  fontWeight: 700,
   fontFamily,
   margin: 0,
-  lineHeight: '1.4',
+  lineHeight: '1.3',
+  letterSpacing: '-0.02em',
 };
 
 const valueLinkStyle: React.CSSProperties = {
-  fontSize: '16px',
-  color: colors.navyLight,
-  fontWeight: 600,
+  fontSize: '26px',
+  color: '#FFFFFF',
+  fontWeight: 700,
   textDecoration: 'none',
   fontFamily,
+  letterSpacing: '-0.02em',
 };

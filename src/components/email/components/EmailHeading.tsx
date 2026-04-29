@@ -15,9 +15,10 @@ export function EmailHeading({ as = 'h1', children }: EmailHeadingProps) {
   );
 }
 
+/** h1 kept for edge cases; primary heading now lives in EmailLayout header */
 const h1Style: React.CSSProperties = {
   margin: '0 0 16px',
-  color: colors.navy,
+  color: colors.textDark,
   fontSize: '24px',
   fontWeight: 700,
   letterSpacing: '-0.02em',
@@ -25,12 +26,14 @@ const h1Style: React.CSSProperties = {
   fontFamily,
 };
 
+/** Section label: teal uppercase */
 const h2Style: React.CSSProperties = {
-  margin: '24px 0 12px',
-  color: colors.navyLight,
-  fontSize: '16px',
+  margin: '24px 0 14px',
+  color: colors.primary,
+  fontSize: '11px',
   fontWeight: 600,
-  letterSpacing: '-0.005em',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '0.1em',
   lineHeight: '1.4',
   fontFamily,
 };

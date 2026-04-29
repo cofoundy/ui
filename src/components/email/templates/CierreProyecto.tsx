@@ -5,7 +5,9 @@ import { EmailText } from '../components/EmailText';
 import { EmailButton } from '../components/EmailButton';
 import { EmailDivider } from '../components/EmailDivider';
 import { InfoBox } from '../components/InfoBox';
-import { colors, fontFamily } from '../constants';
+import { ScopeList } from '../components/ScopeList';
+import { NextStepCallout } from '../components/NextStepCallout';
+import { colors } from '../constants';
 
 export interface CierreProyectoProps {
   clientName?: string;
@@ -14,7 +16,6 @@ export interface CierreProyectoProps {
   liveUrl?: string;
   caseStudyUrl?: string;
   calLink?: string;
-  signatureHtml?: string;
   testMode?: boolean;
 }
 
@@ -25,31 +26,26 @@ export function CierreProyecto({
   liveUrl,
   caseStudyUrl,
   calLink,
-  signatureHtml,
   testMode = false,
 }: CierreProyectoProps) {
   return (
     <EmailLayout
       title={`Proyecto ${projectName} completado — Cofoundy`}
+      heading="Proyecto entregado con éxito"
+      subtitle={projectName}
       previewText={`El proyecto ${projectName} está completado y entregado`}
-      signatureHtml={signatureHtml}
       testMode={testMode}
     >
-      <EmailHeading>Proyecto entregado con éxito</EmailHeading>
-      <EmailText>Hola{clientName ? ` ${clientName}` : ''},</EmailText>
+      <EmailText variant="greeting">Hola{clientName ? ` ${clientName}` : ''},</EmailText>
       <EmailText>
-        El proyecto <strong style={{ color: colors.navy }}>{projectName}</strong> está completado y entregado.
+        El proyecto <strong style={{ color: colors.textDark }}>{projectName}</strong> está completado y entregado.
         Fue un placer construirlo contigo.
       </EmailText>
 
       {deliverables && deliverables.length > 0 && (
         <>
           <EmailHeading as="h2">Entregables finales</EmailHeading>
-          <ul style={listStyle}>
-            {deliverables.map((item, i) => (
-              <li key={i} style={listItemStyle}>{item}</li>
-            ))}
-          </ul>
+          <ScopeList items={deliverables} />
         </>
       )}
 
@@ -57,11 +53,10 @@ export function CierreProyecto({
 
       <EmailDivider />
 
-      <EmailHeading as="h2">¿Qué sigue?</EmailHeading>
-      <EmailText>
+      <NextStepCallout label="¿Qué sigue?">
         En los próximos 30 días te haremos seguimiento para asegurarnos de que todo
         funciona correctamente y explorar cómo podemos seguir apoyándote.
-      </EmailText>
+      </NextStepCallout>
 
       {caseStudyUrl && (
         <EmailText>
@@ -72,18 +67,18 @@ export function CierreProyecto({
 
       {calLink && (
         <>
-          <EmailText>¿Tienes un nuevo proyecto en mente o quieres coordinar el seguimiento?</EmailText>
+          <EmailText style={{ marginTop: '16px' }}>
+            ¿Tienes un nuevo proyecto en mente o quieres coordinar el seguimiento?
+          </EmailText>
           <EmailButton href={calLink}>Agendar llamada de cierre</EmailButton>
         </>
       )}
 
-      <EmailText style={{ marginTop: '16px' }}>
+      <EmailText variant="muted">
         Gracias por confiar en Cofoundy. Nos vemos en el próximo.
       </EmailText>
     </EmailLayout>
   );
 }
 
-const linkStyle: React.CSSProperties = { color: colors.navyLight, textDecoration: 'underline' };
-const listStyle: React.CSSProperties = { margin: '0 0 16px', paddingLeft: '22px', color: colors.textBody, fontSize: '15px', lineHeight: '1.7', fontFamily };
-const listItemStyle: React.CSSProperties = { marginBottom: '6px' };
+const linkStyle: React.CSSProperties = { color: colors.primary, textDecoration: 'underline' };

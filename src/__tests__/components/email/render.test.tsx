@@ -14,6 +14,7 @@ describe('Email template rendering', () => {
         clientName: 'Test',
         projectName: 'Test Project',
         amount: 'S/1,000',
+        timeline: '4 semanas',
         scopeBullets: ['Item 1', 'Item 2'],
         calLink: 'https://example.com',
       })

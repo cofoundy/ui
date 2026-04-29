@@ -6,7 +6,7 @@ export function EmailDivider() {
 }
 
 const hrStyle: React.CSSProperties = {
-  borderColor: colors.border,
-  borderTop: `1px solid ${colors.border}`,
+  borderColor: colors.divider,
+  borderTop: `1px solid ${colors.divider}`,
   margin: '24px 0',
 };

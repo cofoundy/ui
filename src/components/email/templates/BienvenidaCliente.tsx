@@ -5,7 +5,9 @@ import { EmailText } from '../components/EmailText';
 import { EmailButton } from '../components/EmailButton';
 import { EmailDivider } from '../components/EmailDivider';
 import { InfoBox } from '../components/InfoBox';
-import { fontFamily, colors } from '../constants';
+import { InfoBoxRow } from '../components/InfoBoxRow';
+import { ScopeList } from '../components/ScopeList';
+import { colors } from '../constants';
 
 export interface BienvenidaClienteProps {
   clientName: string;
@@ -17,7 +19,6 @@ export interface BienvenidaClienteProps {
   vikunjaUrl?: string;
   kickoffDetails?: string;
   calLink?: string;
-  signatureHtml?: string;
   testMode?: boolean;
 }
 
@@ -31,7 +32,6 @@ export function BienvenidaCliente({
   vikunjaUrl,
   kickoffDetails,
   calLink,
-  signatureHtml,
   testMode = false,
 }: BienvenidaClienteProps) {
   const defaultSteps = [
@@ -43,41 +43,49 @@ export function BienvenidaCliente({
     ? nextStepsBullets
     : defaultSteps;
 
+  // Build the full list including conditional items
+  const allSteps = [...steps];
+  if (vikunjaUrl) allSteps.push(`Panel de seguimiento del proyecto: ${vikunjaUrl}`);
+  if (kickoffDetails) allSteps.push(kickoffDetails);
+
   return (
     <EmailLayout
       title={`Bienvenido a Cofoundy — ${projectName || clientName}`}
+      heading={`¡Bienvenido, ${clientName}!`}
+      subtitle={projectName}
       previewText={`¡Bienvenido, ${clientName}! Tu proyecto ${projectName} está activo`}
-      signatureHtml={signatureHtml}
       testMode={testMode}
     >
-      <EmailHeading>¡Bienvenido, {clientName}!</EmailHeading>
+      <EmailText variant="greeting">
+        Hola {clientName},
+      </EmailText>
       <EmailText>
-        Nos alegra arrancar contigo en <strong style={{ color: colors.navy }}>{projectName}</strong>.
+        Nos alegra arrancar contigo en <strong style={{ color: colors.textDark }}>{projectName}</strong>.
         Tu proyecto ya está activo en nuestro sistema y el equipo está listo para empezar.
       </EmailText>
 
-      {kickoffDate && <InfoBox label="Fecha de inicio" value={kickoffDate} />}
-      {pmName && (
-        <InfoBox
-          label="Tu punto de contacto en Cofoundy"
-          value={senderEmail ? `${pmName} · ${senderEmail}` : pmName}
-          href={senderEmail ? `mailto:${senderEmail}` : undefined}
+      {kickoffDate && pmName && senderEmail ? (
+        <InfoBoxRow
+          items={[
+            { label: 'Fecha de inicio', value: kickoffDate },
+            { label: 'Tu contacto', value: pmName },
+          ]}
         />
+      ) : (
+        <>
+          {kickoffDate && <InfoBox label="Fecha de inicio" value={kickoffDate} />}
+          {pmName && (
+            <InfoBox
+              label="Tu punto de contacto en Cofoundy"
+              value={senderEmail ? `${pmName} · ${senderEmail}` : pmName}
+              href={senderEmail ? `mailto:${senderEmail}` : undefined}
+            />
+          )}
+        </>
       )}
 
       <EmailHeading as="h2">¿Qué sigue?</EmailHeading>
-      <ul style={listStyle}>
-        {steps.map((item, i) => (
-          <li key={i} style={listItemStyle}>{item}</li>
-        ))}
-        {vikunjaUrl && (
-          <li style={listItemStyle}>
-            Panel de seguimiento del proyecto:{' '}
-            <Link href={vikunjaUrl} style={linkStyle}>ver aquí</Link>
-          </li>
-        )}
-        {kickoffDetails && <li style={listItemStyle}>{kickoffDetails}</li>}
-      </ul>
+      <ScopeList items={allSteps} />
 
       <EmailDivider />
 
@@ -88,13 +96,9 @@ export function BienvenidaCliente({
         </>
       )}
 
-      <EmailText style={{ marginTop: '16px' }}>
+      <EmailText variant="muted">
         Gracias por confiar en Cofoundy. Vamos a construir algo excelente juntos.
       </EmailText>
     </EmailLayout>
   );
 }
-
-const linkStyle: React.CSSProperties = { color: colors.navyLight, textDecoration: 'none', fontWeight: 600 };
-const listStyle: React.CSSProperties = { margin: '0 0 16px', paddingLeft: '22px', color: colors.textBody, fontSize: '15px', lineHeight: '1.7', fontFamily };
-const listItemStyle: React.CSSProperties = { marginBottom: '6px' };

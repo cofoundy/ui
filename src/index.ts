@@ -364,6 +364,9 @@ export {
 export {
   EmailLayout,
   InfoBox as EmailInfoBox,
+  InfoBoxRow as EmailInfoBoxRow,
+  ScopeList as EmailScopeList,
+  NextStepCallout as EmailNextStepCallout,
   EmailButton,
   EmailHeading,
   EmailText,
@@ -382,6 +385,10 @@ export {
 } from "./components/email";
 export type {
   EmailLayoutProps,
+  InfoBoxRowProps as EmailInfoBoxRowProps,
+  InfoBoxRowItem as EmailInfoBoxRowItem,
+  ScopeListProps as EmailScopeListProps,
+  NextStepCalloutProps as EmailNextStepCalloutProps,
   EmailButtonProps,
   EmailHeadingProps,
   EmailTextProps,

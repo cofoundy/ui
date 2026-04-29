@@ -4,7 +4,8 @@ import { EmailText } from '../components/EmailText';
 import { EmailButton } from '../components/EmailButton';
 import { EmailDivider } from '../components/EmailDivider';
 import { InfoBox } from '../components/InfoBox';
-import { colors } from '../constants';
+import { InfoBoxRow } from '../components/InfoBoxRow';
+import { NextStepCallout } from '../components/NextStepCallout';
 
 export interface ReminderPagoProps {
   clientName?: string;
@@ -14,7 +15,6 @@ export interface ReminderPagoProps {
   daysOverdue?: number;
   bdnAccount?: string;
   calLink?: string;
-  signatureHtml?: string;
   testMode?: boolean;
 }
 
@@ -26,7 +26,6 @@ export function ReminderPago({
   daysOverdue,
   bdnAccount,
   calLink,
-  signatureHtml,
   testMode = false,
 }: ReminderPagoProps) {
   const dueDateDisplay = dueDate && daysOverdue && daysOverdue > 0
@@ -36,19 +35,31 @@ export function ReminderPago({
   return (
     <EmailLayout
       title={`Recordatorio de pago — ${invoiceNumber || 'Factura pendiente'}`}
+      heading="Recordatorio de pago pendiente"
+      subtitle={invoiceNumber || undefined}
       previewText={`Recordatorio: pago pendiente de ${amount}`}
-      signatureHtml={signatureHtml}
       testMode={testMode}
     >
-      <EmailHeading>Recordatorio de pago pendiente</EmailHeading>
-      <EmailText>Hola{clientName ? ` ${clientName}` : ''},</EmailText>
+      <EmailText variant="greeting">Hola{clientName ? ` ${clientName}` : ''},</EmailText>
       <EmailText>
         Te escribimos para recordarte un pago pendiente correspondiente a los
         servicios de Cofoundy S.A.C.
       </EmailText>
 
-      {invoiceNumber && <InfoBox label="Comprobante" value={invoiceNumber} />}
-      <InfoBox label="Monto pendiente" value={amount} />
+      {invoiceNumber && dueDateDisplay ? (
+        <InfoBoxRow
+          items={[
+            { label: 'Comprobante', value: invoiceNumber },
+            { label: 'Monto pendiente', value: amount },
+          ]}
+        />
+      ) : (
+        <>
+          {invoiceNumber && <InfoBox label="Comprobante" value={invoiceNumber} />}
+          <InfoBox label="Monto pendiente" value={amount} />
+        </>
+      )}
+
       {dueDateDisplay && <InfoBox label="Fecha de vencimiento" value={dueDateDisplay} />}
 
       {bdnAccount && (
@@ -64,11 +75,12 @@ export function ReminderPago({
 
       <EmailDivider />
 
-      <EmailText>
+      <NextStepCallout label="Nota">
         Si ya realizaste el pago, por favor ignora este mensaje y envíanos la
         constancia para actualizar nuestros registros.
-      </EmailText>
-      <EmailText>
+      </NextStepCallout>
+
+      <EmailText style={{ marginTop: '16px' }}>
         Si tienes algún inconveniente o quieres coordinar una alternativa, no dudes
         en responder a este correo o contactarnos directamente.
       </EmailText>
