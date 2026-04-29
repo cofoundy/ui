@@ -359,3 +359,37 @@ export {
   getChannelColor,
   type ChannelType,
 } from "./utils/channel";
+
+// Email Templates
+export {
+  EmailLayout,
+  InfoBox as EmailInfoBox,
+  EmailButton,
+  EmailHeading,
+  EmailText,
+  EmailDivider,
+  TestBanner as EmailTestBanner,
+  CotizacionFollowup,
+  Factura,
+  BienvenidaCliente,
+  CierreProyecto,
+  DevEntrega,
+  ReminderPago,
+  renderEmail,
+  renderEmailPlainText,
+  emailColors,
+  cofoundyInfo,
+} from "./components/email";
+export type {
+  EmailLayoutProps,
+  EmailButtonProps,
+  EmailHeadingProps,
+  EmailTextProps,
+  TestBannerProps as EmailTestBannerProps,
+  CotizacionFollowupProps,
+  FacturaProps,
+  BienvenidaClienteProps,
+  CierreProyectoProps,
+  DevEntregaProps,
+  ReminderPagoProps,
+} from "./components/email";
