@@ -6,6 +6,7 @@ import { BienvenidaCliente } from '../../../components/email/templates/Bienvenid
 import { CierreProyecto } from '../../../components/email/templates/CierreProyecto';
 import { DevEntrega } from '../../../components/email/templates/DevEntrega';
 import { ReminderPago } from '../../../components/email/templates/ReminderPago';
+import { EnvioContrato } from '../../../components/email/templates/EnvioContrato';
 
 describe('Email template rendering', () => {
   it('renders CotizacionFollowup to valid HTML', async () => {
@@ -92,6 +93,24 @@ describe('Email template rendering', () => {
     expect(html).toContain('<!DOCTYPE html');
     expect(html).toContain('Recordatorio de pago pendiente');
     expect(html).toContain('5 días vencida');
+  });
+
+  it('renders EnvioContrato to valid HTML', async () => {
+    const html = await render(
+      EnvioContrato({
+        clientName: 'Test',
+        contractType: 'Acuerdo de Confidencialidad (NDA)',
+        projectName: 'Test Project',
+        keyPoints: ['Vigencia de 2 años', 'Bilateral'],
+        signingDeadline: '5 de mayo, 2026',
+        contactName: 'André Pacheco',
+      })
+    );
+    expect(html).toContain('<!DOCTYPE html');
+    expect(html).toContain('Tu contrato está listo');
+    expect(html).toContain('NDA');
+    expect(html).toContain('Vigencia de 2 años');
+    expect(html).toContain('5 de mayo, 2026');
   });
 
   it('includes test banner when testMode is true', async () => {

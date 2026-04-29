@@ -32,6 +32,8 @@ export { DevEntrega } from './templates/DevEntrega';
 export type { DevEntregaProps } from './templates/DevEntrega';
 export { ReminderPago } from './templates/ReminderPago';
 export type { ReminderPagoProps } from './templates/ReminderPago';
+export { EnvioContrato } from './templates/EnvioContrato';
+export type { EnvioContratoProps } from './templates/EnvioContrato';
 
 // Render utilities
 export { renderEmail, renderEmailPlainText } from './render';

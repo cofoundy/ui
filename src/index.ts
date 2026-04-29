@@ -378,6 +378,7 @@ export {
   CierreProyecto,
   DevEntrega,
   ReminderPago,
+  EnvioContrato,
   renderEmail,
   renderEmailPlainText,
   emailColors,
@@ -399,4 +400,5 @@ export type {
   CierreProyectoProps,
   DevEntregaProps,
   ReminderPagoProps,
+  EnvioContratoProps,
 } from "./components/email";
