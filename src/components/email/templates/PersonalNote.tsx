@@ -175,7 +175,7 @@ export function PersonalNote({
   body,
   bodyMarkdown,
   greeting,
-  signOff = 'Un abrazo,',
+  signOff,
   calLink,
   calLabel = 'Agendar llamada',
   previewText,
@@ -267,9 +267,11 @@ export function PersonalNote({
               </Section>
             )}
 
-            <Section style={signOffSectionStyle}>
-              <Text style={signOffTextStyle}>{signOff}</Text>
-            </Section>
+            {signOff && (
+              <Section style={signOffSectionStyle}>
+                <Text style={signOffTextStyle}>{signOff}</Text>
+              </Section>
+            )}
 
             <Section style={sigSectionStyle}>
               <table cellPadding={0} cellSpacing={0} style={{ borderCollapse: 'collapse' as const }}>
