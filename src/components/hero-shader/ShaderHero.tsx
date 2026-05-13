@@ -32,6 +32,11 @@ export interface ShaderHeroProps {
  *   2. prefers-reduced-motion → poster only
  *   3. parent offscreen (if observeRef given) → unmount canvas
  *
+ * The poster always stays mounted as a base layer. The canvas is overlaid on
+ * top once gates pass — while the three.js chunk loads, the canvas wrapper is
+ * transparent and the poster bleeds through, so there's no flash to background
+ * color before the first shader paint.
+ *
  * The poster should be a frame-canonical capture of `config` so the transition
  * from poster → live shader is seamless. Use the capture-shader-poster script.
  */
@@ -70,22 +75,23 @@ export function ShaderHero({
     return () => io.disconnect();
   }, [shouldRender, observeRef]);
 
-  const Poster = (
-    <img
-      className={posterClassName}
-      src={posterSrc}
-      alt=""
-      aria-hidden="true"
-      decoding="async"
-      loading="eager"
-    />
-  );
-
-  if (!mounted || !shouldRender || !inView) return Poster;
+  const showCanvas = mounted && shouldRender && inView;
 
   return (
-    <div className={canvasClassName}>
-      <ShaderHeroCanvas config={config} pixelDensity={pixelDensity} />
-    </div>
+    <>
+      <img
+        className={posterClassName}
+        src={posterSrc}
+        alt=""
+        aria-hidden="true"
+        decoding="async"
+        loading="eager"
+      />
+      {showCanvas && (
+        <div className={canvasClassName}>
+          <ShaderHeroCanvas config={config} pixelDensity={pixelDensity} />
+        </div>
+      )}
+    </>
   );
 }
