@@ -57,11 +57,19 @@
   /* Primary color - brand color, same in both themes */
   --chat-primary: var(--color-primary, var(--cf-primary, #46a0d0));
 
-  /* Semantic colors - sophisticated palette aligned with brand */
-  --chat-success: #059669;  /* Emerald-600: connects to primary teal family */
-  --chat-success-light: #34d399; /* Emerald-400: gradient accent */
-  --chat-error: #BE123C;    /* Rose-700: elegant, complements teal */
-  --chat-warning: #D97706;  /* Amber-600: warm, sophisticated */
+  /* Semantic colors - reserved for real state (success/error/warning), not categorical chart fills */
+  --chat-success: #059669;  /* Emerald-600: positive state (confirmed, connected, positive delta) */
+  --chat-success-light: #34d399; /* Emerald-400: gradient accent for success surfaces */
+  --chat-error: #BE123C;    /* Rose-700 */
+  --chat-warning: #D97706;  /* Amber-600 */
+
+  /* Categorical chart palette - brand-aligned, for multi-series visualizations.
+     Use these in charts/donuts/funnels/stacked bars. Do NOT use --chat-success for series. */
+  --chart-1: #46A0D0;  /* brand primary sky - main series */
+  --chart-2: #1B577E;  /* brand secondary deep blue - 2nd series */
+  --chart-3: #D97706;  /* amber - 3rd series (warm accent) */
+  --chart-4: #64748b;  /* slate-500 - neutral / "other" */
+  --chart-5: #7dd3fc;  /* sky-300 - light tint / 5th series */
 
   /* AI accent — purple identity for AI-generated content */
   --chat-ai: #9333ea;           /* Purple-600 */
@@ -118,11 +126,41 @@
   --channel-webchat: #0EA5E9;   /* Sky blue for web chat */
   --channel-sms: #F97316;       /* Orange for SMS */
 
-  /* Status colors - cohesive with Cofoundy brand */
-  --status-success: #059669;  /* Emerald-600 */
-  --status-warning: #D97706;  /* Amber-600 */
-  --status-error: #BE123C;    /* Rose-700: elegant, complements teal */
-  --status-info: #46A0D0;     /* Brand primary */
+  /* Status colors - aliases of --chat-* semantic tokens (kept for shadcn-style call sites) */
+  --status-success: var(--chat-success);
+  --status-warning: var(--chat-warning);
+  --status-error: var(--chat-error);
+  --status-info: var(--chat-primary);
+}
+
+/* Docs design tokens — promoted from docs-ai 2026-05-13.
+   Consumed by docs components in @cofoundy/ui/components/docs/.
+   Dark-mode defaults; light overrides below in [data-theme="light"]. */
+:root {
+  --cf-primary: #46A0D0;
+  --cf-primary-dark: #2984AD;
+  --cf-secondary: #1B577E;
+  --cf-deep: #23435F;
+  --cf-bg: #020b1b;
+  --cf-fg: #E2E8F0;
+  --cf-muted: #94A3B8;
+  --cf-border: rgba(255, 255, 255, 0.15);
+  --cf-card: rgba(255, 255, 255, 0.07);
+  --cf-code-bg: rgba(255, 255, 255, 0.1);
+  --cf-success: #059669;
+  --cf-error: #BE123C;
+  --cf-warning: #D97706;
+}
+
+/* Docs tokens — light theme overrides */
+[data-theme="light"] {
+  --cf-bg: #ffffff;
+  --cf-fg: #0f172a;
+  --cf-primary: #2984AD;
+  --cf-border: rgba(0, 0, 0, 0.1);
+  --cf-card: rgba(0, 0, 0, 0.03);
+  --cf-code-bg: rgba(0, 0, 0, 0.06);
+  --cf-muted: #64748b;
 }
 
 /* Dark theme (default) */
@@ -184,6 +222,10 @@
 
   /* Success light variant for gradients */
   --chat-success-light: #6ee7b7; /* Emerald-300: lighter for light bg */
+
+  /* Chart palette — light-mode overrides for adequate contrast on white */
+  --chart-1: #2984ad;  /* darker brand sky to read on white */
+  --chart-5: #0ea5e9;  /* sky-500 instead of sky-300 which would wash out */
 
   /* AI accent - darker purple on light bg for contrast */
   --chat-ai: #7c3aed;
