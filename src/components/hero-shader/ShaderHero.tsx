@@ -99,7 +99,7 @@ export function ShaderHero({
           className={canvasClassName}
           style={{
             opacity: painted ? 1 : 0,
-            transition: 'opacity 350ms ease-out',
+            transition: 'opacity 150ms linear',
           }}
         >
           <ShaderHeroCanvas

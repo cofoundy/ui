@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { ShaderGradientCanvas, ShaderGradient } from '@shadergradient/react';
+import { useFrame } from '@react-three/fiber';
 
 export type ShaderHeroType = 'sphere' | 'waves' | 'plane';
 export type ShaderHeroGrain = 'on' | 'off';
@@ -39,8 +40,23 @@ export interface ShaderHeroConfig {
 export interface ShaderHeroCanvasProps {
   config: ShaderHeroConfig;
   pixelDensity?: number;
-  /** Fired after component mounts + 2 animation frames (≈ when WebGL has painted). */
+  /** Fired the first time three.js paints a frame into the WebGL canvas. */
   onPainted?: () => void;
+}
+
+/**
+ * Mounted INSIDE the r3f scene. useFrame runs in three.js's render loop after
+ * each frame is drawn — firing it the first time gives the exact moment the
+ * shader has produced pixels in the WebGL backbuffer.
+ */
+function FirstFramePing({ onPainted }: { onPainted?: () => void }) {
+  const firedRef = React.useRef(false);
+  useFrame(() => {
+    if (firedRef.current || !onPainted) return;
+    firedRef.current = true;
+    onPainted();
+  });
+  return null;
 }
 
 export function ShaderHeroCanvas({
@@ -48,18 +64,6 @@ export function ShaderHeroCanvas({
   pixelDensity = 1,
   onPainted,
 }: ShaderHeroCanvasProps) {
-  React.useEffect(() => {
-    if (!onPainted) return;
-    // Two rAFs: first to let the component commit, second to let three.js
-    // run its initial render. By the time the second rAF fires, the WebGL
-    // backbuffer has the shader frame — safe to reveal.
-    const id1 = requestAnimationFrame(() => {
-      const id2 = requestAnimationFrame(() => onPainted());
-      (id1 as unknown as { _id2?: number })._id2 = id2;
-    });
-    return () => cancelAnimationFrame(id1);
-  }, [onPainted]);
-
   return (
     <ShaderGradientCanvas
       style={{ width: '100%', height: '100%' }}
@@ -68,6 +72,7 @@ export function ShaderHeroCanvas({
       lazyLoad={false}
     >
       <ShaderGradient {...config} />
+      <FirstFramePing onPainted={onPainted} />
     </ShaderGradientCanvas>
   );
 }
