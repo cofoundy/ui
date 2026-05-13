@@ -1,6 +1,6 @@
 {
   "name": "@cofoundy/ui",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./styles": "./src/styles/index.css",
     "./utils": "./src/utils/index.ts",
+    "./hero-shader": "./src/components/hero-shader/index.ts",
     "./iife": {
       "import": "./dist/chat-widget.iife.js",
       "require": "./dist/chat-widget.iife.js"
@@ -15,7 +16,13 @@
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "@shadergradient/react": ">=2.4.0",
+    "next": ">=15"
+  },
+  "peerDependenciesMeta": {
+    "@shadergradient/react": { "optional": true },
+    "next": { "optional": true }
   },
   "optionalDependencies": {
     "socket.io-client": "^4.7.5"
@@ -76,6 +83,7 @@
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "build:iife": "vite build --config vite.config.iife.ts",
-    "build:iife:watch": "vite build --config vite.config.iife.ts --watch"
+    "build:iife:watch": "vite build --config vite.config.iife.ts --watch",
+    "capture-shader-poster": "node scripts/capture-shader-poster.mjs"
   }
 }
