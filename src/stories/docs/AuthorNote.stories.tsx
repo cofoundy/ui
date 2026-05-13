@@ -1,17 +1,14 @@
 import type { StoryObj, Meta } from "@storybook/react";
-import { PersonalNote as DocsPersonalNote } from "../../components/docs/PersonalNote";
+import { AuthorNote } from "../../components/docs/AuthorNote";
 
-// Note: exported as DocsPersonalNote to avoid collision with the email
-// template PersonalNote already exported from @cofoundy/ui.
-
-const meta: Meta<typeof DocsPersonalNote> = {
-  title: "Docs/PersonalNote",
-  component: DocsPersonalNote,
+const meta: Meta<typeof AuthorNote> = {
+  title: "Docs/AuthorNote",
+  component: AuthorNote,
   tags: ["autodocs"],
 };
 
 export default meta;
-type Story = StoryObj<typeof DocsPersonalNote>;
+type Story = StoryObj<typeof AuthorNote>;
 
 export const Default: Story = {
   args: {

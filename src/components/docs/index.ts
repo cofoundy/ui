@@ -26,10 +26,10 @@ export type { NextStepCalloutProps } from './NextStepCallout';
 export { PersonaCard } from './PersonaCard';
 export type { PersonaCardProps } from './PersonaCard';
 
-// PersonalNote is exported as DocsPersonalNote to avoid conflict with the
-// email template PersonalNote already exported from @cofoundy/ui.
-export { PersonalNote as DocsPersonalNote } from './PersonalNote';
-export type { PersonalNoteProps as DocsPersonalNoteProps } from './PersonalNote';
+// AuthorNote (was DocsPersonalNote) — renamed to avoid clash with the email
+// template's PersonalNote, which is a different concept (full email layout).
+export { AuthorNote } from './AuthorNote';
+export type { AuthorNoteProps } from './AuthorNote';
 
 export { ScopeList } from './ScopeList';
 export type { ScopeListProps, ScopeItem, ScopeStatus } from './ScopeList';

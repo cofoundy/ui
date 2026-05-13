@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-export interface PersonalNoteProps {
+export interface AuthorNoteProps {
   author: string;
   role?: string;
   avatar?: string;
@@ -8,10 +8,10 @@ export interface PersonalNoteProps {
   children?: ReactNode;
 }
 
-export function PersonalNote({ author, role, avatar, signature, children }: PersonalNoteProps) {
+export function AuthorNote({ author, role, avatar, signature, children }: AuthorNoteProps) {
   return (
     <aside
-      data-slot="personal-note"
+      data-slot="author-note"
       style={{
         margin: '2em 0',
         padding: '1.5em 1.75em',

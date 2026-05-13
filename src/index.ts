@@ -417,7 +417,7 @@ export {
   MoodBoard,
   NextStepCallout,
   PersonaCard,
-  DocsPersonalNote,
+  AuthorNote,
   ScopeList,
   TestimonialCard,
 } from "./components/docs";
@@ -441,7 +441,7 @@ export type {
   MoodBoardItem,
   NextStepCalloutProps,
   PersonaCardProps,
-  DocsPersonalNoteProps,
+  AuthorNoteProps,
   ScopeListProps,
   ScopeItem,
   ScopeStatus,
