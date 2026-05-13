@@ -39,12 +39,27 @@ export interface ShaderHeroConfig {
 export interface ShaderHeroCanvasProps {
   config: ShaderHeroConfig;
   pixelDensity?: number;
+  /** Fired after component mounts + 2 animation frames (≈ when WebGL has painted). */
+  onPainted?: () => void;
 }
 
 export function ShaderHeroCanvas({
   config,
   pixelDensity = 1,
+  onPainted,
 }: ShaderHeroCanvasProps) {
+  React.useEffect(() => {
+    if (!onPainted) return;
+    // Two rAFs: first to let the component commit, second to let three.js
+    // run its initial render. By the time the second rAF fires, the WebGL
+    // backbuffer has the shader frame — safe to reveal.
+    const id1 = requestAnimationFrame(() => {
+      const id2 = requestAnimationFrame(() => onPainted());
+      (id1 as unknown as { _id2?: number })._id2 = id2;
+    });
+    return () => cancelAnimationFrame(id1);
+  }, [onPainted]);
+
   return (
     <ShaderGradientCanvas
       style={{ width: '100%', height: '100%' }}

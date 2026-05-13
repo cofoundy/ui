@@ -77,6 +77,13 @@ export function ShaderHero({
 
   const showCanvas = mounted && shouldRender && inView;
 
+  // Crossfade gate: only reveal the canvas once the shader has actually
+  // painted (avoids a black flash from WebGL's pre-paint opaque backbuffer).
+  const [painted, setPainted] = React.useState(false);
+  React.useEffect(() => {
+    if (!showCanvas) setPainted(false);
+  }, [showCanvas]);
+
   return (
     <>
       <img
@@ -88,8 +95,18 @@ export function ShaderHero({
         loading="eager"
       />
       {showCanvas && (
-        <div className={canvasClassName}>
-          <ShaderHeroCanvas config={config} pixelDensity={pixelDensity} />
+        <div
+          className={canvasClassName}
+          style={{
+            opacity: painted ? 1 : 0,
+            transition: 'opacity 350ms ease-out',
+          }}
+        >
+          <ShaderHeroCanvas
+            config={config}
+            pixelDensity={pixelDensity}
+            onPainted={() => setPainted(true)}
+          />
         </div>
       )}
     </>
