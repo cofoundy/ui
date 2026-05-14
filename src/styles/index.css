@@ -713,32 +713,46 @@
   animation-delay: calc(var(--cf-stagger-index, 0) * var(--cf-stagger-fast));
 }
 
-/* === ANALYTICS REVEAL UTILITIES === */
-/* Bars: final width/height inline; CSS animates transform from 0 to 1.
-   Survives SSR with no hydration (docs-ai Frame B) because final layout
-   sits in the HTML — the @keyframes just animates the visual transform. */
-.cf-bar-reveal-x {
-  transform-origin: left center;
+/* === ANALYTICS REVEAL UTILITIES ===
+   Two-phase activation to fire animations ONCE on viewport entry:
+   - SSR/no-JS: bars/donut render at final value, no animation (acceptable degradation)
+   - With reveal bootstrap script: <html> gets `.cf-reveals-ready` synchronously,
+     elements start hidden. IntersectionObserver flips `data-cf-reveal="visible"`
+     when in view → animation runs exactly once, no double-fire on hydration.
+   Bootstrap: `<script>` exported from @cofoundy/ui/scripts/reveal-on-scroll.
+*/
+.cf-bar-reveal-x { transform-origin: left center; }
+.cf-bar-reveal-y { transform-origin: bottom center; }
+
+.cf-donut-reveal {
+  mask: conic-gradient(from 0deg, #000 0deg var(--cf-reveal-angle), transparent var(--cf-reveal-angle) 360deg);
+  -webkit-mask: conic-gradient(from 0deg, #000 0deg var(--cf-reveal-angle), transparent var(--cf-reveal-angle) 360deg);
+}
+
+/* Pending state — only when JS bootstrap has marked <html> as ready */
+.cf-reveals-ready .cf-bar-reveal-x:not([data-cf-reveal="visible"]) { transform: scaleX(0); }
+.cf-reveals-ready .cf-bar-reveal-y:not([data-cf-reveal="visible"]) { transform: scaleY(0); }
+.cf-reveals-ready .cf-donut-reveal:not([data-cf-reveal="visible"]) { --cf-reveal-angle: 0deg; }
+.cf-reveals-ready .cf-stagger-fade-in:not([data-cf-reveal="visible"]) { opacity: 0; }
+
+/* Visible state — animation runs on viewport entry (set by observer) */
+.cf-bar-reveal-x[data-cf-reveal="visible"] {
   animation: cf-reveal-x var(--cf-duration-smooth) var(--cf-ease-default) both;
   animation-delay: calc(var(--cf-stagger-index, 0) * 80ms);
 }
 
-.cf-bar-reveal-y {
-  transform-origin: bottom center;
+.cf-bar-reveal-y[data-cf-reveal="visible"] {
   animation: cf-reveal-y var(--cf-duration-smooth) var(--cf-ease-default) both;
   animation-delay: calc(var(--cf-stagger-index, 0) * 50ms);
 }
 
-.cf-stagger-fade-in {
-  animation: cf-fade-in var(--cf-duration-smooth) var(--cf-ease-default) both;
-  animation-delay: calc(var(--cf-stagger-index, 0) * 80ms);
+.cf-donut-reveal[data-cf-reveal="visible"] {
+  animation: cf-reveal-angle var(--cf-duration-slow) var(--cf-ease-default) both;
 }
 
-/* Donut reveal: full conic-gradient rendered SSR, mask sweeps 0→360deg. */
-.cf-donut-reveal {
-  mask: conic-gradient(from 0deg, #000 0deg var(--cf-reveal-angle), transparent var(--cf-reveal-angle) 360deg);
-  -webkit-mask: conic-gradient(from 0deg, #000 0deg var(--cf-reveal-angle), transparent var(--cf-reveal-angle) 360deg);
-  animation: cf-reveal-angle var(--cf-duration-slow) var(--cf-ease-default) both;
+.cf-stagger-fade-in[data-cf-reveal="visible"] {
+  animation: cf-fade-in var(--cf-duration-smooth) var(--cf-ease-default) both;
+  animation-delay: calc(var(--cf-stagger-index, 0) * 80ms);
 }
 
 /* Glass morphism utilities - theme aware */

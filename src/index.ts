@@ -173,6 +173,8 @@ export {
   type TimestampFormat,
   MessageStatus,
   MessageContent,
+  StreamingMarkdown,
+  type StreamingMarkdownProps,
   MessageMedia,
 } from "./components/messaging";
 
@@ -447,3 +449,6 @@ export type {
   ScopeStatus,
   TestimonialCardProps,
 } from "./components/docs";
+
+// Analytics reveal bootstrap (viewport-triggered animations)
+export { revealOnScrollScript } from "./scripts/reveal-on-scroll";
