@@ -729,11 +729,10 @@
   -webkit-mask: conic-gradient(from 0deg, #000 0deg var(--cf-reveal-angle), transparent var(--cf-reveal-angle) 360deg);
 }
 
-/* Pending state — only when JS bootstrap has marked <html> as ready */
-.cf-reveals-ready .cf-bar-reveal-x:not([data-cf-reveal="visible"]) { transform: scaleX(0); }
-.cf-reveals-ready .cf-bar-reveal-y:not([data-cf-reveal="visible"]) { transform: scaleY(0); }
-.cf-reveals-ready .cf-donut-reveal:not([data-cf-reveal="visible"]) { --cf-reveal-angle: 0deg; }
-.cf-reveals-ready .cf-stagger-fade-in:not([data-cf-reveal="visible"]) { opacity: 0; }
+/* Pending state — the JS bootstrap injects the equivalent hide rules into <head>
+   synchronously so they apply before first paint. The .cf-reveals-ready class
+   below is kept only as an explicit marker (queryable by tests/devtools);
+   the actual hide is done by the injected <style>. */
 
 /* Visible state — animation runs on viewport entry (set by observer) */
 .cf-bar-reveal-x[data-cf-reveal="visible"] {

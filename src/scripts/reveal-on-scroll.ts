@@ -22,6 +22,11 @@
  * at their final state, so degradation is graceful.
  */
 export const revealOnScrollScript = `(function(){
+  // Inject hide-rule synchronously in <head> so body paints with bars already
+  // at scaleX(0) — prevents first-frame flash of the final-width inline style.
+  var s = document.createElement('style');
+  s.textContent = '.cf-bar-reveal-x:not([data-cf-reveal="visible"]){transform:scaleX(0);transform-origin:left center}.cf-bar-reveal-y:not([data-cf-reveal="visible"]){transform:scaleY(0);transform-origin:bottom center}.cf-donut-reveal:not([data-cf-reveal="visible"]){--cf-reveal-angle:0deg}.cf-stagger-fade-in:not([data-cf-reveal="visible"]){opacity:0}';
+  (document.head || document.documentElement).appendChild(s);
   document.documentElement.classList.add('cf-reveals-ready');
   var SEL = '.cf-bar-reveal-x,.cf-bar-reveal-y,.cf-donut-reveal,.cf-stagger-fade-in';
   function reveal(el){ el.setAttribute('data-cf-reveal','visible'); }
