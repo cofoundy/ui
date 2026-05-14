@@ -1,8 +1,4 @@
-"use client";
-
 import { cn } from "../../utils/cn";
-import { useMountTransition } from "../../hooks/useMountTransition";
-import { useAnimatedValue } from "../../hooks/useAnimatedValue";
 
 type ProgressFormat = "number" | "percentage" | "fraction";
 
@@ -40,8 +36,6 @@ export function ProgressBar({
   animate = true,
   className,
 }: ProgressBarProps) {
-  const mounted = useMountTransition(animate);
-  const animatedValue = useAnimatedValue({ value, enabled: animate });
   const pct = Math.min((value / Math.max(max, 1)) * 100, 100);
 
   return (
@@ -50,19 +44,16 @@ export function ProgressBar({
         <div className="flex items-center justify-between">
           <span className="text-xs font-sans text-[var(--chat-foreground)]">{label}</span>
           <span className="text-xs font-mono text-[var(--chat-muted)]">
-            {formatProgress(animatedValue, max, format)}
+            {formatProgress(value, max, format)}
           </span>
         </div>
       )}
       <div className="h-2 w-full rounded-full overflow-hidden bg-[var(--chat-border)]">
         <div
-          className="h-full rounded-full"
+          className={cn("h-full rounded-full", animate && "cf-bar-reveal-x")}
           style={{
-            width: mounted ? `${pct}%` : "0%",
+            width: `${pct}%`,
             backgroundColor: color,
-            transition: animate
-              ? `width var(--cf-duration-smooth) var(--cf-ease-default)`
-              : undefined,
           }}
         />
       </div>

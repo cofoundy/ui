@@ -1,7 +1,3 @@
-"use client";
-
-import { useAnimatedValue } from "../../hooks/useAnimatedValue";
-
 type AnimatedNumberFormat = "number" | "duration" | "percentage";
 
 export interface AnimatedNumberProps {
@@ -13,7 +9,6 @@ export interface AnimatedNumberProps {
 }
 
 function formatAnimatedValue(value: number, format: AnimatedNumberFormat): string {
-  // Round to avoid flickering decimals during animation
   const rounded = Math.round(value);
 
   switch (format) {
@@ -38,19 +33,11 @@ function formatAnimatedValue(value: number, format: AnimatedNumberFormat): strin
 export function AnimatedNumber({
   value,
   format = "number",
-  duration = 600,
-  animate = true,
   className,
 }: AnimatedNumberProps) {
-  const animatedValue = useAnimatedValue({
-    value,
-    duration,
-    enabled: animate,
-  });
-
   return (
     <span data-slot="animated-number" className={className}>
-      {formatAnimatedValue(animatedValue, format)}
+      {formatAnimatedValue(value, format)}
     </span>
   );
 }

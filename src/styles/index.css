@@ -405,6 +405,29 @@
   }
 }
 
+/* === ANALYTICS REVEAL (SSR-safe: final value in HTML, CSS animates on mount) === */
+
+@keyframes cf-reveal-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes cf-reveal-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@property --cf-reveal-angle {
+  syntax: '<angle>';
+  initial-value: 360deg;
+  inherits: false;
+}
+
+@keyframes cf-reveal-angle {
+  from { --cf-reveal-angle: 0deg; }
+  to { --cf-reveal-angle: 360deg; }
+}
+
 /* === LEGACY ALIASES (for backwards compatibility) === */
 @keyframes chat-fade-in {
   from { opacity: 0; transform: translateY(10px); }
@@ -510,6 +533,57 @@
 
 .cf-folding-cube .cf-cube4::before {
   animation-delay: 0.9s;
+}
+
+/* === Streaming markdown per-char wave === */
+@keyframes cf-stream-char-wave {
+  from {
+    opacity: 0;
+    filter: blur(var(--cf-stream-blur, 4px));
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.cf-stream-char {
+  animation: cf-stream-char-wave var(--cf-stream-fade, 220ms) ease-out both;
+  display: inline-block;
+  white-space: pre;
+  transition:
+    font-weight 180ms ease-out,
+    font-style 180ms ease-out,
+    color 180ms ease-out,
+    background-color 180ms ease-out;
+}
+
+.cf-stream-bold {
+  font-weight: 600;
+}
+
+.cf-stream-italic {
+  font-style: italic;
+}
+
+.cf-stream-code {
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  font-size: 0.9em;
+}
+
+.cf-stream-strike {
+  text-decoration: line-through;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cf-stream-char {
+    animation: none !important;
+  }
 }
 
 /* === LEGACY UTILITY CLASSES (for backwards compatibility) === */
@@ -637,6 +711,34 @@
   opacity: 0;
   animation: cf-fade-in var(--cf-duration-smooth) var(--cf-ease-default) forwards;
   animation-delay: calc(var(--cf-stagger-index, 0) * var(--cf-stagger-fast));
+}
+
+/* === ANALYTICS REVEAL UTILITIES === */
+/* Bars: final width/height inline; CSS animates transform from 0 to 1.
+   Survives SSR with no hydration (docs-ai Frame B) because final layout
+   sits in the HTML — the @keyframes just animates the visual transform. */
+.cf-bar-reveal-x {
+  transform-origin: left center;
+  animation: cf-reveal-x var(--cf-duration-smooth) var(--cf-ease-default) both;
+  animation-delay: calc(var(--cf-stagger-index, 0) * 80ms);
+}
+
+.cf-bar-reveal-y {
+  transform-origin: bottom center;
+  animation: cf-reveal-y var(--cf-duration-smooth) var(--cf-ease-default) both;
+  animation-delay: calc(var(--cf-stagger-index, 0) * 50ms);
+}
+
+.cf-stagger-fade-in {
+  animation: cf-fade-in var(--cf-duration-smooth) var(--cf-ease-default) both;
+  animation-delay: calc(var(--cf-stagger-index, 0) * 80ms);
+}
+
+/* Donut reveal: full conic-gradient rendered SSR, mask sweeps 0→360deg. */
+.cf-donut-reveal {
+  mask: conic-gradient(from 0deg, #000 0deg var(--cf-reveal-angle), transparent var(--cf-reveal-angle) 360deg);
+  -webkit-mask: conic-gradient(from 0deg, #000 0deg var(--cf-reveal-angle), transparent var(--cf-reveal-angle) 360deg);
+  animation: cf-reveal-angle var(--cf-duration-slow) var(--cf-ease-default) both;
 }
 
 /* Glass morphism utilities - theme aware */

@@ -1,8 +1,5 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { cn } from "../../utils/cn";
-import { useMountTransition } from "../../hooks/useMountTransition";
 import { AnimatedNumber } from "./AnimatedNumber";
 
 export interface HorizontalBarItem {
@@ -25,7 +22,6 @@ export function HorizontalBar({
   animate = true,
   className,
 }: HorizontalBarProps) {
-  const mounted = useMountTransition(animate);
   const maxValue = Math.max(...items.map((d) => d.value), 1);
 
   return (
@@ -47,14 +43,12 @@ export function HorizontalBar({
 
             <div className="flex-1 h-6 rounded-md overflow-hidden bg-[var(--chat-border)]">
               <div
-                className="h-full rounded-md"
+                className={cn("h-full rounded-md", animate && "cf-bar-reveal-x")}
                 style={{
-                  width: mounted ? `${pct}%` : "0%",
+                  width: `${pct}%`,
                   backgroundColor: item.color,
-                  transition: animate
-                    ? `width var(--cf-duration-smooth) var(--cf-ease-default) ${i * 80}ms`
-                    : undefined,
-                }}
+                  ["--cf-stagger-index" as string]: i,
+                } as React.CSSProperties}
               />
             </div>
 

@@ -1,8 +1,5 @@
-"use client";
-
 import type { ReactNode } from "react";
 import { cn } from "../../utils/cn";
-import { useMountTransition } from "../../hooks/useMountTransition";
 import { AnimatedNumber } from "./AnimatedNumber";
 
 type LeaderboardFormat = "number" | "duration" | "percentage";
@@ -25,9 +22,9 @@ export interface LeaderboardProps {
 }
 
 const rankColors = [
-  "var(--rank-gold)",      // #1 gold
-  "var(--rank-silver)",    // #2 silver
-  "var(--rank-bronze)",    // #3 bronze
+  "var(--rank-gold)",
+  "var(--rank-silver)",
+  "var(--rank-bronze)",
 ];
 
 export function Leaderboard({
@@ -39,7 +36,6 @@ export function Leaderboard({
   animate = true,
   className,
 }: LeaderboardProps) {
-  const mounted = useMountTransition(animate);
   const maxScore = Math.max(...items.map((i) => i.score), 1);
 
   return (
@@ -97,14 +93,17 @@ export function Leaderboard({
               {showBars && (
                 <div className="w-20 h-1.5 rounded-full overflow-hidden bg-[var(--chat-border)]">
                   <div
-                    className="h-full rounded-full"
+                    className={cn(
+                      "h-full rounded-full",
+                      animate && "cf-bar-reveal-x"
+                    )}
                     style={{
-                      width: mounted ? `${barPct}%` : "0%",
+                      width: `${barPct}%`,
                       backgroundColor: isPodium
                         ? rankColors[i] ?? "var(--chat-primary)"
                         : "var(--chat-primary)",
-                      transition: `width var(--cf-duration-smooth) var(--cf-ease-default)`,
-                    }}
+                      ["--cf-stagger-index" as string]: i,
+                    } as React.CSSProperties}
                   />
                 </div>
               )}

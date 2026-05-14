@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { cn } from "../../utils/cn";
-import { useMountTransition } from "../../hooks/useMountTransition";
 
 export interface BarChartItem {
   label: string;
@@ -29,7 +28,6 @@ export function BarChart({
   className,
 }: BarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const mounted = useMountTransition(animate);
   const maxValue = Math.max(...data.map((d) => d.value), 1);
 
   if (data.length === 0) {
@@ -73,15 +71,14 @@ export function BarChart({
               <div
                 className={cn(
                   "w-full rounded-t-md min-h-[2px]",
-                  isHovered ? "opacity-100" : "opacity-80"
+                  isHovered ? "opacity-100" : "opacity-80",
+                  animate && "cf-bar-reveal-y"
                 )}
                 style={{
-                  height: mounted ? `${pct}%` : "0%",
+                  height: `${pct}%`,
                   backgroundColor: barColor,
-                  transition: animate
-                    ? `height var(--cf-duration-smooth) var(--cf-ease-default) ${i * 50}ms, opacity var(--cf-duration-fast)`
-                    : `opacity var(--cf-duration-fast)`,
-                }}
+                  ["--cf-stagger-index" as string]: i,
+                } as React.CSSProperties}
               />
             </div>
           );

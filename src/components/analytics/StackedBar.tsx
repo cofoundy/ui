@@ -1,7 +1,4 @@
-"use client";
-
 import { cn } from "../../utils/cn";
-import { useMountTransition } from "../../hooks/useMountTransition";
 import { AnimatedNumber } from "./AnimatedNumber";
 
 export interface StackedBarSegment {
@@ -29,7 +26,6 @@ export function StackedBar({
   animate = true,
   className,
 }: StackedBarProps) {
-  const mounted = useMountTransition(animate);
   const computedTotal = total ?? segments.reduce((sum, s) => sum + s.value, 0);
 
   if (computedTotal === 0) return null;
@@ -45,14 +41,15 @@ export function StackedBar({
           return (
             <div
               key={i}
-              className="relative flex items-center justify-center"
+              className={cn(
+                "relative flex items-center justify-center",
+                animate && "cf-bar-reveal-x"
+              )}
               style={{
-                width: mounted ? `${pct}%` : "0%",
+                width: `${pct}%`,
                 backgroundColor: seg.color,
-                transition: animate
-                  ? `width var(--cf-duration-smooth) var(--cf-ease-default) ${i * 80}ms`
-                  : undefined,
-              }}
+                ["--cf-stagger-index" as string]: i,
+              } as React.CSSProperties}
             >
               {showPercentages && pct >= 5 && (
                 <span className="text-[11px] font-mono font-medium text-[var(--chat-on-primary)] drop-shadow-sm">
