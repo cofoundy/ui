@@ -62,10 +62,10 @@ export const ColorVariants: Story = {
         <AvatarFallback className="bg-[var(--chat-primary)] text-white">CF</AvatarFallback>
       </Avatar>
       <Avatar>
-        <AvatarFallback className="bg-green-500 text-white">OK</AvatarFallback>
+        <AvatarFallback className="bg-[var(--chat-success)] text-white">OK</AvatarFallback>
       </Avatar>
       <Avatar>
-        <AvatarFallback className="bg-orange-500 text-white">WN</AvatarFallback>
+        <AvatarFallback className="bg-[var(--chat-warning)] text-white">WN</AvatarFallback>
       </Avatar>
       <Avatar>
         <AvatarFallback className="bg-red-500 text-white">ER</AvatarFallback>

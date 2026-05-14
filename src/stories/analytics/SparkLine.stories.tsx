@@ -78,9 +78,9 @@ export const InTableContext: StoryObj = {
       </thead>
       <tbody>
         {[
-          { name: "Ana Garcia", count: 47, data: [8, 6, 10, 7, 5, 8, 3], color: "var(--chat-success)" },
-          { name: "Carlos Ruiz", count: 31, data: [5, 4, 6, 3, 4, 5, 4], color: "var(--chat-primary)" },
-          { name: "Maria Lopez", count: 52, data: [6, 8, 7, 9, 6, 8, 8], color: "var(--chat-success)" },
+          { name: "Ana Garcia", count: 47, data: [8, 6, 10, 7, 5, 8, 3], color: "var(--chart-2)" },
+          { name: "Carlos Ruiz", count: 31, data: [5, 4, 6, 3, 4, 5, 4], color: "var(--chart-1)" },
+          { name: "Maria Lopez", count: 52, data: [6, 8, 7, 9, 6, 8, 8], color: "var(--chart-3)" },
         ].map((agent) => (
           <tr key={agent.name} className="border-b border-[var(--chat-border)]">
             <td className="py-2 text-sm font-sans text-[var(--chat-foreground)]">{agent.name}</td>

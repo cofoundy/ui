@@ -13,8 +13,8 @@ type Story = StoryObj<typeof DonutChart>;
 export const Default: Story = {
   args: {
     segments: [
-      { label: "AI resolvio", value: 107, color: "var(--chat-success)" },
-      { label: "Agente resolvio", value: 40, color: "var(--chat-primary)" },
+      { label: "AI resolvio", value: 107, color: "var(--chart-3)" },
+      { label: "Agente resolvio", value: 40, color: "var(--chart-1)" },
     ],
     centerValue: "73%",
     centerLabel: "AI",
@@ -26,8 +26,8 @@ export const CSATScore: Story = {
   name: "Score CSAT",
   args: {
     segments: [
-      { label: "Satisfecho", value: 85, color: "var(--chat-success)" },
-      { label: "Neutral", value: 10, color: "var(--chat-warning)" },
+      { label: "Satisfecho", value: 85, color: "var(--chart-1)" },
+      { label: "Neutral", value: 10, color: "var(--chart-4)" },
       { label: "Insatisfecho", value: 5, color: "var(--chat-error)" },
     ],
     centerValue: "85%",
@@ -54,7 +54,7 @@ export const SmallDonut: Story = {
   name: "Pequeno (inline)",
   args: {
     segments: [
-      { label: "Resuelto", value: 73, color: "var(--chat-success)" },
+      { label: "Resuelto", value: 73, color: "var(--chart-1)" },
       { label: "Pendiente", value: 27, color: "var(--chat-border)" },
     ],
     size: 80,
@@ -71,7 +71,7 @@ export const Sizes: StoryObj = {
     <div className="flex items-center gap-6">
       <DonutChart
         segments={[
-          { label: "OK", value: 80, color: "var(--chat-success)" },
+          { label: "OK", value: 80, color: "var(--chart-1)" },
           { label: "Resto", value: 20, color: "var(--chat-border)" },
         ]}
         size={60}
@@ -81,7 +81,7 @@ export const Sizes: StoryObj = {
       />
       <DonutChart
         segments={[
-          { label: "OK", value: 80, color: "var(--chat-success)" },
+          { label: "OK", value: 80, color: "var(--chart-1)" },
           { label: "Resto", value: 20, color: "var(--chat-border)" },
         ]}
         size={120}
@@ -92,7 +92,7 @@ export const Sizes: StoryObj = {
       />
       <DonutChart
         segments={[
-          { label: "OK", value: 80, color: "var(--chat-success)" },
+          { label: "OK", value: 80, color: "var(--chart-1)" },
           { label: "Resto", value: 20, color: "var(--chat-border)" },
         ]}
         size={200}

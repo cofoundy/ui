@@ -98,15 +98,15 @@ export const ChannelTabs: Story = {
         <div className="space-y-2">
           <div className="p-3 bg-card rounded-lg border border-border flex justify-between">
             <span className="text-sm text-foreground">John Doe</span>
-            <span className="text-xs text-green-400">WhatsApp</span>
+            <span className="text-xs text-[var(--channel-whatsapp)]">WhatsApp</span>
           </div>
           <div className="p-3 bg-card rounded-lg border border-border flex justify-between">
             <span className="text-sm text-foreground">Jane Smith</span>
-            <span className="text-xs text-blue-400">Telegram</span>
+            <span className="text-xs text-[var(--channel-telegram)]">Telegram</span>
           </div>
           <div className="p-3 bg-card rounded-lg border border-border flex justify-between">
             <span className="text-sm text-foreground">Bob Wilson</span>
-            <span className="text-xs text-purple-400">Email</span>
+            <span className="text-xs text-[var(--channel-email)]">Email</span>
           </div>
         </div>
       </TabsContent>

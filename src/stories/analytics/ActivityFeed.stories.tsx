@@ -15,7 +15,7 @@ const sampleItems = [
     actor: "Maria Lopez",
     description: "resolvio conversacion #1247",
     timestamp: "Hace 2 min",
-    color: "var(--chat-success)",
+    color: "var(--chart-2)",
   },
   {
     actor: "AI",

@@ -108,8 +108,8 @@ export const MonochromeColors: Story = {
         <span className="text-xs text-muted-foreground">White</span>
       </div>
       <div className="flex flex-col items-center gap-2">
-        <Logo size="lg" mono className="text-green-500" />
-        <span className="text-xs text-muted-foreground">Green</span>
+        <Logo size="lg" mono className="text-[var(--chat-warning)]" />
+        <span className="text-xs text-muted-foreground">Amber</span>
       </div>
     </div>
   ),

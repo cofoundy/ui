@@ -14,11 +14,11 @@ export const ConversationFunnel: Story = {
   name: "Embudo de conversaciones",
   args: {
     steps: [
-      { label: "Conversaciones iniciadas", value: 500, color: "var(--chat-primary)" },
-      { label: "AI respondio", value: 450, color: "var(--chat-primary)" },
-      { label: "Resueltas por AI", value: 320, color: "var(--chat-success)" },
-      { label: "Escaladas a agente", value: 130, color: "var(--chat-warning)" },
-      { label: "Resueltas por agente", value: 110, color: "var(--chat-success)" },
+      { label: "Conversaciones iniciadas", value: 500, color: "var(--chart-1)" },
+      { label: "AI respondio", value: 450, color: "var(--chart-1)" },
+      { label: "Resueltas por AI", value: 320, color: "var(--chart-3)" },
+      { label: "Escaladas a agente", value: 130, color: "var(--chart-4)" },
+      { label: "Resueltas por agente", value: 110, color: "var(--chart-2)" },
     ],
     showPercentages: true,
     showDropoff: true,
@@ -46,9 +46,9 @@ export const SimpleThreeStep: Story = {
   name: "Tres pasos",
   args: {
     steps: [
-      { label: "Visitas", value: 1200, color: "var(--chat-muted)" },
-      { label: "Conversaciones", value: 147, color: "var(--chat-primary)" },
-      { label: "Convertidos", value: 23, color: "var(--chat-success)" },
+      { label: "Visitas", value: 1200, color: "var(--chart-4)" },
+      { label: "Conversaciones", value: 147, color: "var(--chart-1)" },
+      { label: "Convertidos", value: 23, color: "var(--chart-3)" },
     ],
     showPercentages: true,
     showDropoff: true,

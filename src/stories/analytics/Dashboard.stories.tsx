@@ -81,7 +81,7 @@ function generateHeatmapData() {
 }
 
 const activityItems = [
-  { actor: "Maria Lopez", description: "resolvio conversacion #1247", timestamp: "Hace 2 min", color: "var(--chat-success)" },
+  { actor: "Maria Lopez", description: "resolvio conversacion #1247", timestamp: "Hace 2 min", color: "var(--chart-2)" },
   { actor: "AI", description: "resolvio automaticamente #1246", timestamp: "Hace 5 min", color: "var(--chat-primary)" },
   { actor: "Carlos Ruiz", description: "escalo #1245 a Soporte L2", timestamp: "Hace 12 min", color: "var(--chat-warning)" },
   { actor: "Ana Garcia", description: "se conecto al inbox", timestamp: "Hace 15 min", color: "var(--chat-muted)" },
@@ -131,8 +131,8 @@ export const FullDashboard: StoryObj = {
               <div className="flex justify-center py-4">
                 <DonutChart
                   segments={[
-                    { label: "AI resolvio", value: 107, color: "var(--chat-success)" },
-                    { label: "Agente resolvio", value: 40, color: "var(--chat-primary)" },
+                    { label: "AI resolvio", value: 107, color: "var(--chart-3)" },
+                    { label: "Agente resolvio", value: 40, color: "var(--chart-1)" },
                   ]}
                   centerValue="73%"
                   centerLabel="AI"
@@ -147,8 +147,8 @@ export const FullDashboard: StoryObj = {
           {/* Stacked bar */}
           <StackedBar
             segments={[
-              { label: "AI resolvio", value: 107, color: "var(--chat-success)" },
-              { label: "Agente resolvio", value: 40, color: "var(--chat-primary)" },
+              { label: "AI resolvio", value: 107, color: "var(--chart-3)" },
+              { label: "Agente resolvio", value: 40, color: "var(--chart-1)" },
             ]}
             showLegend
             showPercentages
@@ -159,11 +159,11 @@ export const FullDashboard: StoryObj = {
           <AnalyticsSectionHeader title="Embudo de conversaciones" />
           <FunnelChart
             steps={[
-              { label: "Iniciadas", value: 500, color: "var(--chat-primary)" },
-              { label: "AI respondio", value: 450, color: "var(--chat-primary)" },
-              { label: "Resueltas AI", value: 320, color: "var(--chat-success)" },
-              { label: "Escaladas", value: 130, color: "var(--chat-warning)" },
-              { label: "Resueltas agente", value: 110, color: "var(--chat-success)" },
+              { label: "Iniciadas", value: 500, color: "var(--chart-1)" },
+              { label: "AI respondio", value: 450, color: "var(--chart-1)" },
+              { label: "Resueltas AI", value: 320, color: "var(--chart-3)" },
+              { label: "Escaladas", value: 130, color: "var(--chart-4)" },
+              { label: "Resueltas agente", value: 110, color: "var(--chart-2)" },
             ]}
             showPercentages
             showDropoff
@@ -173,10 +173,10 @@ export const FullDashboard: StoryObj = {
           {/* Goals */}
           <AnalyticsSectionHeader title="Metas del mes" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <ProgressBar label="Tickets resueltos" value={385} max={500} format="fraction" color="var(--chat-success)" />
-            <ProgressBar label="CSAT > 4.5" value={73} max={100} format="percentage" color="var(--chat-primary)" />
-            <ProgressBar label="Resp. < 2min" value={62} max={100} format="percentage" color="var(--chat-warning)" />
-            <ProgressBar label="Tasa abandono < 5%" value={92} max={100} format="percentage" color="var(--chat-success)" />
+            <ProgressBar label="Tickets resueltos" value={385} max={500} format="fraction" color="var(--chart-1)" />
+            <ProgressBar label="CSAT > 4.5" value={73} max={100} format="percentage" color="var(--chart-2)" />
+            <ProgressBar label="Resp. < 2min" value={62} max={100} format="percentage" color="var(--chart-3)" />
+            <ProgressBar label="Tasa abandono < 5%" value={92} max={100} format="percentage" color="var(--chart-1)" />
           </div>
 
           {/* Team + Activity */}
@@ -240,7 +240,7 @@ export const SoloAgent: StoryObj = {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <ProgressBar label="Meta semanal" value={47} max={60} format="fraction" color="var(--chat-primary)" />
-        <ProgressBar label="CSAT" value={88} max={100} format="percentage" color="var(--chat-success)" />
+        <ProgressBar label="CSAT" value={88} max={100} format="percentage" color="var(--chart-1)" />
       </div>
 
       <HorizontalBar
@@ -281,23 +281,23 @@ export const DarkVsLight: StoryObj = {
         <BarChart data={weekData} height={120} animate />
         <StackedBar
           segments={[
-            { label: "AI", value: 107, color: "var(--chat-success)" },
-            { label: "Agente", value: 40, color: "var(--chat-primary)" },
+            { label: "AI", value: 107, color: "var(--chart-3)" },
+            { label: "Agente", value: 40, color: "var(--chart-1)" },
           ]}
           showLegend
           height={24}
         />
         <DonutChart
           segments={[
-            { label: "AI", value: 73, color: "var(--chat-success)" },
-            { label: "Agente", value: 27, color: "var(--chat-primary)" },
+            { label: "AI", value: 73, color: "var(--chart-3)" },
+            { label: "Agente", value: 27, color: "var(--chart-1)" },
           ]}
           size={100}
           thickness={12}
           centerValue="73%"
           showLegend={false}
         />
-        <ProgressBar label="Meta mensual" value={73} max={100} format="percentage" color="var(--chat-success)" />
+        <ProgressBar label="Meta mensual" value={73} max={100} format="percentage" color="var(--chart-1)" />
       </div>
     );
 

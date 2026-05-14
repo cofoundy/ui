@@ -51,5 +51,5 @@ export const ThirtyDays: Story = {
 
 export const CustomColor: Story = {
   name: "Color personalizado",
-  args: { data: weekData, height: 200, barColor: "var(--chat-success)", animate: true },
+  args: { data: weekData, height: 200, barColor: "var(--chart-3)", animate: true },
 };

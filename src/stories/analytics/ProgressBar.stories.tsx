@@ -26,7 +26,7 @@ export const Percentage: Story = {
     value: 73,
     max: 100,
     format: "percentage",
-    color: "var(--chat-success)",
+    color: "var(--chart-1)",
   },
 };
 
@@ -37,7 +37,7 @@ export const AlmostComplete: Story = {
     value: 95,
     max: 100,
     format: "percentage",
-    color: "var(--chat-success)",
+    color: "var(--chart-1)",
   },
 };
 
@@ -56,10 +56,10 @@ export const MultipleGoals: StoryObj = {
   name: "Multiples metas",
   render: () => (
     <div className="flex flex-col gap-4 max-w-md">
-      <ProgressBar label="Tickets resueltos" value={85} max={100} format="fraction" color="var(--chat-success)" />
+      <ProgressBar label="Tickets resueltos" value={85} max={100} format="fraction" color="var(--chart-1)" />
       <ProgressBar label="Tiempo respuesta < 2min" value={62} max={100} format="percentage" color="var(--chat-primary)" />
       <ProgressBar label="CSAT > 4.5" value={45} max={100} format="percentage" color="var(--chat-warning)" />
-      <ProgressBar label="Tasa abandono < 5%" value={90} max={100} format="percentage" color="var(--chat-success)" />
+      <ProgressBar label="Tasa abandono < 5%" value={90} max={100} format="percentage" color="var(--chart-1)" />
     </div>
   ),
 };

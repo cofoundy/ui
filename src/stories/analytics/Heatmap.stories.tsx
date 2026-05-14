@@ -46,13 +46,13 @@ export const Default: Story = {
   },
 };
 
-export const SuccessColor: Story = {
-  name: "Color exito",
+export const AmberPalette: Story = {
+  name: "Paleta amber",
   args: {
     data: generateHeatmapData(),
     rows: days,
     cols: hours,
-    color: "var(--chat-success)",
+    color: "var(--chart-3)",
     showLabels: true,
   },
 };
