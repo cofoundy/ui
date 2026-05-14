@@ -22,6 +22,10 @@
  * at their final state, so degradation is graceful.
  */
 export const revealOnScrollScript = `(function(){
+  // Idempotency guard — Next.js App Router emits inline <script> twice
+  // (raw HTML stream + RSC payload that React processes on hydration), so
+  // without this check the bootstrap runs twice → animations fire twice.
+  if (window.__cfRevealBoot) return; window.__cfRevealBoot = 1;
   // Inject hide-rule synchronously in <head> so body paints with bars already
   // at scaleX(0) — prevents first-frame flash of the final-width inline style.
   var s = document.createElement('style');
@@ -29,7 +33,10 @@ export const revealOnScrollScript = `(function(){
   (document.head || document.documentElement).appendChild(s);
   document.documentElement.classList.add('cf-reveals-ready');
   var SEL = '.cf-bar-reveal-x,.cf-bar-reveal-y,.cf-donut-reveal,.cf-stagger-fade-in';
-  function reveal(el){ el.setAttribute('data-cf-reveal','visible'); }
+  function reveal(el){
+    if (el.getAttribute('data-cf-reveal') === 'visible') return;
+    el.setAttribute('data-cf-reveal','visible');
+  }
   function setup(){
     var els = document.querySelectorAll(SEL);
     if (!('IntersectionObserver' in window)) { els.forEach(reveal); return; }
