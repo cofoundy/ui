@@ -1,0 +1,176 @@
+---
+title: "Sitemap — xgodel.com (Tier 1 go-live)"
+project: xgodel
+role: client
+chrome: deliverable
+kind: reference
+version: 1
+author: andre
+created: "2026-05-16"
+tags: [sitemap, information-architecture, xgodel, dogfood-v2.6]
+---
+
+# Sitemap — xgodel.com (Tier 1 go-live)
+
+John, este es el árbol de páginas que vamos a construir para el rediseño de
+**xgodel.com**. 21 páginas en Tier 1 — el go-live obligatorio — más legales y
+404. **Recursos** (blog) y **landings por universidad** se difieren a v1.5.
+
+## Principios aplicados
+
+1. **Profundidad ≤ 3 clicks** desde home a cualquier página
+2. **Una intención por página** (no mezclar info + venta + transacción)
+3. **URLs hablantes en español**, lowercase, kebab-case, sin tildes
+4. **Mobile-first nav** — header con 5 items + 1 CTA primario
+5. **No huérfanas** — toda página alcanzable desde header o footer
+6. **Cross-linking explícito** al pie de páginas de detalle
+7. **404 dirige** — lleva a home + link a programas + WhatsApp
+
+## Árbol completo
+
+<Sitemap
+  defaultExpanded={true}
+  density="comfortable"
+  nodes={[
+    {
+      path: "/",
+      label: "Home",
+      intent: "transactional",
+      nav_group: "primary"
+    },
+    {
+      path: "/programas",
+      label: "Programas",
+      intent: "informational",
+      nav_group: "primary",
+      children: [
+        { path: "/programas/preuniv", label: "PREUNIV", intent: "informational", nav_group: "primary" },
+        { path: "/programas/univ", label: "UNIV (Cálculo · Álgebra)", intent: "informational", nav_group: "primary" },
+        { path: "/programas/1-a-1-vs-grupo", label: "1:1 vs Grupo", intent: "informational", nav_group: "primary" }
+      ]
+    },
+    {
+      path: "/sistema",
+      label: "Sistema",
+      intent: "informational",
+      nav_group: "primary",
+      children: [
+        { path: "/sistema/diagnostico", label: "Diagnóstico inicial", intent: "informational" },
+        { path: "/sistema/entrenamiento", label: "Entrenamiento", intent: "informational" },
+        { path: "/sistema/metricas", label: "Métricas y rúbricas", intent: "informational" },
+        { path: "/sistema/bitacora", label: "Bitácora de errores", intent: "informational" },
+        { path: "/sistema/reporte-semanal", label: "Reporte semanal (PDF padre)", intent: "informational" },
+        { path: "/sistema/seguimiento", label: "Seguimiento + continuidad", intent: "informational" }
+      ]
+    },
+    {
+      path: "/apoderados",
+      label: "Apoderados",
+      intent: "informational",
+      nav_group: "primary"
+    },
+    {
+      path: "/resultados",
+      label: "Resultados (ingresos)",
+      intent: "transactional",
+      nav_group: "primary"
+    },
+    {
+      path: "/equipo",
+      label: "Equipo (profes + fundadores)",
+      intent: "informational",
+      nav_group: "footer"
+    },
+    {
+      path: "/diagnostico",
+      label: "Diagnóstico gratuito (form completo)",
+      intent: "transactional",
+      nav_group: "primary"
+    },
+    {
+      path: "/faq",
+      label: "FAQ",
+      intent: "informational",
+      nav_group: "footer"
+    },
+    {
+      path: "/contacto",
+      label: "Contacto (WhatsApp + form)",
+      intent: "transactional",
+      nav_group: "footer"
+    },
+    {
+      path: "/area-del-estudiante",
+      label: "Área del Estudiante (existente)",
+      intent: "transactional",
+      nav_group: "footer"
+    },
+    {
+      path: "/legal/privacidad",
+      label: "Política de privacidad",
+      intent: "informational",
+      nav_group: "legal"
+    },
+    {
+      path: "/legal/terminos",
+      label: "Términos y condiciones",
+      intent: "informational",
+      nav_group: "legal"
+    },
+    {
+      path: "/404",
+      label: "Not found custom",
+      intent: "informational",
+      nav_group: "legal"
+    }
+  ]}
+/>
+
+## Header desktop (sticky)
+
+```
+[Logo]   Programas ▼   Sistema ▼   Apoderados   Resultados   [Solicitar Diagnóstico]   [Acceso ▾]
+```
+
+- **Programas ▼:** PREUNIV / UNIV / 1:1 vs Grupo
+- **Sistema ▼:** Visión / Diagnóstico / Entrenamiento / Métricas / Bitácora / Reporte / Seguimiento
+- **Apoderados, Resultados:** links directos (no dropdown)
+- **CTA primario:** "Solicitar Diagnóstico" → ancla form home o ir a `/diagnostico`
+- **"Acceso ▾"** — link sutil, no botón sólido (corrige H4 del análisis UX)
+
+## Mobile
+
+- Logo izquierda · Hamburguesa derecha
+- Menú lateral con accordion para Programas + Sistema
+- CTA "Solicitar Diagnóstico" sticky al pie del menú
+- **FAB WhatsApp permanente** abajo derecha (verde)
+
+## Redirects 301 (no perder SEO)
+
+11 redirects desde URLs del sitio Hostinger actual al nuevo Next.js:
+
+| URL actual | Nueva URL | Razón |
+|---|---|---|
+| `/1vs1-vs-grupo` | `/programas/1-a-1-vs-grupo` | Mejor jerarquía + SEO |
+| `/sistema-xgodel` | `/sistema` | URL más limpia |
+| `/sistema-xgodel/como-funciona` | `/sistema/entrenamiento` | Renombrar para claridad |
+| `/sistema-xgodel/rubricas` | `/sistema/metricas` | Consolidar rúbricas en métricas |
+| `/sistema-xgodel/continuidad` | `/sistema/seguimiento` | Consolidar |
+| `/sistema-xgodel/bitacora-errores` | `/sistema/bitacora` | Acortar parent |
+| `/sistema-xgodel/diagnostico-inicial` | `/sistema/diagnostico` | Acortar |
+| `/sistema-xgodel/metricas` | `/sistema/metricas` | Acortar parent |
+| `/sistema-xgodel/reporte-semanal` | `/sistema/reporte-semanal` | Acortar parent |
+| `/para-apoderados` | `/apoderados` | Acortar |
+| `/preguntas-frecuentes` | `/faq` | Acortar |
+
+Implementación: `next.config.ts` → `redirects()` array.
+
+## Fuera de scope (v1.5+)
+
+- **`/recursos` + `/recursos/[slug]`** (blog/guías) — diferido a v2 por volumen de contenido
+- **`/admision/[universidad]`** — landings por U para SEO local fuerte, v1.5
+- **`/area-del-estudiante`** — existente en Hostinger; **no se toca** en este rediseño, solo se enlaza desde footer con menor peso
+
+---
+
+**Source:** `projects/xgodel-landing/research/07-information-architecture.md` (§2 Sitemap completo, §4 Navegación, §5 Auditoría URLs, §8 Output lista Tier 1) y `06-userflow.md` (intents y nav_groups).

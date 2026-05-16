@@ -1,6 +1,8 @@
 export interface ColorToken {
   name: string;
   value: string;
+  /** Short usage hint per token (e.g. "primary CTA", "muted body"). */
+  usage_note?: string;
 }
 
 export interface TypeToken {
@@ -15,9 +17,11 @@ export interface DesignSystemPanelProps {
   typography?: TypeToken[];
   spacing?: { name: string; value: string }[];
   radius?: { name: string; value: string }[];
+  /** Brand direction label (e.g. "emerald-academic"). Renders as a chip in the header. */
+  direction?: string;
 }
 
-export function DesignSystemPanel({ colors, typography, spacing, radius }: DesignSystemPanelProps) {
+export function DesignSystemPanel({ colors, typography, spacing, radius, direction }: DesignSystemPanelProps) {
   return (
     <section
       data-slot="design-system-panel"
@@ -32,6 +36,25 @@ export function DesignSystemPanel({ colors, typography, spacing, radius }: Desig
         gap: '1.5em',
       }}
     >
+      {direction && (
+        <header
+          data-slot="design-system-panel-direction"
+          style={{
+            display: 'inline-flex',
+            alignSelf: 'flex-start',
+            padding: '0.3em 0.85em',
+            borderRadius: 999,
+            background: 'rgba(70,160,208,0.12)',
+            color: 'var(--cf-primary)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.78em',
+            fontWeight: 700,
+            letterSpacing: '0.06em',
+          }}
+        >
+          {direction}
+        </header>
+      )}
       {colors && colors.length > 0 && (
         <div>
           <h4 style={{ margin: '0 0 0.85em', fontFamily: 'var(--font-brand)', fontSize: '0.85em', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cf-muted)' }}>Colors</h4>
@@ -51,6 +74,14 @@ export function DesignSystemPanel({ colors, typography, spacing, radius }: Desig
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: '0.85em', color: 'var(--cf-fg)' }}>{c.name}</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78em', color: 'var(--cf-muted)' }}>{c.value}</div>
+                  {c.usage_note && (
+                    <div
+                      data-slot="design-system-panel-usage"
+                      style={{ fontSize: '0.72em', color: 'var(--cf-muted)', marginTop: '0.2em', fontStyle: 'italic' }}
+                    >
+                      {c.usage_note}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

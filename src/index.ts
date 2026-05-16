@@ -452,3 +452,9 @@ export type {
 
 // Analytics reveal bootstrap (viewport-triggered animations)
 export { revealOnScrollScript } from "./scripts/reveal-on-scroll";
+
+// Atelier registry — 9-component allowlist consumed by docs-ai MDX provider.
+// Per ceo-agent Q1=B: individual Zod schemas are NOT named-exported; access
+// via `ATELIER_COMPONENTS[name].schema` instead.
+export { ATELIER_COMPONENTS } from "./lib/atelier-registry";
+export type { AtelierEntry, AtelierComponentName } from "./lib/atelier-registry";

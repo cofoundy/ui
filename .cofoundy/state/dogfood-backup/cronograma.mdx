@@ -1,0 +1,208 @@
+---
+title: "Cronograma — Academia Digital XGodel"
+project: xgodel
+role: client
+chrome: deliverable
+kind: timeline
+source_freshness: "manual-snapshot-2026-05-16"
+version: 1
+author: andre
+created: "2026-05-16"
+tags: [cronograma, timeline, delivery, xgodel, dogfood-v2.6]
+---
+
+# Cronograma — Academia Digital XGodel
+
+John, este es el cronograma vivo del proyecto al **16 de mayo 2026**.
+
+> **Nota de freshness:** este es un *snapshot manual* del estado actual de
+> Vikunja (project id 22) tomado el 2026-05-16. La automatización
+> build-time del fetch a Vikunja está diferida — por ahora el documento se
+> actualiza a mano en hitos clave. Frontmatter `source_freshness:
+> manual-snapshot-2026-05-16` declara la convención.
+
+## Resumen — dos olas de entrega
+
+El proyecto tiene dos dimensiones independientes:
+
+1. **Olas de entrega** (Ola 1 / Ola 2) — el orden en que construimos. Reflejan
+   la secuencia ajustada en el sync del 25-abr para que XGodel pueda **arrancar
+   Meta Ads la primera semana de mayo** sin esperar a que la plataforma esté
+   lista.
+2. **Hitos de pago** (40 / 30 / 30%) — la estructura financiera del contrato.
+   Hitos 1+2 ya cobrados (70%); solo queda Hito 3 al go-live.
+
+| Ola | Ventana | Entrega central |
+|---|---|---|
+| **Ola 1 — Front comercial** | 27-abr → 10-may (días 1-14) | Landing nueva + WhatsApp conectado + branding base + pasarela embebida |
+| **Ola 2 — Plataforma académica** | 11-may → 1-jun (días 15-35) | Moodle branded + 4 bloques + adaptativa + go-live |
+
+## Estado actual de fases (L0-L9)
+
+<BuildProgress
+  steps={[
+    {
+      label: "Discovery + brief firmado",
+      phase: "L0",
+      status: "done",
+      owner: "Andre",
+      started_at: "2026-04-23",
+      completed_at: "2026-04-25",
+      body: "Discovery con John, Christian y Jean Pierre. Brief.yaml + propuesta.html generados. BANT alto, deal cerrado."
+    },
+    {
+      label: "Kickoff + setup + branding base (Sprint 1)",
+      phase: "L1",
+      status: "done",
+      owner: "Andre",
+      started_at: "2026-04-27",
+      completed_at: "2026-05-03",
+      vikunja_project_id: 22,
+      body: "Kickoff lunes 27-abr · DNS xgodel.com migrado a Cloudflare · Railway provisionado · repo GitHub privado · paleta+tipo+logo base · wireframe landing aprobado."
+    },
+    {
+      label: "Landing live + WhatsApp + pasarela (Sprint 2)",
+      phase: "L2",
+      status: "done",
+      owner: "Andre",
+      started_at: "2026-05-04",
+      completed_at: "2026-05-10",
+      vikunja_project_id: 22,
+      body: "Landing Next.js en producción en xgodel.com · formulario → WhatsApp oficial + email · pasarela embebida (opción C: WhatsApp→transferencia, pasarela diferida a Ola 2) · SEO básico + LCP <2s mobile · QA flujo ad → landing → form → WhatsApp."
+    },
+    {
+      label: "UX research personas + IA (entregables paralelos)",
+      phase: "L4",
+      status: "done",
+      owner: "Andre + Percy",
+      started_at: "2026-04-30",
+      completed_at: "2026-05-08",
+      body: "2 personas (María del Carmen + Diego) + empathy map + 7 docs de IA + 4 conceptos visuales iterados + 3 paletas evaluadas → emerald-academic locked."
+    },
+    {
+      label: "Moodle + theme + 3 roles + LaTeX (Sprint 3)",
+      phase: "L5",
+      status: "current",
+      owner: "Andre",
+      started_at: "2026-05-11",
+      vikunja_project_id: 22,
+      body: "Moodle 4.x desplegado en Railway con dominio propio (plataforma.xgodel.com) · PostgreSQL + backups + SSL · 3 roles (estudiante, padre, admin) · MathJax integrado · bloque 1 cargado como PoC. EN CURSO — días 15-21 (11-17 may)."
+    },
+    {
+      label: "Bloques 2-4 + adaptativa + reportes (Sprint 4)",
+      phase: "L6",
+      status: "pending",
+      owner: "Andre",
+      vikunja_project_id: 22,
+      body: "~750 ejercicios (3 bloques × 250) · quizzes con timer 20min · training phase <80% adaptativa real + link YouTube · simulacro final con ranking · reportes PDF auto semanales al email del padre · diagnóstico pagado integrado. Días 22-28 (18-24 may)."
+    },
+    {
+      label: "QA + capacitación + soft launch (Sprint 5)",
+      phase: "L7",
+      status: "pending",
+      owner: "Andre",
+      vikunja_project_id: 22,
+      body: "QA end-to-end flujos alumno/padre/admin · test desktop+móvil+tablet · capacitación 1h Google Meet + video loom · soft launch con 2-3 padres de prueba · feedback final. Días 29-34 (25-31 may)."
+    },
+    {
+      label: "Go-live oficial",
+      phase: "L8",
+      status: "pending",
+      owner: "Andre + XGodel",
+      vikunja_project_id: 22,
+      body: "Plataforma abierta al público · Meta Ads activo apuntando al funnel completo · factura/boleta Hito 3 (S/. 1,050) · arranca soporte 30 días. Día 35 (lunes 1-jun)."
+    },
+    {
+      label: "Soporte 30 días + handoff",
+      phase: "L9",
+      status: "pending",
+      owner: "Andre",
+      body: "Bug fixes + consultas <24h + handoff código GitHub + Railway + Cloudflare + credenciales · documentación técnica básica · plan Fase 2 si modelo validado con 20-30 alumnos."
+    }
+  ]}
+/>
+
+## Path crítico — día 14
+
+> XGodel debe entregar los **4 bloques preuniversitarios en formato LaTeX**
+> a más tardar el **día 14** del proyecto (transición Ola 1 → Ola 2). Sin
+> esto, Sprint 4 no puede arrancar y el go-live se mueve día por día.
+
+## KPIs de delivery (snapshot 2026-05-16, día 20 del proyecto)
+
+<KPIBoard
+  columns={4}
+  kpis={[
+    {
+      label: "Fases completadas",
+      value: "4 / 9",
+      target: "9 / 9",
+      baseline: "0 / 9 al kickoff (27-abr)",
+      status: "good",
+      trend: { direction: "up", value: "+4 vs kickoff" },
+      source: "Vikunja project 22 · roadmap-hitos.md"
+    },
+    {
+      label: "Días transcurridos vs planeados",
+      value: "20 / 35",
+      target: "≤35 días (1-jun)",
+      baseline: "35 días plan original",
+      status: "good",
+      trend: { direction: "flat", value: "on-schedule" },
+      source: "cronograma.tex"
+    },
+    {
+      label: "Hitos de pago cobrados",
+      value: "2 / 3",
+      target: "3 / 3 al go-live",
+      baseline: "0 / 3 al firmar",
+      status: "good",
+      trend: { direction: "up", value: "+70% adelantado por cliente" },
+      source: "addendum-pago-comprobante.md · Cláusula Cuarta"
+    },
+    {
+      label: "Entregables shipped",
+      value: 6,
+      target: "13 al go-live",
+      baseline: "0 al kickoff",
+      status: "warn",
+      trend: { direction: "up", value: "+6 vs kickoff" },
+      source: "roadmap-hitos.md §Output visible Ola 1 + Ola 2"
+    },
+    {
+      label: "LCP móvil landing live",
+      value: "1.6s",
+      target: "<2.0s",
+      baseline: "5.1s (Hostinger DIY pre-rediseño)",
+      status: "good",
+      trend: { direction: "down", value: "-3.5s vs baseline" },
+      source: "Sprint 2 QA · scrape/nav.md baseline"
+    },
+    {
+      label: "Bloques LaTeX entregados por XGodel",
+      value: "1 / 4",
+      target: "4 / 4 antes día 14 (path crítico)",
+      baseline: "0 / 4 al kickoff",
+      status: "warn",
+      trend: { direction: "up", value: "+1 (bloque 1 — PoC Sprint 3)" },
+      source: "cronograma.tex §Path crítico Día 14"
+    }
+  ]}
+/>
+
+## Qué necesitamos de XGodel — próximas 2 semanas
+
+- **Días 18-24 (Sprint 4):** tutoriales YouTube grabados de los temas para el flujo adaptativo <80% + feedback sobre theme y quizzes
+- **Días 25-28 (Sprint 5):** disponibilidad para QA acompañado + feedback final
+- **Revisiones intermedias:** 48h hábiles para feedback en cada entregable (sin respuesta = aprobado, Cláusula VIII)
+
+## Post go-live (incluido)
+
+- Soporte 30 días post go-live · respuesta <24h
+- Handoff completo: código GitHub · Railway · Cloudflare · credenciales de servicios
+- Documentación técnica básica del stack
+- Plan Fase 2 si modelo validado: WhatsApp IA · suscripciones recurrentes · plugin padre-hijo · analytics custom · migración a stack 100% custom
+
+---
+
+**Sources:** `deals/clients/XGodel/cronograma.tex` (sprints, ventanas calendario, paths críticos, entregables por sprint) · `deals/clients/XGodel/roadmap-hitos.md` (resumen olas + hitos pago + qué-necesitamos por sprint + Fase 2).

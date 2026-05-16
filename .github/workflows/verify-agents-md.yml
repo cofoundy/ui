@@ -1,0 +1,59 @@
+name: verify-agents-md
+
+# Drift gate: AGENTS.md is auto-generated from src/lib/atelier-registry.ts.
+# This workflow fails if a PR edits the registry without regenerating AGENTS.md.
+#
+# To fix a failure: run `pnpm gen:agents` from packages/ui and commit the diff.
+
+on:
+  pull_request:
+    paths:
+      - 'packages/ui/src/lib/atelier-registry.ts'
+      - 'packages/ui/src/lib/atelier-schemas.ts'
+      - 'packages/ui/src/components/docs/*.schema.ts'
+      - 'packages/ui/scripts/gen-atelier-agents-md.ts'
+      - 'packages/ui/AGENTS.md'
+      - 'packages/ui/package.json'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/ui/src/lib/atelier-registry.ts'
+      - 'packages/ui/src/lib/atelier-schemas.ts'
+      - 'packages/ui/src/components/docs/*.schema.ts'
+      - 'packages/ui/scripts/gen-atelier-agents-md.ts'
+      - 'packages/ui/AGENTS.md'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/ui
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+        working-directory: .
+
+      - name: Regenerate AGENTS.md
+        run: pnpm gen:agents
+
+      - name: Check for drift
+        run: |
+          if ! git diff --exit-code AGENTS.md; then
+            echo ""
+            echo "::error::AGENTS.md is out of date with the Atelier registry."
+            echo "::error::Run \`pnpm gen:agents\` and commit updated AGENTS.md."
+            exit 1
+          fi

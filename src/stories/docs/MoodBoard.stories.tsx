@@ -33,3 +33,40 @@ export const TwoColumns: Story = {
     columns: 2,
   },
 };
+
+// NEW — exercises `concept_tag` + `source_url` (Atelier patch). 4 XGodel
+// concept directions A/B/C/D — final picked via DECISIONS.md.
+export const XGodelConcepts: Story = {
+  name: "XGodel — 4 concepts (concept_tag + source_url)",
+  args: {
+    items: [
+      {
+        src: "https://picsum.photos/seed/xgodel-A/400/300",
+        alt: "Concept A — emerald academic",
+        caption: "Editorial premium",
+        concept_tag: "A",
+        source_url: "https://example.com/xgodel/concept-A",
+      },
+      {
+        src: "https://picsum.photos/seed/xgodel-B/400/300",
+        alt: "Concept B — bordeaux historic",
+        caption: "Historic gravitas",
+        concept_tag: "B",
+        source_url: "https://example.com/xgodel/concept-B",
+      },
+      {
+        src: "https://picsum.photos/seed/xgodel-C/400/300",
+        alt: "Concept C — editorial premium",
+        caption: "Magazine layout",
+        concept_tag: "C",
+      },
+      {
+        src: "https://picsum.photos/seed/xgodel-D/400/300",
+        alt: "Concept D — minimal",
+        caption: "Reserved typography",
+        concept_tag: "D",
+      },
+    ],
+    columns: 4,
+  },
+};

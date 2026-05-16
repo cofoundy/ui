@@ -1,0 +1,108 @@
+---
+title: "Cotización — Academia Digital XGodel"
+project: xgodel
+role: client
+chrome: deliverable
+kind: quote
+recipient:
+  name: "John Medina"
+  company: "XGodel"
+  email: "medinadiazmeyor@gmail.com"
+expires_at: "2026-06-30"
+version: 1
+author: andre
+created: "2026-05-16"
+tags: [cotizacion, propuesta, xgodel, dogfood-v2.6]
+---
+
+# Cotización — Academia Digital XGodel
+
+John, esta es la cotización formal del **Plan Pro con concesiones** que
+acordamos en el discovery del 23 de abril y formalizamos al firmar el
+contrato el 27 de abril.
+
+> **Status financiero:** Hitos 1 y 2 ya pagados (70% adelantado por John
+> el 26 de abril vía BCP — boleta B001-00000003). Solo queda Hito 3 (30%)
+> al go-live.
+
+## Resumen ejecutivo
+
+- **Alcance:** Landing Next.js + plataforma Moodle branded + 4 bloques cargados + lógica adaptativa <80% + go-live oficial.
+- **Inversión total:** S/. 3,500 IGV incluido.
+- **Pago por hitos:** 40% / 30% / 30% — entregable concreto, no calendario.
+- **Plazo:** 35 días calendario (kickoff 27-abr → go-live 1-jun).
+- **Soporte:** 30 días post go-live incluidos.
+
+<QuoteCard
+  client_name="XGodel"
+  prepared_for="John Medina (en representación de XGodel)"
+  valid_until="2026-06-30"
+  tone="accent"
+  total="S/. 3,500.00 IGV incluido"
+  milestones={[
+    {
+      label: "Hito 1 (40%) — Arranque del Proyecto",
+      deliverable: "Firma de contrato + kickoff + acceso DNS/registrar de xgodel.com + provisionamiento Railway + repo GitHub + branding base + wireframe aprobado",
+      amount: "S/. 1,400.00",
+      due: "Pagado · 2026-04-26"
+    },
+    {
+      label: "Hito 2 (30%) — Infraestructura lista",
+      deliverable: "Landing Next.js en producción en xgodel.com con formulario funcional a WhatsApp + pasarela embebida (Culqi/MP) + Moodle 4.x branded desplegado en Railway con 3 roles configurados (estudiante, padre, admin)",
+      amount: "S/. 1,050.00",
+      due: "Pagado · 2026-04-26 (adelantado por cliente)"
+    },
+    {
+      label: "Hito 3 (30%) — Go-live oficial",
+      deliverable: "4 bloques preuniversitarios cargados + lógica adaptativa <80% + simulacro final + reportes auto PDF al padre + capacitación 1h + handoff completo + arranca soporte 30 días",
+      amount: "S/. 1,050.00",
+      due: "2026-06-01 · al go-live"
+    }
+  ]}
+  payment_terms="Pago por entregable concreto, no por meses calendario. Si un hito se cumple antes, se factura ese momento. Pago exclusivo por transferencia BCP. Hitos 1+2 ya cobrados en transferencia única (BCP Op N° 02917474) — boleta de venta electrónica B001-00000003 emitida por S/. 2,450. Hito 3 emitirá factura o boleta según naturaleza del pagador al go-live."
+  notes="Cotización válida hasta 2026-06-30. Cambios fuera de scope se cotizan como add-on. Revisiones intermedias por entregable con plazo de 48h hábiles desde notificación (silencio = aprobado, Cláusula VIII del Contrato Principal)."
+/>
+
+## Comparativa de mercado
+
+Una plataforma educativa con todo el scope del brief, construida por agencia
+tradicional en Perú, está entre **S/. 15,000 y S/. 30,000** con 3-5 meses
+de desarrollo. Cofoundy entrega el mismo valor funcional en 35 días usando
+infraestructura probada (Moodle) + AI-native development.
+
+| Componente | Mercado (agencia tradicional) | Cofoundy |
+|---|---|---|
+| Landing + Plataforma LMS (full stack + auth + roles) | S/. 10,000 – 18,000 | Incluido |
+| Integración LaTeX + 4 bloques cargados (MathJax + gráficos) | S/. 2,500 – 4,000 | Incluido |
+| Lógica adaptativa + simulacro (engine training phase) | S/. 3,000 – 5,000 | Incluido |
+| Deployment + capacitación (dominio + SSL + handoff) | S/. 1,500 – 3,000 | Incluido |
+| **Total mercado vs Cofoundy** | **S/. 17,000 – 30,000** | **S/. 3,500** |
+
+**Ahorro relativo:** ~80% bajo agencia tradicional.
+
+## Garantías incluidas
+
+1. **Preview antes de pagar.** Landing aprobada y demo de plataforma ANTES del segundo pago. Cero "pensé que venía otra cosa".
+2. **Código 100% suyo desde día 1.** Plataforma, configuración, código y base de datos son propiedad de XGodel. Si mañana migran a otro dev, pueden hacerlo sin pedir permiso.
+3. **Entrega en semanas, no meses.** 35 días calendario. Si nos retrasamos por causas internas, se descuenta del último hito.
+4. **Peru-rooted, globally fluent.** Equipo con formación CS en la UNI. Stack internacional, contexto local.
+
+## Stack tecnológico
+
+Next.js · Moodle 4.x · PostgreSQL · Railway · Cloudflare DNS + CDN · MathJax ·
+Tailwind CSS · HTTPS + Backups automáticos.
+
+## Fuera de scope (Fase 2)
+
+Diferidos para cuando XGodel tenga 20-30 alumnos activos pagando y el modelo
+esté validado con datos reales:
+
+- WhatsApp IA (agente conversacional InboxAI) — S/. 3,000-4,000
+- Suscripciones recurrentes con billing automático — S/. 1,500-2,000
+- Plugin padre-hijo dedicado (vinculación real de cuentas) — S/. 800-1,200
+- Panel de analytics custom (conversión, retention, cohortes) — S/. 2,000-3,000
+- Migración a plataforma 100% custom (Next.js + Supabase) — S/. 8,000-12,000
+
+---
+
+**Sources:** `deals/clients/XGodel/propuesta.html` (pricing table, comparativa, garantías, scope, Fase 2) · `deals/clients/XGodel/addendum-pago-comprobante.md` (status pago Hitos 1+2 + Cláusulas Primera, Segunda, Cuarta del Addendum N°1).

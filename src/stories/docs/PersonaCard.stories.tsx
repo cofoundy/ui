@@ -35,3 +35,32 @@ export const Minimal: Story = {
     quote: "Quiero crecer sin contratar más gente de soporte.",
   },
 };
+
+// NEW — exercises Atelier §6.2 patched props (jtbd, objections, journeyStage,
+// age, incomeRange, source). Canonical XGodel persona — sourced from
+// `deals/clients/XGodel/ux-research/02-user-personas.md`.
+export const XGodelFull: Story = {
+  name: "XGodel — full (Atelier patched props)",
+  args: {
+    name: "John Medina",
+    role: "Cofounder, XGodel",
+    avatar: "https://i.pravatar.cc/80?img=12",
+    demographics: ["Lima, Peru", "32 años", "Startup AcademicTech"],
+    painPoints: [
+      "Demasiados leads no calificados",
+      "Branding inconsistente entre touchpoints",
+      "Sitio actual no transmite seriedad académica",
+    ],
+    goals: [
+      "Cerrar 3 cuentas enterprise en Q3",
+      "Reducir time-to-MQL <48h",
+    ],
+    quote: "Necesito que mi sitio refleje seriedad académica sin parecer aburrido.",
+    jtbd: "Cuando un VC visita nuestra landing, quiero que perciba rigor inmediato — para que reservemos call sin objeción.",
+    objections: ["No tenemos presupuesto este mes", "Ya tenemos un dev interno"],
+    journeyStage: "decision",
+    age: "30-35",
+    incomeRange: "S/.12k-20k/mes",
+    source: "ux-research/02-user-personas.md",
+  },
+};
