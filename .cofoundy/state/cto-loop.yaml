@@ -1,0 +1,52 @@
+schema_version: 1.0
+last_phase: 6
+last_phase_at: 2026-05-16T11:55:30-05:00
+goal_pin_id: atelier-components-xgodel-dogfood
+goal_text: "do all including deployment with proper validation (software, ceo, qa visual, etc, validate on deployment too); >80 coverage"
+project_root: /Users/styreep/cofoundy/packages/ui
+domain: software (frontend-only)
+session_mode: delivery
+
+gates_passed:
+  phase_1_substrate: 2026-05-16T11:18:00-05:00
+  phase_2a_research_ref: 2026-05-16T11:18:30-05:00
+  phase_2b_arch_draft: 2026-05-16T11:35:30-05:00
+  phase_2c_arch_approval: 2026-05-16T11:42:00-05:00 (ceo-agent ac76893282e14117c — Q1=B, Q2=SKIP, Q3=MANUAL)
+  phase_3_contract_ownership: 2026-05-16T11:45:00-05:00
+  phase_4_team_composition: 2026-05-16T11:52:00-05:00 (team: atelier-components-cycle)
+  phase_5_task_graph: 2026-05-16T11:55:00-05:00 (ceo-agent aca2bc7f81f8f57c6 — AMEND→APPLY→green-light)
+
+gates_pending:
+  - phase_11_deploy_approval (auto-approved per escalation-thresholds.yaml)
+
+phase_6_dispatch_plan:
+  wave_1_now:
+    - role: component-author
+      teammate_name: component-author
+      tasks_unblocked: [T-001, T-002]
+      dispatch_at: 2026-05-16T11:55:30-05:00
+  wave_2_when_T-001_T-002_complete:
+    - role: infra-author
+      tasks_unblocked: [T-003, T-005 partial]
+  wave_3_when_T-003_T-004_complete_AND_chrome-cto_propuesta_merged:
+    - role: mdx-author
+      tasks_unblocked: [T-006]
+  wave_4_when_T-007_complete:
+    - role: qa-agent
+      tasks_unblocked: [T-008]
+
+parallel_cto:
+  scope: V2.6 Chrome System Phase 1
+  branch: feat/v2.6-chrome-system
+  external_deps_blocking_my_T006_T007:
+    - chrome-cto vault.yaml initial commit (blocks T-006 start)
+    - chrome-cto propuesta.mdx stub commit (blocks T-006 author)
+    - chrome-cto chrome PR merged (blocks T-007 mdx-components.tsx append)
+
+ic_exceptions_used:
+  - phase_1: brief.yaml, cto-loop.yaml, history.jsonl, agent-floor.md
+  - phase_1_ext_2b: specs/architecture-v1.md
+  - phase_1_ext_2c_amend: arch §7 close-out
+  - phase_1_ext_3: specs/{api-contract,file-ownership-matrix}.md
+  - phase_1_ext_5: tasks/T-001..T-008.md + escalation-thresholds.yaml
+  - phase_1_ext_5c_amend: T-004 package.json bump bullet

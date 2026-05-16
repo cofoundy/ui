@@ -1,0 +1,35 @@
+schema_version: 1.0
+authored_at: 2026-05-16T11:50:00-05:00
+authored_by: cto-loop (Andre Pacheco)
+
+# Source: explicit user /goal directive 2026-05-16 11:50 Lima
+# "do all including deployment with proper validation"
+
+autonomy_overrides:
+  auto_approve_main_deploy: true   # OVERRIDE — main-branch deploy auto-approves
+  auto_approve_feature_deploy: true # default true anyway
+  rationale: |
+    Andre explicitly authorized full pipeline through deployment in this turn.
+    Cycle scope is bounded (component library + 5 MDX docs, packages/ui + docs-ai),
+    rollback cheap (Cloudflare Worker version revert + git revert), blast radius
+    contained to docs.cofoundy.dev (no customer-facing revenue surface impacted).
+
+thresholds_for_escalation:
+  # Cases that STILL escalate even with auto-approve-main override:
+  - condition: "test coverage <80% after all retries"
+    action: escalate
+    rationale: HARD constraint per user directive
+  - condition: "qa-driven-iteration enters loop >3 fix attempts on same bug"
+    action: escalate
+    rationale: "convergence failure; manual intervention needed"
+  - condition: "canary-monitor reports 3 consecutive FAIL post-deploy"
+    action: escalate
+    rationale: "auto-rollback decision per /cto §Phase 11"
+  - condition: "ceo-agent itself escalates (e.g. arch reveals scope creep >50% timeline)"
+    action: escalate
+    rationale: "respect gate-agent judgment"
+
+phase_specific:
+  phase_2_arch: auto-resolve via ceo-agent (already done)
+  phase_5_tasks: auto-resolve via ceo-agent
+  phase_11_deploy: auto-approve per override above

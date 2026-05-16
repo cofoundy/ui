@@ -2,10 +2,22 @@ import type { ReactNode } from 'react';
 
 export type StepStatus = 'done' | 'current' | 'pending';
 
+export type BuildPhase = 'L0' | 'L1' | 'L2' | 'L3' | 'L4' | 'L5' | 'L6' | 'L7' | 'L8' | 'L9';
+
 export interface BuildStep {
   label: string;
   status?: StepStatus;
   body?: ReactNode;
+  /** Atelier delivery phase L0–L9. */
+  phase?: BuildPhase;
+  /** Step owner display label. */
+  owner?: string;
+  /** ISO date when work began. */
+  started_at?: string;
+  /** ISO date when work completed. */
+  completed_at?: string;
+  /** Vikunja project id for traceability. */
+  vikunja_project_id?: number;
 }
 
 export interface BuildProgressProps {
@@ -87,12 +99,44 @@ export function BuildProgress({ steps }: BuildProgressProps) {
                 fontWeight: 600,
                 fontSize: '1.05em',
                 color: 'var(--cf-fg)',
-                marginBottom: step.body ? '0.4em' : 0,
+                marginBottom: step.body || step.owner || step.started_at || step.completed_at ? '0.35em' : 0,
                 paddingTop: '0.1em',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.55em',
+                flexWrap: 'wrap',
               }}
             >
-              {step.label}
+              {step.phase && (
+                <span
+                  data-slot="build-progress-phase"
+                  style={{
+                    padding: '0.1em 0.5em',
+                    borderRadius: 999,
+                    background: 'rgba(70,160,208,0.12)',
+                    color: 'var(--cf-primary)',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.72em',
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  {step.phase}
+                </span>
+              )}
+              <span>{step.label}</span>
             </div>
+            {(step.owner || step.started_at || step.completed_at) && (
+              <div
+                data-slot="build-progress-meta"
+                style={{ fontSize: '0.78em', color: 'var(--cf-muted)', display: 'flex', flexWrap: 'wrap', gap: '0.85em', marginBottom: step.body ? '0.4em' : 0 }}
+              >
+                {step.owner && <span>owner: {step.owner}</span>}
+                {step.started_at && <span>started: {step.started_at}</span>}
+                {step.completed_at && <span>completed: {step.completed_at}</span>}
+                {step.vikunja_project_id && <span>vikunja: #{step.vikunja_project_id}</span>}
+              </div>
+            )}
             {step.body && (
               <div style={{ fontSize: '0.95em', color: 'var(--cf-fg)', opacity: 0.85, lineHeight: 1.6 }}>{step.body}</div>
             )}

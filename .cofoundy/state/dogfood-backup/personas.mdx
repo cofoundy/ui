@@ -1,0 +1,133 @@
+---
+title: "Personas — Academia Digital XGodel"
+project: xgodel
+role: client
+chrome: deliverable
+kind: report
+version: 1
+author: andre
+created: "2026-05-16"
+tags: [personas, ux-research, xgodel, dogfood-v2.6]
+---
+
+# Personas — Academia Digital XGodel
+
+John, esta es la síntesis de research de UX que está guiando todas las
+decisiones de la landing y la plataforma. **No son estereotipos** — son
+síntesis de las conversaciones con padres y estudiantes del segmento target
+de XGodel.
+
+> Insight central: la landing pasa por **dos filtros simultáneos**. El padre
+> paga, pero el estudiante puede vetar. Si el padre cierra, no hay venta. Si
+> el hijo dice "esa wea se ve fome", el padre se retira. El sitio está
+> optimizado para sobrevivir a ambos.
+
+## Persona decisora — paga, investiga, decide
+
+<PersonaCard
+  name="María del Carmen Rodríguez"
+  role="Mamá decisora · Gerente comercial · Surco"
+  age="45 años"
+  incomeRange="S/.12k-18k/mes hogar"
+  journeyStage="decision"
+  jtbd="Cuando vea evidencia tangible del avance de mi hijo, quiero sentir que la inversión vale la pena y dormir sin la angustia de adivinar si está estudiando."
+  quote="No me sirve que me digan 'va bien' cada dos meses. Necesito ver algo concreto, números. Y que no sea una clase masiva donde mi hijo es uno más."
+  demographics={[
+    "Casada · 2 hijos (15 y 17 años)",
+    "Hijo target: Diego, 17, Markham, postula a UPC",
+    "MBA part-time · 18 años en gerencia comercial",
+    "Lee landing 80% en celular, 20% laptop trabajo",
+    "Búsqueda activa: noches 9-11pm, domingos AM"
+  ]}
+  painPoints={[
+    "Probó academia masiva el año pasado (Aduni, 2 meses): demasiada gente, su hijo necesita preguntar y no le hacían caso",
+    "Profesor particular S/.80/h: 4 meses sin reportes, decía 'va bien' pero el simulacro dio 320 (UPC pide 580+)",
+    "Vive en duda permanente: ¿si no entra, qué le digo a mi familia? ¿Reposterga un año?",
+    "Carga mental sola: ella investiga, contrata, paga. El esposo aporta plata pero no investiga",
+    "Diego le dice 'sí estudié' pero ella lo encuentra en TikTok — no tiene termómetro confiable"
+  ]}
+  goals={[
+    "Que Diego entre a UPC Ingeniería de Sistemas en primera convocatoria",
+    "Tener evidencia tangible para mostrar al esposo que la inversión funciona",
+    "Terminar el año pre-universitario sin romper la relación con el hijo",
+    "Sentir 'yo investigué, decidí bien, invertí inteligente — soy buena mamá'"
+  ]}
+  objections={[
+    "'Garantía de ingreso o devolución' suena a estafa — desconfía de promesas absolutas",
+    "Compara contra Trilce/Pamer (precios bajos) y profe particular (S/.1,500/mes sin estructura)",
+    "Si la primera impresión visual es Hostinger-DIY, cierra antes de leer 10 segundos",
+    "Formulario de 8 campos antes de hablar con humano = abandono inmediato"
+  ]}
+  source="deals/clients/XGodel/ux-research/02-user-personas.md · 03-empathy-map.md"
+/>
+
+### Frase que activa reconocimiento inmediato
+
+> **"No más adivinar si tu hijo está estudiando bien."**
+
+Esta frase pega directo en el pain principal, asume que ella ya está
+adivinando (validación, no instrucción), no promete ingreso, cabe en hero
+móvil y diferencia inmediato contra academias masivas y profes informales.
+
+## Persona vetadora — no paga, pero puede tumbar la venta
+
+<PersonaCard
+  name="Diego Rodríguez"
+  role="Estudiante 5to secundaria · Markham · postula a UPC Ingeniería de Sistemas"
+  age="17 años"
+  journeyStage="research"
+  jtbd="Cuando me pasen una landing de academia por WhatsApp, quiero saber en 20 segundos si es moderna o tipo cuartel, para aprobarla o vetarla."
+  quote="O sea sí necesito academia, pero no quiero ir todos los días al cuartel mañanero ese de Saco. Si me pueden enseñar lo que no sé sin hacerme repasar lo que ya manejo, dale, ahí estoy."
+  demographics={[
+    "Plan A: UPC Ingeniería de Sistemas",
+    "Plan B mental: ULima Ingeniería Industrial",
+    "Tech-savviness alta: TikTok, Discord, YouTube tutoriales, ChatGPT para tareas",
+    "Sigue 1Brown3Blue, Khan, profes virales de matemática",
+    "Estética gen Z limeño NSE B+ — cool sin estridencia"
+  ]}
+  painPoints={[
+    "Clases del colegio aburridas: el profe explica al pizarrón, él se sabe la mitad y la otra mitad nadie le explica solo",
+    "Le da roche preguntar en clase — prefiere no entender a parecer tonto",
+    "Sus papás creen que está jugando cuando estudia y al revés. Se hartó",
+    "Academia masiva probada → 'pérdida de tiempo'",
+    "YouTube tutoriales: buenos pero desordenados, no sabe si cubre el examen real"
+  ]}
+  goals={[
+    "Ingresar a UPC sin volverse esclavo del estudio (busca eficiencia, no 8h/día)",
+    "Que sus papás dejen de fastidiarlo: 'si entro a la academia que les guste, me dejan en paz por meses'",
+    "Sentirse seguro el día del examen — no bloquearse",
+    "No quedar atrás de sus 3 mejores patas que también postulan a UPC"
+  ]}
+  objections={[
+    "Si la landing parece colegio-mañanero o academia-2010 → cierre instantáneo",
+    "Si los testimonios son 'estudiantes felices con libros' tipo stock → cierre",
+    "Promesa de 'ingreso garantizado' = trampa obvia",
+    "Carrusel automático con frases motivacionales = fome"
+  ]}
+  source="deals/clients/XGodel/ux-research/02-user-personas.md (persona 2)"
+/>
+
+### El test que toda la landing tiene que pasar
+
+María del Carmen lee la landing a las 10 PM. Se la manda a Diego por
+WhatsApp con "Mira esta opción". Diego scrollea 30 segundos y responde.
+
+| Respuesta de Diego | Diagnóstico |
+|---|---|
+| "Mamá esa wea se ve fome" | Landing falló |
+| "Mmm, podría ser. Pero eh, ¿cuánto cuesta?" | Ganamos |
+| "Sí, esa se ve bien. Agenda" | Ganamos en grande |
+
+La landing está optimizada cuando la conversación entre padre e hijo gira
+a "agendemos el diagnóstico" sin fricción.
+
+## Implicaciones cruzadas para la landing
+
+| Elemento | María del Carmen busca | Diego busca | Resolución |
+|---|---|---|---|
+| **Hero** | Reducción de angustia + dream outcome | Estética moderna no-academia-tradicional | Headline emocional + visual contemporáneo |
+| **Diferenciales** | Reportes, evidencia, control | 1-a-1 (no aula masiva), banco adaptativo | Cards visuales con foco en lo concreto |
+| **Sistema** | Evidencia de que existe | "Esto se ve como app real" | Mockup del dashboard prominente |
+| **¿Y si no ingresa?** | Tranquilidad | Honestidad ("no me venden humo") | Sección dedicada con texto del cliente |
+| **Testimonios** | Otros padres como yo, universidad ingresada | Chicos como yo, no nerds | Mix balanceado, foto real, nombres reales |
+| **CTA** | "Diagnóstico gratuito" + WhatsApp | Sin formulario eterno | Botón claro, WhatsApp directo |

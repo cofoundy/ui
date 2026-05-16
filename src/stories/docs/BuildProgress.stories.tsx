@@ -43,3 +43,50 @@ export const AllPending: Story = {
     ],
   },
 };
+
+// NEW — exercises Atelier patched props: phase L0-L9, owner, started_at,
+// completed_at, vikunja_project_id. XGodel canonical cronograma snapshot.
+export const XGodelCronograma: Story = {
+  name: "XGodel — phased delivery (Atelier patch)",
+  args: {
+    steps: [
+      {
+        label: "L1 — Discovery + Brief",
+        status: "done",
+        phase: "L1",
+        owner: "Andre",
+        started_at: "2026-04-12",
+        completed_at: "2026-04-18",
+      },
+      {
+        label: "L2 — Personas + Sitemap",
+        status: "done",
+        phase: "L2",
+        owner: "Percy",
+        started_at: "2026-04-19",
+        completed_at: "2026-04-30",
+      },
+      {
+        label: "L4 — UX Research (3 user interviews)",
+        status: "current",
+        phase: "L4",
+        owner: "Percy",
+        started_at: "2026-05-02",
+        vikunja_project_id: 22,
+        body: "Interview 2 de 3 — programada 2026-05-18",
+      },
+      {
+        label: "L7 — Build + QA",
+        status: "pending",
+        phase: "L7",
+        owner: "Juan",
+      },
+      {
+        label: "L9 — Deploy + Handoff",
+        status: "pending",
+        phase: "L9",
+        owner: "Andre",
+      },
+    ],
+  },
+};

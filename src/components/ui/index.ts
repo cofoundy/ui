@@ -11,6 +11,8 @@ export { ChannelBadge, channelBadgeVariants } from "./channel-badge";
 export type { ChannelBadgeProps } from "./channel-badge";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
 export { Logo, logoVariants } from "./logo";
+export { NotFound, notFoundVariants } from "./NotFound";
+export type { NotFoundProps } from "./NotFound";
 export { LogoHeader, logoHeaderVariants, Wordmark } from "./logo-header";
 export { CofoundyBadge, cofoundyBadgeVariants } from "./cofoundy-badge";
 export type { CofoundyBadgeProps } from "./cofoundy-badge";

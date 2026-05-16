@@ -1,0 +1,230 @@
+---
+title: "Brand Moodboard + Design Directions — XGodel"
+project: xgodel
+role: client
+chrome: deliverable
+kind: reference
+version: 1
+author: andre
+created: "2026-05-16"
+tags: [brand, moodboard, design-system, xgodel, dogfood-v2.6]
+---
+
+# Brand Moodboard + 3 Design Directions — XGodel
+
+John, este documento consolida la exploración de **dirección visual** para
+Academia Digital XGodel: los 4 conceptos de landing iterados, las 3
+direcciones de paleta+tipografía v2 que evaluamos, y la recomendación final.
+
+> **Decisión locked:** Dirección A — **Emerald Academic**. Verde profundo
+> + cream + brass contenido + Fraunces/Inter. Convierte mejor para el padre
+> Lima B+/A 35-55 que paga S/.2,000-3,500. Patrón validado por Khan
+> Academy, Brilliant, Crehana, Platzi.
+
+## 1 · Concept exploration (4 direcciones de landing)
+
+Cuatro conceptos generados por la skill `/visual-design` (Phase 1 brainstorm),
+cada uno con divergencia explícita en al menos 2 de: background / layout /
+focal point / density. **Ganador: Concept B** — el dashboard report ES el
+hero visual, que es exactamente lo que pidió el brief.
+
+<MoodBoard
+  columns={3}
+  items={[
+    {
+      src: "/xgodel/concept-A.png",
+      alt: "Concept A — Editorial Calm: typography-led, quote-card hero, light + subtle violet glow",
+      caption: "A · Editorial Calm — 4.13/5",
+      concept_tag: "A",
+      source_url: "https://docs.cofoundy.dev/client/xgodel/concept-a"
+    },
+    {
+      src: "/xgodel/concept-B.png",
+      alt: "Concept B — Product-Led Dashboard: dashboard mockup as hero, asymmetric 45/55, violet→purple gradient",
+      caption: "B · Product-Led Dashboard — 4.31/5 — WINNER",
+      concept_tag: "B"
+    },
+    {
+      src: "/xgodel/concept-C.png",
+      alt: "Concept C — Warm Human: cream tones, illustrated kitchen-table scene, editorial asymmetric",
+      caption: "C · Warm Human — 3.13/5",
+      concept_tag: "C"
+    },
+    {
+      src: "/xgodel/concept-D.png",
+      alt: "Concept D — Data Confidence: centered hero, big-number data strip, radial glow",
+      caption: "D · Data Confidence — 3.94/5",
+      concept_tag: "D"
+    },
+    {
+      src: "/xgodel/final-hero.png",
+      alt: "Final landing assembly — Concept B refined through 6 iterations to 4.5/5 ship threshold",
+      caption: "Final · Refined Concept B — 4.5/5 SHIP",
+      concept_tag: "Final"
+    }
+  ]}
+/>
+
+### Por qué ganó Concept B
+
+El brief decía explícitamente: *"el mockup del reporte tiene que ser un visual
+hero del scroll, no una caption pequeña."* Concept B es el único donde el
+**dashboard report ES el visual hero** de la composición above-the-fold. Los
+otros tres demotaron el producto a un visual secundario.
+
+## 2 · Paleta + tipografía — 3 direcciones v2
+
+Sobre el concepto ganador (Product-Led B), exploramos 3 direcciones de
+**paleta + tipografía** para resolver la pregunta: ¿qué cromática+typo
+convierte mejor al padre Lima B+/A ansioso de costo-oportunidad?
+
+### Dirección A — Emerald Academic ✅ RECOMENDADA
+
+<DesignSystemPanel
+  direction="A · Emerald Academic"
+  colors={[
+    { name: "Emerald 900", value: "#0F3D2E", usage_note: "Headlines, CTAs, hero — autoridad institucional" },
+    { name: "Emerald 700", value: "#1B6E4F", usage_note: "Sub-headers, accents secundarios" },
+    { name: "Emerald 100", value: "#D6EBE0", usage_note: "Backgrounds suaves, separadores" },
+    { name: "Brass", value: "#B08A3E", usage_note: "Accent contenido — separadores universitarios, eyebrow CTA (1× por sección)" },
+    { name: "Paper", value: "#FAF8F2", usage_note: "Background dominante (cream warm)" },
+    { name: "Bone", value: "#F2EFE6", usage_note: "Backgrounds alternados de sección" },
+    { name: "Ink", value: "#0E0B2E", usage_note: "Body text" }
+  ]}
+  typography={[
+    { name: "Display", family: "Fraunces", sample: "Academia que prepara y mide", weight: "600" },
+    { name: "Body", family: "Inter", sample: "No más adivinar si tu hijo está estudiando bien.", weight: "400" }
+  ]}
+  spacing={[
+    { name: "xs", value: "4px" },
+    { name: "sm", value: "8px" },
+    { name: "md", value: "16px" },
+    { name: "lg", value: "32px" },
+    { name: "xl", value: "64px" }
+  ]}
+  radius={[
+    { name: "sm", value: "6px" },
+    { name: "md", value: "12px" },
+    { name: "lg", value: "20px" }
+  ]}
+/>
+
+### Dirección B — Bordeaux Historic
+
+<DesignSystemPanel
+  direction="B · Bordeaux Historic"
+  colors={[
+    { name: "Garnet 900", value: "#5C1A24", usage_note: "Headlines, hero — autoridad clásica académica" },
+    { name: "Garnet 700", value: "#8B2D3C", usage_note: "CTAs primarios" },
+    { name: "Gold", value: "#C9A35E", usage_note: "Accent — separadores italic, líneas decorativas" },
+    { name: "Cream", value: "#F8F2E5", usage_note: "Background dominante" },
+    { name: "Bone", value: "#EDE6D5", usage_note: "Background alternado" },
+    { name: "Ink", value: "#1F1414", usage_note: "Body text" }
+  ]}
+  typography={[
+    { name: "Display", family: "Cormorant Garamond", sample: "Academia que prepara y mide", weight: "600" },
+    { name: "Body", family: "Inter", sample: "No más adivinar si tu hijo está estudiando bien." }
+  ]}
+/>
+
+### Dirección C — Editorial Premium
+
+<DesignSystemPanel
+  direction="C · Editorial Premium"
+  colors={[
+    { name: "Charcoal 900", value: "#1A1A1F", usage_note: "Headlines, hero — autoridad moderna tech-edu" },
+    { name: "Charcoal 500", value: "#5A5A66", usage_note: "Body secondary, sub-headers" },
+    { name: "Copper", value: "#C46A3A", usage_note: "Accent — italics, separadores" },
+    { name: "Bone", value: "#F4F1EA", usage_note: "Background dominante" },
+    { name: "Cream", value: "#EDE7D9", usage_note: "Background alternado" }
+  ]}
+  typography={[
+    { name: "Display", family: "Manrope", sample: "Academia que prepara y mide", weight: "800" },
+    { name: "Body", family: "Inter Tight", sample: "No más adivinar si tu hijo está estudiando bien." }
+  ]}
+/>
+
+## 3 · Trade-off matrix — por qué A gana
+
+<ComparisonMatrix
+  columns={["A · Emerald Academic", "B · Bordeaux Historic", "C · Editorial Premium"]}
+  rows={[
+    {
+      feature: "Lectura del padre Lima B+/A",
+      source: "work/brand-paletas-v2/recomendacion.md §El padre target",
+      options: [
+        { name: "A · Emerald Academic", value: "Confianza institucional + moderna calibrada", traffic_light: "green", highlight: true },
+        { name: "B · Bordeaux Historic", value: "Elite/cara — riesgo 'no es para mí'", traffic_light: "yellow" },
+        { name: "C · Editorial Premium", value: "Tech-bro / startup vacía — 'no parece academia'", traffic_light: "red" }
+      ]
+    },
+    {
+      feature: "Diferencia vs competencia preuni PE",
+      source: "work/brand-paletas-v2/recomendacion.md §Mapa cromático del competidor",
+      options: [
+        { name: "A · Emerald Academic", value: "Territorio cromático libre (Trilce naranja · Pamer azul · Aduni rojo)", traffic_light: "green", highlight: true },
+        { name: "B · Bordeaux Historic", value: "Distintivo pero anticuado", traffic_light: "yellow" },
+        { name: "C · Editorial Premium", value: "Distintivo pero pierde el frame 'academia'", traffic_light: "yellow" }
+      ]
+    },
+    {
+      feature: "Patrón validado a escala global",
+      source: "work/brand-paletas-v2/recomendacion.md §Datos del mercado edu-tech LATAM",
+      options: [
+        { name: "A · Emerald Academic", value: "Khan Academy · Crehana · Platzi · Brilliant · Whole Foods", traffic_light: "green", highlight: true },
+        { name: "B · Bordeaux Historic", value: "Harvard/Yale brand (no edu-tech moderno)", traffic_light: "yellow" },
+        { name: "C · Editorial Premium", value: "Apple/Mark Manson — no edu-tech", traffic_light: "red" }
+      ]
+    },
+    {
+      feature: "Conversion test mobile 3s",
+      source: "work/brand-paletas-v2/recomendacion.md §Funciona en mobile el primer scroll",
+      options: [
+        { name: "A · Emerald Academic", value: "Padre entiende propuesta < 3s sin scroll", traffic_light: "green", highlight: true },
+        { name: "B · Bordeaux Historic", value: "Cormorant italic legible pero más lento de escanear", traffic_light: "yellow" },
+        { name: "C · Editorial Premium", value: "Manrope 800 dense — funciona pero menos warm", traffic_light: "yellow" }
+      ]
+    },
+    {
+      feature: "Riesgo principal",
+      source: "work/brand-paletas-v2/recomendacion.md §Riesgos",
+      options: [
+        { name: "A · Emerald Academic", value: "'Eco-friendly' — mitigado: emerald 900 + cream + brass = academic, no wellness", traffic_light: "green" },
+        { name: "B · Bordeaux Historic", value: "'Demasiado tradicional' — riesgo de leer 'Trilce viejo repintado'", traffic_light: "red" },
+        { name: "C · Editorial Premium", value: "'Startup tech, no academia' — frame mismatch", traffic_light: "red" }
+      ]
+    }
+  ]}
+/>
+
+## 4 · Decisiones cerradas (concept B refinement)
+
+Las decisiones de design hechas durante las 6 iteraciones de refinamiento del
+Concept B antes del SHIP — documentadas en
+`visual-design/DECISIONS.md`:
+
+1. **Light-first dominante** con 4 "moments of dark" quirúrgicos (CTA Final, Footer, 2 featured diff cards, Session block 3)
+2. **No stock photos** — anti-pattern #7. Real shoot (1-on-1 session en home Lima) pendiente para v1.1
+3. **Headline con gradient** en la tercera unidad semántica ("estudiando bien") — emocionalmente weighted
+4. **Featured diff cards en dark navy** para los 2 prioritarios (Reporte, Reentrenamiento) — visual weight sin más espacio
+5. **Sección "¿Y si no ingresa?" como CARD** con left-border violet — visualmente dice "stop here, this is important"
+6. **WhatsApp green como ACCENT only** — no en body (anti-Duolingo). Mint en isotipos branded, no styling stock
+
+## 5 · Gaps conocidos para Next.js implementation
+
+Lo que NO está en el v1 design y necesita resolverse antes de producción:
+
+- Real photos de tutor + alumno en home Lima (System block 3)
+- Logo SVG XGodel definitivo (vertical + horizontal + isotipo)
+- Logos de universidades con permiso (UPC · ULima · PUCP)
+- Testimonios reales con foto + permiso (≥3)
+- WhatsApp deep-link en wa.me/... con mensaje pre-llenado
+
+---
+
+**Sources:**
+- `deals/clients/XGodel/visual-design/DECISIONS.md` (concept iteration + ship rationale)
+- `deals/clients/XGodel/visual-design/concept-{A,B,C,D}/` (4 concept HTMLs + PNGs)
+- `deals/clients/XGodel/visual-design/final/` (refined Concept B production reference)
+- `deals/clients/XGodel/work/brand-paletas-v2/recomendacion.md` (3-direction strategic analysis)
+- `deals/clients/XGodel/work/brand-paletas-v2/direccion-{A-emerald-academic,B-bordeaux-historic,C-editorial-premium}/` (rendered palette mockups)

@@ -1,20 +1,32 @@
 import type { ReactNode } from 'react';
 
+export type TrafficLight = 'green' | 'yellow' | 'red';
+
 export interface ComparisonOption {
   name: string;
   value: ReactNode;
   highlight?: boolean;
+  /** Traffic-light convergence indicator per cell (R-A7 §comparison). */
+  traffic_light?: TrafficLight;
 }
 
 export interface ComparisonRow {
   feature: string;
   options: ComparisonOption[];
+  /** Provenance for this row — research doc, benchmark, citation. */
+  source?: string;
 }
 
 export interface ComparisonMatrixProps {
   columns: string[];
   rows: ComparisonRow[];
 }
+
+const TRAFFIC_COLOR: Record<TrafficLight, string> = {
+  green: 'var(--cf-success)',
+  yellow: 'var(--cf-warning)',
+  red: 'var(--cf-error)',
+};
 
 export function ComparisonMatrix({ columns, rows }: ComparisonMatrixProps) {
   return (
@@ -81,7 +93,15 @@ export function ComparisonMatrix({ columns, rows }: ComparisonMatrixProps) {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {row.feature}
+                <span>{row.feature}</span>
+                {row.source && (
+                  <div
+                    data-slot="comparison-matrix-source"
+                    style={{ fontSize: '0.7em', fontFamily: 'var(--font-mono)', color: 'var(--cf-muted)', marginTop: '0.25em', fontWeight: 400 }}
+                  >
+                    source: {row.source}
+                  </div>
+                )}
               </th>
               {row.options.map((opt, oi) => (
                 <td
@@ -95,7 +115,23 @@ export function ComparisonMatrix({ columns, rows }: ComparisonMatrixProps) {
                     verticalAlign: 'top',
                   }}
                 >
-                  {opt.value}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5em' }}>
+                    {opt.traffic_light && (
+                      <span
+                        data-slot="comparison-matrix-traffic-light"
+                        aria-label={`status: ${opt.traffic_light}`}
+                        style={{
+                          marginTop: '0.4em',
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: TRAFFIC_COLOR[opt.traffic_light],
+                          flexShrink: 0,
+                        }}
+                      />
+                    )}
+                    <div>{opt.value}</div>
+                  </div>
                 </td>
               ))}
             </tr>

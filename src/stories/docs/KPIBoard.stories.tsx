@@ -54,3 +54,38 @@ export const Simple: Story = {
     ],
   },
 };
+
+// NEW — exercises `baseline` + `source` (Atelier patch). XGodel CRO plan KPIs.
+export const XGodelCROBaseline: Story = {
+  name: "XGodel — CRO plan (Atelier patch)",
+  args: {
+    kpis: [
+      {
+        label: "Time-to-MQL",
+        value: "36h",
+        trend: { direction: "down", value: "-12h" },
+        target: "<48h",
+        baseline: "60h (Q1 2026)",
+        status: "good",
+        source: "docs/16-cro-plan.md",
+      },
+      {
+        label: "Cierres / mes",
+        value: 3,
+        target: "5",
+        baseline: "2 (Q1 2026)",
+        status: "warn",
+        source: "deals/pipeline.yaml — 2026-05-10",
+      },
+      {
+        label: "Lighthouse perf",
+        value: 95,
+        target: "≥90",
+        baseline: "78 (pre-redesign)",
+        status: "good",
+        source: "Lighthouse CI 2026-05-15",
+      },
+    ],
+    columns: 3,
+  },
+};

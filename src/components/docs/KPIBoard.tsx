@@ -6,6 +6,10 @@ export interface KPI {
   trend?: { direction: 'up' | 'down' | 'flat'; value: string };
   target?: string;
   status?: 'good' | 'warn' | 'bad';
+  /** Reference baseline this KPI is compared against. */
+  baseline?: string;
+  /** Provenance — research doc citation or benchmark URL. */
+  source?: string;
 }
 
 export interface KPIBoardProps {
@@ -68,7 +72,7 @@ export function KPIBoard({ kpis, columns }: KPIBoardProps) {
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.7em', fontWeight: 600, color: 'var(--cf-fg)', lineHeight: 1.1 }}>
             {kpi.value}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25em' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25em', flexWrap: 'wrap', gap: '0.4em' }}>
             {kpi.trend && (
               <span
                 style={{
@@ -85,10 +89,25 @@ export function KPIBoard({ kpis, columns }: KPIBoardProps) {
                 {TREND_GLYPH[kpi.trend.direction]} {kpi.trend.value}
               </span>
             )}
-            {kpi.target && (
-              <span style={{ fontSize: '0.78em', color: 'var(--cf-muted)' }}>target: {kpi.target}</span>
-            )}
+            <div style={{ display: 'flex', gap: '0.6em', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              {kpi.baseline && (
+                <span data-slot="kpi-baseline" style={{ fontSize: '0.78em', color: 'var(--cf-muted)' }}>
+                  baseline: {kpi.baseline}
+                </span>
+              )}
+              {kpi.target && (
+                <span style={{ fontSize: '0.78em', color: 'var(--cf-muted)' }}>target: {kpi.target}</span>
+              )}
+            </div>
           </div>
+          {kpi.source && (
+            <div
+              data-slot="kpi-source"
+              style={{ fontSize: '0.72em', color: 'var(--cf-muted)', fontFamily: 'var(--font-mono)', marginTop: '0.1em' }}
+            >
+              source: {kpi.source}
+            </div>
+          )}
         </div>
       ))}
     </div>
