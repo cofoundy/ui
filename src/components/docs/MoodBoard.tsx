@@ -1,3 +1,4 @@
+import * as React from 'react';
 export interface MoodBoardItem {
   src: string;
   alt: string;

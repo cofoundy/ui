@@ -1,3 +1,4 @@
+import * as React from 'react';
 export interface TestimonialCardProps {
   quote: string;
   author: string;
