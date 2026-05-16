@@ -1,3 +1,4 @@
+import * as React from 'react';
 export type JourneyStage = 'awareness' | 'research' | 'decision' | 'retention';
 
 export interface PersonaCardProps {

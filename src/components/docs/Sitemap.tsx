@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { useState, useCallback, useId, type KeyboardEvent } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../utils/cn';
