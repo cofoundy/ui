@@ -136,6 +136,43 @@ import {
 } from '@cofoundy/ui'
 ```
 
+### ClientPortalPanel (for DocsAI `/client/{slug}/` routes)
+
+**Slot-composable** — 23 slots, NOT in atelier-registry (it's a compound family, not a single component). Used in MDX to author per-client portals. Per-client brand accent via `--portal-accent` CSS var prop on `<Root>`.
+
+```typescript
+import { ClientPortalPanel } from '@cofoundy/ui'
+
+<ClientPortalPanel.Root accentColor="#0F5132">
+  <ClientPortalPanel.Hero title="XGodel" status="en-build" tagline="..." />
+  <ClientPortalPanel.Approvals items={[...]} />     {/* P0: weekly-return driver */}
+  <ClientPortalPanel.Phase percent={78} stages={[...]} current="build" />
+  <ClientPortalPanel.Milestones items={[...]} />
+  <ClientPortalPanel.LiveSites items={[...]} />
+  <ClientPortalPanel.Brand palette={[...]} type={[...]} pdfCover="..." />
+  <ClientPortalPanel.Strategy ... />
+  <ClientPortalPanel.Concepts items={[...]} chosen="C" />
+  <ClientPortalPanel.Tasks projectId={22} columns={[...]} />   {/* Vikunja snapshot */}
+  <ClientPortalPanel.Build repos={[...]} cronograma={...} />
+  <ClientPortalPanel.Documents items={[...]} />     {/* quote/contract/nda/invoice */}
+  <ClientPortalPanel.Meetings past={[...]} upcoming={[...]} />
+  <ClientPortalPanel.Payments total={...} paid={...} next={...} />
+  <ClientPortalPanel.Activity events={[...]} />
+  <ClientPortalPanel.Guides items={[...]} />
+  <ClientPortalPanel.Downloads items={[...]} />
+  <ClientPortalPanel.AccessRegistry items={[...]} />   {/* NEVER credential values */}
+  <ClientPortalPanel.OnboardingChecklist items={[...]} />
+  <ClientPortalPanel.Team members={[...]} />
+  <ClientPortalPanel.ScheduleCTA url="https://cal.cofoundy.dev/..." />
+</ClientPortalPanel.Root>
+```
+
+**Slot inventory:** `Root`, `Hero`, `Phase`, `LiveSites`, `Brand`, `Strategy`, `Concepts`, `Build`, `Payments`, `Activity`, `Team`, `ArtifactTile`, `SectionHeading`, `Approvals`, `Documents`, `Meetings`, `Tasks`, `Milestones`, `Guides`, `Downloads`, `AccessRegistry`, `OnboardingChecklist`, `ScheduleCTA`.
+
+**`<AccessRegistry>` security policy** — inventory ONLY (system name + status: `granted`/`bitwarden-send-issued`/`pending`/`not-applicable`). NEVER renders password/secret values. Actual credentials go via Bitwarden Send (TTL, single-fetch) by WhatsApp/email out-of-band. Reasons: Bitwarden is purpose-built (audit log, rotation), CF Access cookie-stealing blast radius, Peru Law 29733 compliance, drift between SoT systems.
+
+**Source code:** `src/components/docs/ClientPortalPanel.tsx` (facade) + `src/components/docs/client-portal/*.tsx` (23 slot impls). Stories at `src/stories/docs/ClientPortalPanel.stories.tsx` (XGodel-Full, XGodel-Onboarding, Acme-Mid-Build, Acme-Post-Launch, Minimal, Light).
+
 ### Analytics (for PulseAI, dashboards)
 ```typescript
 import {

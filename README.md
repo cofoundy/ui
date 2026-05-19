@@ -35,6 +35,7 @@ All components are built on [shadcn/ui](https://ui.shadcn.com/) with Radix UI pr
 | `Tabs` | Tab navigation with mobile scroll support |
 | `Spinner` | Loading indicator with size variants |
 | `Toast` | Toast notifications (via Sonner) |
+| `ClientPortalPanel` | Slot-composable client portal (23 slots) for DocsAI `/client/{slug}/` routes. Editorial-bento layout, per-client brand accent. See `CLAUDE.md` for slot inventory + usage. |
 
 ### Usage
 
