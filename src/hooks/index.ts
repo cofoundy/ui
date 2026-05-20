@@ -26,3 +26,10 @@ export { useAnimatedValue } from "./useAnimatedValue";
 export type { UseAnimatedValueOptions } from "./useAnimatedValue";
 
 export { useMountTransition } from "./useMountTransition";
+
+export { useStreamingDrip } from "./useStreamingDrip";
+export type {
+  DripMode,
+  UseStreamingDripOptions,
+  UseStreamingDripResult,
+} from "./useStreamingDrip";
