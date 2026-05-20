@@ -5,6 +5,29 @@ All notable changes to `@cofoundy/ui` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] — 2026-05-20
+
+### Added
+
+- **`LinkPreviewProvider`** — wikilink hover preview for docs.cofoundy.dev. Mounts once around a doc-content tree; same-origin anchors with `data-link-preview` opt in via event delegation. Sage-pure surface (variant `quiet` canonical; `card` + `glass` available as variants).
+
+  **Data contract — agnostic:** consumer passes `getPreview(href)` (sync cache hit) and/or `fetchPreview(href)` (async fallback with skeleton). Both modes supported simultaneously — sync first, async on miss.
+
+  **Behavior:** 180ms open delay, 120ms close grace; cursor into popover resets the close timer. Dismiss on ESC, scroll (outside popover), click-outside. Smart positioning — anchors below trigger, flips to top near viewport bottom, clamps horizontally inside viewport. Auto-disables on `(hover: none)` media (touch).
+
+  **A11y:** `role="tooltip"`, `aria-busy` skeleton, keyboard mirroring via `focusin`/`focusout`. Respects `prefers-reduced-motion` — instant show/hide when set.
+
+  **Variants:**
+  - `quiet` (default) — minimal chrome, hairline border, no accent stripe. Sage-pure.
+  - `card` — index-card / citation. Kind-tag + display title + footnote meta.
+  - `glass` — 4px brand-blue leading ribbon + backdrop-filter. Matches AuthorNote / NextStepCallout family.
+
+  Surface dispatcher allows future variants without touching the orchestration layer (provider stays variant-agnostic).
+
+  Files: `src/components/docs/link-preview/{LinkPreviewProvider,LinkPreviewSurface,types,usePreviewPosition}.tsx` + `surfaces/LinkPreview{Quiet,Card,Glass}.tsx`. Test: `src/__tests__/components/docs/link-preview.test.tsx` (7 tests). Story: `src/stories/docs/LinkPreview.stories.tsx` (8 stories: CacheHit, CacheMiss, Hybrid, LightTheme, ReducedMotion, SlowFetch, ErrorState).
+
+  **Integration:** import `{ LinkPreviewProvider }` from `@cofoundy/ui`. Wrap the doc content (e.g., inside `<DocLayout>` around the `.reader-prose` article). Anchors in precompiled HTML must include `data-link-preview` attribute — the docs-ai publish pipeline can inject this on internal links during MDX → HTML compile.
+
 ## [0.5.0] — 2026-05-19
 
 ### Added
