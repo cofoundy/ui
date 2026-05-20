@@ -547,3 +547,17 @@ export type {
   PortalScheduleCTAProps,
   ScheduleFallback,
 } from "./components/docs";
+
+// LinkPreview — wikilink hover popover (2026-05-20)
+// docs.cofoundy.dev: vault navigation without full-page repaint.
+// Provider mounts once around the doc content tree; same-origin anchors
+// with `data-link-preview` opt in via event delegation.
+export { LinkPreviewProvider } from "./components/docs/link-preview";
+export type {
+  PreviewData,
+  PreviewResult,
+  GetPreview,
+  FetchPreview,
+  LinkPreviewVariant,
+  LinkPreviewProviderProps,
+} from "./components/docs/link-preview";

@@ -1033,3 +1033,21 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* === LINK PREVIEW (wikilink hover popover) === */
+@keyframes cf-link-preview-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes cf-link-preview-shimmer {
+    0%, 100% {
+      background-position: 0 0;
+    }
+  }
+}
