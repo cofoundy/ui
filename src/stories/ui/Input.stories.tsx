@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Input } from '../../components/ui/input';
+import { VIEWPORT_MOBILE } from '../_shared/viewports';
 
 const meta: Meta<typeof Input> = {
   title: 'UI/Input',
@@ -65,6 +66,23 @@ export const WithLabel: Story = {
         Name
       </label>
       <Input id="name" placeholder="Enter your name" />
+    </div>
+  ),
+};
+
+/**
+ * Mobile-first contract baseline (375 px). Verifies the input renders with
+ * `font-size ≥ 16px` (iOS auto-zooms below 16 px on focus) and tap target
+ * height respects the 44 px floor. Required per packages/ui/CLAUDE.md.
+ */
+export const MobileBaseline: Story = {
+  parameters: { viewport: VIEWPORT_MOBILE },
+  render: () => (
+    <div className="flex flex-col gap-3 p-4 w-full">
+      <Input placeholder="Tap me — should not zoom on iOS" />
+      <Input type="email" placeholder="email@example.com" />
+      <Input type="tel" placeholder="+51 9XX XXX XXX" />
+      <Input disabled placeholder="Disabled" />
     </div>
   ),
 };

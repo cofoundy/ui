@@ -415,6 +415,34 @@ export { fooVariants };
 - Animations use `cf-animate-*` utility classes or `var(--cf-duration-*)` / `var(--cf-ease-*)` tokens
 - Light/dark mode via `[data-theme="light"]` / `[data-theme="dark"]` selectors in `styles/index.css`
 
+## Mobile-state stories — `MobileBaseline` contract
+
+Every **interactive primitive** (Button, Input, NavDropdown, DataTable, Sheet,
+Tabs, Switch, Select, anything users tap/type/drag) **MUST** export a story
+named `MobileBaseline` that renders the component at the canonical mobile
+viewport (375 px, iPhone SE). This makes the mobile-first contract visible
+at story-review time, not after a real device exposes the regression.
+
+```ts
+import { VIEWPORT_MOBILE } from '../_shared/viewports';
+
+export const MobileBaseline: Story = {
+  parameters: { viewport: VIEWPORT_MOBILE },
+  // …render the component — verify ≥ 44×44 px tap targets + ≥ 16 px input
+  //  font-size + clamp() widths.
+};
+```
+
+Shared viewport constants live in `src/stories/_shared/viewports.ts`
+(`VIEWPORT_MOBILE`, `VIEWPORT_MOBILE_LANDSCAPE`, `VIEWPORT_TABLET`,
+`VIEWPORT_DESKTOP`). Never redeclare these constants per-story — import them.
+
+**Tier-1 pilot scope (this cycle).** `Button`, `Input`, `NavDropdown`. Backfill
+of remaining 91 stories is deferred to Tier 2, one task per category.
+
+**Source.** docs-ai `.cofoundy/specs/architecture-v1.md` §8 + the canonical PRD
+at `docs.cofoundy.dev/team/docs-ai/mobile-first-contract-v1` (§7).
+
 ## AI Assistant Rules
 
 1. **ALWAYS add Storybook stories** for new components

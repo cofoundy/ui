@@ -5,6 +5,7 @@ import {
   NavDropdown,
   type NavDropdownItem,
 } from "../../components/navigation/NavDropdown";
+import { VIEWPORT_MOBILE } from "../_shared/viewports";
 
 const meta: Meta<typeof NavDropdown> = {
   title: "Navigation/NavDropdown",
@@ -269,6 +270,26 @@ export const InNavbar: Story = {
       description: {
         story:
           "Example of NavDropdown components used within a navbar context. The Products dropdown demonstrates interactive active state management.",
+      },
+    },
+  },
+};
+
+// Mobile-first contract baseline — 375 px (iPhone SE).
+// Verifies the 44 px tap-target claim from the component header against an
+// actual mobile viewport. Required per packages/ui/CLAUDE.md.
+export const MobileBaseline: Story = {
+  args: {
+    label: "Servicios",
+    variant: "dark",
+    items: serviceItems,
+  },
+  parameters: {
+    viewport: VIEWPORT_MOBILE,
+    docs: {
+      description: {
+        story:
+          "Mobile baseline (375 px, iPhone SE). Trigger and menu items must keep ≥ 44×44 px touch targets — auditable visually at this viewport.",
       },
     },
   },
