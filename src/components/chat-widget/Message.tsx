@@ -5,6 +5,8 @@ import { User, Bot } from "lucide-react";
 import { cn } from "../../utils/cn";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { MessageContent } from "../messaging/primitives/MessageContent";
+import { StreamingMarkdown } from "../messaging/primitives/StreamingMarkdown";
+import { useChatStore } from "../../stores/chatStore";
 import type { Message as MessageType } from "../../types";
 
 interface MessageProps {
@@ -19,7 +21,10 @@ export const Message = memo(
   function Message({ message }: MessageProps) {
     const isUser = message.role === "user";
 
-    // Memoize formatted time to avoid recalculation on every render
+    const isStreamingThis = useChatStore(
+      (s) => s.isStreaming && s.streamingMessageId === message.id,
+    );
+
     const formattedTime = useMemo(() => {
       return new Date(message.timestamp).toLocaleTimeString("es-ES", {
         hour: "2-digit",
@@ -61,8 +66,19 @@ export const Message = memo(
               : "bg-[var(--chat-card-hover)] text-[var(--chat-foreground)] rounded-tl-sm"
           )}
         >
-          {/* Use MessageContent primitive with markdown format */}
-          <MessageContent content={message.content} format="markdown" isUser={isUser} />
+          {isStreamingThis ? (
+            <StreamingMarkdown
+              content={message.content}
+              isStreaming
+              isUser={isUser}
+            />
+          ) : (
+            <MessageContent
+              content={message.content}
+              format="markdown"
+              isUser={isUser}
+            />
+          )}
 
           {/* Timestamp - exact same styling as original */}
           <span className="text-[10px] opacity-50 mt-1 block">

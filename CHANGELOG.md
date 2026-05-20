@@ -5,6 +5,20 @@ All notable changes to `@cofoundy/ui` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] — 2026-05-20
+
+### Added
+
+- **`StreamingMarkdown`** + **`useStreamingDrip`** — per-char wave reveal for LLM streaming output. The primitive walks the hast tree via `react-markdown` overrides and emits flat `<span>` elements keyed by absolute source offset, so markdown structure changes mid-stream (e.g., `**` closing into a `<strong>`) don't remount existing chars — only their className transitions. Wired into `Message.tsx`: renders `<StreamingMarkdown>` while `useChatStore.isStreaming && streamingMessageId === message.id`, falls back to `<MessageContent>` otherwise.
+
+  **Drip hook (`useStreamingDrip`):** decouples network arrival from visual reveal rate. Modes: `adaptive` (default — caps `cps` at `incomingCps × 1.2` to avoid burst-catchup), `typewriter` (fixed rate), `off` (passthrough).
+
+  **CSS:** `display: inline` (no per-char inline-block gaps), `.cf-stream-active` parent class gates the keyframe so completed spans freeze in place when the stream ends — no flicker, no layout shift. Respects `prefers-reduced-motion`.
+
+  **Storybook:** `Chat/Message → Streaming Chunky / Smooth / Finished` exercises the wiring via the actual `chatStore`. `Chat/Streaming Animation Playground` retained as design exploration (7 strategies; Wave + MD won).
+
+  Files: `src/components/messaging/primitives/StreamingMarkdown.tsx`, `src/hooks/useStreamingDrip.ts`, `src/__tests__/components/{StreamingMarkdown.debug,Message.streaming}.test.tsx` (8 tests), `docs/superpowers/specs/2026-05-14-streaming-markdown-wave-design.md`.
+
 ## [0.5.1] — 2026-05-20
 
 ### Added

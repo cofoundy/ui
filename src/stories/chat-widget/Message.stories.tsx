@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { useEffect, useState } from 'react';
 import { Message } from '../../components/chat-widget/Message';
+import { useChatStore } from '../../stores/chatStore';
 import type { Message as MessageType } from '../../types';
 
 const meta: Meta<typeof Message> = {
@@ -178,4 +180,119 @@ export const Conversation: Story = {
       <Message message={markdownMessage} />
     </div>
   ),
+};
+
+const STREAMING_SCRIPT = `## Estimación rápida
+
+Para una **landing page** moderna con animaciones y responsive:
+
+1. Diseño visual + brand
+2. Implementación en \`Next.js\`
+3. Deploy a *producción*
+
+¿Te suena bien?`;
+
+type StreamPattern = 'chunky' | 'smooth';
+
+function useScriptedStream(
+  messageId: string,
+  pattern: StreamPattern,
+  enabled: boolean,
+) {
+  useEffect(() => {
+    if (!enabled) return;
+    const store = useChatStore.getState();
+    store.reset();
+    store.startStreaming(messageId);
+
+    let cancelled = false;
+    let i = 0;
+    const chunkSize = pattern === 'chunky' ? 28 : 3;
+    const intervalMs = pattern === 'chunky' ? 420 : 35;
+
+    const tick = () => {
+      if (cancelled) return;
+      const next = STREAMING_SCRIPT.slice(i, i + chunkSize);
+      if (!next) {
+        useChatStore.getState().finishStreaming();
+        return;
+      }
+      useChatStore.getState().appendToken(next);
+      i += chunkSize;
+      setTimeout(tick, intervalMs);
+    };
+    setTimeout(tick, 200);
+
+    return () => {
+      cancelled = true;
+      useChatStore.getState().reset();
+    };
+  }, [messageId, pattern, enabled]);
+}
+
+function StreamingDemo({
+  pattern,
+  messageId,
+}: {
+  pattern: StreamPattern;
+  messageId: string;
+}) {
+  const [enabled, setEnabled] = useState(true);
+  const [replayKey, setReplayKey] = useState(0);
+  useScriptedStream(`${messageId}-${replayKey}`, pattern, enabled);
+
+  const messages = useChatStore((s) => s.messages);
+  const streamed = messages.find((m) => m.id === `${messageId}-${replayKey}`);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex gap-2 text-xs">
+        <button
+          onClick={() => {
+            setEnabled(false);
+            setTimeout(() => {
+              setEnabled(true);
+              setReplayKey((k) => k + 1);
+            }, 50);
+          }}
+          className="px-3 py-1 rounded bg-[var(--chat-primary)] text-white"
+        >
+          Replay
+        </button>
+        <span className="text-[var(--chat-muted)] self-center">
+          Pattern: <code>{pattern}</code>
+        </span>
+      </div>
+      {streamed && <Message message={streamed} />}
+    </div>
+  );
+}
+
+export const StreamingChunky: Story = {
+  name: 'Streaming — Chunky (LLM batches)',
+  render: () => (
+    <StreamingDemo pattern="chunky" messageId="demo-chunky" />
+  ),
+};
+
+export const StreamingSmooth: Story = {
+  name: 'Streaming — Smooth (per-token)',
+  render: () => (
+    <StreamingDemo pattern="smooth" messageId="demo-smooth" />
+  ),
+};
+
+export const StreamingFinished: Story = {
+  name: 'Streaming — Finished (renders as MessageContent)',
+  render: () => {
+    const finished: MessageType = {
+      id: 'finished-msg',
+      role: 'assistant',
+      content: STREAMING_SCRIPT,
+      timestamp: new Date(),
+    };
+    // Reset store so isStreaming is false for this message id.
+    useChatStore.getState().reset();
+    return <Message message={finished} />;
+  },
 };

@@ -535,29 +535,37 @@
   animation-delay: 0.9s;
 }
 
-/* === Streaming markdown per-char wave === */
+/* === Streaming markdown per-char wave ===
+   Chars use display: inline (NOT inline-block) so they flow naturally in
+   the line, don't introduce per-char gaps, and let style classes like
+   .cf-stream-code render a seamless background across consecutive siblings.
+   Transform is dropped (inline ignores transforms); opacity + blur are
+   sufficient for the wave aesthetic. */
 @keyframes cf-stream-char-wave {
   from {
     opacity: 0;
     filter: blur(var(--cf-stream-blur, 4px));
-    transform: translateY(2px);
   }
   to {
     opacity: 1;
     filter: blur(0);
-    transform: translateY(0);
   }
 }
 
 .cf-stream-char {
-  animation: cf-stream-char-wave var(--cf-stream-fade, 220ms) ease-out both;
-  display: inline-block;
-  white-space: pre;
+  display: inline;
+  white-space: pre-wrap;
   transition:
     font-weight 180ms ease-out,
     font-style 180ms ease-out,
     color 180ms ease-out,
     background-color 180ms ease-out;
+}
+
+/* Animation runs only while the parent root is "active". Spans freeze in their
+   final state after their animation completes (animation-fill-mode: both). */
+.cf-stream-active .cf-stream-char {
+  animation: cf-stream-char-wave var(--cf-stream-fade, 220ms) ease-out both;
 }
 
 .cf-stream-bold {
@@ -570,10 +578,17 @@
 
 .cf-stream-code {
   background-color: rgba(255, 255, 255, 0.08);
-  padding: 1px 4px;
-  border-radius: 3px;
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
   font-size: 0.9em;
+  /* No padding — per-char padding creates visible boxes around each glyph.
+     Seamless background across siblings is the intended look. */
+}
+
+/* Subtle horizontal padding only on the first/last code char in a run,
+   for visual breathing room. */
+.cf-stream-code + :not(.cf-stream-code),
+:not(.cf-stream-code) + .cf-stream-code {
+  /* No-op selector slot — kept for future refinements. */
 }
 
 .cf-stream-strike {
@@ -581,7 +596,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cf-stream-char {
+  .cf-stream-active .cf-stream-char {
     animation: none !important;
   }
 }

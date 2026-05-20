@@ -4,4 +4,8 @@ export { MessageAvatar } from "./MessageAvatar";
 export { MessageTimestamp, type TimestampFormat } from "./MessageTimestamp";
 export { MessageStatus } from "./MessageStatus";
 export { MessageContent } from "./MessageContent";
+export {
+  StreamingMarkdown,
+  type StreamingMarkdownProps,
+} from "./StreamingMarkdown";
 export { MessageMedia } from "./MessageMedia";

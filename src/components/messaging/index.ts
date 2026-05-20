@@ -9,6 +9,8 @@ export {
   type TimestampFormat,
   MessageStatus,
   MessageContent,
+  StreamingMarkdown,
+  type StreamingMarkdownProps,
   MessageMedia,
 } from "./primitives";
 
