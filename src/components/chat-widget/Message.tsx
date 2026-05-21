@@ -66,10 +66,10 @@ export const Message = memo(
               : "bg-[var(--chat-card-hover)] text-[var(--chat-foreground)] rounded-tl-sm"
           )}
         >
-          {isStreamingThis ? (
+          {message.role === "assistant" ? (
             <StreamingMarkdown
               content={message.content}
-              isStreaming
+              isStreaming={isStreamingThis}
               isUser={isUser}
             />
           ) : (
