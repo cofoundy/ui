@@ -548,6 +548,23 @@ export type {
   ScheduleFallback,
 } from "./components/docs";
 
+// CommandPalette — generalized vault/search palette (2026-05-20)
+export {
+  CommandPalette,
+  CommandPaletteTrigger,
+} from "./components/command-palette/CommandPalette";
+export type {
+  CommandPaletteProps,
+  CommandPaletteTriggerProps,
+  SearchHit,
+  SearchResponse,
+  SearchFn,
+  DocRole,
+  RecentDoc,
+  RecentSearch,
+  EmptyAction,
+} from "./components/command-palette/CommandPalette";
+
 // LinkPreview — wikilink hover popover (2026-05-20)
 // docs.cofoundy.dev: vault navigation without full-page repaint.
 // Provider mounts once around the doc content tree; same-origin anchors
