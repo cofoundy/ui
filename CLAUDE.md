@@ -2,6 +2,8 @@
 
 Shared UI component library for the Cofoundy product suite.
 
+> **Looking for a component to use?** Open [`COMPONENTS.md`](./COMPONENTS.md) — intent map + section tables for all ~83 exports. This file covers setup, theming, transport contracts, and AI-assistant rules.
+
 ## Quick Reference
 
 ```bash
