@@ -5,13 +5,16 @@ import { FloatingWindow } from '../../components/chat-widget/FloatingWindow'
 import { ChatWidgetFloating } from '../../components/chat-widget/ChatWidgetFloating'
 
 // ============================================================================
-// Viewport configurations for responsive testing
+// Viewport configurations — sourced from the canonical _shared module so the
+// mobile-first contract has a single SSOT. See packages/ui/CLAUDE.md.
 // ============================================================================
 
-const VIEWPORT_MOBILE = { defaultViewport: 'mobile1' } // 375px (iPhone SE)
-const VIEWPORT_MOBILE_LANDSCAPE = { defaultViewport: 'mobile2' } // 414px landscape
-const VIEWPORT_TABLET = { defaultViewport: 'tablet' } // 768px (iPad)
-const VIEWPORT_DESKTOP = { defaultViewport: 'responsive' } // Full width
+import {
+  VIEWPORT_MOBILE,
+  VIEWPORT_MOBILE_LANDSCAPE,
+  VIEWPORT_TABLET,
+  VIEWPORT_DESKTOP,
+} from '../_shared/viewports'
 
 // ============================================================================
 // FloatingLauncher Stories

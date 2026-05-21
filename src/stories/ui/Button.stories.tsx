@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from '../../components/ui/button';
 import { Send, Plus, Check, X } from 'lucide-react';
+import { VIEWPORT_MOBILE } from '../_shared/viewports';
 
 const meta: Meta<typeof Button> = {
   title: 'UI/Button',
@@ -107,6 +108,26 @@ export const IconOnly: Story = {
     size: 'icon',
     'aria-label': 'Add',
   },
+};
+
+/**
+ * Mobile-first contract baseline (375 px, iPhone SE). Verifies 44×44 px tap
+ * targets at `size='lg'` and that the default size remains usable on mobile.
+ * Required per packages/ui/CLAUDE.md → "Mobile-state stories".
+ */
+export const MobileBaseline: Story = {
+  parameters: { viewport: VIEWPORT_MOBILE },
+  render: () => (
+    <div className="flex flex-col gap-3 p-4">
+      <Button size="lg">Primary CTA (lg ≥ 44 px)</Button>
+      <Button>Default</Button>
+      <Button variant="secondary">Secondary</Button>
+      <Button variant="outline">Outline</Button>
+      <Button size="icon" aria-label="Add">
+        <Plus className="w-4 h-4" />
+      </Button>
+    </div>
+  ),
 };
 
 export const AllVariants: Story = {
