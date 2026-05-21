@@ -5,6 +5,14 @@ All notable changes to `@cofoundy/ui` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] — 2026-05-20
+
+### Fixed
+
+- **`Message.tsx` — preserve `<StreamingMarkdown>` render path after stream finishes.** Previously the component swapped from `<StreamingMarkdown>` to `<MessageContent>` at end-of-stream. `MessageContent` relies on Tailwind's `prose` class for heading styles, but `@tailwindcss/typography` is not installed in the consuming apps — so `h2` (e.g. "Estimación rápida") collapsed from `1.35em` (StreamingMarkdown's inline `BLOCK_STYLES`) to the browser default ~21px, producing a visible heading-shrink regression at end-of-stream. Fix: render `<StreamingMarkdown>` for ALL assistant messages and toggle the `isStreaming` prop based on `isStreamingThis`. User messages keep `<MessageContent>` (user input rarely contains markdown). The wrapper's `.cf-stream-root` stays mounted; only `.cf-stream-active` drops at completion, freezing chars in place with zero layout shift.
+
+  Files: `src/components/chat-widget/Message.tsx`, `src/__tests__/components/Message.streaming.test.tsx`.
+
 ## [0.5.2] — 2026-05-20
 
 ### Added
