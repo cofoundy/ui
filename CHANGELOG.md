@@ -5,6 +5,12 @@ All notable changes to `@cofoundy/ui` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] — 2026-05-22
+
+### Fixed
+
+- **`CommandPaletteTrigger` flashed unstyled before the palette was first opened.** The singleton stylesheet (`<style id="cp-styles">`) was injected inside `PaletteSurface`'s mount effect, which only runs when `open=true`. The trigger pill mounts long before that, so its `.cp-trigger` rules didn't exist on first paint. Moved the injection to module-import time (after `COMMAND_PALETTE_CSS` is initialized, behind a `typeof document` guard so SSR stays safe). The trigger now renders styled from the first render, regardless of whether the palette has ever been opened.
+
 ## [0.6.0] — 2026-05-22
 
 ### Added
