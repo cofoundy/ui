@@ -54,6 +54,7 @@ function Harness({
       onNavigate={onNavigate}
       scope="team"
       debounceMs={0}
+      minQueryLength={1}
     />
   );
 }
