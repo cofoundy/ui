@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { useState } from 'react';
 import {
   CommandPalette,
+  useCommandPaletteHotkeys,
   type SearchHit,
   type SearchResponse,
   type SearchFn,
+  type EmptyAction,
+  type RecentDoc,
 } from '../../../components/command-palette/CommandPalette';
 
 const FIXTURE: SearchHit[] = [
@@ -129,5 +132,260 @@ describe('CommandPalette', () => {
     await waitFor(() =>
       expect(screen.queryByRole('dialog', { name: /search documentation/i })).toBeNull(),
     );
+  });
+
+  it('does not fire searchFn for sub-minQueryLength queries', async () => {
+    const searchFn = vi.fn(instant(FIXTURE));
+    function GatedHarness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <CommandPalette
+          open={open}
+          onOpenChange={setOpen}
+          searchFn={searchFn}
+          scope="team"
+          debounceMs={0}
+          minQueryLength={3}
+        />
+      );
+    }
+    render(<GatedHarness />);
+    const input = screen.getByLabelText(/search query/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'ab' } });
+    await waitFor(() =>
+      expect(screen.queryByText(/start typing to search the vault/i)).toBeTruthy(),
+    );
+    expect(searchFn).not.toHaveBeenCalled();
+  });
+
+  it('sanitizes <script> out of snippet HTML by default', async () => {
+    const dangerous: SearchHit = {
+      project: 'p',
+      slug: 's',
+      role: 'team',
+      title: 'Dangerous',
+      snippet: 'hello <script>alert(1)</script> <mark>world</mark>',
+      score: 0,
+      url: '/x',
+    };
+    render(<Harness searchFn={instant([dangerous])} />);
+    const input = screen.getByLabelText(/search query/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'hello' } });
+    await waitFor(() => expect(screen.getByRole('listbox')).toBeTruthy());
+    const snippet = document.querySelector('.cp-result-snippet');
+    expect(snippet?.innerHTML.includes('<script>')).toBe(false);
+    expect(snippet?.innerHTML.includes('<mark>world</mark>')).toBe(true);
+  });
+
+  it('preserves raw snippet HTML when trustSnippetHtml is true', async () => {
+    const trusted: SearchHit = {
+      project: 'p',
+      slug: 's',
+      role: 'team',
+      title: 'Trusted',
+      snippet: '<mark>kept</mark> <em>and emphasized</em>',
+      score: 0,
+      url: '/x',
+    };
+    function TrustingHarness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <CommandPalette
+          open={open}
+          onOpenChange={setOpen}
+          searchFn={instant([trusted])}
+          scope="team"
+          debounceMs={0}
+          minQueryLength={1}
+          trustSnippetHtml
+        />
+      );
+    }
+    render(<TrustingHarness />);
+    const input = screen.getByLabelText(/search query/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'kept' } });
+    await waitFor(() => expect(screen.getByRole('listbox')).toBeTruthy());
+    const snippet = document.querySelector('.cp-result-snippet');
+    expect(snippet?.innerHTML.includes('<em>and emphasized</em>')).toBe(true);
+  });
+
+  it('clear button empties the query and refocuses input', async () => {
+    render(<Harness searchFn={instant(FIXTURE)} />);
+    const input = screen.getByLabelText(/search query/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'brand' } });
+    await waitFor(() => expect(screen.getByRole('listbox')).toBeTruthy());
+    const clearBtn = screen.getByLabelText(/clear search/i);
+    fireEvent.click(clearBtn);
+    expect(input.value).toBe('');
+  });
+
+  it('fires onSearch + onSelect telemetry callbacks', async () => {
+    const onSearch = vi.fn();
+    const onSelect = vi.fn();
+    function TelemetryHarness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <CommandPalette
+          open={open}
+          onOpenChange={setOpen}
+          searchFn={instant(FIXTURE)}
+          onNavigate={() => {}}
+          onSearch={onSearch}
+          onSelect={onSelect}
+          scope="team"
+          debounceMs={0}
+          minQueryLength={1}
+        />
+      );
+    }
+    render(<TelemetryHarness />);
+    const input = screen.getByLabelText(/search query/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'brand' } });
+    await waitFor(() => expect(onSearch).toHaveBeenCalled());
+    expect(onSearch).toHaveBeenCalledWith('brand', expect.any(Array), 1);
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onSelect).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Brand Validator' }),
+      0,
+      'enter',
+    );
+  });
+
+  it('emptyActions chip with onSelect fires when clicked', async () => {
+    const onChip = vi.fn();
+    const actions: EmptyAction[] = [{ label: 'Switch scope', kbd: '2', onSelect: onChip }];
+    function EmptyHarness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <CommandPalette
+          open={open}
+          onOpenChange={setOpen}
+          searchFn={instant([])}
+          scope="team"
+          debounceMs={0}
+          minQueryLength={1}
+          emptyActions={actions}
+        />
+      );
+    }
+    render(<EmptyHarness />);
+    const input = screen.getByLabelText(/search query/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'nothing' } });
+    const chip = await screen.findByRole('button', { name: /switch scope/i });
+    fireEvent.click(chip);
+    expect(onChip).toHaveBeenCalled();
+  });
+
+  it('Cmd+Enter on a hit opens in a new tab via window.open', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const onNavigate = vi.fn();
+    render(<Harness searchFn={instant(FIXTURE)} onNavigate={onNavigate} />);
+    const input = screen.getByLabelText(/search query/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'brand' } });
+    await waitFor(() => expect(screen.getByRole('listbox')).toBeTruthy());
+    fireEvent.keyDown(input, { key: 'Enter', metaKey: true });
+    expect(openSpy).toHaveBeenCalledWith('/team/a/one', '_blank', 'noopener,noreferrer');
+    expect(onNavigate).not.toHaveBeenCalled();
+    openSpy.mockRestore();
+  });
+
+  it('renders the role badge when SearchHit.role is set', async () => {
+    render(<Harness searchFn={instant(FIXTURE)} />);
+    const input = screen.getByLabelText(/search query/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'brand' } });
+    await waitFor(() => expect(screen.getByRole('listbox')).toBeTruthy());
+    const badges = document.querySelectorAll('.cp-result-role');
+    expect(badges.length).toBeGreaterThan(0);
+    expect(badges[0].getAttribute('data-role')).toBe('team');
+  });
+
+  it('recents are clickable links when supplied', async () => {
+    const recents: RecentDoc[] = [
+      { title: 'Recent A', path: 'vault/a.md', date: '2d ago', url: '/team/a/recent' },
+    ];
+    function RecentHarness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <CommandPalette
+          open={open}
+          onOpenChange={setOpen}
+          searchFn={instant(FIXTURE)}
+          scope="team"
+          debounceMs={0}
+          minQueryLength={1}
+          recents={recents}
+        />
+      );
+    }
+    render(<RecentHarness />);
+    const link = await screen.findByText('Recent A');
+    const anchor = link.closest('a');
+    expect(anchor?.getAttribute('href')).toBe('/team/a/recent');
+  });
+
+  it('options namespace IDs so two palettes do not collide', async () => {
+    function DualHarness() {
+      return (
+        <>
+          <CommandPalette
+            open
+            onOpenChange={() => {}}
+            searchFn={instant(FIXTURE)}
+            scope="team"
+            debounceMs={0}
+            minQueryLength={1}
+          />
+        </>
+      );
+    }
+    render(<DualHarness />);
+    const input = screen.getByLabelText(/search query/i) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'brand' } });
+    await waitFor(() => expect(screen.getByRole('listbox')).toBeTruthy());
+    const options = document.querySelectorAll('[role="option"]');
+    for (const opt of options) {
+      expect(opt.id).toMatch(/^cp-opt-.+-\d+$/);
+    }
+  });
+
+  it('warns to console when opened without a searchFn (dev mode)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(<Harness />);
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/without a `searchFn`/));
+    warn.mockRestore();
+  });
+});
+
+describe('useCommandPaletteHotkeys', () => {
+  function HookHarness({ initialOpen = false }: { initialOpen?: boolean }) {
+    const [open, setOpen] = useState(initialOpen);
+    useCommandPaletteHotkeys({ open, setOpen });
+    return <div data-testid="status">{open ? 'open' : 'closed'}</div>;
+  }
+
+  it('Cmd+K opens the palette', () => {
+    render(<HookHarness />);
+    expect(screen.getByTestId('status').textContent).toBe('closed');
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+    });
+    expect(screen.getByTestId('status').textContent).toBe('open');
+  });
+
+  it('Slash opens the palette when no input is focused', () => {
+    render(<HookHarness />);
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '/' }));
+    });
+    expect(screen.getByTestId('status').textContent).toBe('open');
+  });
+
+  it('Escape closes the palette when open', () => {
+    render(<HookHarness initialOpen />);
+    expect(screen.getByTestId('status').textContent).toBe('open');
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+    expect(screen.getByTestId('status').textContent).toBe('closed');
   });
 });

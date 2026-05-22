@@ -552,6 +552,7 @@ export type {
 export {
   CommandPalette,
   CommandPaletteTrigger,
+  useCommandPaletteHotkeys,
 } from "./components/command-palette/CommandPalette";
 export type {
   CommandPaletteProps,

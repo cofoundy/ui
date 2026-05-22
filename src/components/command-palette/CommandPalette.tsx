@@ -120,6 +120,18 @@ export interface CommandPaletteProps {
    * trusted (e.g. you control the search index and emit FTS5 snippets directly).
    */
   trustSnippetHtml?: boolean;
+  /**
+   * Fires after each successful fetch. Lets consumers wire analytics without
+   * wrapping `searchFn`. Not called for sub-min queries (those skip the fetch
+   * entirely) or aborted requests.
+   */
+  onSearch?: (query: string, hits: SearchHit[], took_ms?: number) => void;
+  /**
+   * Fires before `onNavigate` when the user selects a hit. `source` indicates
+   * how the selection happened — useful for distinguishing keyboard-only users
+   * from mouse-only users in analytics.
+   */
+  onSelect?: (hit: SearchHit, idx: number, source: 'click' | 'enter') => void;
 }
 
 export interface CommandPaletteTriggerProps {
@@ -166,6 +178,102 @@ export function CommandPaletteTrigger({
   );
 }
 
+// ─── Hotkeys hook ─────────────────────────────────────────────────────────────
+
+/**
+ * Bind the canonical command-palette hotkeys (`Cmd+K` / `Ctrl+K`, `/`, `Esc`)
+ * to a controlled `open` state. Consumers wire it once next to their palette
+ * mount so the global keys work even when the modal is closed.
+ *
+ * Behaviour matches docs-ai-vault-search architecture §5.2:
+ *   - `Cmd+K` / `Ctrl+K` opens; suppressed only inside contenteditable.
+ *   - `/` opens, but only when no INPUT/TEXTAREA/contenteditable is focused
+ *     (so native typeahead inside form fields keeps working).
+ *   - `Esc` closes when open.
+ */
+export function useCommandPaletteHotkeys({
+  open,
+  setOpen,
+}: {
+  open: boolean;
+  setOpen: (v: boolean) => void;
+}): void {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent): void {
+      if (e.key === 'Escape') {
+        if (open) {
+          e.preventDefault();
+          setOpen(false);
+        }
+        return;
+      }
+      const target = (e.target ?? null) as HTMLElement | null;
+      const tag = target?.tagName;
+      const inInputOrTextarea = tag === 'INPUT' || tag === 'TEXTAREA';
+      const inContentEditable = target?.isContentEditable === true;
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        if (inContentEditable) return;
+        e.preventDefault();
+        setOpen(true);
+        return;
+      }
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (inInputOrTextarea || inContentEditable) return;
+        if (open) return;
+        e.preventDefault();
+        setOpen(true);
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, setOpen]);
+}
+
+// ─── Module-scope CSS injection + scroll-lock refcount ────────────────────────
+
+/**
+ * The component used to inject its CSS via `<style dangerouslySetInnerHTML>`
+ * inside the portal — every Cmd+K re-parsed the rules, two parallel instances
+ * duplicated them. Now we append a singleton `<style id="cp-styles">` to
+ * `<head>` on first mount and reuse it forever.
+ */
+let stylesInjected = false;
+function ensureCommandPaletteStyles() {
+  if (stylesInjected || typeof document === 'undefined') return;
+  if (document.getElementById('cp-styles')) {
+    stylesInjected = true;
+    return;
+  }
+  const el = document.createElement('style');
+  el.id = 'cp-styles';
+  el.textContent = COMMAND_PALETTE_CSS;
+  document.head.appendChild(el);
+  stylesInjected = true;
+}
+
+/**
+ * Body scroll-lock counter. Composes safely with sibling modals — the lock
+ * is applied only on the 0→1 transition and released only on 1→0, so closing
+ * one modal while another is still open doesn't restore body scroll prematurely.
+ */
+let scrollLockCount = 0;
+let prevBodyOverflow = '';
+function acquireBodyScrollLock() {
+  if (typeof document === 'undefined') return;
+  if (scrollLockCount === 0) {
+    prevBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+  }
+  scrollLockCount += 1;
+}
+function releaseBodyScrollLock() {
+  if (typeof document === 'undefined') return;
+  scrollLockCount = Math.max(0, scrollLockCount - 1);
+  if (scrollLockCount === 0) {
+    document.body.style.overflow = prevBodyOverflow;
+  }
+}
+
 // ─── Main palette ─────────────────────────────────────────────────────────────
 
 const DEFAULT_DEBOUNCE = 200;
@@ -210,6 +318,8 @@ export function CommandPalette({
   recentSearches = [],
   emptyActions = [],
   trustSnippetHtml = false,
+  onSearch,
+  onSelect,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchHit[]>([]);
@@ -259,9 +369,11 @@ export function CommandPalette({
       try {
         const response = await searchFn(trimmed, controller.signal);
         if (controller.signal.aborted) return;
-        setResults(Array.isArray(response?.hits) ? response.hits : []);
+        const hits = Array.isArray(response?.hits) ? response.hits : [];
+        setResults(hits);
         setSelectedIndex(0);
         setStale(false);
+        onSearch?.(trimmed, hits, response?.took_ms);
       } catch {
         if (!controller.signal.aborted) {
           setErrored(true);
@@ -276,7 +388,7 @@ export function CommandPalette({
       clearTimeout(t);
       controller.abort();
     };
-  }, [query, open, searchFn, debounceMs, minQueryLength, retryNonce]);
+  }, [query, open, searchFn, debounceMs, minQueryLength, retryNonce, onSearch]);
 
   // Reset transient state when the palette closes. Matches the docs-ai
   // useCommandPalette hook teardown (use-command-palette.ts §setOpen) so
@@ -324,6 +436,7 @@ export function CommandPalette({
       setSelectedIndex={setSelectedIndex}
       onClose={() => onOpenChange(false)}
       onNavigate={handleNavigate}
+      onSelect={onSelect}
       scope={scope}
       project={project}
       mobileVariant={mobileVariant}
@@ -360,6 +473,7 @@ interface PaletteSurfaceProps {
   recentSearches: RecentSearch[];
   emptyActions: EmptyAction[];
   trustSnippetHtml: boolean;
+  onSelect?: (hit: SearchHit, idx: number, source: 'click' | 'enter') => void;
 }
 
 function PaletteSurface({
@@ -384,6 +498,7 @@ function PaletteSurface({
   recentSearches,
   emptyActions,
   trustSnippetHtml,
+  onSelect,
 }: PaletteSurfaceProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -394,8 +509,10 @@ function PaletteSurface({
 
   // Portal mount guard — overlay must render into document.body so backdrop-filter
   // ancestors don't pin position:fixed children to a stale containing block.
+  // Also inject the singleton stylesheet on first mount (T23).
   const [portalReady, setPortalReady] = useState(false);
   useEffect(() => {
+    ensureCommandPaletteStyles();
     setPortalReady(true);
   }, []);
 
@@ -417,10 +534,9 @@ function PaletteSurface({
 
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    acquireBodyScrollLock();
     return () => {
-      document.body.style.overflow = prev;
+      releaseBodyScrollLock();
     };
   }, [open]);
 
@@ -466,6 +582,7 @@ function PaletteSurface({
         const hit = results[selectedIndex];
         if (hit) {
           e.preventDefault();
+          onSelect?.(hit, selectedIndex, 'enter');
           // Cmd/Ctrl + Enter → open in a new tab without leaving the palette.
           if ((e.metaKey || e.ctrlKey) && typeof window !== 'undefined') {
             window.open(hit.url, '_blank', 'noopener,noreferrer');
@@ -481,7 +598,7 @@ function PaletteSurface({
         setSelectedIndex(Math.max(0, results.length - 1));
       }
     },
-    [results, selectedIndex, setSelectedIndex, onClose, onNavigate],
+    [results, selectedIndex, setSelectedIndex, onClose, onNavigate, onSelect],
   );
 
   useEffect(() => {
@@ -633,8 +750,12 @@ function PaletteSurface({
                         className="cp-result"
                         onClick={(e) => {
                           // Let Cmd/Ctrl-click open in a new tab (browser default).
-                          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+                            onSelect?.(hit, i, 'click');
+                            return;
+                          }
                           e.preventDefault();
+                          onSelect?.(hit, i, 'click');
                           onNavigate(hit);
                           onClose();
                         }}
@@ -722,8 +843,6 @@ function PaletteSurface({
           )}
         </div>
       </div>
-
-      <style dangerouslySetInnerHTML={{ __html: COMMAND_PALETTE_CSS }} />
     </div>,
     document.body,
   );
