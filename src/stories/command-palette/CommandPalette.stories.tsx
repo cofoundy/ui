@@ -100,6 +100,9 @@ const erroringSearch: SearchFn = async () => {
   throw new Error('upstream search index unavailable');
 };
 
+// Stories use a no-op onNavigate so clicking a hit doesn't actually navigate
+// away from the Storybook frame. Wire onSelect to Storybook's actions panel
+// when iterating on telemetry behaviour locally.
 function Harness(props: Parameters<typeof CommandPalette>[0]) {
   const [open, setOpen] = useState(true);
   return (
@@ -107,10 +110,7 @@ function Harness(props: Parameters<typeof CommandPalette>[0]) {
       {...props}
       open={open}
       onOpenChange={setOpen}
-      onNavigate={(url) => {
-        // eslint-disable-next-line no-console
-        console.log('[CommandPalette] navigate →', url);
-      }}
+      onNavigate={() => {}}
     />
   );
 }

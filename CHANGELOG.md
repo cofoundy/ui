@@ -5,6 +5,34 @@ All notable changes to `@cofoundy/ui` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] — 2026-05-22
+
+### Added
+
+- **`CommandPalette`** + **`CommandPaletteTrigger`** — generalized vault/search palette, extracted from `docs-ai-vault-search` and reshaped for shared consumption. Props-driven (`searchFn`, `onNavigate`, `recents`, `recentSearches`, `emptyActions`), brand-themed via the existing `--cf-*` CSS variables (with safe `:where(...)` fallbacks for standalone use), and shipped with two themes (light/dark) + a mobile bottom-sheet variant.
+- **`useCommandPaletteHotkeys`** — minimal hook that binds the canonical `Cmd+K` / `Ctrl+K`, `/`, and `Esc` keys to a controlled `open` state. Respects `INPUT`/`TEXTAREA`/`contenteditable` so native typeahead and prose editing keep working.
+- Types: `CommandPaletteProps`, `CommandPaletteTriggerProps`, `SearchHit`, `SearchResponse`, `SearchFn`, `DocRole`, `RecentDoc`, `RecentSearch`, `EmptyAction`.
+- Telemetry hooks: `onSearch?(query, hits, took_ms?)` and `onSelect?(hit, idx, source: 'click' | 'enter')` — consumer-level analytics without wrapping `searchFn`.
+
+### Safety + a11y
+
+- Snippet HTML is sanitized by default (allow-only `<mark>`); consumers with trusted backends opt in via `trustSnippetHtml`.
+- External-origin hits open in a new tab with `rel="noopener noreferrer"` automatically.
+- Focus trap on the dialog; `aria-controls` only references the listbox when mounted; option IDs namespaced via `useId` to prevent collisions between parallel instances; focus restore guarded by `isConnected`; full `prefers-reduced-motion` fallback.
+
+### Performance
+
+- Singleton CSS injection (`<style id="cp-styles">` appended once to `<head>`) — no per-mount re-parse.
+- Refcounted body scroll-lock — composes safely with sibling modals.
+- `minQueryLength` prop (default 2) + stale-results indicator during debounce — fewer wasted fetches, clearer typing feedback.
+
+### Notes
+
+- `SearchHit.role` is now optional; when present it renders as a small role badge next to the title.
+- Trigger pill's 44×44 minimum hit target is gated behind `@media (pointer: coarse)` so desktop keeps the visually-designed 32px height.
+
+Files: `src/components/command-palette/CommandPalette.tsx`, `src/__tests__/components/command-palette/CommandPalette.test.tsx` (21 tests), `src/stories/command-palette/CommandPalette.stories.tsx`, `src/index.ts` (new public exports).
+
 ## [0.5.3] — 2026-05-20
 
 ### Fixed
