@@ -250,6 +250,9 @@ function ensureCommandPaletteStyles() {
   document.head.appendChild(el);
   stylesInjected = true;
 }
+// NOTE: the eager-inject call lives at the bottom of this file, after
+// COMMAND_PALETTE_CSS is initialized. Calling it here would hit a TDZ since
+// the const-style template literal isn't bound yet at module-evaluation top.
 
 /**
  * Body scroll-lock counter. Composes safely with sibling modals — the lock
@@ -1805,5 +1808,12 @@ const COMMAND_PALETTE_CSS = `
 }
 .cp-kbd-meta { font-size: 11px; margin-right: 1px; }
 `;
+
+// Eager-inject the singleton stylesheet on client-side module import so
+// `CommandPaletteTrigger` renders styled even before the palette has ever
+// opened. Without this, the trigger pill loses its `.cp-trigger` rules until
+// the user fires Cmd+K once — every consumer's header pill flashes unstyled
+// on first paint. SSR-safe via the `typeof document` guard inside the helper.
+if (typeof document !== 'undefined') ensureCommandPaletteStyles();
 
 export default CommandPalette;
