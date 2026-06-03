@@ -1,6 +1,6 @@
 # @cofoundy/ui — Agent Quick Reference
 
-**~83 components:** `node_modules/@cofoundy/ui/COMPONENTS.md` (intent map + section tables)
+**All components:** `node_modules/@cofoundy/ui/COMPONENTS.md` (intent map + section tables — count is always current there)
 **Live stories (API docs):** https://ui.cofoundy.dev — machine-readable index at /index.json
 
 ## Update to latest main

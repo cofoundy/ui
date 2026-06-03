@@ -2,7 +2,9 @@
 
 Shared UI component library for the Cofoundy product suite.
 
-> **Looking for a component to use?** Open [`COMPONENTS.md`](./COMPONENTS.md) — intent map + section tables for all ~83 exports. This file covers setup, theming, transport contracts, and AI-assistant rules.
+> **Looking for a component to use?** Open [`COMPONENTS.md`](./COMPONENTS.md) — intent map + section tables for all current exports. This file covers setup, theming, transport contracts, and AI-assistant rules.
+>
+> **SSOT rule:** `COMPONENTS.md` owns the components index. When you add or remove exports from `src/index.ts`, update `COMPONENTS.md` (header count + relevant section table). `AI.md` never needs editing — it only points here.
 
 ## Quick Reference
 
