@@ -276,6 +276,16 @@ const BLOCK_STYLES = {
     fontFamily: "var(--font-mono, ui-monospace, monospace)",
     fontSize: "0.9em",
   },
+  th: {
+    fontWeight: 600,
+    padding: "0.3em 0.6em",
+    borderBottom: "1px solid var(--chat-border, rgba(255,255,255,0.2))",
+    textAlign: "left" as const,
+  },
+  td: {
+    padding: "0.2em 0.6em",
+    borderBottom: "1px solid var(--chat-border, rgba(255,255,255,0.08))",
+  },
 } satisfies Record<string, React.CSSProperties>;
 
 function buildStreamComponents(_isUser: boolean, ctx: WalkerCtx): Components {
@@ -331,6 +341,22 @@ function buildStreamComponents(_isUser: boolean, ctx: WalkerCtx): Components {
     ),
     hr: () => (
       <hr style={{ border: 0, borderTop: "1px solid var(--chat-border, rgba(255,255,255,0.1))", margin: "0.6em 0" }} />
+    ),
+    table: ({ children }: OverrideProps) => (
+      <div style={{ overflowX: "auto", margin: "0.5em 0" }}>
+        <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.9em" }}>
+          {children}
+        </table>
+      </div>
+    ),
+    thead: ({ children }: OverrideProps) => <thead>{children}</thead>,
+    tbody: ({ children }: OverrideProps) => <tbody>{children}</tbody>,
+    tr: ({ children }: OverrideProps) => <tr>{children}</tr>,
+    th: ({ node, children }: OverrideProps) => (
+      <th style={BLOCK_STYLES.th}>{node ? walked(node) : children}</th>
+    ),
+    td: ({ node, children }: OverrideProps) => (
+      <td style={BLOCK_STYLES.td}>{node ? walked(node) : children}</td>
     ),
   } as unknown as Components;
   return map;

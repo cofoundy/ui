@@ -65,6 +65,24 @@ export function MessageContent({
                 {children}
               </pre>
             ),
+            table: ({ children }) => (
+              <div className="overflow-x-auto my-2">
+                <table className="border-collapse w-full text-sm">{children}</table>
+              </div>
+            ),
+            thead: ({ children }) => <thead>{children}</thead>,
+            tbody: ({ children }) => <tbody>{children}</tbody>,
+            tr: ({ children }) => <tr>{children}</tr>,
+            th: ({ children }) => (
+              <th className="font-semibold px-3 py-1.5 border-b border-[var(--chat-border,rgba(255,255,255,0.2))] text-left">
+                {children}
+              </th>
+            ),
+            td: ({ children }) => (
+              <td className="px-3 py-1 border-b border-[var(--chat-border,rgba(255,255,255,0.08))]">
+                {children}
+              </td>
+            ),
           }}
         >
           {content}
