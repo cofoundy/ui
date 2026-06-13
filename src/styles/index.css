@@ -163,6 +163,81 @@
   --cf-muted: #64748b;
 }
 
+/* ============================================
+   WORKSPACE GOVERNANCE TOKENS
+   Consumed by RoleChip, WorkspaceShell, ActivationNote
+   (@cofoundy/ui workspace governance primitives, promoted
+   from the docs-ai Workspace Ledger 2026-06-13).
+   Dark-mode defaults; light overrides in [data-theme="light"] below.
+   ============================================ */
+:root {
+  /* Document surface — warm-cool deep panel with a faint blue cast (anti e-ink) */
+  --doc-paper: #0a1626;
+  --doc-paper-raised: #0e1d31;        /* the one elevation tier — 1 step lighter */
+  --doc-ink: #eef3f8;
+  --doc-ink-soft: #c3d0de;
+  --doc-ink-muted: #8497ab;
+  --doc-ink-note: #aebfd1;            /* activation-note tone — clears the contrast floor */
+  --doc-rule: rgba(70, 160, 208, 0.14);
+  --doc-rule-strong: rgba(70, 160, 208, 0.26);
+  --doc-tint: rgba(70, 160, 208, 0.04);
+  --doc-accent: #5db0dc;
+  --well-bg: radial-gradient(120% 90% at 80% -10%, #0c1c34 0%, #050f22 55%, #030a18 100%);
+  --rail-bg: linear-gradient(177deg, #0a1830 0%, #071324 100%);
+
+  /* Role chip foregrounds — light tints on dark surfaces (AA-passing). */
+  --chip-fg-owner: #cde7f6;
+  --chip-fg-admin: #f4d9a8;
+  --chip-fg-member: #c5d2df;
+  --chip-fg-open: #a7e8cc;
+  --chip-fg-private: #c5d2df;
+  --chip-fg-public: #f4d9a8;
+
+  /* Role chip fills + rings + dots — tone-keyed, theme-stable (rgba). */
+  --chip-bg-owner: rgba(70, 160, 208, 0.20);
+  --chip-ring-owner: rgba(70, 160, 208, 0.55);
+  --chip-dot-owner: #46a0d0;
+  --chip-bg-admin: rgba(217, 134, 10, 0.18);
+  --chip-ring-admin: rgba(217, 134, 10, 0.48);
+  --chip-dot-admin: #d9860a;
+  --chip-bg-member: rgba(148, 163, 184, 0.16);
+  --chip-ring-member: rgba(148, 163, 184, 0.36);
+  --chip-dot-member: #94a3b8;
+  --chip-bg-open: rgba(5, 150, 105, 0.18);
+  --chip-ring-open: rgba(5, 150, 105, 0.50);
+  --chip-dot-open: #059669;
+  --chip-bg-private: rgba(99, 123, 150, 0.18);
+  --chip-ring-private: rgba(148, 163, 184, 0.36);
+  --chip-dot-private: #8497ab;
+  --chip-bg-public: rgba(217, 134, 10, 0.18);
+  --chip-ring-public: rgba(217, 134, 10, 0.48);
+  --chip-dot-public: #d9860a;
+}
+
+/* Workspace governance — light theme overrides.
+   Chip foregrounds flip to dark saturated tones for AA on pale tints. */
+[data-theme="light"] {
+  --doc-paper: #ffffff;
+  --doc-paper-raised: #f4f8fc;
+  --doc-ink: #0f1f30;
+  --doc-ink-soft: #34495e;
+  --doc-ink-muted: #5b7088;
+  --doc-ink-note: #4a607a;
+  --doc-rule: rgba(41, 132, 173, 0.18);
+  --doc-rule-strong: rgba(41, 132, 173, 0.32);
+  --doc-tint: rgba(70, 160, 208, 0.05);
+  --doc-accent: #1e6f9e;
+  --well-bg: radial-gradient(120% 90% at 80% -10%, #eef5fb 0%, #e6eef7 60%, #dde8f3 100%);
+  --rail-bg: linear-gradient(177deg, #f1f6fb 0%, #e7eef7 100%);
+
+  --chip-fg-owner: #1c6390;
+  --chip-fg-admin: #9a5b06;
+  --chip-fg-member: #455468;
+  --chip-fg-open: #06694a;
+  --chip-fg-private: #455468;
+  --chip-fg-public: #9a5b06;
+}
+
 /* Dark theme (default) */
 :root,
 [data-theme="dark"] {

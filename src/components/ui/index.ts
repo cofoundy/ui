@@ -18,6 +18,30 @@ export { CofoundyBadge, cofoundyBadgeVariants } from "./cofoundy-badge";
 export type { CofoundyBadgeProps } from "./cofoundy-badge";
 export { ThemeSwitcher, themeSwitcherVariants } from "./theme-switcher";
 
+// Workspace governance primitives
+export { RoleChip, roleChipVariants } from "./role-chip";
+export type { RoleChipProps } from "./role-chip";
+export { ActivationNote, activationNoteVariants } from "./activation-note";
+export type { ActivationNoteProps } from "./activation-note";
+export {
+  WorkspaceShell,
+  WorkspaceShellRail,
+  WorkspaceShellIdentity,
+  WorkspaceShellNav,
+  WorkspaceShellNavItem,
+  WorkspaceShellRailFooter,
+  WorkspaceShellWell,
+} from "./workspace-shell";
+export type {
+  WorkspaceShellProps,
+  WorkspaceShellRailProps,
+  WorkspaceShellIdentityProps,
+  WorkspaceShellNavProps,
+  WorkspaceShellNavItemProps,
+  WorkspaceShellRailFooterProps,
+  WorkspaceShellWellProps,
+} from "./workspace-shell";
+
 // Sidebar system components
 export { Separator } from "./separator";
 export { Skeleton } from "./skeleton";
