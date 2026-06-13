@@ -324,12 +324,17 @@ const WorkspaceShellWell = React.forwardRef<HTMLElement, WorkspaceShellWellProps
       ref={ref}
       data-slot="workspace-shell-well"
       className={cn(
+        // min-w-0 + flex-1 → the well SHRINKS to fill remaining width beside the
+        // 272px rail (never sums rigidly with it). At 1280 the well computes to
+        // ~1008px and fits; the maxWidth below is a CAP, never a fixed width.
         "min-w-0 flex-1 overflow-auto bg-[var(--well-bg)] px-[18px] pb-14 pt-6 md:px-14 md:pb-[72px] md:pt-10",
         className
       )}
       {...props}
     >
-      <div className="mx-auto" style={{ maxWidth }}>
+      {/* w-full + max-width cap: fills the (shrunk) well, caps the reading
+          measure on very wide screens, never forces a width that overflows. */}
+      <div className="mx-auto w-full" style={{ maxWidth }}>
         {children}
       </div>
     </main>
