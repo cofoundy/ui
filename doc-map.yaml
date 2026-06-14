@@ -1,0 +1,14 @@
+# doc-map.yaml — maps SSOT docs to the source files they describe.
+# The cofoundy-toolkit SessionStart drift-detector warns when a source listed
+# here gets git commits AFTER the doc was last committed → the doc may be stale.
+# level: 1 = broad (any source commit warns) · 2 = surface-only (default, fewer false positives)
+docs:
+  - doc: COMPONENTS.md
+    sources: [src/index.ts]
+    level: 2
+  - doc: CLAUDE.md
+    sources: [src/transports, src/styles, package.json]
+    level: 1
+  - doc: AI.md
+    sources: [package.json]
+    level: 2
