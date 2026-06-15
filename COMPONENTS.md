@@ -1,6 +1,6 @@
 # @cofoundy/ui — Component Catalog
 
-**Last updated:** 2026-05-20 · **Storybook:** [ui.cofoundy.dev](https://ui.cofoundy.dev) · **Total exports:** ~83
+**Last updated:** 2026-06-15 · **Storybook:** [ui.cofoundy.dev](https://ui.cofoundy.dev) · **Total exports:** ~95
 
 > **For agents:** start at the [Intent Map](#intent-map) below — maps "I need X" → component name + import + story URL. If you don't find your need there, fall through to the [Section tables](#chat) (alphabetical) or run `grep '^export' ~/cofoundy/packages/ui/src/index.ts` for the raw export list. Storybook auto-discovery: `curl -sS https://ui.cofoundy.dev/index.json` returns 598 entries (all stories, parseable JSON).
 
@@ -125,7 +125,7 @@ Generic messaging primitives (used by InboxAI; reusable for any chat surface).
 
 ### Analytics
 
-16 components. **Pure CSS / Tailwind — no charting libraries.**
+**Pure CSS / Tailwind — no charting libraries.**
 
 | Component | Description |
 |---|---|
@@ -144,13 +144,18 @@ Generic messaging primitives (used by InboxAI; reusable for any chat surface).
 | `EmptyState` | Centered empty state with CTA. |
 | `TimeRangeSelector` | Segmented pill control (7d / 30d / 90d). |
 | `AnalyticsSectionHeader` | Section title + action slot. |
+| `AnimatedNumber` | Count-up animated number (for KPI reveals). |
 | `(Dashboard story)` | Composed analytics dashboard (no canonical export — see `Analytics/Dashboard` story for layout). |
 
 ### UI
 
-25 primitives. shadcn/ui base, theme-tokenized.
+shadcn/ui base, theme-tokenized.
 
-`Button`, `Input`, `Badge`, `ChannelBadge`, `Avatar`, `Spinner`, `Skeleton`, `Switch`, `Separator`, `Tabs`, `Tooltip`, `Collapsible`, `Select`, `DropdownMenu`, `Sheet`, `Dialog`, `Breadcrumb`, `Sidebar` (+ ~20 subcomponents), `Toaster`/`toast`, `ConfirmDialog`, `DangerZone`/`DangerZoneItem`, `Logo`, `LogoHeader`/`Wordmark`, `CofoundyBadge`, `ChannelBadge`, `CalBookingButton`/`CalendlyButton` (legacy alias), `NotFound`, `ThemeSwitcher`, `ShimmerText`, `GradientBorder`.
+`Button`, `Input`, `Badge`, `ChannelBadge`, `Avatar`, `Spinner`, `Skeleton`, `Switch`, `Separator`, `Tabs`, `Tooltip`, `Collapsible`, `Select`, `DropdownMenu`, `Sheet`, `Dialog`, `Breadcrumb`, `Sidebar` (+ ~20 subcomponents), `Toaster`/`toast`, `ConfirmDialog`, `DangerZone`/`DangerZoneItem`/`DangerZoneHeader`, `RoleChip`, `ActivationNote`, `ComposerQuickAction`, `Logo`, `LogoHeader`/`Wordmark`, `CofoundyBadge`, `ChannelBadge`, `CalBookingButton`/`CalendlyButton` (legacy alias), `NotFound`, `ThemeSwitcher`, `ShimmerText`, `GradientBorder`.
+
+**App shell** — `WorkspaceShell` (+ `Identity`, `Nav`, `NavItem`, `Rail`, `RailFooter`, `Well` slots): full product-app layout chrome (rail + nav + content well).
+
+**Command palette** — `CommandPalette` + `CommandPaletteTrigger`: ⌘K-style fuzzy command launcher. Styles eager-inject so the trigger renders styled on first paint.
 
 For **brand identity work** (badge, logo, attribution) use the `/branding` skill — it covers `Logo`, `LogoHeader`, `CofoundyBadge`, `ShimmerText`, `GradientBorder` with brand-aligned variants.
 
@@ -180,7 +185,7 @@ For **brand identity work** (badge, logo, attribution) use the `/branding` skill
 
 ### Email
 
-9 transactional templates (server-side render via `scripts/render-email.ts`).
+Transactional templates (server-side render via `scripts/render-email.ts`).
 
 | Template | Purpose |
 |---|---|
@@ -189,6 +194,8 @@ For **brand identity work** (badge, logo, attribution) use the `/branding` skill
 | `CierreProyecto` | Project close-out. |
 | `DevEntrega` | Dev hand-off / delivery. |
 | `EnvioContrato` | Contract send (with host logo). |
+| `Factura` | Invoice email (itemized, with total). |
+| `ReminderPago` | Payment reminder. |
 | `PersonalNote` | Markdown-driven personal note (agent writes md → system renders brand). |
 | `Email/Primitives` | Building blocks (InfoBox, Header, Footer, etc.). |
 | `Reactivacion` | Re-engagement template. |
@@ -217,7 +224,9 @@ For **brand identity work** (badge, logo, attribution) use the `/branding` skill
 | Component | Description |
 |---|---|
 | `AuthorNote` | Inline author note callout. |
-| `InfoBox` | Generic callout (info / warn / tip variants). |
+| `InfoBox`/`InfoBoxRow` | Generic callout (info / warn / tip variants) + row primitive. |
+| `MetadataCard` | Key/value metadata card for doc front-matter display. |
+| `ScopeList` | Scoped in/out-of-scope list. |
 | `LinkPreviewProvider` | **NEW (v0.5.1)** — wikilink hover preview. Same-origin anchors with `data-link-preview` opt in via event delegation. |
 | `ClientPortalPanel` | Slot-composable client portal page (23 slots). For `/client/{slug}/` routes. |
 | `NextStepCallout` | Sequenced next-step callout. |
@@ -230,12 +239,16 @@ For **brand identity work** (badge, logo, attribution) use the `/branding` skill
 
 ---
 
+## Non-component exports (NOT cataloged)
+
+`src/index.ts` also exports transport/infra utilities that are **not visual components** — intentionally absent from the tables above: `AGUIEventType`, `ATELIER_COMPONENTS`, `CircuitBreaker`/`CircuitBreakerOpenError`, `ConnectionMetricsCollector`, `MessageQueue`. These belong to the transport layer (see `CLAUDE.md` Transport Layer API), not the component catalog.
+
+---
+
 ## When this file goes stale
 
 This file is **hand-curated**. If you add an export to `src/index.ts` and don't update this file, agents will not discover your component.
 
-Tooling to detect drift (TODO):
+**Drift is now auto-detected.** `doc-map.yaml` maps `COMPONENTS.md → src/index.ts`; the cofoundy-toolkit SessionStart drift-detector warns when `src/index.ts` gets commits after this file's last commit. You'll see a 🔴 at session start — reconcile the catalog then. Mechanism: `cofoundy-toolkit/docs/drift-detector.md`.
 
-- `scripts/audit-components-md.ts` — list exports in `src/index.ts` that are not mentioned in `COMPONENTS.md`. Run on CI as a non-blocking warning until coverage reaches 100%.
-
-For now, before merging a PR that adds an export, search this file for the component name. If not present, add a row to the Intent Map + Section table.
+Before merging a PR that adds an export, search this file for the component name. If absent, add it to the Intent Map + the relevant Section table (or the Non-component list above).
