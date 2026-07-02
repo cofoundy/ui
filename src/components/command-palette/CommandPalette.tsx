@@ -114,6 +114,13 @@ export interface CommandPaletteProps {
   /** No-results action chips. Empty by default. */
   emptyActions?: EmptyAction[];
   /**
+   * Scope phrase in the no-results line: "No matches for `q` {emptyScopeText}."
+   * Default 'in this vault' — pass e.g. 'in your workspace' for global search.
+   */
+  emptyScopeText?: string;
+  /** No-results hint line. Default 'Try a shorter query, switch scopes, or jump to the index.' */
+  emptyHintText?: string;
+  /**
    * Pass `true` to render `hit.snippet` as raw HTML via `dangerouslySetInnerHTML`.
    * Default `false`: the palette runs the snippet through an allow-only-`<mark>`
    * sanitizer that strips every other tag. Only opt in when your backend is
@@ -320,6 +327,8 @@ export function CommandPalette({
   recents = [],
   recentSearches = [],
   emptyActions = [],
+  emptyScopeText = 'in this vault',
+  emptyHintText = 'Try a shorter query, switch scopes, or jump to the index.',
   trustSnippetHtml = false,
   onSearch,
   onSelect,
@@ -447,6 +456,8 @@ export function CommandPalette({
       recents={recents}
       recentSearches={recentSearches}
       emptyActions={emptyActions}
+      emptyScopeText={emptyScopeText}
+      emptyHintText={emptyHintText}
       trustSnippetHtml={trustSnippetHtml}
     />
   );
@@ -475,6 +486,8 @@ interface PaletteSurfaceProps {
   recents: RecentDoc[];
   recentSearches: RecentSearch[];
   emptyActions: EmptyAction[];
+  emptyScopeText: string;
+  emptyHintText: string;
   trustSnippetHtml: boolean;
   onSelect?: (hit: SearchHit, idx: number, source: 'click' | 'enter') => void;
 }
@@ -500,6 +513,8 @@ function PaletteSurface({
   recents,
   recentSearches,
   emptyActions,
+  emptyScopeText,
+  emptyHintText,
   trustSnippetHtml,
   onSelect,
 }: PaletteSurfaceProps) {
@@ -715,6 +730,8 @@ function PaletteSurface({
               query={query}
               emptyActions={emptyActions}
               recentSearches={recentSearches}
+              scopeText={emptyScopeText}
+              hintText={emptyHintText}
             />
           )}
           {!loading && !errored && results.length > 0 && (
@@ -927,18 +944,22 @@ function EmptyState({
   query,
   emptyActions,
   recentSearches,
+  scopeText,
+  hintText,
 }: {
   query: string;
   emptyActions: EmptyAction[];
   recentSearches: RecentSearch[];
+  scopeText: string;
+  hintText: string;
 }) {
   return (
     <div className="cp-empty">
       <div className="cp-empty-line1">
-        No matches for <span className="cp-empty-q">{query}</span> in this vault.
+        No matches for <span className="cp-empty-q">{query}</span> {scopeText}.
       </div>
       <div className="cp-empty-hint">
-        Try a shorter query, switch scopes, or jump to the index.
+        {hintText}
       </div>
       {emptyActions.length > 0 && (
         <div className="cp-empty-chips">
