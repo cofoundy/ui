@@ -7,7 +7,7 @@ import { InfoBox } from '../components/InfoBox';
 import { InfoBoxRow } from '../components/InfoBoxRow';
 import { NextStepCallout } from '../components/NextStepCallout';
 import { ScopeList } from '../components/ScopeList';
-import { colors } from '../constants';
+import { colors, cofoundyInfo } from '../constants';
 
 export interface FacturaProps {
   clientName?: string;
@@ -42,6 +42,7 @@ export function Factura({
       heading={`Factura ${invoiceNumber}`}
       previewText={`Factura ${invoiceNumber} por ${amount}`}
       testMode={testMode}
+      contactEmail={cofoundyInfo.billingEmail}
     >
       <EmailText variant="greeting">Hola{clientName ? ` ${clientName}` : ''},</EmailText>
       <EmailText>
@@ -69,7 +70,7 @@ export function Factura({
           <InfoBox label="Cuenta BdN · Cofoundy S.A.C." value={bdnAccount || '00-028-152698'} />
           <EmailText>
             Una vez realizado el depósito, envíanos la constancia a{' '}
-            <Link href="mailto:info@cofoundy.dev" style={linkStyle}>info@cofoundy.dev</Link> para
+            <Link href={`mailto:${cofoundyInfo.billingEmail}`} style={linkStyle}>{cofoundyInfo.billingEmail}</Link> para
             completar el registro.
           </EmailText>
         </>
@@ -82,7 +83,7 @@ export function Factura({
 
       <EmailText>
         Cualquier consulta sobre este comprobante, responde a este correo o escríbenos a{' '}
-        <Link href="mailto:info@cofoundy.dev" style={linkStyle}>info@cofoundy.dev</Link>.
+        <Link href={`mailto:${cofoundyInfo.billingEmail}`} style={linkStyle}>{cofoundyInfo.billingEmail}</Link>.
       </EmailText>
       <EmailText>Gracias por confiar en Cofoundy.</EmailText>
     </EmailLayout>

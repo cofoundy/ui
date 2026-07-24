@@ -29,7 +29,10 @@ export const logoWhiteUrl = 'https://cofoundy.dev/email/logo-white.png';
 export const cofoundyInfo = {
   name: 'Cofoundy S.A.C.',
   ruc: '20614413566',
+  /** Public inbox. Kept free of transactional noise — see `billingEmail`. */
   email: 'info@cofoundy.dev',
+  /** Functional billing mailbox: comprobantes, constancias de detracción, cobranza. */
+  billingEmail: 'facturacion@cofoundy.dev',
   web: 'https://cofoundy.dev',
   tagline: 'Productos de software en semanas, no meses.',
 } as const;

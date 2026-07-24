@@ -157,3 +157,21 @@ describe('Email template rendering', () => {
     expect(html).not.toContain('MODO TEST');
   });
 });
+
+describe('Billing identity', () => {
+  // info@ is the public inbox and must stay free of transactional noise.
+  // Anything a client would reply to about a comprobante goes to facturacion@.
+  it('routes every Factura contact point to facturacion@', async () => {
+    const html = await render(
+      Factura({ invoiceNumber: 'F001-00000001', amount: 'S/1,000', detractionAmount: 'S/120' })
+    );
+    expect(html).toContain('facturacion@cofoundy.dev');
+    expect(html).not.toContain('info@cofoundy.dev');
+  });
+
+  it('leaves non-billing templates on the public inbox', async () => {
+    const html = await render(CotizacionFollowup({ clientName: 'Test' }));
+    expect(html).toContain('info@cofoundy.dev');
+    expect(html).not.toContain('facturacion@cofoundy.dev');
+  });
+});
