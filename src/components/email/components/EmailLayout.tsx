@@ -22,6 +22,13 @@ export interface EmailLayoutProps {
   subtitle?: string;
   previewText?: string;
   testMode?: boolean;
+  /**
+   * Contact address shown in the footer. Defaults to the public inbox.
+   * Transactional templates whose replies belong to a functional mailbox
+   * (e.g. `factura` → facturacion@) override it so the public inbox stays
+   * free of transactional noise.
+   */
+  contactEmail?: string;
   children: React.ReactNode;
 }
 
@@ -31,6 +38,7 @@ export function EmailLayout({
   subtitle,
   previewText,
   testMode = false,
+  contactEmail = cofoundyInfo.email,
   children,
 }: EmailLayoutProps) {
   const year = new Date().getFullYear();
@@ -95,8 +103,8 @@ export function EmailLayout({
                     {cofoundyInfo.name} &middot; RUC {cofoundyInfo.ruc}
                   </Text>
                   <Text style={footerLinksStyle}>
-                    <Link href={`mailto:${cofoundyInfo.email}`} style={footerLinkStyle}>
-                      {cofoundyInfo.email}
+                    <Link href={`mailto:${contactEmail}`} style={footerLinkStyle}>
+                      {contactEmail}
                     </Link>
                     {' · '}
                     <Link href={cofoundyInfo.web} style={footerLinkStyle}>
