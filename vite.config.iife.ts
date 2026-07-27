@@ -38,12 +38,16 @@ export default defineConfig({
       // Don't externalize anything - bundle everything
       external: [],
       output: {
-        // Ensure all CSS is inlined
+        // Emit the widget's stylesheet with a stable name paired to the JS
+        // bundle (chat-widget.iife.js → chat-widget.css). Vite would otherwise
+        // name it after the package ("ui.css"). Consumers load it via the
+        // `./iife/styles` export until CSS auto-injection lands (see #251).
         assetFileNames: (assetInfo) => {
-          if (assetInfo.name === "style.css") {
+          const name = assetInfo.names?.[0] ?? assetInfo.name ?? "";
+          if (name.endsWith(".css")) {
             return "chat-widget.css";
           }
-          return assetInfo.name ?? "asset";
+          return name || "asset";
         },
         // Add banner with version info
         banner: `/* Cofoundy Chat Widget v${process.env.npm_package_version || "1.0.0"} */`,
