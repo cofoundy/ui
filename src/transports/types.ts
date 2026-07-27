@@ -51,6 +51,14 @@ export interface TransportCallbacks {
   onMessage?: (message: string) => void;
   /** Called when message delivery is acknowledged */
   onMessageAck?: (ack: MessageAck) => void;
+  /**
+   * Called when the server signals a change in the agent's typing state.
+   * The backend emits both edges: `true` at turn start and `false` at turn end.
+   * This is the authoritative signal that a turn is in progress — it keeps the
+   * typing indicator up across a whole multi-bubble turn (one bubble per
+   * `send_message` tool call) instead of flickering off between bubbles.
+   */
+  onTypingChange?: (active: boolean) => void;
   /** Connection lifecycle callbacks */
   onConnect?: () => void;
   onDisconnect?: () => void;

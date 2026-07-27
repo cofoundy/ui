@@ -45,6 +45,7 @@ export function useChatTransport({
   onConfirmation,
   onMessage,
   onMessageAck,
+  onTypingChange,
   onConnect,
   onDisconnect,
   onError,
@@ -68,6 +69,7 @@ export function useChatTransport({
     onConfirmation,
     onMessage,
     onMessageAck,
+    onTypingChange,
     onConnect,
     onDisconnect,
     onError,
@@ -87,6 +89,7 @@ export function useChatTransport({
       onConfirmation,
       onMessage,
       onMessageAck,
+      onTypingChange,
       onConnect,
       onDisconnect,
       onError,
@@ -103,6 +106,7 @@ export function useChatTransport({
     onConfirmation,
     onMessage,
     onMessageAck,
+    onTypingChange,
     onConnect,
     onDisconnect,
     onError,
@@ -128,6 +132,7 @@ export function useChatTransport({
         callbacksRef.current.onConfirmation?.(confirmation),
       onMessage: (message) => callbacksRef.current.onMessage?.(message),
       onMessageAck: (ack) => callbacksRef.current.onMessageAck?.(ack),
+      onTypingChange: (active) => callbacksRef.current.onTypingChange?.(active),
       onConnect: () => {
         setConnectionStatus("connected");
         callbacksRef.current.onConnect?.();

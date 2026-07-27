@@ -460,6 +460,28 @@ describe("SocketIOTransport", () => {
     });
   });
 
+  describe("Typing indicator (agent:typing)", () => {
+    it("should forward server-driven typing to onTypingChange on both edges", async () => {
+      const onTypingChange = vi.fn();
+      const options = createMockOptions({ onTypingChange });
+      await createSocketIOTransport(defaultConfig, options);
+
+      eventHandlers["agent:typing"]?.({ active: true });
+      expect(onTypingChange).toHaveBeenCalledWith(true);
+
+      eventHandlers["agent:typing"]?.({ active: false });
+      expect(onTypingChange).toHaveBeenCalledWith(false);
+      expect(onTypingChange).toHaveBeenCalledTimes(2);
+    });
+
+    it("should not throw when onTypingChange is not provided", async () => {
+      const options = createMockOptions({ onTypingChange: undefined });
+      await createSocketIOTransport(defaultConfig, options);
+
+      expect(() => eventHandlers["agent:typing"]?.({ active: true })).not.toThrow();
+    });
+  });
+
   describe("Disconnection", () => {
     it("should call onDisconnect on disconnect event", async () => {
       const options = createMockOptions();

@@ -138,6 +138,7 @@ export async function createSocketIOTransport(
     onConfirmation,
     onMessage,
     onMessageAck,
+    onTypingChange,
     onConnect,
     onDisconnect,
     onError,
@@ -442,10 +443,11 @@ export async function createSocketIOTransport(
       }
     });
 
-    // Typing indicator
+    // Typing indicator — server-driven. The backend sends both edges
+    // (true at turn start, false at turn end), so this drives the indicator
+    // for the whole turn across multi-bubble responses.
     socket.on("agent:typing", (data: { active: boolean }) => {
-      // Could emit a typing event to the UI if needed
-      console.log("[SocketIO] Agent typing:", data.active);
+      onTypingChange?.(data.active);
     });
 
     // Message delivery acknowledgment
