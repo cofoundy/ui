@@ -13,7 +13,8 @@
     "./iife": {
       "import": "./dist/chat-widget.iife.js",
       "require": "./dist/chat-widget.iife.js"
-    }
+    },
+    "./iife/styles": "./dist/chat-widget.css"
   },
   "peerDependencies": {
     "@react-three/fiber": ">=8",

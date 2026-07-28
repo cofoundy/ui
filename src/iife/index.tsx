@@ -21,8 +21,9 @@ import { createRoot } from "react-dom/client";
 import { ChatWidgetFloating } from "../components/chat-widget/ChatWidgetFloating";
 import type { ChatWidgetConfig, Message } from "../types";
 
-// Import styles
-import "../styles/index.css";
+// Import styles — the IIFE-only entry that pulls in the Tailwind utility layer
+// (via @tailwindcss/vite) plus the base tokens/styles. See iife.css. (#251)
+import "./iife.css";
 
 /**
  * Widget configuration from window.cofoundyChatConfig
