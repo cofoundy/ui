@@ -418,7 +418,7 @@ export const BusyLiveTurn = () => {
  * habría tenido que competir con los iconos y truncarse.
  */
 export const BusyMobileBaseline: Story = {
-  parameters: { viewport: VIEWPORT_MOBILE },
+  parameters: { viewport: VIEWPORT_MOBILE, layout: "fullscreen" },
   decorators: [
     (Story) => (
       <div className="w-full bg-[var(--chat-background)] py-2">
