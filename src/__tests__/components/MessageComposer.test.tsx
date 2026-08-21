@@ -124,4 +124,60 @@ describe('MessageComposer — send gate', () => {
       expect(onSend).not.toHaveBeenCalled()
     })
   })
+
+  /*
+   * `allowEmptySend` and `busy` landed within hours of each other and they meet
+   * on the same gate, so the crossing gets its own tests: each feature's own
+   * suite exercises it with the other one off, which is exactly where a bad
+   * composition hides.
+   *
+   * The rule is `busy` wins. It encodes a product decision — no crossed
+   * messages while the AI is dispatching — while `allowEmptySend` only says
+   * "empty is legitimate content". A permission cannot outrank a prohibition.
+   */
+  describe('crossed with `busy`', () => {
+    it('busy blocks the empty send too — no send button while the AI is dispatching', async () => {
+      const user = userEvent.setup()
+      const onStop = vi.fn()
+      render(
+        <MessageComposer
+          onSend={onSend}
+          sendLabel="Send"
+          allowEmptySend
+          busy
+          onStop={onStop}
+          stopLabel="Stop"
+        />
+      )
+
+      expect(screen.queryByRole('button', { name: /send/i })).toBeNull()
+      await user.click(screen.getByRole('button', { name: /stop/i }))
+      expect(onStop).toHaveBeenCalledTimes(1)
+      expect(onSend).not.toHaveBeenCalled()
+    })
+
+    it('busy swallows Enter even with allowEmptySend on', async () => {
+      const user = userEvent.setup()
+      render(
+        <MessageComposer onSend={onSend} sendLabel="Send" allowEmptySend busy stopLabel="Stop" />
+      )
+
+      await user.click(screen.getByPlaceholderText('Type a message...'))
+      await user.keyboard('{Enter}')
+
+      expect(onSend).not.toHaveBeenCalled()
+    })
+
+    it('once busy clears, the queued attachment can still go out with no text', async () => {
+      const user = userEvent.setup()
+      const { rerender } = render(
+        <MessageComposer onSend={onSend} sendLabel="Send" allowEmptySend busy stopLabel="Stop" />
+      )
+
+      rerender(<MessageComposer onSend={onSend} sendLabel="Send" allowEmptySend stopLabel="Stop" />)
+
+      await user.click(sendButton())
+      expect(onSend).toHaveBeenCalledWith('')
+    })
+  })
 })

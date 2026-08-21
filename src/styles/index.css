@@ -748,6 +748,14 @@
   animation: cf-spin 1s linear infinite;
 }
 
+/* Punto de "escribiendo". Usa el keyframe cf-bounce-dot que ya existía sin
+   utilidad que lo consumiera. El escalonado de los tres puntos entra por
+   --cf-dot-delay, para no hornear tres clases casi iguales. */
+.cf-animate-typing-dot {
+  animation: cf-bounce-dot 1.4s var(--cf-ease-in-out) infinite;
+  animation-delay: var(--cf-dot-delay, 0ms);
+}
+
 .cf-animate-glow {
   animation: cf-glow 2s var(--cf-ease-in-out) infinite;
 }
@@ -949,6 +957,7 @@
 .bg-\[var\(--chat-error\,\#ef4444\)\] { background-color: var(--chat-error, #ef4444); }
 .bg-\[var\(--chat-warning\)\]\/5 { background-color: color-mix(in srgb, var(--chat-warning) 5%, transparent); }
 .bg-\[var\(--chat-warning\)\]\/40 { background-color: color-mix(in srgb, var(--chat-warning) 40%, transparent); }
+.bg-\[var\(--chat-foreground\)\] { background-color: var(--chat-foreground); }
 
 /* --- Text Colors --- */
 .text-\[var\(--chat-foreground\)\] { color: var(--chat-foreground); }
@@ -962,6 +971,7 @@
 .text-\[var\(--chat-muted\)\]\/60 { color: color-mix(in srgb, var(--chat-muted) 60%, transparent); }
 .text-\[var\(--chat-primary\)\]\/50 { color: color-mix(in srgb, var(--chat-primary) 50%, transparent); }
 .text-\[var\(--chat-primary\)\]\/60 { color: color-mix(in srgb, var(--chat-primary) 60%, transparent); }
+.text-\[var\(--chat-background\)\] { color: var(--chat-background); }
 
 /* --- Border Colors --- */
 .border-\[var\(--chat-border\)\] { border-color: var(--chat-border); }
@@ -979,6 +989,7 @@
 /* --- Hover States --- */
 .hover\:text-\[var\(--chat-foreground\)\]:hover { color: var(--chat-foreground); }
 .hover\:bg-\[var\(--chat-card-hover\)\]:hover { background-color: var(--chat-card-hover); }
+.hover\:bg-\[var\(--chat-foreground\)\]\/90:hover { background-color: color-mix(in srgb, var(--chat-foreground) 90%, transparent); }
 
 /* --- Placeholder --- */
 .placeholder\:text-\[var\(--chat-muted\)\]::placeholder { color: var(--chat-muted); }

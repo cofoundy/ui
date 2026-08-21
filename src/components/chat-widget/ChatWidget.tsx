@@ -288,11 +288,30 @@ export function ChatWidget({
     [setConfirmedAppointment, onAppointmentConfirmed]
   );
 
+  // Whether the server has taken over the typing indicator via `agent:typing`.
+  // Once a server-driven typing event has been seen, the local per-message
+  // heuristic below stops turning the indicator off — the server's turn-end
+  // edge is authoritative, so the dots stay up across a multi-bubble turn.
+  const serverDrivesTypingRef = useRef(false);
+
+  const handleTypingChange = useCallback(
+    (active: boolean) => {
+      serverDrivesTypingRef.current = true;
+      setTyping(active);
+    },
+    [setTyping]
+  );
+
   // Legacy message handler (for non-streaming complete messages)
   // Note: Slots and confirmations now come via structured events (onSlots, onConfirmation)
   const handleMessage = useCallback(
     (data: string) => {
-      setTyping(false);
+      // Only clear typing locally for transports that don't drive it from the
+      // server. When the server sends `agent:typing`, each incoming bubble must
+      // NOT stop the indicator — the turn-end edge does that.
+      if (!serverDrivesTypingRef.current) {
+        setTyping(false);
+      }
 
       const assistantMessage: Message = {
         id: generateId(),
@@ -374,6 +393,7 @@ export function ChatWidget({
     onConfirmation: handleConfirmation,
     onMessage: handleMessage,
     onMessageAck: handleMessageAck,
+    onTypingChange: handleTypingChange,
     onConnect: handleConnect,
     onDisconnect: handleDisconnect,
     onError: handleError,

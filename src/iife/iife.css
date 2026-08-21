@@ -1,0 +1,15 @@
+/* IIFE embed stylesheet (#251).
+ *
+ * Kept SEPARATE from ../styles/index.css — which is the package's `./styles`
+ * export, plain browser-ready CSS with no Tailwind directives. Putting
+ * `@import "tailwindcss"` there would ship an unresolved bare import to any
+ * consumer that loads `./styles` as static CSS.
+ *
+ * The IIFE build processes THIS file through `@tailwindcss/vite`, which emits
+ * the Tailwind utility layer the chat-widget components depend on (`.flex`,
+ * `.fixed`, `.gap-2`, `.rounded-2xl`, `.animate-bounce`, `.w-8`, …). Without
+ * it the emitted CSS is only the hand-written tokens/keyframes and the embed
+ * renders completely unstyled.
+ */
+@import "tailwindcss";
+@import "../styles/index.css";

@@ -120,7 +120,7 @@ Generic messaging primitives (used by InboxAI; reusable for any chat surface).
 | `MessageMedia` | Media attachment renderer (image / file / audio). |
 | **`StreamingMarkdown`** | **NEW (v0.5.1)** — Per-char wave reveal for LLM streaming. Walks hast tree, emits flat spans keyed by source offset. Drops to `<MessageContent>` when content > 5000 chars or `prefers-reduced-motion`. |
 | `InboxMessage`, `InboxMessageList` | Composed message list (InboxAI). |
-| `MessageComposer` | Multi-modal input (text + attachments + toolbar + quick actions). |
+| `MessageComposer` | Multi-modal input (text + attachments + toolbar + quick actions). `busy` swaps Send for Stop while an automatic reply is in flight — the textarea stays live. |
 | `AIBadge` | "AI" inline pill (mark AI-generated content). |
 
 ### Analytics
