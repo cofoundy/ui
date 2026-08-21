@@ -18,7 +18,7 @@
   "peerDependencies": {
     "@react-three/fiber": ">=8",
     "@shadergradient/react": ">=2.4.0",
-    "next": ">=15",
+    "next": ">=14",
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
   },
