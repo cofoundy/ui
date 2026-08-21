@@ -235,6 +235,12 @@ export function MessageComposer({
         // Se traga la tecla también con `busy`: el operador quiso enviar, no
         // meter un salto de línea en su borrador. Shift+Enter sigue igual.
         e.preventDefault();
+        // OJO si vas a borrar la línea de abajo: NINGÚN test se pone rojo.
+        // `handleSubmit` vuelve a chequear `isBusy`, así que esta mitad no es
+        // observable por separado — medido sobre este archivo, mutándola sola:
+        // 31/31 verde. Es defensa en profundidad a propósito (deja el submit
+        // del form como único camino con una sola cerradura), y por eso "los
+        // tests siguen verdes" no alcanza como argumento para sacarla.
         if (isBusy) return;
         handleSubmit();
       }
