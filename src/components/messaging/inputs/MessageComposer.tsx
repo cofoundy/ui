@@ -3,14 +3,17 @@
 import {
   useState,
   useRef,
+  useEffect,
+  useId,
   useCallback,
+  type CSSProperties,
   type FormEvent,
   type KeyboardEvent,
   type ChangeEvent,
   type ClipboardEvent,
   type ReactNode,
 } from "react";
-import { Send, Paperclip, Smile } from "lucide-react";
+import { Send, Paperclip, Smile, Square } from "lucide-react";
 import { cn } from "../../../utils/cn";
 
 /* ─── Types ─── */
@@ -77,6 +80,17 @@ export interface MessageComposerProps {
   /** Custom send button label */
   sendLabel?: string;
 
+  /* ─── Estado ocupado (una respuesta automática en vuelo) ─── */
+  /** La conversación tiene una respuesta automática en vuelo. Mientras es true,
+   *  la acción primaria es Parar en vez de Enviar, y Enter no envía. */
+  busy?: boolean;
+  /** Se invoca al pulsar Parar. Solo alcanzable mientras `busy`. */
+  onStop?: () => void;
+  /** Etiqueta del botón Parar. La i18n vive en la app anfitriona, no acá. */
+  stopLabel?: string;
+  /** Texto de estado mientras `busy` (ej. "Sofía está respondiendo…"). */
+  busyLabel?: ReactNode;
+
   /** Custom ReactNode injected at the start of the toolbar (e.g. an emoji picker with its own popover) */
   toolbarLeading?: ReactNode;
 
@@ -92,6 +106,12 @@ export interface MessageComposerProps {
  * - Auto-resizing textarea
  * - Bottom toolbar inside the input border (leading icons + send button)
  * - Single unified visual block
+ *
+ * Con `busy` la acción primaria pasa de Enviar a Parar. La regla de producto es
+ * que no haya mensajes cruzados: mientras la IA despacha, el operador NO puede
+ * mandar encima — pero sí puede seguir redactando. Lo que se bloquea es el
+ * envío, nunca la escritura, así que el textarea no se toca y su borrador
+ * sobrevive al momento de parar.
  */
 export function MessageComposer({
   onSend,
@@ -108,12 +128,40 @@ export function MessageComposer({
   showEmoji = false,
   toolbarLeading,
   sendLabel,
+  busy = false,
+  onStop,
+  stopLabel,
+  busyLabel,
   quickActions,
   className,
 }: MessageComposerProps) {
   const [message, setMessage] = useState("");
+  const [stopping, setStopping] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Guard sincrónico del doble clic. `stopping` es estado y se aplica en el
+  // render siguiente, así que dos clics seguidos pasarían los dos; el ref se
+  // actualiza en el mismo tick. Nunca `disabled` en el botón de Parar: un
+  // control deshabilitado se borra de su propio submit, porque el navegador
+  // arma la entry list DESPUÉS de despachar el evento.
+  const stoppingRef = useRef(false);
+  const busyStatusId = useId();
+
+  // `disabled` gana sobre `busy`: si el compositor entero está inerte, se
+  // comporta exactamente como siempre — sin estado ocupado y sin botón Parar.
+  const isBusy = busy && !disabled;
+  const showBusyStatus = isBusy && Boolean(busyLabel);
+  // El botón necesita nombre accesible aunque el host no pase etiqueta visible
+  // (en móvil el texto se oculta, igual que en Enviar).
+  const stopAccessibleLabel = stopLabel ?? "Parar";
+
+  // Al salir de ocupado se rearma Parar para el próximo turno de la IA.
+  useEffect(() => {
+    if (!isBusy) {
+      stoppingRef.current = false;
+      setStopping(false);
+    }
+  }, [isBusy]);
 
   // Resolve active mode config
   const currentMode = modes?.find((m) => m.id === activeMode);
@@ -144,6 +192,8 @@ export function MessageComposer({
   const handleSubmit = useCallback(
     (e?: FormEvent) => {
       e?.preventDefault();
+      // Nada de mensajes cruzados: mientras la IA despacha, enviar no existe.
+      if (isBusy) return;
       if (message.trim() && !disabled) {
         onSend(message.trim());
         setMessage("");
@@ -152,18 +202,21 @@ export function MessageComposer({
         }
       }
     },
-    [message, disabled, onSend]
+    [message, disabled, isBusy, onSend]
   );
 
   // Enter to send, Shift+Enter for newline
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (e.key === "Enter" && !e.shiftKey) {
+        // Se traga la tecla también con `busy`: el operador quiso enviar, no
+        // meter un salto de línea en su borrador. Shift+Enter sigue igual.
         e.preventDefault();
+        if (isBusy) return;
         handleSubmit();
       }
     },
-    [handleSubmit]
+    [handleSubmit, isBusy]
   );
 
   // File selection
@@ -201,6 +254,13 @@ export function MessageComposer({
   const handleAttachClick = useCallback(() => {
     fileInputRef.current?.click();
   }, []);
+
+  const handleStop = useCallback(() => {
+    if (stoppingRef.current) return;
+    stoppingRef.current = true;
+    setStopping(true);
+    onStop?.();
+  }, [onStop]);
 
   // Determine accent styling for note-like modes
   const isAccented = currentMode?.activeClass;
@@ -241,6 +301,33 @@ export function MessageComposer({
             : "border-[var(--chat-border)] bg-[var(--chat-input-bg,var(--chat-card-hover))]"
         )}
       >
+        {/* ─── Estado: la IA está redactando ─────────────────────────────
+            Va ARRIBA del textarea, no en la barra de herramientas, por dos
+            razones: aquí cabe la frase entera en cualquier ancho (sin truncar
+            ni esconderla en móvil), y deja la fila de abajo intacta — que el
+            botón no se mueva es lo que hace leer Enviar→Parar como un mismo
+            control cambiando de estado y no como que apareció otro. */}
+        {showBusyStatus && (
+          <div
+            id={busyStatusId}
+            data-slot="composer-busy"
+            role="status"
+            aria-live="polite"
+            className="flex items-center gap-2 px-3.5 pt-2.5 text-xs text-[var(--chat-muted)]"
+          >
+            <span className="flex items-center gap-0.5 shrink-0" aria-hidden="true">
+              {[0, 180, 360].map((delay) => (
+                <span
+                  key={delay}
+                  className="h-1.5 w-1.5 rounded-full bg-[var(--chat-primary)] cf-animate-typing-dot"
+                  style={{ "--cf-dot-delay": `${delay}ms` } as CSSProperties}
+                />
+              ))}
+            </span>
+            <span className="min-w-0 truncate">{busyLabel}</span>
+          </div>
+        )}
+
         {/* Textarea */}
         <form onSubmit={handleSubmit}>
           <textarea
@@ -251,10 +338,12 @@ export function MessageComposer({
             onPaste={handlePaste}
             placeholder={resolvedPlaceholder}
             disabled={disabled}
+            aria-describedby={showBusyStatus ? busyStatusId : undefined}
             rows={1}
             className={cn(
               "w-full resize-none bg-transparent",
-              "px-3.5 pt-3 pb-1.5",
+              // La fila de estado ya aportó aire arriba; sin ella, padding normal.
+              showBusyStatus ? "px-3.5 pt-1.5 pb-1.5" : "px-3.5 pt-3 pb-1.5",
               "text-[var(--chat-foreground)] text-sm",
               "placeholder:text-[var(--chat-muted)]",
               "focus:outline-none",
@@ -317,23 +406,46 @@ export function MessageComposer({
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* Send button */}
-            <button
-              type="submit"
-              disabled={disabled || !message.trim()}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
-                "disabled:opacity-30 disabled:cursor-not-allowed",
-                isAccented
-                  ? "bg-[var(--chat-warning)] hover:bg-[var(--chat-warning)]/90 text-[var(--chat-on-primary)]"
-                  : "bg-[var(--chat-primary)] hover:bg-[var(--chat-primary)]/80 text-[var(--chat-on-primary)]"
-              )}
-            >
-              <Send className="w-3.5 h-3.5" />
-              {resolvedSendLabel && (
-                <span className="hidden sm:inline">{resolvedSendLabel}</span>
-              )}
-            </button>
+            {/* Botón primario — mismo hueco, misma caja, dos estados.
+                Parar no es rojo ni de peligro: es el gesto de tomar el hilo,
+                así que va en el contraste máximo del tema (foreground sólido),
+                inconfundible frente al primary de Enviar sin leerse como error.
+                Nunca `disabled` mientras se está parando. */}
+            {isBusy ? (
+              <button
+                type="button"
+                onClick={handleStop}
+                aria-disabled={stopping || undefined}
+                aria-label={stopAccessibleLabel}
+                title={stopAccessibleLabel}
+                data-slot="composer-stop"
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                  "bg-[var(--chat-foreground)] hover:bg-[var(--chat-foreground)]/90 text-[var(--chat-background)]",
+                  stopping && "opacity-80"
+                )}
+              >
+                <Square className="w-3.5 h-3.5" fill="currentColor" />
+                {stopLabel && <span className="hidden sm:inline">{stopLabel}</span>}
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={disabled || !message.trim()}
+                className={cn(
+                  "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
+                  "disabled:opacity-30 disabled:cursor-not-allowed",
+                  isAccented
+                    ? "bg-[var(--chat-warning)] hover:bg-[var(--chat-warning)]/90 text-[var(--chat-on-primary)]"
+                    : "bg-[var(--chat-primary)] hover:bg-[var(--chat-primary)]/80 text-[var(--chat-on-primary)]"
+                )}
+              >
+                <Send className="w-3.5 h-3.5" />
+                {resolvedSendLabel && (
+                  <span className="hidden sm:inline">{resolvedSendLabel}</span>
+                )}
+              </button>
+            )}
           </div>
         </form>
       </div>
