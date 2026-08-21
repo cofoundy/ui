@@ -282,3 +282,58 @@ export const InstructAIFlow = () => {
     </div>
   );
 };
+
+/**
+ * `allowEmptySend` — a photo with no caption, the way WhatsApp does it.
+ *
+ * The composer knows nothing about attachments: it does not render, count or
+ * validate them. The parent owns the queue and tells the composer whether an
+ * empty send is legitimate **right now**. Toggle the chip and watch the send
+ * button follow — with nothing queued it goes back to blocked, which is the
+ * direction that must never change.
+ *
+ * On an empty textarea `onSend` receives the empty string. The composer invents
+ * no content: what goes on the wire (a placeholder, a caption, nothing) is the
+ * consumer's decision.
+ */
+export const AllowEmptySend = () => {
+  const [attached, setAttached] = useState(true);
+  const [sent, setSent] = useState<string[]>([]);
+
+  return (
+    <div className="w-[500px] bg-[var(--chat-background)]">
+      <div className="flex items-center gap-2 px-3 pt-3">
+        <button
+          type="button"
+          onClick={() => setAttached((v) => !v)}
+          className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70 hover:text-white transition-colors"
+        >
+          {attached ? "foto.jpg ×" : "+ adjuntar"}
+        </button>
+        <span className="text-xs text-white/30">
+          allowEmptySend = {String(attached)}
+        </span>
+      </div>
+
+      <MessageComposer
+        onSend={(message) => {
+          setSent((prev) => [...prev, JSON.stringify(message)]);
+          setAttached(false);
+        }}
+        onAttach={() => setAttached(true)}
+        showAttachment
+        allowEmptySend={attached}
+        sendLabel="Enviar"
+        placeholder="Escribe un mensaje..."
+      />
+
+      {sent.length > 0 && (
+        <div className="px-4 pb-3 font-mono text-xs text-white/40">
+          {sent.map((s, i) => (
+            <div key={i}>onSend({s})</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};

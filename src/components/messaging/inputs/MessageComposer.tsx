@@ -77,6 +77,26 @@ export interface MessageComposerProps {
   /** Custom send button label */
   sendLabel?: string;
 
+  /**
+   * Allow sending while the textarea is empty. Default `false` — an empty
+   * composer is blocked, which is the behaviour every existing consumer has.
+   *
+   * Pass a **live** value, true only while the parent has something else queued
+   * to send (a pending attachment, a recording, a picked template). A constant
+   * `true` leaves the send button permanently enabled and fires `onSend("")` on
+   * every click — the composer cannot tell the two apart, exactly as it cannot
+   * for `disabled`.
+   *
+   * Named after what the composer does, not after why the parent enabled it:
+   * this component never renders, counts or validates attachments, so it is in
+   * no position to claim there are any.
+   *
+   * When it fires on an empty textarea, `onSend` receives the **empty string** —
+   * the composer does not invent content (no placeholder, no padding space).
+   * What goes on the wire is the consumer's decision.
+   */
+  allowEmptySend?: boolean;
+
   /** Custom ReactNode injected at the start of the toolbar (e.g. an emoji picker with its own popover) */
   toolbarLeading?: ReactNode;
 
@@ -108,6 +128,7 @@ export function MessageComposer({
   showEmoji = false,
   toolbarLeading,
   sendLabel,
+  allowEmptySend = false,
   quickActions,
   className,
 }: MessageComposerProps) {
@@ -140,11 +161,14 @@ export function MessageComposer({
     [maxHeight]
   );
 
+  // There is something to send: text, or whatever the parent has queued.
+  const canSend = (message.trim().length > 0 || allowEmptySend) && !disabled;
+
   // Handle send
   const handleSubmit = useCallback(
     (e?: FormEvent) => {
       e?.preventDefault();
-      if (message.trim() && !disabled) {
+      if (canSend) {
         onSend(message.trim());
         setMessage("");
         if (textareaRef.current) {
@@ -152,7 +176,7 @@ export function MessageComposer({
         }
       }
     },
-    [message, disabled, onSend]
+    [canSend, message, onSend]
   );
 
   // Enter to send, Shift+Enter for newline
@@ -320,7 +344,7 @@ export function MessageComposer({
             {/* Send button */}
             <button
               type="submit"
-              disabled={disabled || !message.trim()}
+              disabled={!canSend}
               className={cn(
                 "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors",
                 "disabled:opacity-30 disabled:cursor-not-allowed",
