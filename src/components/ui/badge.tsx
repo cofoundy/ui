@@ -9,8 +9,12 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
+        // Mismo motivo que en `button.tsx`: `--primary` es reasignable por la app
+        // (Fovente lo ata al color del tenant), así que la tinta se deriva de él.
+        // Las demás variantes conservan `text-white` a propósito — sus rellenos
+        // son colores FIJOS del sistema, no de marca. → inbox-ai#617
         default:
-          "border-transparent bg-[var(--primary)] text-white [a&]:hover:bg-[var(--primary)]/90",
+          "border-transparent bg-[var(--primary)] text-[var(--primary-foreground)] [a&]:hover:bg-[var(--primary)]/90",
         secondary:
           "border-transparent bg-[var(--secondary)] text-white [a&]:hover:bg-[var(--secondary)]/90",
         destructive:

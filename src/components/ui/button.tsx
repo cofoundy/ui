@@ -9,7 +9,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90",
+        // La tinta se DERIVA del relleno, no se fija. `--primary` es el color de
+        // marca y una app puede reasignarlo (Fovente lo ata al color del tenant),
+        // así que un `text-white` clavado acá deja el relleno variable y la tinta
+        // constante: sobre un relleno claro el rótulo desaparece. Medido en el DOM
+        // vivo de Fovente, tema oscuro: blanco sobre #D98D7D = 2.61:1, reprueba AA
+        // en TODA acción primaria de la app. `--primary-foreground` ya existe en
+        // `styles/index.css` y vale `#ffffff` en los dos temas, así que para quien
+        // no lo reasigne (TimelyAI, Landing) esto no mueve un píxel. → inbox-ai#617
+        default: "bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary)]/90",
         destructive: "bg-[var(--destructive)] text-white hover:bg-[var(--destructive)]/90",
         outline:
           "border border-[var(--border)] bg-transparent text-[var(--foreground)] shadow-xs hover:bg-[var(--accent)]",
