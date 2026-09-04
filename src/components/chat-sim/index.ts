@@ -12,3 +12,5 @@ export { createPlayhead } from './core/playhead';
 export type { Playhead } from './core/playhead';
 export { rand } from './core/prng';
 export { digestOf } from './core/digest';
+export { ChatSim } from './react';
+export type { ChatSimMode, ChatSimProps } from './react';
