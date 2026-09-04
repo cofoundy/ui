@@ -8,6 +8,7 @@
 | `src/components/chat-sim/core/**` | **W** | R | R | R | R | R |
 | `src/components/chat-sim/adapters/**` | R | **W** | R | R | R | R |
 | `src/components/chat-sim/element/**` | R | R | **W** | R | R | R |
+| `demo/**` (página demo de la ola 1) | – | – | **W** | R | – | R |
 | `src/components/chat-sim/styles.css` | – | A | **W** | A | A | – |
 | `src/components/chat-sim/react/**` | R | R | R | – | **W** | R |
 | `src/components/chat-sim/capture/**` | R | – | R | **W** | – | R |
