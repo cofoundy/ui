@@ -7,12 +7,14 @@ import type { CompileOptions, Ev, Frame, SimScript, Tick } from './types';
 
 const JITTER_MS_MAX = 400; // deterministic per-step jitter window, positionally drawn
 
-function stepToEv(step: SimScript[number], id: string, idx: number): Ev {
+// `by: ActorId` is the currency every consumer already uses (element/'s group-key model, T-002)
+// — the draft event carries it verbatim, same as post/react do. No index/registry indirection.
+function stepToEv(step: SimScript[number], id: string): Ev {
   switch (step.k) {
     case 'post':
       return { k: 'post', id, step };
     case 'draft':
-      return { k: 'draft', idx, chars: step.chars };
+      return { k: 'draft', by: step.by, chars: step.chars };
     case 'flag':
       return { k: 'flag', key: step.key, value: step.value };
   }
@@ -28,7 +30,7 @@ export function compile(script: SimScript, o: CompileOptions): import('./types')
     clock += (step.delayMs ?? 0) + jitter;
 
     const id = step.k === 'post' ? `m${nextMsgId++}` : '';
-    frames.push({ t: clock, ev: stepToEv(step, id, stepIdx) });
+    frames.push({ t: clock, ev: stepToEv(step, id) });
   });
 
   const keys = Int32Array.from(frames.map((f) => f.t));

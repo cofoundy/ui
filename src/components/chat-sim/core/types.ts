@@ -120,7 +120,10 @@ export type Ev =
   | { k: 'receipt'; id: MsgId; to: DeliveryState }
   | { k: 'read'; upTo: MsgId }
   | { k: 'views'; id: MsgId; n: number }
-  | { k: 'draft'; idx: number; chars: number }
+  // `by` is the ActorId verbatim — element/ (T-002) already treats ActorId as the group key
+  // ('in' | 'out:ai' | 'out:human:<id>', adapter-interface-draft.md §groupKey) with no separate
+  // index/registry indirection, so the draft event carries the same currency as everything else.
+  | { k: 'draft'; by: ActorId; chars: number }
   | { k: 'flag'; key: string; value: Json }
   | { k: 'overlay'; id: string; phase: string }
   | { k: 'cue'; sound: SoundId };

@@ -34,10 +34,12 @@ export function applyEvent(state: SimState, ev: Ev): SimState {
       };
       const msgs = new Map(state.msgs); // copy-on-write shallow
       msgs.set(ev.id, msg);
-      return { ...state, msgs, order: [...state.order, ev.id], scrollId: ev.id };
+      // A post supersedes any pending "typing…" indicator — without this the draft bubble
+      // never clears once the message it was drafting actually lands.
+      return { ...state, msgs, order: [...state.order, ev.id], scrollId: ev.id, draft: null };
     }
     case 'draft': {
-      const draft: Draft = { by: '', chars: ev.chars };
+      const draft: Draft = { by: ev.by, chars: ev.chars };
       return { ...state, draft };
     }
     case 'flag':

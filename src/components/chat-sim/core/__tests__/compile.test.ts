@@ -63,4 +63,20 @@ describe('compile()', () => {
     const tl = compile(SCRIPT, BASE);
     expect(Array.from(tl.keys)).toEqual(tl.frames.map((f) => f.t));
   });
+
+  it('draft events carry the actor id verbatim, not lost/blanked (bug #2)', () => {
+    const script: SimScript = [
+      { k: 'draft', by: 'in', chars: 3 },
+      { k: 'post', by: 'in', text: 'hola' },
+      { k: 'draft', by: 'out:ai', chars: 5 },
+    ];
+    const tl = compile(script, BASE);
+    const drafts = tl.frames
+      .map((f) => f.ev)
+      .filter((ev): ev is Extract<typeof ev, { k: 'draft' }> => ev.k === 'draft');
+
+    expect(drafts).toHaveLength(2);
+    expect(drafts[0].by).toBe('in');
+    expect(drafts[1].by).toBe('out:ai');
+  });
 });
