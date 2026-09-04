@@ -1,6 +1,72 @@
-wall_clock_minutes: 90
+wall_clock_minutes: 120
 
 # skin — T-002 (stylesheet scoped + element + layout WhatsApp)
+
+## Iteration 3 — typing-indicator root cause + bundle-freshness gate (operator + team-lead)
+
+**Operator symptom:** typing animation stops repeating during playback, wrong position, doesn't
+read as WhatsApp.
+
+**Team-lead's root-cause diagnosis, confirmed correct:** `#reconcile` was re-populating/re-moving
+DOM nodes on every `data-step` change — and `play()`'s `onFrame` callback writes that attribute on
+EVERY rAF tick (~60/s), not just at script-step boundaries. Most ticks land on a step value
+identical to the last one applied, so every visible node (messages AND the typing indicator) was
+being torn down and rebuilt dozens of times per script step. For messages this was invisible
+(content was byte-identical each time) except for the CSS cost; for the typing indicator's
+`infinite` dot animation, tearing the node's content down via `appendChild`/reinsertion on every
+one of those redundant passes reset the animation loop every time — it never got past its first
+fraction of a cycle. This is also, per team-lead, the same underlying category as iteration 1's
+duplicate-bubble bug (`li.replaceChildren()` there treated the symptom of unnecessary rebuilds,
+not the cause).
+
+**Fix, two parts:**
+1. `#applyStep` now guards on `step === #lastStep` and returns immediately — `#reconcile` only
+   ever runs when the step actually changed. (The `adapter` setter resets `#lastStep = null`
+   first, since an adapter swap DOES need a fresh reconcile even at the same step.)
+2. Typing indicators are no longer a single reused/`appendChild`-moved node. `draftIntervals()`
+   walks the compiled timeline ONCE (forward fold, generic — asks "when was `state.draft`
+   non-null", not "next post clears it", so it keeps working however core/fold.ts's clearing rule
+   evolves) and returns one `[appearStep, vanishStep)` window per draft occurrence, each with the
+   `MsgId` it follows. `connectedCallback` builds ONE stable `<li>` per window, at its real
+   position in the flow (`insertBefore` the message that comes after it — built once, never
+   moved again). `#reconcile` only ever flips `.hidden` on these nodes now — no `innerHTML`, no
+   `appendChild`, matching what messages already did post-iteration-1.
+3. Position + shape: it's a real `.cf-bubble`-shaped element with `data-dir` (left for inbound,
+   right for outbound, same rule as `.cf-msg`) — not a floating pill at the end of the log.
+   Numbers (5px dots, 3px gap, 1.2s cycle, .18s stagger) match
+   `products/fovente-landingpage/src/styles/global.css:444-451` — adapted to `.cf-` tokens, not
+   copied literally.
+
+**Verification (team-lead's exact ask):** a test asserting the typing `<li>` is the SAME node
+reference across two different `data-step` values while its window stays open — using a
+dedicated script with a `flag` between the `draft` and the resolving `post` so the window spans
+2 distinct steps (a 1-step-wide window would make the assertion pass vacuously via the guard
+alone). Also verified LIVE in headless Chrome, past the point of just trusting the test: sampled
+`Element.getAnimations()[0].currentTime` and computed `opacity` over ~1.3s of real playback —
+`currentTime` advances continuously and `opacity` cycles 0.3→1.0→0.3 on schedule, confirming the
+animation genuinely loops now (first attempt at this measurement raced the demo's own autoplay
+and gave a false "frozen" reading — redone after autoplay settled, see below for the gotcha).
+
+**Bundle-freshness gate (team-lead, second ask):** `demo/chat-sim.bundle.js` is committed (R-1
+requires zero build step to open the demo) but nothing rebuilds it automatically, and the regen
+command only lived in an HTML comment. Added `element/__tests__/bundle-freshness.test.ts`:
+shells out to the esbuild CLI (not the JS API — that breaks under this suite's jsdom + `setup.ts`,
+which mocks `window`) to rebuild `element/index.ts` to a temp file, byte-compares against the
+committed file, fails with the exact regen command in the error message. Positive twin: truncate
+the fresh build, assert the comparison catches it. Manually demonstrated both directions: appended
+a stray line to the committed bundle, watched the test fail with the regen command, restored,
+watched it pass again.
+
+**Gotcha worth recording:** my first attempt to verify the animation loop live raced the demo
+page's own `requestAnimationFrame(play)` autoplay — I set `data-step` manually via eval, but the
+page's autoplay was still running in the background and immediately overwrote it, so I was
+sampling a `hidden`/`display:none` node the whole time (which correctly shows a frozen
+`getComputedStyle` and zero `getAnimations()` — that's not a bug, `display:none` elements have no
+active animations). Redid it after autoplay settled to completion (`data-step` stopped moving) —
+then the manual set stuck and the real measurement was possible.
+
+49/49 chat-sim tests green (up from 44 — added the same-node-reference test, a guard-scenario
+test, and the 2 bundle-freshness tests), typecheck clean.
 
 ## Iteration 2 — visual review (team-lead, DOM-measured, not eyeballed)
 

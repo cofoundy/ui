@@ -342,26 +342,42 @@
   line-height: 1;
 }
 
-/* ── typing / draft indicator ───────────────────────────────────────── */
+/* ── typing / draft indicator ───────────────────────────────────────────
+   A typing <li> is built ONCE per draft window (element/chat-sim-element.ts's
+   `draftIntervals()`), at its real position in the flow — never recreated or moved during
+   playback. This block only ever gets `hidden` toggled on it, which is what lets the
+   infinite dot animation actually loop instead of restarting on every reconcile (the bug the
+   old floating/`appendChild`-per-frame version had). It's a real bubble in the flow — same
+   left/right rule as .cf-msg, same shape — not a floating pill. Numbers (5px dots, 3px gap,
+   1.2s cycle, .18s stagger) match products/fovente-landingpage's global.css:444-451 exactly;
+   those are what read as WhatsApp instead of a generic spinner. */
 
 .cf-typing-row {
   display: flex;
-  justify-content: flex-end; /* ChatDemo.astro precedent: the outbound side is the one that "types" */
-  padding-right: 7px;
+  max-width: 100%;
 }
 .cf-typing-row[hidden] {
   display: none;
 }
-.cf-chat-sim[data-drafting] .cf-typing {
-  display: flex;
+.cf-typing-row[data-dir='in'] {
+  justify-content: flex-start;
+  padding-left: 7px;
+}
+.cf-typing-row[data-dir='out'] {
+  justify-content: flex-end;
+  padding-right: 7px;
 }
 .cf-typing {
-  display: none;
+  display: flex;
   gap: 3px;
   padding: 0.6rem 0.7rem;
   border-radius: var(--cf-cs-radius);
+}
+.cf-typing-row[data-dir='in'] .cf-typing {
   background: var(--cf-cs-bubble-in);
-  width: fit-content;
+}
+.cf-typing-row[data-dir='out'] .cf-typing {
+  background: var(--cf-cs-bubble-out);
 }
 .cf-typing i {
   width: 5px;
@@ -384,6 +400,12 @@
   }
   30% {
     opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cf-typing i {
+    animation: none;
+    opacity: 0.6;
   }
 }
 

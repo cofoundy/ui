@@ -93,4 +93,61 @@ describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
     const label = el.querySelector('.cf-msg .cf-time')?.textContent ?? '';
     expect(label).toMatch(/^\d{1,2}:\d{2}$/);
   });
+
+  describe('typing indicator — pre-rendered once, revealed by hidden only (team-lead diagnosis, iteration 3)', () => {
+    it('is built exactly once per draft window, in the flow, not floating at the end of the log', () => {
+      const el = mount(); // full script — 1 draft window (frames 1..2, actor out:ai)
+      const rows = el.querySelectorAll('.cf-typing-row');
+      expect(rows).toHaveLength(1);
+      expect(rows[0].getAttribute('data-dir')).toBe('out'); // out:ai drafted it
+
+      // Positioned between the message it interrupted (m0, 'in') and the one that resolved it
+      // (m1, 'out:ai') — a sibling in the flow, not appended after everything at the end.
+      const children = [...el.querySelector('.cf-log')!.children];
+      const typingIdx = children.indexOf(rows[0]);
+      expect(children[typingIdx - 1]?.classList.contains('cf-msg')).toBe(true);
+      expect(children[typingIdx + 1]?.classList.contains('cf-msg')).toBe(true);
+    });
+
+    it('the SAME node stays visible across two different consecutive data-step values while the window is open — never recreated', () => {
+      // A dedicated script whose draft window spans TWO distinct steps (a `flag` sits between the
+      // draft and the post that resolves it, so `state.draft` stays truthy across steps 2 AND 3) —
+      // this is what actually exercises "same node across steps", unlike a 1-step-wide window
+      // where the step-unchanged guard alone would make the assertion vacuously true.
+      const script = JSON.stringify([
+        { k: 'post', by: 'in', text: 'hola', delayMs: 0 },
+        { k: 'draft', by: 'out:ai', chars: 5, delayMs: 50 },
+        { k: 'flag', key: 'tick', value: 1, delayMs: 50 },
+        { k: 'post', by: 'out:ai', text: 'hey', delayMs: 50 },
+      ]);
+      const el = document.createElement('cf-chat-sim');
+      el.setAttribute('t0', '1767261600000');
+      el.setAttribute('data-step', '2'); // frames 0,1 applied: post(in), draft(out:ai)
+      const scriptTag = document.createElement('script');
+      scriptTag.type = 'application/json';
+      scriptTag.textContent = script;
+      el.appendChild(scriptTag);
+      document.body.appendChild(el);
+
+      const nodeAtStep2 = el.querySelector<HTMLElement>('.cf-typing-row:not([hidden])');
+      expect(nodeAtStep2).not.toBeNull();
+
+      el.setAttribute('data-step', '3'); // frame 2 applied: flag — draft still active, no post yet
+      const nodeAtStep3 = el.querySelector<HTMLElement>('.cf-typing-row:not([hidden])');
+      expect(nodeAtStep3).not.toBeNull();
+      expect(nodeAtStep3).toBe(nodeAtStep2); // <- the assertion team-lead asked for, literally
+
+      el.setAttribute('data-step', '4'); // frame 3 applied: post(out:ai) — resolves the draft
+      expect(el.querySelector('.cf-typing-row:not([hidden])')).toBeNull();
+      // and the node itself is still there, just hidden — not removed and rebuilt on vanish either.
+      expect(el.querySelector('.cf-typing-row')).toBe(nodeAtStep2);
+    });
+
+    it("repopulating the SAME step twice (the guard's exact scenario) does not touch the typing node at all", () => {
+      const el = mount(2); // draft active
+      const before = el.querySelector('.cf-typing-row');
+      el.setAttribute('data-step', '2'); // same value — the playhead does this ~60x/s during playback
+      expect(el.querySelector('.cf-typing-row')).toBe(before);
+    });
+  });
 });

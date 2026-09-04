@@ -461,6 +461,33 @@ var CfChatSim = (() => {
     for (let i = 0; i < upto; i++) state = applyEvent(state, tl.frames[i].ev);
     return state;
   }
+  function draftIntervals(tl) {
+    const out = [];
+    let state = initialState();
+    let openSince = null;
+    let openBy = "";
+    let openAfter = null;
+    let lastMsgId = null;
+    for (let i = 0; i < tl.frames.length; i++) {
+      const ev = tl.frames[i].ev;
+      const wasOpen = state.draft !== null;
+      state = applyEvent(state, ev);
+      const step = i + 1;
+      if (!wasOpen && state.draft) {
+        openSince = step;
+        openBy = state.draft.by;
+        openAfter = lastMsgId;
+      } else if (wasOpen && !state.draft) {
+        out.push({ by: openBy, appearStep: openSince, vanishStep: step, afterMsgId: openAfter, li: null });
+        openSince = null;
+      }
+      if (ev.k === "post") lastMsgId = ev.id;
+    }
+    if (openSince !== null) {
+      out.push({ by: openBy, appearStep: openSince, vanishStep: tl.frames.length, afterMsgId: openAfter, li: null });
+    }
+    return out;
+  }
   function postedAtByMsgId(frames) {
     const out = /* @__PURE__ */ new Map();
     for (const f of frames) if (f.ev.k === "post") out.set(f.ev.id, f.t);
@@ -488,7 +515,7 @@ var CfChatSim = (() => {
       editedLabel: msg.v > 0 ? editedLabel : void 0
     };
   }
-  var _timeline, _postedAt, _msgEls, _log, _typingEl, _playhead, _adapter, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn;
+  var _timeline, _postedAt, _msgEls, _log, _typingIntervals, _playhead, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn;
   var CfChatSimElement = class extends HTMLElement {
     constructor() {
       super(...arguments);
@@ -497,9 +524,14 @@ var CfChatSim = (() => {
       __privateAdd(this, _postedAt, /* @__PURE__ */ new Map());
       __privateAdd(this, _msgEls, /* @__PURE__ */ new Map());
       __privateAdd(this, _log, null);
-      __privateAdd(this, _typingEl, null);
+      __privateAdd(this, _typingIntervals, []);
       __privateAdd(this, _playhead, null);
       __privateAdd(this, _adapter, WHATSAPP_REFERENCE_ADAPTER);
+      /** Guards against redoing any work when `data-step` is set to the value it already holds — the
+       * root cause of the animation bug (team-lead, iteration 3): the playhead writes this attribute
+       * on EVERY rAF tick (~60/s), and most ticks land between script steps, so without this guard
+       * every visible node got repopulated/reinserted dozens of times per script step for no reason. */
+      __privateAdd(this, _lastStep, null);
     }
     /** Settable so a caller (a devtools console, a future capture/ harness, or T-005's real
      * `getAdapter(channel)` once it lands) can swap the whole 16-field object and see the DOM
@@ -511,6 +543,7 @@ var CfChatSim = (() => {
     set adapter(next) {
       __privateSet(this, _adapter, next);
       this.dataset.wallpaper = next.wallpaper;
+      __privateSet(this, _lastStep, null);
       if (__privateGet(this, _timeline)) __privateMethod(this, _CfChatSimElement_instances, applyStep_fn).call(this, Number(this.dataset.step ?? __privateGet(this, _timeline).frames.length));
     }
     connectedCallback() {
@@ -538,11 +571,19 @@ var CfChatSim = (() => {
         __privateGet(this, _msgEls).set(id, li);
         __privateGet(this, _log).appendChild(li);
       });
-      __privateSet(this, _typingEl, document.createElement("li"));
-      __privateGet(this, _typingEl).className = "cf-typing-row";
-      __privateGet(this, _typingEl).hidden = true;
-      __privateGet(this, _typingEl).innerHTML = '<span class="cf-typing"><i></i><i></i><i></i></span>';
-      __privateGet(this, _log).appendChild(__privateGet(this, _typingEl));
+      const intervals = draftIntervals(__privateGet(this, _timeline));
+      intervals.forEach((interval) => {
+        const li = document.createElement("li");
+        li.className = "cf-typing-row";
+        li.dataset.dir = actorDir(interval.by);
+        li.hidden = true;
+        li.innerHTML = '<span class="cf-bubble cf-typing"><i></i><i></i><i></i></span>';
+        interval.li = li;
+        const anchorIdx = interval.afterMsgId ? finalState.order.indexOf(interval.afterMsgId) + 1 : 0;
+        const anchor = anchorIdx < finalState.order.length ? __privateGet(this, _msgEls).get(finalState.order[anchorIdx]) : null;
+        __privateGet(this, _log).insertBefore(li, anchor);
+      });
+      __privateSet(this, _typingIntervals, intervals);
       this.appendChild(__privateMethod(this, _CfChatSimElement_instances, buildComposer_fn).call(this));
       const initialStep = this.hasAttribute("data-step") ? Number(this.getAttribute("data-step")) : __privateGet(this, _timeline).frames.length;
       this.dataset.step = String(initialStep);
@@ -577,9 +618,10 @@ var CfChatSim = (() => {
   _postedAt = new WeakMap();
   _msgEls = new WeakMap();
   _log = new WeakMap();
-  _typingEl = new WeakMap();
+  _typingIntervals = new WeakMap();
   _playhead = new WeakMap();
   _adapter = new WeakMap();
+  _lastStep = new WeakMap();
   _CfChatSimElement_instances = new WeakSet();
   /** Header — ChatDemo.astro precedent (`.chat-head`: avatar + name + meta). Visual-only, driven
    * by attributes so any consumer can set it; falls back to a channel-neutral default rather than
@@ -624,8 +666,10 @@ var CfChatSim = (() => {
   };
   applyStep_fn = function(step) {
     if (!__privateGet(this, _timeline) || !__privateGet(this, _log)) return;
+    if (step === __privateGet(this, _lastStep)) return;
+    __privateSet(this, _lastStep, step);
     const state = stateAtStep(__privateGet(this, _timeline), step);
-    __privateMethod(this, _CfChatSimElement_instances, reconcile_fn).call(this, state);
+    __privateMethod(this, _CfChatSimElement_instances, reconcile_fn).call(this, state, step);
   };
   /** ChatDemo.astro's exact trick (`s.offsetWidth + 10`, global.css's `measure()`): `--cf-cs-pad`
    * (styles.css) is a static FALLBACK only — a stamp with a receipt glyph is measurably wider
@@ -643,7 +687,7 @@ var CfChatSim = (() => {
   /** Pre-render contract: every MsgId's <li> already exists (built in connectedCallback from the
    * final state) — this only repopulates content for currently-visible messages and flips
    * `hidden`. It never creates, removes, or reorders nodes. */
-  reconcile_fn = function(state) {
+  reconcile_fn = function(state, step) {
     const t0 = __privateGet(this, _timeline).t0;
     const locale = this.getAttribute("locale") || "es-PE";
     const tz = this.getAttribute("tz") || "America/Lima";
@@ -664,16 +708,12 @@ var CfChatSim = (() => {
     __privateGet(this, _msgEls).forEach((li, id) => {
       if (!visibleIds.has(id)) li.hidden = true;
     });
-    if (state.draft) {
-      this.setAttribute("data-drafting", state.draft.by);
-      if (__privateGet(this, _typingEl)) {
-        __privateGet(this, _typingEl).hidden = false;
-        __privateGet(this, _log).appendChild(__privateGet(this, _typingEl));
-      }
-    } else {
-      this.removeAttribute("data-drafting");
-      if (__privateGet(this, _typingEl)) __privateGet(this, _typingEl).hidden = true;
-    }
+    if (state.draft) this.setAttribute("data-drafting", state.draft.by);
+    else this.removeAttribute("data-drafting");
+    __privateGet(this, _typingIntervals).forEach((interval) => {
+      if (!interval.li) return;
+      interval.li.hidden = !(step >= interval.appearStep && step < interval.vanishStep);
+    });
   };
   __publicField(CfChatSimElement, "observedAttributes", ["data-step"]);
   customElements.define("cf-chat-sim", CfChatSimElement);
