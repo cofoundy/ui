@@ -31,11 +31,23 @@ export interface CaptureFrameOptions extends CaptureRecipe {
   readonly width: number;
   readonly dpr: number;
   readonly out: string;
-  /** Isolated `agent-browser --session` name. Auto-generated (unique per call) when omitted, so
-   * two captures run back-to-back never share browser state — see agentBrowser.ts's header on why
-   * that matters for determinism (T-004 acceptance #1: two runs of the SAME recipe must produce
-   * byte-identical PNGs, which a leaked session — a stale animation frame, a cached layout —
-   * could quietly break). */
+  /** `agent-browser --session` name.
+   *
+   * OMITTED (default): captureFrame owns the session's whole lifecycle — opens a freshly-named
+   * one, closes it before returning (even on failure). Simplest for a single one-off capture (the
+   * CLI, one process, one Chrome), but each call spins its own Chrome process — team-lead's
+   * session-leak report measured this compounding across a batch (a full test run, N marketing
+   * frames from one script) into daemon contention shared with every other lane's own
+   * `agent-browser` usage.
+   *
+   * PROVIDED: the CALLER owns the session's lifecycle (open it once before the batch, close it
+   * once after — see agentBrowser.ts's `close`/`listSessions`). captureFrame still navigates
+   * (`open`) on every call — cheap on an EXISTING session (no new Chrome process, just a
+   * reload — settleScript.ts's own `document.querySelectorAll(TAG).forEach(remove)` plus a fresh
+   * navigate is what guarantees no state leaks between captures on a reused session) — but never
+   * closes it. Determinism (acceptance #1) is unaffected either way: every capture always
+   * rebuilds `<cf-chat-sim>` from scratch and drives it to an exact step, regardless of whether
+   * the underlying Chrome PROCESS is fresh or reused. */
   readonly session?: string;
 }
 
@@ -53,19 +65,34 @@ const VIEWPORT_HEIGHT_PX = 6000;
 
 export async function captureFrame(tl: Timeline, t: Tick, o: CaptureFrameOptions): Promise<string> {
   const step = tickToStep(tl, t);
+  const ownsSession = o.session === undefined;
   const session = o.session ?? defaultSession();
 
   mkdirSync(dirname(o.out), { recursive: true });
 
-  ab.open(session, CAPTURE_HTML_URL);
   try {
+    ab.open(session, CAPTURE_HTML_URL);
     ab.setViewport(session, o.width, VIEWPORT_HEIGHT_PX, o.dpr);
     const script = buildSettleScript({ recipe: o, step, widthPx: o.width });
     ab.evalScript(session, script);
     ab.screenshotSelector(session, '.cf-chat-sim', o.out);
   } finally {
-    ab.close(session);
+    // Only close a session THIS call created — closing a caller-owned shared session out from
+    // under a batch would break every capture after this one in the same run.
+    if (ownsSession) ab.close(session);
   }
 
   return o.out;
+}
+
+/** Explicit lifecycle for a shared session — a batch of captures (a multi-frame CLI run, a test
+ * suite) opens once, passes the same `session` name to every `captureFrame()` call, then closes
+ * once. Re-exported here (not just from agentBrowser.ts) since this IS captureFrame's public
+ * batching contract, not an internal detail. */
+export function openCaptureSession(session: string): void {
+  ab.open(session, CAPTURE_HTML_URL);
+}
+
+export function closeCaptureSession(session: string): void {
+  ab.close(session);
 }

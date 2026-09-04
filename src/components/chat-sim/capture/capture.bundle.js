@@ -219,7 +219,7 @@ var CfChatSimCapture = (() => {
   }
   function compile(script, o) {
     const frames = [];
-    let clock = o.t0;
+    let clock = 0;
     let nextMsgId = 0;
     script.forEach((step, stepIdx) => {
       const jitter = Math.floor(rand(o.seed, stepIdx, 0) * JITTER_MS_MAX);
@@ -228,7 +228,7 @@ var CfChatSimCapture = (() => {
       frames.push({ t: clock, ev: stepToEv(step, id) });
     });
     const keys = Int32Array.from(frames.map((f) => f.t));
-    const duration = frames.length > 0 ? frames[frames.length - 1].t : o.t0;
+    const duration = frames.length > 0 ? frames[frames.length - 1].t : 0;
     const digest = digestOf(
       JSON.stringify({ script, seed: o.seed, channel: o.channel, locale: o.locale, tz: o.tz })
     );
@@ -276,12 +276,16 @@ var CfChatSimCapture = (() => {
   function seek(tl, t) {
     return seekTraced(tl, t).state;
   }
+  function stateAtStep(tl, step) {
+    const upto = Math.max(0, Math.min(step, tl.frames.length));
+    return foldFromCheckpoint(tl, upto).state;
+  }
 
   // src/components/chat-sim/core/playhead.ts
   function createPlayhead(tl) {
     let playing = false;
     let playRate = 1;
-    let virtualT = tl.t0;
+    let virtualT = 0;
     let rafId = null;
     let lastWall = null;
     const listeners = /* @__PURE__ */ new Set();
@@ -328,8 +332,148 @@ var CfChatSimCapture = (() => {
     };
   }
 
-  // src/components/chat-sim/element/fixtures.ts
-  var WHATSAPP_REFERENCE_ADAPTER = {
+  // src/components/chat-sim/core/draft-intervals.ts
+  function draftIntervals(tl) {
+    const out = [];
+    let state = initialState();
+    let openSince = null;
+    let openBy = "";
+    let openAfter = null;
+    let lastMsgId = null;
+    for (let i = 0; i < tl.frames.length; i++) {
+      const ev = tl.frames[i].ev;
+      const wasOpen = state.draft !== null;
+      state = applyEvent(state, ev);
+      const step = i + 1;
+      if (!wasOpen && state.draft) {
+        openSince = step;
+        openBy = state.draft.by;
+        openAfter = lastMsgId;
+      } else if (wasOpen && !state.draft) {
+        out.push({ by: openBy, appearStep: openSince, vanishStep: step, afterMsgId: openAfter });
+        openSince = null;
+      }
+      if (ev.k === "post") lastMsgId = ev.id;
+    }
+    if (openSince !== null) {
+      out.push({ by: openBy, appearStep: openSince, vanishStep: tl.frames.length, afterMsgId: openAfter });
+    }
+    return out;
+  }
+
+  // src/components/chat-sim/adapters/caps.ts
+  var VARIATION_SELECTOR_16 = "\uFE0F";
+  function normalizeReactionEmoji(emoji) {
+    return (emoji ?? "").replaceAll(VARIATION_SELECTOR_16, "");
+  }
+  var TELEGRAM_REACTIONS_RAW = [
+    "\u2764",
+    "\u{1F44D}",
+    "\u{1F44E}",
+    "\u{1F525}",
+    "\u{1F970}",
+    "\u{1F44F}",
+    "\u{1F601}",
+    "\u{1F914}",
+    "\u{1F92F}",
+    "\u{1F631}",
+    "\u{1F92C}",
+    "\u{1F622}",
+    "\u{1F389}",
+    "\u{1F929}",
+    "\u{1F92E}",
+    "\u{1F4A9}",
+    "\u{1F64F}",
+    "\u{1F44C}",
+    "\u{1F54A}",
+    "\u{1F921}",
+    "\u{1F971}",
+    "\u{1F974}",
+    "\u{1F60D}",
+    "\u{1F433}",
+    "\u2764\u200D\u{1F525}",
+    "\u{1F31A}",
+    "\u{1F32D}",
+    "\u{1F4AF}",
+    "\u{1F923}",
+    "\u26A1",
+    "\u{1F34C}",
+    "\u{1F3C6}",
+    "\u{1F494}",
+    "\u{1F928}",
+    "\u{1F610}",
+    "\u{1F353}",
+    "\u{1F37E}",
+    "\u{1F48B}",
+    "\u{1F595}",
+    "\u{1F608}",
+    "\u{1F634}",
+    "\u{1F62D}",
+    "\u{1F913}",
+    "\u{1F47B}",
+    "\u{1F468}\u200D\u{1F4BB}",
+    "\u{1F440}",
+    "\u{1F383}",
+    "\u{1F648}",
+    "\u{1F607}",
+    "\u{1F628}",
+    "\u{1F91D}",
+    "\u270D",
+    "\u{1F917}",
+    "\u{1FAE1}",
+    "\u{1F385}",
+    "\u{1F384}",
+    "\u2603",
+    "\u{1F485}",
+    "\u{1F92A}",
+    "\u{1F5FF}",
+    "\u{1F192}",
+    "\u{1F498}",
+    "\u{1F649}",
+    "\u{1F984}",
+    "\u{1F618}",
+    "\u{1F48A}",
+    "\u{1F64A}",
+    "\u{1F60E}",
+    "\u{1F47E}",
+    "\u{1F937}\u200D\u2642",
+    "\u{1F937}",
+    "\u{1F937}\u200D\u2640",
+    "\u{1F621}"
+  ];
+  var TELEGRAM_REACTIONS = new Set(
+    TELEGRAM_REACTIONS_RAW.map(normalizeReactionEmoji)
+  );
+
+  // src/components/chat-sim/adapters/telegram.ts
+  var telegram = {
+    tail: "last",
+    wallpaper: "pattern",
+    reactions: "own-row",
+    reactionConstraint: {
+      emoji: "allowlist",
+      allowlistSize: TELEGRAM_REACTIONS.size,
+      maxAgeDays: 0,
+      canTargetReaction: false,
+      canTargetOutbound: true,
+      maxPerMessage: 0
+    },
+    groupKey: "actor",
+    deliveryStates: ["queued", "sent", "read", "failed"],
+    receiptGlyph: "single-tick",
+    counter: "views",
+    timestamp: "inside-plain",
+    quote: "thin-bar",
+    bubbleTransport: "per-conversation",
+    senderKinds: ["human", "ai", "bot", "forwarded", "channel"],
+    keyboard: "inline-in-message",
+    album: "grid-in-one-bubble",
+    e2eNotice: false,
+    avatarSide: "inbound"
+  };
+
+  // src/components/chat-sim/adapters/whatsapp.ts
+  var whatsapp = {
     tail: "first",
     wallpaper: "pattern",
     reactions: "overlay-below",
@@ -354,13 +498,21 @@ var CfChatSimCapture = (() => {
     e2eNotice: true,
     avatarSide: "inbound"
   };
-  var CAPS_FIXTURE_INVERTED_ADAPTER = {
-    ...WHATSAPP_REFERENCE_ADAPTER,
-    tail: "last",
-    receiptGlyph: "single-tick",
-    timestamp: "inside-plain",
-    reactions: "own-row"
+
+  // src/components/chat-sim/adapters/registry.ts
+  var ADAPTERS = {
+    whatsapp,
+    telegram
   };
+  function getAdapter(channel) {
+    const adapter = ADAPTERS[channel];
+    if (!adapter) {
+      throw new Error(
+        `chat-sim: no adapter registered for channel '${channel}' \u2014 out of scope this cycle (architecture-v1.md \xA710, "Adapter iMessage completo").`
+      );
+    }
+    return adapter;
+  }
 
   // src/components/chat-sim/element/render.ts
   function actorDir(by) {
@@ -537,39 +689,6 @@ var CfChatSimCapture = (() => {
   }
 
   // src/components/chat-sim/element/chat-sim-element.ts
-  function stateAtStep2(tl, step) {
-    let state = initialState();
-    const upto = Math.max(0, Math.min(step, tl.frames.length));
-    for (let i = 0; i < upto; i++) state = applyEvent(state, tl.frames[i].ev);
-    return state;
-  }
-  function draftIntervals2(tl) {
-    const out = [];
-    let state = initialState();
-    let openSince = null;
-    let openBy = "";
-    let openAfter = null;
-    let lastMsgId = null;
-    for (let i = 0; i < tl.frames.length; i++) {
-      const ev = tl.frames[i].ev;
-      const wasOpen = state.draft !== null;
-      state = applyEvent(state, ev);
-      const step = i + 1;
-      if (!wasOpen && state.draft) {
-        openSince = step;
-        openBy = state.draft.by;
-        openAfter = lastMsgId;
-      } else if (wasOpen && !state.draft) {
-        out.push({ by: openBy, appearStep: openSince, vanishStep: step, afterMsgId: openAfter, li: null });
-        openSince = null;
-      }
-      if (ev.k === "post") lastMsgId = ev.id;
-    }
-    if (openSince !== null) {
-      out.push({ by: openBy, appearStep: openSince, vanishStep: tl.frames.length, afterMsgId: openAfter, li: null });
-    }
-    return out;
-  }
   function postedAtByMsgId(frames) {
     const out = /* @__PURE__ */ new Map();
     for (const f of frames) if (f.ev.k === "post") out.set(f.ev.id, f.t);
@@ -605,7 +724,7 @@ var CfChatSimCapture = (() => {
       editedLabel: msg.v > 0 ? editedLabel : void 0
     };
   }
-  var _timeline, _postedAt, _msgEls, _log, _typingIntervals, _dateSeps, _playhead, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn;
+  var _timeline, _postedAt, _msgEls, _log, _typingRows, _dateSeps, _playhead, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn;
   var CfChatSimElement = class extends HTMLElement {
     constructor() {
       super(...arguments);
@@ -614,10 +733,17 @@ var CfChatSimCapture = (() => {
       __privateAdd(this, _postedAt, /* @__PURE__ */ new Map());
       __privateAdd(this, _msgEls, /* @__PURE__ */ new Map());
       __privateAdd(this, _log, null);
-      __privateAdd(this, _typingIntervals, []);
+      __privateAdd(this, _typingRows, []);
       __privateAdd(this, _dateSeps, []);
       __privateAdd(this, _playhead, null);
-      __privateAdd(this, _adapter, WHATSAPP_REFERENCE_ADAPTER);
+      /** Bug found by `app`, confirmed reading this file (T-002 iteration 5): this used to be a fixed
+       * `WHATSAPP_REFERENCE_ADAPTER` fixture, and the `channel` attribute only ever fed `compile()` —
+       * nothing ever called `getAdapter(channel)`, so `<cf-chat-sim channel="telegram">` silently
+       * rendered WhatsApp chrome. Not this lane's fault at the time: T-005's registry didn't exist yet
+       * when this was written (see the fixture's own now-removed "once it lands" comment) — it landed
+       * and nobody closed the loop. `connectedCallback` overwrites this with the real adapter before
+       * anything gets built; the default here only matters for the instant before that runs. */
+      __privateAdd(this, _adapter, getAdapter("whatsapp"));
       /** Guards against redoing any work when `data-step` is set to the value it already holds — the
        * root cause of the animation bug (team-lead, iteration 3): the playhead writes this attribute
        * on EVERY rAF tick (~60/s), and most ticks land between script steps, so without this guard
@@ -640,13 +766,14 @@ var CfChatSimCapture = (() => {
     connectedCallback() {
       this.classList.add("cf-chat-sim");
       if (!this.hasAttribute("role")) this.setAttribute("role", "log");
-      this.dataset.wallpaper = __privateGet(this, _adapter).wallpaper;
       const script = __privateMethod(this, _CfChatSimElement_instances, readScript_fn).call(this);
       const channel = this.getAttribute("channel") || "whatsapp";
       const seed = Number(this.getAttribute("seed") ?? "1");
       const locale = this.getAttribute("locale") || "es-PE";
       const tz = this.getAttribute("tz") || "America/Lima";
       const t0 = Number(this.getAttribute("t0") ?? String(Date.UTC(2026, 0, 1, 9, 0, 0)));
+      __privateSet(this, _adapter, getAdapter(channel));
+      this.dataset.wallpaper = __privateGet(this, _adapter).wallpaper;
       __privateSet(this, _timeline, compile(script, { seed, channel, locale, tz, t0 }));
       __privateSet(this, _postedAt, postedAtByMsgId(__privateGet(this, _timeline).frames));
       this.textContent = "";
@@ -654,7 +781,7 @@ var CfChatSimCapture = (() => {
       __privateSet(this, _log, document.createElement("ol"));
       __privateGet(this, _log).className = "cf-log";
       this.appendChild(__privateGet(this, _log));
-      const finalState = stateAtStep2(__privateGet(this, _timeline), __privateGet(this, _timeline).frames.length);
+      const finalState = stateAtStep(__privateGet(this, _timeline), __privateGet(this, _timeline).frames.length);
       finalState.order.forEach((id) => {
         const li = document.createElement("li");
         li.className = "cf-msg";
@@ -675,19 +802,17 @@ var CfChatSimCapture = (() => {
         __privateGet(this, _log).insertBefore(sep, __privateGet(this, _msgEls).get(id));
         __privateGet(this, _dateSeps).push({ triggerId: id, li: sep });
       });
-      const intervals = draftIntervals2(__privateGet(this, _timeline));
-      intervals.forEach((interval) => {
+      __privateSet(this, _typingRows, draftIntervals(__privateGet(this, _timeline)).map((interval) => {
         const li = document.createElement("li");
         li.className = "cf-typing-row";
         li.dataset.dir = actorDir(interval.by);
         li.hidden = true;
         li.innerHTML = '<span class="cf-bubble cf-typing"><i></i><i></i><i></i></span>';
-        interval.li = li;
         const anchorIdx = interval.afterMsgId ? finalState.order.indexOf(interval.afterMsgId) + 1 : 0;
         const anchor = anchorIdx < finalState.order.length ? __privateGet(this, _msgEls).get(finalState.order[anchorIdx]) : null;
         __privateGet(this, _log).insertBefore(li, anchor);
-      });
-      __privateSet(this, _typingIntervals, intervals);
+        return { interval, li };
+      }));
       this.appendChild(__privateMethod(this, _CfChatSimElement_instances, buildComposer_fn).call(this));
       const initialStep = this.hasAttribute("data-step") ? Number(this.getAttribute("data-step")) : __privateGet(this, _timeline).frames.length;
       this.dataset.step = String(initialStep);
@@ -722,7 +847,7 @@ var CfChatSimCapture = (() => {
   _postedAt = new WeakMap();
   _msgEls = new WeakMap();
   _log = new WeakMap();
-  _typingIntervals = new WeakMap();
+  _typingRows = new WeakMap();
   _dateSeps = new WeakMap();
   _playhead = new WeakMap();
   _adapter = new WeakMap();
@@ -773,7 +898,7 @@ var CfChatSimCapture = (() => {
     if (!__privateGet(this, _timeline) || !__privateGet(this, _log)) return;
     if (step === __privateGet(this, _lastStep)) return;
     __privateSet(this, _lastStep, step);
-    const state = stateAtStep2(__privateGet(this, _timeline), step);
+    const state = stateAtStep(__privateGet(this, _timeline), step);
     __privateMethod(this, _CfChatSimElement_instances, reconcile_fn).call(this, state, step);
   };
   /** ChatDemo.astro's exact trick (`s.offsetWidth + 10`, global.css's `measure()`): `--cf-cs-pad`
@@ -818,9 +943,8 @@ var CfChatSimCapture = (() => {
     });
     if (state.draft) this.setAttribute("data-drafting", state.draft.by);
     else this.removeAttribute("data-drafting");
-    __privateGet(this, _typingIntervals).forEach((interval) => {
-      if (!interval.li) return;
-      interval.li.hidden = !(step >= interval.appearStep && step < interval.vanishStep);
+    __privateGet(this, _typingRows).forEach((row) => {
+      row.li.hidden = !(step >= row.interval.appearStep && step < row.interval.vanishStep);
     });
     __privateMethod(this, _CfChatSimElement_instances, applyBottomAnchor_fn).call(this);
   };
@@ -838,5 +962,39 @@ var CfChatSimCapture = (() => {
   };
   __publicField(CfChatSimElement, "observedAttributes", ["data-step"]);
   customElements.define("cf-chat-sim", CfChatSimElement);
+
+  // src/components/chat-sim/element/fixtures.ts
+  var WHATSAPP_REFERENCE_ADAPTER = {
+    tail: "first",
+    wallpaper: "pattern",
+    reactions: "overlay-below",
+    reactionConstraint: {
+      emoji: "any",
+      allowlistSize: 0,
+      maxAgeDays: 30,
+      canTargetReaction: false,
+      canTargetOutbound: true,
+      maxPerMessage: 0
+    },
+    groupKey: "actor",
+    deliveryStates: ["queued", "sent", "delivered", "read", "failed"],
+    receiptGlyph: "double-tick",
+    counter: "none",
+    timestamp: "inside-pad",
+    quote: "color-bar",
+    bubbleTransport: "per-conversation",
+    senderKinds: ["human", "ai"],
+    keyboard: "os-qwerty",
+    album: "grid-in-one-bubble",
+    e2eNotice: true,
+    avatarSide: "inbound"
+  };
+  var CAPS_FIXTURE_INVERTED_ADAPTER = {
+    ...WHATSAPP_REFERENCE_ADAPTER,
+    tail: "last",
+    receiptGlyph: "single-tick",
+    timestamp: "inside-plain",
+    reactions: "own-row"
+  };
   return __toCommonJS(index_exports);
 })();

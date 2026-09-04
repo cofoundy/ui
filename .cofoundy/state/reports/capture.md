@@ -1,6 +1,56 @@
-wall_clock_minutes: 55
+wall_clock_minutes: 55 (+40 reactivation)
 
 # capture — T-004 (PNG determinista + settle gate)
+
+## Reactivation — session-leak report (team-lead)
+
+**Measured, not assumed** (team-lead's own ask #1). Reproduced the leak directly: baseline
+`agent-browser session list` = `["default"]`; ran one capture through the real CLI; it failed with
+the exact symptom reported (`"Resource temporarily unavailable (os error 35)... daemon may be
+busy"`); session list AFTER the whole process exited still showed the leaked
+`chat-sim-capture-*` session. Root cause was NOT that `captureFrame`'s `finally { ab.close(session) }`
+wasn't running — it was, every time. It was that `agentBrowser.close()`'s `catch {}` silently
+swallowed close's OWN failure against the same degraded daemon, so the finally block ran, called
+`close()`, `close()` failed too, and nothing surfaced. Fixed in `agentBrowser.ts`:
+
+1. `close()` now retries (5x, backoff) and WARNS on stderr if every retry is exhausted, instead of
+   swallowing silently.
+2. `run()` (every `agent-browser` call, not just `close`) retries transient daemon errors with
+   backoff — widened to also match `ETIMEDOUT` (measured: under heavier load the SAME contention
+   surfaces as our own client-side timeout, not just the daemon's "os error 35" message).
+3. `captureFrame`'s `session` option (ask #3): omit it and the call owns a fresh ephemeral session
+   (unchanged default behavior); pass an explicit name and the CALLER owns open/close — a batch of
+   captures then shares ONE Chrome process instead of spinning one per frame. `determinism.test.ts`
+   now uses this (all 4 of its captures share one session).
+4. New `capture/__tests__/session-lifecycle.test.ts` (ask #4): asserts N ephemeral captures leave
+   `agent-browser session list`'s length unchanged, AND that a capture forced to fail (an
+   unwritable output directory) still closes its own session — this second case is what actually
+   exercises the bug above; "close() was called" was never the gap, "close() succeeding was
+   assumed" was.
+
+**Re-verified the no-leak invariant live, 3 separate times, against the machine's CURRENT real
+load** (not the test — directly): each time, a capture failed, and each time `agent-browser
+session list` still returned to `["default"]` afterward. The leak fix holds.
+
+**What's still failing, and why it's not a `capture/**` bug**: right now this shared machine is
+under severe memory pressure — measured via `vm_stat` (~200-350MB free of 23GB, ~8GB in the
+compressor) and `top` (load avg 3.06, `Disks`/`CSW` churn, near-zero free pages) — almost certainly
+from 5 lanes + team-lead's own agent-browser usage all running concurrent headless Chrome on one
+box. `agent-browser eval` now fails with `"CDP command timed out: Runtime.evaluate"` — Chrome
+itself, not just the daemon's IPC layer, is too starved to answer a DevTools Protocol call in time.
+Confirmed it's NOT a leaked-session pileup causing this: `ps aux` showed exactly ONE Chrome browser
+process tree running at the time (its normal helper/renderer/GPU children, not multiple browsers).
+`session-lifecycle.test.ts`'s happy-path assertion can't currently complete a full run for this
+reason (raised its timeout to 300s and it still didn't land a capture) — the earlier evidence PNGs
+in this report (committed before this reactivation) were captured when the machine had headroom, so
+they remain valid; re-running the full suite for a clean pass needs the shared machine to have
+memory available, which is outside `capture/**`'s scope to fix (it's a shared-infra capacity
+question — every lane doing heavy headless-Chrome work concurrently on one box).
+
+`capture.bundle.js` regenerated in this same commit (had gone stale against `[skin]`'s further
+`element/**`/`styles.css` edits since the original T-004 delivery — own freshness gate caught it).
+
+## Original delivery (below), unchanged except where noted above
 
 ## Delivered
 
@@ -98,7 +148,12 @@ small `t0` values (e.g. `0`), which never crosses the boundary. Worked around he
 
 ## Flagged for the CTO
 
-- **`.cofoundy/tasks/T-009.md` filed against `[core]`** — see above.
+- **`.cofoundy/tasks/T-009.md` filed against `[core]`** — see above. **Resolved by `core`** at the
+  actual root cause (not the Int32Array symptom this file worked around): `compile()` was storing
+  `Frame.t` as an ABSOLUTE epoch tick when `architecture-v1.md`'s own formatting formula
+  (`fmt(t0 + f.t, …)`) only holds if `f.t` is RELATIVE to `t0`. `tickToStep`'s own workaround
+  (searching `Timeline.frames` instead of the corrupted `Timeline.keys`) stays correct either way —
+  it never assumed absolute vs. relative — so no follow-up change was needed here.
 - **Pre-existing, unrelated**: `npx vitest run src/components/chat-sim` currently fails
   `element/__tests__/bundle-freshness.test.ts` — `demo/chat-sim.bundle.js` (skin's `W` cell) is
   stale relative to the CURRENT `element/index.ts` (verified: `git status` shows zero modification

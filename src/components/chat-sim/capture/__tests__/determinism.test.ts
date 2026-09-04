@@ -2,8 +2,16 @@
 // romper el byte-compare. Un test que no puede ponerse rojo no mide nada."
 //
 // Drives the REAL agent-browser CLI + a REAL headless Chrome — this is deliberately not mocked
-// (agent-floor.md: "mocked-only tests are judgment-tier amend, not proof"). Slow (~4 real browser
-// sessions); timeouts below are generous on purpose.
+// (agent-floor.md: "mocked-only tests are judgment-tier amend, not proof").
+//
+// REACTIVATION (team-lead, session-leak report): this file used to let captureFrame() open a
+// brand-new `agent-browser` session (= a new Chrome process) for each of its 4 captures. Measured
+// contributing to the shared daemon (every lane in this cycle hits the SAME `agent-browser`
+// daemon) going unresponsive under load ("Resource temporarily unavailable (os error 35)"). All 4
+// captures below now share ONE session, opened once in beforeAll and closed once in afterAll (see
+// captureFrame.ts's `session` option) — settleScript.ts already tears down and rebuilds
+// `<cf-chat-sim>` from scratch on every call, so reusing the underlying Chrome PROCESS doesn't
+// weaken either acceptance line, it just stops spinning 4 of them for 4 captures.
 //
 // Why `t` is chosen the way it is below, not just "capture the final state": jitter (core/prng.ts,
 // positional PRNG) only perturbs FRAME TIMING, never message content — a script whose only
@@ -27,7 +35,7 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { compile } from '../../index';
 import type { SimScript } from '../../core/types';
-import { captureFrame } from '../captureFrame';
+import { captureFrame, closeCaptureSession, openCaptureSession } from '../captureFrame';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const FIXTURE_SCRIPT: SimScript = JSON.parse(
@@ -74,11 +82,14 @@ describe('capture determinism (T-004 acceptance #1 + #2)', () => {
   let outDir: string;
   const SEED_A = 7;
   const SEED_B = 99;
+  const SESSION = `chat-sim-capture-determinism-${process.pid}`;
 
   beforeAll(() => {
     outDir = mkdtempSync(join(tmpdir(), 'chat-sim-capture-determinism-'));
+    openCaptureSession(SESSION); // ONE Chrome process for every capture in this file — see header
   });
   afterAll(() => {
+    closeCaptureSession(SESSION);
     rmSync(outDir, { recursive: true, force: true });
   });
 
@@ -91,8 +102,22 @@ describe('capture determinism (T-004 acceptance #1 + #2)', () => {
       const outA1 = join(outDir, 'seedA-run1.png');
       const outA2 = join(outDir, 'seedA-run2.png');
 
-      await captureFrame(tlA, t, { ...RECIPE_BASE, seed: SEED_A, width: 380, dpr: 2, out: outA1 });
-      await captureFrame(tlA, t, { ...RECIPE_BASE, seed: SEED_A, width: 380, dpr: 2, out: outA2 });
+      await captureFrame(tlA, t, {
+        ...RECIPE_BASE,
+        seed: SEED_A,
+        width: 380,
+        dpr: 2,
+        out: outA1,
+        session: SESSION,
+      });
+      await captureFrame(tlA, t, {
+        ...RECIPE_BASE,
+        seed: SEED_A,
+        width: 380,
+        dpr: 2,
+        out: outA2,
+        session: SESSION,
+      });
 
       expect(sha256(outA1)).toBe(sha256(outA2));
     },
@@ -109,8 +134,22 @@ describe('capture determinism (T-004 acceptance #1 + #2)', () => {
       const outA = join(outDir, 'seedA-twin.png');
       const outB = join(outDir, 'seedB-twin.png');
 
-      await captureFrame(tlA, t, { ...RECIPE_BASE, seed: SEED_A, width: 380, dpr: 2, out: outA });
-      await captureFrame(tlB, t, { ...RECIPE_BASE, seed: SEED_B, width: 380, dpr: 2, out: outB });
+      await captureFrame(tlA, t, {
+        ...RECIPE_BASE,
+        seed: SEED_A,
+        width: 380,
+        dpr: 2,
+        out: outA,
+        session: SESSION,
+      });
+      await captureFrame(tlB, t, {
+        ...RECIPE_BASE,
+        seed: SEED_B,
+        width: 380,
+        dpr: 2,
+        out: outB,
+        session: SESSION,
+      });
 
       expect(sha256(outA)).not.toBe(sha256(outB));
     },
