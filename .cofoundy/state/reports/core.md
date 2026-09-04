@@ -56,3 +56,66 @@ a pegar contra la misma restricción cuando skin lo necesite.
 - Commit `942383e` en `cto/chat-sim-rewrite`, pusheado a `origin`. Worktree compartido con
   `skin` (`element/**` apareció sin commitear durante la tarea, no tocado — `git add` explícito
   por paths, nunca `-A`).
+
+---
+
+wall_clock_minutes: 20
+
+# T-001 reactivación — fold.ts: draft no se limpiaba + perdía el actor
+
+Dos bugs que `skin` encontró en vivo en el demo (ver mensaje del team-lead). Fix en
+`core/fold.ts` + `core/compile.ts` + `core/types.ts`:
+1. `post` ahora limpia `draft: null` — la burbuja de "escribiendo…" ya no queda colgada.
+2. `Ev.draft` pasó de `{idx:number, chars}` (mi primer intento, equivocado — un registro de
+   actores por índice que nadie más necesitaba) a `{by:ActorId, chars}` — enmienda al contrato
+   (`api-contract.md`), ya anotada por el CTO con verificación de mutación propia.
+
+Verificado en rojo (git-stash del fix ⇒ 5 aserciones fallan) y en verde (27/27 en `core`).
+Commit `a2f899c`, pusheado. Efecto colateral en el test de `skin` (`data-drafting` value)
+flagueado directo a `skin` — no tocado, `element/**` no es mi scope.
+
+---
+
+wall_clock_minutes: 25
+
+# T-003 — core: fold completo + checkpoints + seek O(log n + 64)
+
+## Entregado
+- `core/fold.ts` — `applyEvent` gana `edit`/`delete`/`react`/`pin`/`unpin`/`receipt`/`read`/
+  `views`. Todos no-op sobre un id desconocido (fold total, nunca throws). `overlay`/`cue`
+  siguen no-op — `cue` por diseño (arch §1: "emitido, no aplicado por el reducer"), `overlay`
+  sin dueño asignado todavía (no es de esta tarea).
+- `core/types.ts` — `SimStep` gana las 8 variantes correspondientes, estructuralmente
+  idénticas a su `Ev` (+ `delayMs`): referencian un `MsgId` ya asignado por `post`, no asignan
+  uno nuevo.
+- `core/compile.ts` — `checkpoints[]` cada `CHECKPOINT_INTERVAL=64` frames (`checkpoints[k]` =
+  estado tras exactamente `64k` frames).
+- `core/seek.ts` — reemplaza el fold-desde-cero de T-001 por `checkpoints[i>>6]` + fold del
+  remanente (<64 frames). `seekFoldSteps()` nueva (hook de verificación, no firma pública) para
+  contar pasos de fold reales en vez de medir reloj.
+- 3 archivos de test nuevos/ampliados: `fold-extended.test.ts` (10 tests), `seek.test.ts`
+  (+5 tests), `fold.test.ts` intacto.
+
+## Acceptance (falsable) — status
+1. Seek adelante/atrás mismo `t` ⇒ deep-equal (ya cubierto T-001) + **gemelo anti-aliasing**:
+   dos `t` en frames distintos ⇒ estados distintos — `seek.test.ts`. **passed**
+2. `react` sobre mensaje posteado se refleja tras `seek` posterior + **gemelo negativo**: `seek`
+   a un `t` anterior al `react` ⇒ la reacción no está — `seek.test.ts`. **passed**
+3. **Contador de pasos de fold** (no reloj): `seekFoldSteps` ≤ `CHECKPOINT_INTERVAL` (64) para
+   guiones de 10/500/5000 pasos. Escalado 500 vs 5000: mismo orden de pasos (no lineal) —
+   `seek.test.ts`. **passed**. Verifiqué el instrumento en rojo: reemplacé `seek.ts` por un fold
+   lineal sin checkpoints → 500 y 5000 pasos respectivamente (el fallo exacto que la task
+   advertía); restaurado y confirmado verde.
+
+## Notas
+- `npx vitest run chat-sim/core`: 8 files / 42 tests, verde. Suite completa del repo: 572/574 —
+  los 2 rojos son heredados (`ChatInput` de `main`, no relacionado) y el gate de frescura del
+  bundle de `demo/chat-sim.bundle.js` (esperado: mi cambio en `core/**` invalida un bundle que
+  bundlea `core/**` transitivamente; el CTO ya dispuso que `skin` lo regenera como último paso
+  antes del merge — no es mi scope.write, no lo toqué).
+- `tsc --noEmit`: 0 errores en `chat-sim/**` (los 2 que arroja son preexistentes de
+  `hero-shader/*.tsx`, no tocados).
+- Mis cambios quedaron co-commiteados con un commit de documentación del CTO (`984bc54`) — el
+  CTO stasheó mi WIP no commiteado para aislar un rojo propio (riesgo que documentó en
+  `_cto-index.md`) y el pop los reincorporó junto con su commit. Confirmé `git diff HEAD --
+  core/` vacío: nada se perdió ni se mezcló mal. Pusheado.
