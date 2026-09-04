@@ -9,7 +9,11 @@
 // `Math.random`. Same (id, layer index, sample index) => same draw, always — exactly what makes
 // "same pack twice => same digest" (T-006 acceptance #3's positive twin) hold.
 
-import { digestOf, rand } from '../index';
+// Direct file imports, not the '../index' barrel: it re-exports `ChatSim` from `./react`
+// (T-007), which would pull React into audition.bundle.js even though nothing here uses it —
+// element/chat-sim-element.ts hit this exact problem first (see its own comment).
+import { digestOf } from '../core/digest';
+import { rand } from '../core/prng';
 import type { Cue, CueLayer, Wave } from './types';
 
 export const SAMPLE_RATE = 44100;

@@ -62,12 +62,16 @@
     <cf-chat-sim
       channel="whatsapp"
       seed="7"
-      t0="1767261600000"
+      t0="1789761600000"
       locale="es-PE"
       tz="America/Lima"
       contact-name="Fovente — Reservas"
       contact-status="en línea"
     >
+      <!-- t0 = a real calendar instant (2026-09-18 15:00 America/Lima), not the epoch — safe
+           since core fixed the t0 double-counting bug (0c86277): Frame.t is script-relative,
+           formatTime does t0+tick itself. A realistic date is what makes the date-separator pill
+           read as a real conversation instead of "1 de enero". -->
       <script type="application/json">
         [
           { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 500 },
@@ -77,15 +81,16 @@
           { "k": "draft", "by": "out:ai", "chars": 30, "delayMs": 400 },
           { "k": "post", "by": "out:ai", "text": "Perfecto, reservado para 4 el sábado a las 8pm 🎉", "delayMs": 900 },
           { "k": "post", "by": "out:ai", "text": "Te llega la confirmación por este mismo chat.", "delayMs": 750 },
-          { "k": "flag", "key": "aiOn", "value": true, "delayMs": 0 }
+          { "k": "flag", "key": "aiOn", "value": true, "delayMs": 0 },
+          { "k": "receipt", "id": "m4", "to": "read", "delayMs": 600 }
         ]
       </script>
     </cf-chat-sim>
 
     <div class="controls">
       <button id="replay">▶ replay</button>
-      <label>data-step <input id="step" type="range" min="0" max="8" value="8" /></label>
-      <span id="step-label">8</span>
+      <label>data-step <input id="step" type="range" min="0" max="9" value="9" /></label>
+      <span id="step-label">9</span>
     </div>
 
     <!-- Plain <script>, not type="module": file:// + ES module imports hit Chrome's strict CORS

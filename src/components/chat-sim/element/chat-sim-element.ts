@@ -12,87 +12,40 @@
 // core/** (compile/seek/createPlayhead/initialState/applyEvent) is [core]'s W cell; this file only
 // reads it (file-ownership-matrix.md gives [skin] `R` on core/**).
 
-import {
-  applyEvent,
-  compile,
-  createPlayhead,
-  initialState,
-  type ChannelAdapter,
-  type ChannelId,
-  type Frame,
-  type MsgId,
-  type MsgState,
-  type Playhead,
-  type SimScript,
-  type SimState,
-  type Timeline,
-} from '../index';
-import { WHATSAPP_REFERENCE_ADAPTER } from './fixtures';
+// Deliberately NOT importing from '../index' (the chat-sim barrel): it re-exports `ChatSim` from
+// `./react` (T-007), so going through it would pull React transitively into this bundle even
+// though nothing here uses it — confirmed the hard way (assert-no-react.mjs caught 97KB of React
+// the first time this file switched to core's promoted stateAtStep/draftIntervals via the
+// barrel). Direct file imports instead — file-ownership-matrix.md gives [skin] `R` on `core/**`
+// and `adapters/**`, and a direct import can't accidentally drag in a sibling subpath's deps.
+import { compile } from '../core/compile';
+import { createPlayhead, type Playhead } from '../core/playhead';
+import { stateAtStep } from '../core/seek';
+import { draftIntervals, type DraftInterval } from '../core/draft-intervals';
+import { getAdapter } from '../adapters/registry';
+import type {
+  ChannelAdapter,
+  ChannelId,
+  Frame,
+  MsgId,
+  MsgState,
+  SimScript,
+  SimState,
+  Timeline,
+} from '../core/types';
 import { actorDir, computeGroupFlags, populateMessageElement } from './render';
 import type { RenderMessage } from './render';
 
-/** One [appearStep, vanishStep) window during which `state.draft` is active for a given actor —
- * team-lead's root-cause diagnosis (T-002 iteration 3): re-populating/re-inserting the typing
- * node on every reconcile pass kills its CSS animation loop, because `data-step` changes on
- * EVERY rAF tick during playback (~60/s), not just at script-step boundaries — most of those
- * ticks fall between steps and would otherwise still churn every visible node. The fix is
- * structural: figure out, once, every step-range where a draft is active, build ONE stable <li>
- * per range at its correct position in the flow, and during playback only ever flip `hidden` on
- * it — matching exactly what messages already do post-pre-render. */
-interface TypingInterval {
-  readonly by: string;
-  readonly appearStep: number;
-  readonly vanishStep: number;
-  /** The last posted MsgId strictly before this window opens, or `null` if the draft opens before
-   * any message has posted — this is what lets connectedCallback place the <li> at its real
-   * position in the flow, built once, instead of appending it wherever playback happens to be. */
-  readonly afterMsgId: MsgId | null;
-  li: HTMLLIElement | null;
-}
-
-/** Exact frame count applied — the integer `data-step` counts, NOT a raw Tick (architecture-v1.md
- * §13 #2: "N clases acumuladas" becomes "N frames applied"). Deliberately its own tiny fold
- * instead of `seek(tl, t)`: `seek` resolves by Tick, and two frames with equal jitter-adjusted
- * ticks would make a Tick-keyed step ambiguous. Frame-count is unambiguous by construction. */
-function stateAtStep(tl: Timeline, step: number): SimState {
-  let state = initialState();
-  const upto = Math.max(0, Math.min(step, tl.frames.length));
-  for (let i = 0; i < upto; i++) state = applyEvent(state, tl.frames[i].ev);
-  return state;
-}
-
-/** One forward fold pass computing every `state.draft` active window, generically — this asks
- * "when was `draft` non-null" rather than hardcoding "drafts end at the next post", so it keeps
- * working however core/fold.ts's clearing rule evolves (T-003 may add more ways a draft ends).
- * Also records `afterMsgId` (the last posted MsgId strictly before the window opens, or `null`)
- * so the caller can place the interval's <li> at its real position in the flow. */
-function draftIntervals(tl: Timeline): TypingInterval[] {
-  const out: TypingInterval[] = [];
-  let state = initialState();
-  let openSince: number | null = null;
-  let openBy = '';
-  let openAfter: MsgId | null = null;
-  let lastMsgId: MsgId | null = null;
-
-  for (let i = 0; i < tl.frames.length; i++) {
-    const ev = tl.frames[i].ev;
-    const wasOpen = state.draft !== null;
-    state = applyEvent(state, ev);
-    const step = i + 1;
-    if (!wasOpen && state.draft) {
-      openSince = step;
-      openBy = state.draft.by;
-      openAfter = lastMsgId;
-    } else if (wasOpen && !state.draft) {
-      out.push({ by: openBy, appearStep: openSince!, vanishStep: step, afterMsgId: openAfter, li: null });
-      openSince = null;
-    }
-    if (ev.k === 'post') lastMsgId = ev.id;
-  }
-  if (openSince !== null) {
-    out.push({ by: openBy, appearStep: openSince, vanishStep: tl.frames.length, afterMsgId: openAfter, li: null });
-  }
-  return out;
+/** A `DraftInterval` (core/draft-intervals.ts — promoted from this file, T-002/T-006, so
+ * app/'s T-007 and this file read the same implementation instead of a third copy) plus the
+ * DOM bookkeeping that's genuinely element/'s own: the pre-built, stable `<li>` for this window.
+ * Team-lead's root-cause diagnosis (T-002 iteration 3) for why the node must be built ONCE and
+ * only ever `hidden`-toggled: re-populating/re-inserting it on every reconcile pass kills its CSS
+ * animation loop, because `data-step` changes on EVERY rAF tick during playback (~60/s), not just
+ * at script-step boundaries. */
+interface TypingRow {
+  readonly interval: DraftInterval;
+  readonly li: HTMLLIElement;
 }
 
 /** First `post` frame per MsgId → the Tick to format as this message's displayed time. `Frame.t`
@@ -158,10 +111,17 @@ export class CfChatSimElement extends HTMLElement {
   #postedAt = new Map<MsgId, number>();
   #msgEls = new Map<MsgId, HTMLLIElement>();
   #log: HTMLOListElement | null = null;
-  #typingIntervals: TypingInterval[] = [];
+  #typingRows: TypingRow[] = [];
   #dateSeps: { triggerId: MsgId; li: HTMLLIElement }[] = [];
   #playhead: Playhead | null = null;
-  #adapter: ChannelAdapter = WHATSAPP_REFERENCE_ADAPTER;
+  /** Bug found by `app`, confirmed reading this file (T-002 iteration 5): this used to be a fixed
+   * `WHATSAPP_REFERENCE_ADAPTER` fixture, and the `channel` attribute only ever fed `compile()` —
+   * nothing ever called `getAdapter(channel)`, so `<cf-chat-sim channel="telegram">` silently
+   * rendered WhatsApp chrome. Not this lane's fault at the time: T-005's registry didn't exist yet
+   * when this was written (see the fixture's own now-removed "once it lands" comment) — it landed
+   * and nobody closed the loop. `connectedCallback` overwrites this with the real adapter before
+   * anything gets built; the default here only matters for the instant before that runs. */
+  #adapter: ChannelAdapter = getAdapter('whatsapp');
   /** Guards against redoing any work when `data-step` is set to the value it already holds — the
    * root cause of the animation bug (team-lead, iteration 3): the playhead writes this attribute
    * on EVERY rAF tick (~60/s), and most ticks land between script steps, so without this guard
@@ -188,7 +148,6 @@ export class CfChatSimElement extends HTMLElement {
   connectedCallback(): void {
     this.classList.add('cf-chat-sim');
     if (!this.hasAttribute('role')) this.setAttribute('role', 'log');
-    this.dataset.wallpaper = this.#adapter.wallpaper;
 
     const script = this.#readScript();
     const channel = (this.getAttribute('channel') as ChannelId) || 'whatsapp';
@@ -196,6 +155,13 @@ export class CfChatSimElement extends HTMLElement {
     const locale = this.getAttribute('locale') || 'es-PE';
     const tz = this.getAttribute('tz') || 'America/Lima';
     const t0 = Number(this.getAttribute('t0') ?? String(Date.UTC(2026, 0, 1, 9, 0, 0)));
+
+    // THE fix (T-002 iteration 5): resolve the real adapter from the `channel` attribute instead
+    // of leaving the class-field default in place. `getAdapter` throws for a channel with no
+    // registered adapter (only 'imessage', by design — architecture-v1.md §10); that's a real
+    // authoring error in the markup, not something to swallow into a silent WhatsApp fallback.
+    this.#adapter = getAdapter(channel);
+    this.dataset.wallpaper = this.#adapter.wallpaper;
 
     this.#timeline = compile(script, { seed, channel, locale, tz, t0 });
     this.#postedAt = postedAtByMsgId(this.#timeline.frames);
@@ -242,21 +208,19 @@ export class CfChatSimElement extends HTMLElement {
     });
 
     // Typing/"…" indicators: ONE stable <li> per draft window, built here at its real position in
-    // the flow (never moved, never re-populated during playback — see TypingInterval's comment).
-    const intervals = draftIntervals(this.#timeline);
-    intervals.forEach((interval) => {
+    // the flow (never moved, never re-populated during playback — see TypingRow's comment).
+    this.#typingRows = draftIntervals(this.#timeline).map((interval) => {
       const li = document.createElement('li');
       li.className = 'cf-typing-row';
       li.dataset.dir = actorDir(interval.by);
       li.hidden = true;
       li.innerHTML = '<span class="cf-bubble cf-typing"><i></i><i></i><i></i></span>';
-      interval.li = li;
 
       const anchorIdx = interval.afterMsgId ? finalState.order.indexOf(interval.afterMsgId) + 1 : 0;
       const anchor = anchorIdx < finalState.order.length ? this.#msgEls.get(finalState.order[anchorIdx])! : null;
       this.#log!.insertBefore(li, anchor);
+      return { interval, li };
     });
-    this.#typingIntervals = intervals;
 
     this.appendChild(this.#buildComposer());
 
@@ -423,9 +387,8 @@ export class CfChatSimElement extends HTMLElement {
     // Typing indicators: flip `hidden` on the ALREADY-BUILT <li> for whichever window contains
     // `step` — never innerHTML, never appendChild/insertBefore here. That's what keeps the CSS
     // animation looping instead of restarting every time this runs (team-lead's diagnosis).
-    this.#typingIntervals.forEach((interval) => {
-      if (!interval.li) return;
-      interval.li.hidden = !(step >= interval.appearStep && step < interval.vanishStep);
+    this.#typingRows.forEach((row) => {
+      row.li.hidden = !(step >= row.interval.appearStep && step < row.interval.vanishStep);
     });
 
     this.#applyBottomAnchor();

@@ -21,8 +21,18 @@ const FRAME_COUNT = 6;
 const POST_COUNT = 5;
 
 function mount(step?: number): HTMLElement {
+  return mountWithChannel('whatsapp', step);
+}
+
+/** Mounts by ATTRIBUTE only — never touches `.adapter` directly. That distinction is the whole
+ * point of the test this helper serves (T-002 iteration 5, bug found by `app`): setting
+ * `.adapter` by hand exercises render.ts's caps-fixture correctly, but it can't catch
+ * connectedCallback failing to resolve `getAdapter(channel)` from the markup in the first place —
+ * which is exactly the bug that shipped (`<cf-chat-sim channel="telegram">` silently rendering
+ * WhatsApp chrome). */
+function mountWithChannel(channel: string, step?: number): HTMLElement {
   const el = document.createElement('cf-chat-sim');
-  el.setAttribute('channel', 'whatsapp');
+  el.setAttribute('channel', channel);
   el.setAttribute('seed', '7');
   el.setAttribute('t0', '1767261600000');
   if (step !== undefined) el.setAttribute('data-step', String(step));
@@ -204,6 +214,32 @@ describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
       expect(label.toLowerCase()).not.toContain('hoy');
       expect(label.toLowerCase()).not.toContain('ayer');
       expect(label.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('channel attribute actually resolves the real adapter (T-002 iteration 5 — bug found by app, confirmed by team-lead)', () => {
+    it('channel="telegram" renders Telegram chrome — tail on the LAST of a streak, single-tick, inside-plain timestamp', () => {
+      const el = mountWithChannel('telegram');
+      const msgs = [...el.querySelectorAll('.cf-msg')];
+      // same streak as the WhatsApp test below (index 3,4, both out:ai) — Telegram's
+      // adapter.tail === 'last' tails the OPPOSITE message from WhatsApp's.
+      expect(msgs[3].hasAttribute('data-tail')).toBe(false);
+      expect(msgs[4].hasAttribute('data-tail')).toBe(true);
+      // single-tick: exactly one <path> in the receipt SVG (WhatsApp's double-tick has two).
+      const receipt = msgs[3].querySelector('.cf-receipt');
+      expect(receipt?.querySelectorAll('path')).toHaveLength(1);
+      // inside-plain: no .cf-pad sibling reserving inline space before the stamp.
+      expect(msgs[0].querySelector('.cf-bubble > .cf-pad')).toBeNull();
+    });
+
+    it('twin: channel="whatsapp" (the default) renders WhatsApp chrome — same script, opposite answers', () => {
+      const el = mountWithChannel('whatsapp');
+      const msgs = [...el.querySelectorAll('.cf-msg')];
+      expect(msgs[3].hasAttribute('data-tail')).toBe(true);
+      expect(msgs[4].hasAttribute('data-tail')).toBe(false);
+      const receipt = msgs[3].querySelector('.cf-receipt');
+      expect(receipt?.querySelectorAll('path')).toHaveLength(2);
+      expect(msgs[0].querySelector('.cf-bubble > .cf-pad')).not.toBeNull();
     });
   });
 });

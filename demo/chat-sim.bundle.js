@@ -56,6 +56,100 @@ var CfChatSim = (() => {
     return (h1 >>> 0).toString(16).padStart(8, "0") + (h2 >>> 0).toString(16).padStart(8, "0");
   }
 
+  // src/components/chat-sim/core/fold.ts
+  function initialState() {
+    return {
+      msgs: /* @__PURE__ */ new Map(),
+      order: [],
+      pinned: null,
+      draft: null,
+      flags: {},
+      overlays: [],
+      scrollId: null
+    };
+  }
+  function applyEvent(state, ev) {
+    switch (ev.k) {
+      case "post": {
+        const authored = ev.step;
+        const msg = {
+          id: ev.id,
+          by: authored.k === "post" ? authored.by : "",
+          v: 0,
+          text: authored.k === "post" ? authored.text : void 0,
+          media: authored.k === "post" ? authored.media : void 0,
+          deleted: null,
+          reactions: [],
+          receipt: "queued",
+          views: 0
+        };
+        const msgs = new Map(state.msgs);
+        msgs.set(ev.id, msg);
+        return { ...state, msgs, order: [...state.order, ev.id], scrollId: ev.id, draft: null };
+      }
+      case "draft": {
+        const draft = { by: ev.by, chars: ev.chars };
+        return { ...state, draft };
+      }
+      case "flag":
+        return { ...state, flags: { ...state.flags, [ev.key]: ev.value } };
+      case "edit": {
+        const msg = state.msgs.get(ev.id);
+        if (!msg) return state;
+        const msgs = new Map(state.msgs);
+        msgs.set(ev.id, { ...msg, v: ev.v });
+        return { ...state, msgs };
+      }
+      case "delete": {
+        const msg = state.msgs.get(ev.id);
+        if (!msg) return state;
+        const msgs = new Map(state.msgs);
+        msgs.set(ev.id, { ...msg, deleted: ev.scope });
+        return { ...state, msgs };
+      }
+      case "react": {
+        const msg = state.msgs.get(ev.id);
+        if (!msg) return state;
+        const reactions = ev.remove ? msg.reactions.filter((r) => !(r.by === ev.by && r.emoji === ev.emoji)) : [...msg.reactions, { emoji: ev.emoji, by: ev.by }];
+        const msgs = new Map(state.msgs);
+        msgs.set(ev.id, { ...msg, reactions });
+        return { ...state, msgs };
+      }
+      case "pin":
+        return state.msgs.has(ev.id) ? { ...state, pinned: ev.id } : state;
+      case "unpin":
+        return state.pinned === ev.id ? { ...state, pinned: null } : state;
+      case "receipt": {
+        const msg = state.msgs.get(ev.id);
+        if (!msg) return state;
+        const msgs = new Map(state.msgs);
+        msgs.set(ev.id, { ...msg, receipt: ev.to });
+        return { ...state, msgs };
+      }
+      case "read": {
+        const uptoIdx = state.order.indexOf(ev.upTo);
+        if (uptoIdx === -1) return state;
+        const msgs = new Map(state.msgs);
+        for (let i = 0; i <= uptoIdx; i++) {
+          const msg = msgs.get(state.order[i]);
+          if (msg && msg.receipt !== "read" && msg.receipt !== "failed") {
+            msgs.set(msg.id, { ...msg, receipt: "read" });
+          }
+        }
+        return { ...state, msgs };
+      }
+      case "views": {
+        const msg = state.msgs.get(ev.id);
+        if (!msg) return state;
+        const msgs = new Map(state.msgs);
+        msgs.set(ev.id, { ...msg, views: ev.n });
+        return { ...state, msgs };
+      }
+      default:
+        return state;
+    }
+  }
+
   // src/components/chat-sim/core/prng.ts
   function xmur3(str) {
     let h = 1779033703 ^ str.length;
@@ -97,6 +191,7 @@ var CfChatSim = (() => {
 
   // src/components/chat-sim/core/compile.ts
   var JITTER_MS_MAX = 400;
+  var CHECKPOINT_INTERVAL = 64;
   function stepToEv(step, id) {
     switch (step.k) {
       case "post":
@@ -105,11 +200,26 @@ var CfChatSim = (() => {
         return { k: "draft", by: step.by, chars: step.chars };
       case "flag":
         return { k: "flag", key: step.key, value: step.value };
+      case "edit":
+        return { k: "edit", id: step.id, v: step.v };
+      case "delete":
+        return { k: "delete", id: step.id, scope: step.scope };
+      case "react":
+        return { k: "react", id: step.id, emoji: step.emoji, by: step.by, remove: step.remove };
+      case "pin":
+      case "unpin":
+        return { k: step.k, id: step.id };
+      case "receipt":
+        return { k: "receipt", id: step.id, to: step.to };
+      case "read":
+        return { k: "read", upTo: step.upTo };
+      case "views":
+        return { k: "views", id: step.id, n: step.n };
     }
   }
   function compile(script, o) {
     const frames = [];
-    let clock = o.t0;
+    let clock = 0;
     let nextMsgId = 0;
     script.forEach((step, stepIdx) => {
       const jitter = Math.floor(rand(o.seed, stepIdx, 0) * JITTER_MS_MAX);
@@ -118,61 +228,24 @@ var CfChatSim = (() => {
       frames.push({ t: clock, ev: stepToEv(step, id) });
     });
     const keys = Int32Array.from(frames.map((f) => f.t));
-    const duration = frames.length > 0 ? frames[frames.length - 1].t : o.t0;
+    const duration = frames.length > 0 ? frames[frames.length - 1].t : 0;
     const digest = digestOf(
       JSON.stringify({ script, seed: o.seed, channel: o.channel, locale: o.locale, tz: o.tz })
     );
+    const checkpoints = [initialState()];
+    let state = checkpoints[0];
+    for (let idx = 0; idx < frames.length; idx++) {
+      state = applyEvent(state, frames[idx].ev);
+      if ((idx + 1) % CHECKPOINT_INTERVAL === 0) checkpoints.push(state);
+    }
     return {
       t0: o.t0,
       frames,
       keys,
-      checkpoints: [],
-      // full checkpointing is T-003 (architecture-v1.md §1, "cada K=64 frames")
+      checkpoints,
       duration,
       digest
     };
-  }
-
-  // src/components/chat-sim/core/fold.ts
-  function initialState() {
-    return {
-      msgs: /* @__PURE__ */ new Map(),
-      order: [],
-      pinned: null,
-      draft: null,
-      flags: {},
-      overlays: [],
-      scrollId: null
-    };
-  }
-  function applyEvent(state, ev) {
-    switch (ev.k) {
-      case "post": {
-        const authored = ev.step;
-        const msg = {
-          id: ev.id,
-          by: authored.k === "post" ? authored.by : "",
-          v: 0,
-          text: authored.k === "post" ? authored.text : void 0,
-          media: authored.k === "post" ? authored.media : void 0,
-          deleted: null,
-          reactions: [],
-          receipt: "queued",
-          views: 0
-        };
-        const msgs = new Map(state.msgs);
-        msgs.set(ev.id, msg);
-        return { ...state, msgs, order: [...state.order, ev.id], scrollId: ev.id, draft: null };
-      }
-      case "draft": {
-        const draft = { by: ev.by, chars: ev.chars };
-        return { ...state, draft };
-      }
-      case "flag":
-        return { ...state, flags: { ...state.flags, [ev.key]: ev.value } };
-      default:
-        return state;
-    }
   }
 
   // src/components/chat-sim/core/seek.ts
@@ -186,20 +259,33 @@ var CfChatSim = (() => {
     }
     return lo;
   }
-  function seek(tl, t) {
-    const upto = upperBound(tl.keys, t);
-    let state = initialState();
-    for (let i = 0; i < upto; i++) {
+  function foldFromCheckpoint(tl, upto) {
+    const checkpointIdx = Math.floor(upto / CHECKPOINT_INTERVAL);
+    const from = checkpointIdx * CHECKPOINT_INTERVAL;
+    let state = tl.checkpoints[checkpointIdx];
+    let foldSteps = 0;
+    for (let i = from; i < upto; i++) {
       state = applyEvent(state, tl.frames[i].ev);
+      foldSteps++;
     }
-    return state;
+    return { state, foldSteps };
+  }
+  function seekTraced(tl, t) {
+    return foldFromCheckpoint(tl, upperBound(tl.keys, t));
+  }
+  function seek(tl, t) {
+    return seekTraced(tl, t).state;
+  }
+  function stateAtStep(tl, step) {
+    const upto = Math.max(0, Math.min(step, tl.frames.length));
+    return foldFromCheckpoint(tl, upto).state;
   }
 
   // src/components/chat-sim/core/playhead.ts
   function createPlayhead(tl) {
     let playing = false;
     let playRate = 1;
-    let virtualT = tl.t0;
+    let virtualT = 0;
     let rafId = null;
     let lastWall = null;
     const listeners = /* @__PURE__ */ new Set();
@@ -246,8 +332,148 @@ var CfChatSim = (() => {
     };
   }
 
-  // src/components/chat-sim/element/fixtures.ts
-  var WHATSAPP_REFERENCE_ADAPTER = {
+  // src/components/chat-sim/core/draft-intervals.ts
+  function draftIntervals(tl) {
+    const out = [];
+    let state = initialState();
+    let openSince = null;
+    let openBy = "";
+    let openAfter = null;
+    let lastMsgId = null;
+    for (let i = 0; i < tl.frames.length; i++) {
+      const ev = tl.frames[i].ev;
+      const wasOpen = state.draft !== null;
+      state = applyEvent(state, ev);
+      const step = i + 1;
+      if (!wasOpen && state.draft) {
+        openSince = step;
+        openBy = state.draft.by;
+        openAfter = lastMsgId;
+      } else if (wasOpen && !state.draft) {
+        out.push({ by: openBy, appearStep: openSince, vanishStep: step, afterMsgId: openAfter });
+        openSince = null;
+      }
+      if (ev.k === "post") lastMsgId = ev.id;
+    }
+    if (openSince !== null) {
+      out.push({ by: openBy, appearStep: openSince, vanishStep: tl.frames.length, afterMsgId: openAfter });
+    }
+    return out;
+  }
+
+  // src/components/chat-sim/adapters/caps.ts
+  var VARIATION_SELECTOR_16 = "\uFE0F";
+  function normalizeReactionEmoji(emoji) {
+    return (emoji ?? "").replaceAll(VARIATION_SELECTOR_16, "");
+  }
+  var TELEGRAM_REACTIONS_RAW = [
+    "\u2764",
+    "\u{1F44D}",
+    "\u{1F44E}",
+    "\u{1F525}",
+    "\u{1F970}",
+    "\u{1F44F}",
+    "\u{1F601}",
+    "\u{1F914}",
+    "\u{1F92F}",
+    "\u{1F631}",
+    "\u{1F92C}",
+    "\u{1F622}",
+    "\u{1F389}",
+    "\u{1F929}",
+    "\u{1F92E}",
+    "\u{1F4A9}",
+    "\u{1F64F}",
+    "\u{1F44C}",
+    "\u{1F54A}",
+    "\u{1F921}",
+    "\u{1F971}",
+    "\u{1F974}",
+    "\u{1F60D}",
+    "\u{1F433}",
+    "\u2764\u200D\u{1F525}",
+    "\u{1F31A}",
+    "\u{1F32D}",
+    "\u{1F4AF}",
+    "\u{1F923}",
+    "\u26A1",
+    "\u{1F34C}",
+    "\u{1F3C6}",
+    "\u{1F494}",
+    "\u{1F928}",
+    "\u{1F610}",
+    "\u{1F353}",
+    "\u{1F37E}",
+    "\u{1F48B}",
+    "\u{1F595}",
+    "\u{1F608}",
+    "\u{1F634}",
+    "\u{1F62D}",
+    "\u{1F913}",
+    "\u{1F47B}",
+    "\u{1F468}\u200D\u{1F4BB}",
+    "\u{1F440}",
+    "\u{1F383}",
+    "\u{1F648}",
+    "\u{1F607}",
+    "\u{1F628}",
+    "\u{1F91D}",
+    "\u270D",
+    "\u{1F917}",
+    "\u{1FAE1}",
+    "\u{1F385}",
+    "\u{1F384}",
+    "\u2603",
+    "\u{1F485}",
+    "\u{1F92A}",
+    "\u{1F5FF}",
+    "\u{1F192}",
+    "\u{1F498}",
+    "\u{1F649}",
+    "\u{1F984}",
+    "\u{1F618}",
+    "\u{1F48A}",
+    "\u{1F64A}",
+    "\u{1F60E}",
+    "\u{1F47E}",
+    "\u{1F937}\u200D\u2642",
+    "\u{1F937}",
+    "\u{1F937}\u200D\u2640",
+    "\u{1F621}"
+  ];
+  var TELEGRAM_REACTIONS = new Set(
+    TELEGRAM_REACTIONS_RAW.map(normalizeReactionEmoji)
+  );
+
+  // src/components/chat-sim/adapters/telegram.ts
+  var telegram = {
+    tail: "last",
+    wallpaper: "pattern",
+    reactions: "own-row",
+    reactionConstraint: {
+      emoji: "allowlist",
+      allowlistSize: TELEGRAM_REACTIONS.size,
+      maxAgeDays: 0,
+      canTargetReaction: false,
+      canTargetOutbound: true,
+      maxPerMessage: 0
+    },
+    groupKey: "actor",
+    deliveryStates: ["queued", "sent", "read", "failed"],
+    receiptGlyph: "single-tick",
+    counter: "views",
+    timestamp: "inside-plain",
+    quote: "thin-bar",
+    bubbleTransport: "per-conversation",
+    senderKinds: ["human", "ai", "bot", "forwarded", "channel"],
+    keyboard: "inline-in-message",
+    album: "grid-in-one-bubble",
+    e2eNotice: false,
+    avatarSide: "inbound"
+  };
+
+  // src/components/chat-sim/adapters/whatsapp.ts
+  var whatsapp = {
     tail: "first",
     wallpaper: "pattern",
     reactions: "overlay-below",
@@ -272,13 +498,21 @@ var CfChatSim = (() => {
     e2eNotice: true,
     avatarSide: "inbound"
   };
-  var CAPS_FIXTURE_INVERTED_ADAPTER = {
-    ...WHATSAPP_REFERENCE_ADAPTER,
-    tail: "last",
-    receiptGlyph: "single-tick",
-    timestamp: "inside-plain",
-    reactions: "own-row"
+
+  // src/components/chat-sim/adapters/registry.ts
+  var ADAPTERS = {
+    whatsapp,
+    telegram
   };
+  function getAdapter(channel) {
+    const adapter = ADAPTERS[channel];
+    if (!adapter) {
+      throw new Error(
+        `chat-sim: no adapter registered for channel '${channel}' \u2014 out of scope this cycle (architecture-v1.md \xA710, "Adapter iMessage completo").`
+      );
+    }
+    return adapter;
+  }
 
   // src/components/chat-sim/element/render.ts
   function actorDir(by) {
@@ -455,39 +689,6 @@ var CfChatSim = (() => {
   }
 
   // src/components/chat-sim/element/chat-sim-element.ts
-  function stateAtStep(tl, step) {
-    let state = initialState();
-    const upto = Math.max(0, Math.min(step, tl.frames.length));
-    for (let i = 0; i < upto; i++) state = applyEvent(state, tl.frames[i].ev);
-    return state;
-  }
-  function draftIntervals(tl) {
-    const out = [];
-    let state = initialState();
-    let openSince = null;
-    let openBy = "";
-    let openAfter = null;
-    let lastMsgId = null;
-    for (let i = 0; i < tl.frames.length; i++) {
-      const ev = tl.frames[i].ev;
-      const wasOpen = state.draft !== null;
-      state = applyEvent(state, ev);
-      const step = i + 1;
-      if (!wasOpen && state.draft) {
-        openSince = step;
-        openBy = state.draft.by;
-        openAfter = lastMsgId;
-      } else if (wasOpen && !state.draft) {
-        out.push({ by: openBy, appearStep: openSince, vanishStep: step, afterMsgId: openAfter, li: null });
-        openSince = null;
-      }
-      if (ev.k === "post") lastMsgId = ev.id;
-    }
-    if (openSince !== null) {
-      out.push({ by: openBy, appearStep: openSince, vanishStep: tl.frames.length, afterMsgId: openAfter, li: null });
-    }
-    return out;
-  }
   function postedAtByMsgId(frames) {
     const out = /* @__PURE__ */ new Map();
     for (const f of frames) if (f.ev.k === "post") out.set(f.ev.id, f.t);
@@ -523,7 +724,7 @@ var CfChatSim = (() => {
       editedLabel: msg.v > 0 ? editedLabel : void 0
     };
   }
-  var _timeline, _postedAt, _msgEls, _log, _typingIntervals, _dateSeps, _playhead, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn;
+  var _timeline, _postedAt, _msgEls, _log, _typingRows, _dateSeps, _playhead, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn;
   var CfChatSimElement = class extends HTMLElement {
     constructor() {
       super(...arguments);
@@ -532,10 +733,17 @@ var CfChatSim = (() => {
       __privateAdd(this, _postedAt, /* @__PURE__ */ new Map());
       __privateAdd(this, _msgEls, /* @__PURE__ */ new Map());
       __privateAdd(this, _log, null);
-      __privateAdd(this, _typingIntervals, []);
+      __privateAdd(this, _typingRows, []);
       __privateAdd(this, _dateSeps, []);
       __privateAdd(this, _playhead, null);
-      __privateAdd(this, _adapter, WHATSAPP_REFERENCE_ADAPTER);
+      /** Bug found by `app`, confirmed reading this file (T-002 iteration 5): this used to be a fixed
+       * `WHATSAPP_REFERENCE_ADAPTER` fixture, and the `channel` attribute only ever fed `compile()` —
+       * nothing ever called `getAdapter(channel)`, so `<cf-chat-sim channel="telegram">` silently
+       * rendered WhatsApp chrome. Not this lane's fault at the time: T-005's registry didn't exist yet
+       * when this was written (see the fixture's own now-removed "once it lands" comment) — it landed
+       * and nobody closed the loop. `connectedCallback` overwrites this with the real adapter before
+       * anything gets built; the default here only matters for the instant before that runs. */
+      __privateAdd(this, _adapter, getAdapter("whatsapp"));
       /** Guards against redoing any work when `data-step` is set to the value it already holds — the
        * root cause of the animation bug (team-lead, iteration 3): the playhead writes this attribute
        * on EVERY rAF tick (~60/s), and most ticks land between script steps, so without this guard
@@ -558,13 +766,14 @@ var CfChatSim = (() => {
     connectedCallback() {
       this.classList.add("cf-chat-sim");
       if (!this.hasAttribute("role")) this.setAttribute("role", "log");
-      this.dataset.wallpaper = __privateGet(this, _adapter).wallpaper;
       const script = __privateMethod(this, _CfChatSimElement_instances, readScript_fn).call(this);
       const channel = this.getAttribute("channel") || "whatsapp";
       const seed = Number(this.getAttribute("seed") ?? "1");
       const locale = this.getAttribute("locale") || "es-PE";
       const tz = this.getAttribute("tz") || "America/Lima";
       const t0 = Number(this.getAttribute("t0") ?? String(Date.UTC(2026, 0, 1, 9, 0, 0)));
+      __privateSet(this, _adapter, getAdapter(channel));
+      this.dataset.wallpaper = __privateGet(this, _adapter).wallpaper;
       __privateSet(this, _timeline, compile(script, { seed, channel, locale, tz, t0 }));
       __privateSet(this, _postedAt, postedAtByMsgId(__privateGet(this, _timeline).frames));
       this.textContent = "";
@@ -593,19 +802,17 @@ var CfChatSim = (() => {
         __privateGet(this, _log).insertBefore(sep, __privateGet(this, _msgEls).get(id));
         __privateGet(this, _dateSeps).push({ triggerId: id, li: sep });
       });
-      const intervals = draftIntervals(__privateGet(this, _timeline));
-      intervals.forEach((interval) => {
+      __privateSet(this, _typingRows, draftIntervals(__privateGet(this, _timeline)).map((interval) => {
         const li = document.createElement("li");
         li.className = "cf-typing-row";
         li.dataset.dir = actorDir(interval.by);
         li.hidden = true;
         li.innerHTML = '<span class="cf-bubble cf-typing"><i></i><i></i><i></i></span>';
-        interval.li = li;
         const anchorIdx = interval.afterMsgId ? finalState.order.indexOf(interval.afterMsgId) + 1 : 0;
         const anchor = anchorIdx < finalState.order.length ? __privateGet(this, _msgEls).get(finalState.order[anchorIdx]) : null;
         __privateGet(this, _log).insertBefore(li, anchor);
-      });
-      __privateSet(this, _typingIntervals, intervals);
+        return { interval, li };
+      }));
       this.appendChild(__privateMethod(this, _CfChatSimElement_instances, buildComposer_fn).call(this));
       const initialStep = this.hasAttribute("data-step") ? Number(this.getAttribute("data-step")) : __privateGet(this, _timeline).frames.length;
       this.dataset.step = String(initialStep);
@@ -640,7 +847,7 @@ var CfChatSim = (() => {
   _postedAt = new WeakMap();
   _msgEls = new WeakMap();
   _log = new WeakMap();
-  _typingIntervals = new WeakMap();
+  _typingRows = new WeakMap();
   _dateSeps = new WeakMap();
   _playhead = new WeakMap();
   _adapter = new WeakMap();
@@ -736,9 +943,8 @@ var CfChatSim = (() => {
     });
     if (state.draft) this.setAttribute("data-drafting", state.draft.by);
     else this.removeAttribute("data-drafting");
-    __privateGet(this, _typingIntervals).forEach((interval) => {
-      if (!interval.li) return;
-      interval.li.hidden = !(step >= interval.appearStep && step < interval.vanishStep);
+    __privateGet(this, _typingRows).forEach((row) => {
+      row.li.hidden = !(step >= row.interval.appearStep && step < row.interval.vanishStep);
     });
     __privateMethod(this, _CfChatSimElement_instances, applyBottomAnchor_fn).call(this);
   };
@@ -756,5 +962,39 @@ var CfChatSim = (() => {
   };
   __publicField(CfChatSimElement, "observedAttributes", ["data-step"]);
   customElements.define("cf-chat-sim", CfChatSimElement);
+
+  // src/components/chat-sim/element/fixtures.ts
+  var WHATSAPP_REFERENCE_ADAPTER = {
+    tail: "first",
+    wallpaper: "pattern",
+    reactions: "overlay-below",
+    reactionConstraint: {
+      emoji: "any",
+      allowlistSize: 0,
+      maxAgeDays: 30,
+      canTargetReaction: false,
+      canTargetOutbound: true,
+      maxPerMessage: 0
+    },
+    groupKey: "actor",
+    deliveryStates: ["queued", "sent", "delivered", "read", "failed"],
+    receiptGlyph: "double-tick",
+    counter: "none",
+    timestamp: "inside-pad",
+    quote: "color-bar",
+    bubbleTransport: "per-conversation",
+    senderKinds: ["human", "ai"],
+    keyboard: "os-qwerty",
+    album: "grid-in-one-bubble",
+    e2eNotice: true,
+    avatarSide: "inbound"
+  };
+  var CAPS_FIXTURE_INVERTED_ADAPTER = {
+    ...WHATSAPP_REFERENCE_ADAPTER,
+    tail: "last",
+    receiptGlyph: "single-tick",
+    timestamp: "inside-plain",
+    reactions: "own-row"
+  };
   return __toCommonJS(index_exports);
 })();

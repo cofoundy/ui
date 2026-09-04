@@ -1,6 +1,59 @@
-wall_clock_minutes: 195
+wall_clock_minutes: 225
 
 # skin — T-002 + T-006 (stylesheet/element/layout, then sound packs + iMessage token)
+
+## Iteration 5 — real bug fix: `channel` attribute never reached the adapter
+
+`app` found it, team-lead confirmed reading `chat-sim-element.ts`: `#adapter` was a fixed
+`WHATSAPP_REFERENCE_ADAPTER`, and the `channel` attribute only ever fed `compile()` — nothing
+called `getAdapter(channel)`. `<cf-chat-sim channel="telegram">` silently rendered WhatsApp
+chrome. Not a fresh mistake — the fixture's own comment said "once `getAdapter` lands" back when
+T-005 didn't exist yet; it landed and nobody closed the loop (team-lead's own framing, and
+correct: this is a coordination gap, not a build-time defect in either lane's own work).
+
+**Fix:** `connectedCallback` now resolves `this.#adapter = getAdapter(channel)` before anything
+gets built (wallpaper token, group flags, all downstream of `#adapter`). Imports `getAdapter`
+directly from `adapters/registry.ts` ([channel]'s cell, `R` for skin) rather than through the
+shared barrel — see the bundle regression below for why.
+
+**Verification, exactly as asked — mounts by ATTRIBUTE, not by setting `.adapter`:**
+`mountWithChannel('telegram')` asserts real Telegram chrome (tail on the LAST of a streak,
+single-tick receipt, no `.cf-pad` — i.e. `inside-plain` timestamp); the twin
+`mountWithChannel('whatsapp')` asserts the opposite on the same script. Demonstrated the test
+actually catches the regression: disabled the `getAdapter(channel)` line by hand, watched the
+Telegram test go red (WhatsApp chrome rendered instead) while its own twin stayed green, restored,
+watched both go green again.
+
+**A second real bug found while wiring this, not reported by anyone — caught by my own
+`assert-no-react.mjs` before it shipped:** switching `stateAtStep`/`draftIntervals` over to
+core's newly-promoted versions (see below) via the `'../index'` barrel pulled 97KB of React into
+`demo/chat-sim.bundle.js`, because that barrel now also re-exports `ChatSim` from `./react`
+(T-007) and esbuild's tree-shaking didn't eliminate it. Fixed by importing directly from
+`core/compile.ts` / `core/playhead.ts` / `core/seek.ts` / `core/draft-intervals.ts` /
+`core/types.ts` instead of the barrel — file-ownership-matrix.md's `R` on `core/**` covers direct
+file imports just as well, and a direct import can't accidentally drag in a sibling subpath's
+dependency tree. Applied the same fix to `sound/synth.ts`, which had the identical barrel import
+for `digestOf`/`rand`. Re-verified `assert-no-react.mjs`: 15 modules, zero React, after the fix.
+
+**Also picked up while in here (small, related, not separately reported):**
+- Adopted core's promoted `stateAtStep`/`draftIntervals` (now in `core/seek.ts` /
+  `core/draft-intervals.ts`, exported from the barrel — I just don't import them THROUGH the
+  barrel, per above) instead of this file's own private copies. `stateAtStep` now gets the same
+  O(log n + 64) checkpoint bound `seek` already had, for free. Local DOM bookkeeping (the `<li>`
+  per typing window) stays layered on top in a small `TypingRow` wrapper, per team-lead's
+  explicit instruction not to move that part.
+- Demo script: `t0` is now a real calendar instant (2026-09-18, `America/Lima`) instead of the
+  epoch — safe now that `core` fixed the `t0` double-counting bug (`0c86277`); confirmed live, the
+  date pill now reads "18 de setiembre" instead of "1 de enero".
+- Added a `receipt` step marking the last outbound message `read` — this was blocked in iteration
+  4 (no `SimStep` could author a receipt transition yet); `core`'s T-003 landed the fold case
+  since then, so it's now literally the one-line script change flagged back then. Confirmed live:
+  the last message's ✓✓ render blue (`data-read="true"` on the `.cf-receipt` element).
+
+Re-verified: 46/46 `element/` + `sound/` tests green, typecheck clean, `assert-no-react.mjs`
+green, both bundles (`demo/chat-sim.bundle.js`, `sound/audition.bundle.js`) rebuilt and
+freshness-gate-confirmed. Live-checked in headless Chrome: `channel="telegram"` mounted fresh
+gives Telegram chrome (tail-last, single-tick) — confirmed independently of the vitest suite.
 
 # T-006 — sound packs + token iMessage
 
