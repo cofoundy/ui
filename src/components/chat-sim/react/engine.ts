@@ -2,17 +2,21 @@
 //
 // `stateAtStep`/`draftIntervals` used to be a flagged duplication of element/'s private helpers
 // here (see decision-log/history.jsonl "promote-stateAtStep-draftIntervals") — [core] promoted
-// both into `core/seek.ts` / `core/draft-intervals.ts` and re-exports them from the `chat-sim`
-// subpath barrel exactly because this file asked for it. Imported from `../index` below, same as
-// element/chat-sim-element.ts does for `compile`/`seek`/etc. — one implementation, not two.
+// both into `core/seek.ts` / `core/draft-intervals.ts`. Imported from those LEAF modules directly
+// below, never from `'../index'` (the subpath barrel): team-lead caught a real circular import
+// (`index.ts -> react/index.ts -> ... -> react/engine.ts -> ../index`) that `madge` had no way to
+// see until `core` actually exported `ChatSim` through the barrel — latent until this file
+// imported back from the thing that (transitively) imports it. Same rule `adapters/caps.ts` vs
+// `registry.ts` already encodes: a leaf module imports leaves, never the barrel.
 //
 // `postedAtByMsgId` and the Intl-based formatters (`dayKeyOf`/`dayLabelOf`/`formatTime`) stay
 // local: `postedAtByMsgId` is a 4-line lookup not worth promoting, and the formatters use
 // `Intl`/`Date` — same as element/chat-sim-element.ts's own comment ("element/ is NOT core/, the
 // no-Date lint doesn't apply here"), core/'s purity lint (invariant 4) would reject them.
 
-import { draftIntervals, stateAtStep } from '../index';
-import type { DraftInterval } from '../index';
+import { draftIntervals } from '../core/draft-intervals';
+import type { DraftInterval } from '../core/draft-intervals';
+import { stateAtStep } from '../core/seek';
 import type { Frame, MsgId, Tick } from '../core/types';
 
 export { draftIntervals, stateAtStep };
