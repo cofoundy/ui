@@ -1,6 +1,6 @@
 # @cofoundy/ui — Component Catalog
 
-**Last updated:** 2026-06-15 · **Storybook:** [ui.cofoundy.dev](https://ui.cofoundy.dev) · **Total exports:** ~95
+**Last updated:** 2026-09-04 · **Storybook:** [ui.cofoundy.dev](https://ui.cofoundy.dev) · **Total exports:** ~95 (`chat-sim` is a separate subpath, not yet in this count — see its section)
 
 > **For agents:** start at the [Intent Map](#intent-map) below — maps "I need X" → component name + import + story URL. If you don't find your need there, fall through to the [Section tables](#chat) (alphabetical) or run `grep '^export' ~/cofoundy/packages/ui/src/index.ts` for the raw export list. Storybook auto-discovery: `curl -sS https://ui.cofoundy.dev/index.json` returns 598 entries (all stories, parseable JSON).
 
@@ -64,6 +64,7 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 | **Docs MDX components** (allowlist for `docs-ai/content/*`) | see [Docs](#docs) (15 components) | Docs | `docs-*` |
 | Slot-composable client portal page | `ClientPortalPanel` | Docs | `docs-clientportalpanel` |
 | Wikilink hover preview in docs | `LinkPreviewProvider` | Docs | `docs-linkpreview` |
+| Deterministic, seeded chat-conversation simulator (WhatsApp/Telegram look, byte-identical screenshots) | `ChatSim` (React), `<cf-chat-sim>` (custom element) | Chat Sim | `chatsim-channels`, `chatsim-states`, `chatsim-inboxai-replacement` |
 
 ---
 
@@ -104,6 +105,30 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 | `TypingIndicator` | Animated "typing..." indicator. |
 | `ToolIndicator` | "AI is checking calendar..." inline tool-execution indicator. |
 | `QuickActions` | Inline quick-reply buttons. |
+
+### Chat Sim
+
+Deterministic, seeded chat-conversation simulator — WhatsApp/Telegram bubble geometry, receipts,
+reactions, typing indicator, date separators. Byte-identical PNG output for the same
+`(script, seed, channel, locale, tz)` (invariant, not a goal — see `capture/**`'s determinism
+test). **Subpath export, not the main barrel** — `import { ChatSim, compile, ... } from
+'@cofoundy/ui/chat-sim'` (verify what's actually exported: `cat
+node_modules/@cofoundy/ui/src/components/chat-sim/index.ts` or, in this repo,
+`src/components/chat-sim/index.ts`). `src/index.ts` (the main `@cofoundy/ui` barrel) is
+deliberately never touched (api-contract.md §"Árbol"). 3 stories files, `ChatSim/*` in Storybook.
+
+| Component | Description |
+|---|---|
+| `ChatSim` | React entry point. `mode="demo"` autoplays via the core `Playhead` (visual-only composer, same DOM as `<cf-chat-sim>`); `mode="live"` freezes at the final step and swaps in a real, operable composer (mobile keyboard handling: `visualViewport` + `100dvh` + safe-area + ≥44px targets + ≥16px input). |
+| `<cf-chat-sim>` | Custom element (light DOM, no shadow root) — `script`/`channel`/`seed`/`t0`/`locale`/`tz` attributes, `data-step` as the one public reveal knob. Zero framework dependency; needs `styles.css` loaded globally (see `demo/index.html`). |
+| `compile()` / `seek()` / `createPlayhead()` | Core pure functions (`@cofoundy/ui/chat-sim`'s `core/**`) — script → `Timeline`, `Timeline` → `SimState` at any tick, and an rAF-driven playhead. `core/` is lint-pure: no `Math.random`/`Date`/`fetch`/`window`/`document`. |
+| `getAdapter()` / `validateScript()` | Channel adapters (WhatsApp, Telegram — iMessage has a `ChannelId` member but no adapter this cycle) and the falsifiable script/channel compatibility check. |
+
+**Known issue:** reactions never render via the React path (`<ChatSim>`/`MessageThread.tsx`) on
+any channel — an `&&` operator-precedence bug, not a data problem (`SimState` has the reaction;
+the JSX just never receives it). Tracked at `.cofoundy/tasks/T-010.md` (role: `app`). Verify:
+`grep -n "reactionsInsideBubble = reactionsEl &&" src/components/chat-sim/react/MessageThread.tsx`
+— still there means still broken.
 
 ### Messaging
 
