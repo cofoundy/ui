@@ -187,8 +187,9 @@ paso N es exactamente N clases aplicadas**).
 `channel`, `deliveryStatus`, `sender` y `media`.
 
 El segundo modelo (`Message`, `src/types/index.ts:28`, role-based, usado por transports y stores)
-**queda fuera de alcance**: el ciclo no escribe el conversor que falta. Se declara la deuda en
-`COMPONENTS.md` y se abre issue. Escribirlo tocaría el chat-widget de TimelyAI, que ningún criterio
+**queda fuera de alcance**: el ciclo no escribe el conversor que falta. Se declara la deuda **en los propios archivos de tipos** (`src/types/message.ts:62` y
+`src/types/index.ts:28` — los modelos NO son intercambiables y no existe conversor), además de
+`COMPONENTS.md` + issue. El desarrollador se tropieza en los tipos, no en el índice de componentes. Escribirlo tocaría el chat-widget de TimelyAI, que ningún criterio
 de éxito de este ciclo cubre.
 
 ---
@@ -235,9 +236,9 @@ Deriva de R-1: cada iteración produce algo abrible.
 |---|---|---|
 | 1 | `core/` + `element/` + adapter WhatsApp | ✅ página demo estática |
 | 2 | `capture/` PNG/WebP + gate de settle | ✅ PNG byte-idéntico |
-| 3 | Adapter Telegram | ✅ mismo guion, dos canales |
+| 3 | Adapter Telegram + **token `--channel-imessage` y `ChannelId` de iMessage** (el token y el tipo, NO el adapter) | ✅ mismo guion, dos canales |
 | 4 | `react/` + mobile + `MobileBaseline` | ✅ Storybook |
-| 5 | Stories, tests, `COMPONENTS.md` | ✅ Storybook completo |
+| 5 | Stories, tests, `COMPONENTS.md`. **La story de reemplazo se alimenta de la forma de mensaje REAL de inbox-ai** (o lleva adaptador documentado inline) — sin eso el criterio de éxito #4 se afirma en vez de medirse | ✅ Storybook completo |
 
 ---
 
@@ -246,15 +247,33 @@ Deriva de R-1: cada iteración produce algo abrible.
 | Recorte | Razón | Ahorro |
 |---|---|---|
 | `capture/` **solo PNG/WebP**, sin mp4 | el encoder es superficie de determinismo aparte; el operador pidió **fotos**, el video lo agregué yo | −2 d |
-| `audio/` = schema + sink stub, **mute por default** | no aparece en ningún criterio de éxito; es la clase-5 (colas agendadas vs seek) | −1,5 d |
+| `audio/` = schema + **cue packs por canal como DATOS** (WhatsApp + Telegram) + `AudioSink` a la política clase-5 de §1, muteado por default, + 1 story de audición | el trabajo duro ya está hecho: el DSP es ~90% parametrizable (finding 03 §4) y lo soldado ya se diseña afuera en §7. Falta **autoría de datos, no diseño** | −0,75 d **con tope: si excede ~0,5 d revierte al stub** |
 | `pin` / `delete-for-all` = eventos + tests, **sin chrome** | el fold los absorbe gratis; dibujar barra de fijado y tombstone es UI nueva por canal | −1 d |
 | Adapter iMessage completo | la prueba en papel ya rindió (`bubbleTransport`); implementarlo no agrega información | — |
 | Migración de `inbox-ai` | el ciclo entrega el skin + story de reemplazo, no un PR contra ese repo | — |
+| **Copia literal de `whatsimule`** | es referencia de **comportamiento**, no fuente | **prohibida** |
 
 **Con los recortes: 12-14 días. Sin ellos: 17-19.**
 
-⚠️ El recorte de audio **difiere**, no resuelve, la queja explícita del operador sobre los sonidos.
-El schema queda diseñado; sintetizar los cues es un ciclo de 1 día posterior.
+✅ El audio **responde parcialmente** la queja explícita del operador sobre los sonidos: los cue packs
+de WhatsApp y Telegram entran como datos, con story de audición. Lo que queda afuera es ampliar la
+biblioteca de cues, no el diseño ni la textura.
+
+---
+
+### Restricción dura — el prior art es referencia de comportamiento, no fuente
+
+`whatsimule` (MIT) se leyó para extraer **qué debe hacer** un simulador. **Cero copia literal** de
+código, constantes o assets. Nombrados explícitamente porque son los que tientan:
+
+- la coreografía de 9 pasos del contact-picker
+- el anillo de progreso `10→30→60→85→100`
+- la tabla de cadencias y los 5 contactos ficticios con fotos de Unsplash
+
+**Tripwire:** una lane que crea necesitar un lift literal **PARA y escala**. No lo decide sola.
+
+Esto es además lo que sostiene que D-1 no bloquee el build: sin copia sustancial, MIT no impone
+atribución en build-time, y el release público ya está fuera del alcance del ciclo.
 
 ---
 
