@@ -19,18 +19,12 @@ describe('<ChatSim> — imported via the public barrel', () => {
     expect(screen.getByText('hola')).toBeInTheDocument();
   });
 
-  // KNOWN BUG, filed as .cofoundy/tasks/T-010.md (role_owner: app) — NOT fixed here, `react/**`
-  // is `app`'s write cell (file-ownership-matrix.md), qa only has `R`. Root cause: `MessageThread
-  // .tsx:169-170` writes `reactionsEl && adapter.reactions !== 'own-row'` — `a && b` evaluates to
-  // `b` (a plain boolean) when `a` is truthy, never to `a` itself, so `reactionsInsideBubble` /
-  // `reactionsOwnRow` are booleans, never the JSX element — React renders `{true}`/`{false}` as
-  // nothing. Confirmed independently of this test (compile()+seek() show the reaction IS present
-  // in SimState; rendering <MessageThread> directly with hand-built props reproduces the same
-  // empty output) — this isn't a fixture/mapping issue on qa's side.
-  // `it.fails`: this documents the CURRENT (broken) behavior without silently passing against
-  // it — flip to `it` once T-010 lands; if this block ever starts passing unexpectedly, vitest
-  // reports IT as the failure, which is the point (a tripwire, not a green light).
-  it.fails('WhatsApp: a reaction renders as an overlay pill anchored to its message', () => {
+  // Was a KNOWN BUG (.cofoundy/tasks/T-010.md, role_owner: app) — the `&&` operator-precedence
+  // defect in react/MessageThread.tsx:169-170 that made `reactionsInsideBubble`/`reactionsOwnRow`
+  // plain booleans instead of the JSX element. Fixed by [app] in `7f88aae`; team-lead verified
+  // with mutation (restoring the original `&&` breaks 3 of these 4 scenarios). Flipped from
+  // `it.fails` back to a normal `it` — the tripwire did its job.
+  it('WhatsApp: a reaction renders as an overlay pill anchored to its message', () => {
     const script: SimScript = [
       { k: 'post', by: 'in', text: 'reservado!' },
       { k: 'react', id: 'm0', emoji: '❤', by: 'out:ai' },
@@ -71,9 +65,9 @@ describe('<ChatSim> — imported via the public barrel', () => {
     expect(views?.textContent).toBe('42');
   });
 
-  // Same root cause as the WhatsApp case above (T-010) — the `own-row` branch is also a boolean,
-  // never the element.
-  it.fails('Telegram: reactions render in their own row (own-row), not WhatsApp\'s overlay', () => {
+  // Same root cause as the WhatsApp case above (T-010, fixed in `7f88aae`) — the `own-row`
+  // branch was also a boolean, never the element.
+  it('Telegram: reactions render in their own row (own-row), not WhatsApp\'s overlay', () => {
     const script: SimScript = [
       { k: 'post', by: 'out:human:agent_1', text: 'promo del finde' },
       { k: 'react', id: 'm0', emoji: '🔥', by: 'in' },
