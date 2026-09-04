@@ -1,0 +1,89 @@
+# chat-sim — simulador de chat multi-canal
+
+**TL;DR** — `@cofoundy/ui/chat-sim` renderiza una conversación de WhatsApp o Telegram desde un
+guion, con diferencias **estructurales** entre canales (no de color), y escupe PNGs **byte-idénticos**
+corrida tras corrida. Sirve a las dos landings Astro sin agregar React, y a la app de Fovente vía
+React. 33+ commits, ~13.6k líneas, 6 lanes en paralelo.
+
+**Estado: NO listo para merge.** Falta que la captura sea repetible (ver Abierto).
+
+---
+
+## Qué se puede hacer con esto hoy
+
+| Capacidad | Cómo se comprueba |
+|---|---|
+| Un guion → PNG reproducible | `sha256` de dos corridas coincide; cambiar la seed lo rompe |
+| El mismo guion en dos canales, con diferencias reales | colita en la primera vs la última de la racha; reacciones overlay vs fila propia; **Telegram sin estado "entregado"** |
+| Montar en una landing Astro sin React | assert sobre el grafo del bundle: `react`/`react-dom` ausentes |
+| Montar en la app de Fovente | `<ChatSim>` React sobre el mismo `SimState` |
+| Sonido por canal | digest PCM distinto por canal, con gemelo de determinismo |
+
+## Las 7 sondas que se ponen rojas de verdad
+
+Cada una verificada por el CTO **inyectando el defecto exacto**, no leyendo el reporte de la lane.
+
+| Sonda | Se pone roja cuando |
+|---|---|
+| Pureza de `core/` | aparece `Math.random`/`Date`/`fetch`/`window` — nombra archivo y token |
+| Prohibición de Tailwind | una clase de utilidad entra a `chat-sim/**` |
+| Cero React en `element/` | el grafo del bundle importa `react` |
+| Frescura de bundles (×3) | el commiteado difiere del rebuild — **imprime el comando de fix** |
+| Cero ciclos de imports | reproduce el ciclo exacto por nombre |
+| Guion inválido por canal | `receipt:'delivered'` en Telegram ⇒ no compila |
+| `seek` O(log n + 64) | un fold lineal rompe el contador **y** el escalado 500↔5000 |
+
+## El número, medido y no afirmado
+
+**N = 4,976 bytes (4.85 KB) = 7.3%** del fork de 66.1 KB de `inbox-ai/MessageBubble.tsx`.
+
+Cubre `ReactionPill` + `Ticks` + `DeliveryStatus`. **Excluye** el tombstone de borrado y el chequeo
+inline de editado: están enredados en una función de render de 636 líneas y no tienen rango de bytes
+limpio. Incluirlos habría inflado el número sin poder defenderlo.
+
+⚠️ **Esto corrige el encuadre que el CTO venía usando.** "Les devolvemos 68 KB" era falso. Lo real:
+**se unifican las primitivas de presentación**; el resto de esos 66 KB es lógica de dominio de un
+inbox real (adjuntos, plantillas, tombstones, edición) que un simulador no tiene por qué cubrir.
+
+## Los 5 bugs serios vivieron en costuras entre lanes
+
+Ninguno dentro de una tarea. En los cinco, **el que encontró no era el dueño del código**.
+
+| Bug | Encontró | Dueño |
+|---|---|---|
+| `channel="telegram"` renderizaba chrome de WhatsApp | `app` | `skin` |
+| `Frame.t` absoluto ⇒ `t0` contado dos veces en cada timestamp | `core` (al promover) | `core` |
+| `Int32Array` desborda con `t0` real ⇒ `seek` siempre devuelve el final | `capture` | `core` |
+| Ciclo de imports por el barrel | `core` (al exportar) | `app` |
+| Reacciones **nunca** renderizan, en ningún canal | `qa` | `app` |
+
+Los cinco pasan un code review. Se necesitaba que **otra lane los usara**.
+
+**Lección para el próximo ciclo:** las acceptance por tarea no cubren costuras por construcción.
+Los dos instrumentos que sí las cubrieron fueron cruzados — el snapshot `element`↔`react` y el
+cross-check `stateAtStep`↔`seek`. Exigir al menos un test cruzado por par de lanes que comparta
+contrato.
+
+## Abierto — requiere decisión humana
+
+1. **La captura no es repetible.** Los PNGs de evidencia son válidos (sha256 verificados), pero los
+   tests que lo demuestran fallan por fuga de sesiones del navegador. **Un entregable que solo se
+   verifica una vez, con el entorno limpio, no está terminado.** Reabierto con `capture`.
+2. **D-1 — línea de prior art en el README** al abrir el repo. No hay copia literal de `whatsimule`
+   (restricción con tripwire), así que MIT no impone atribución en build-time: es decisión
+   reputacional, no legal. Recomendación del CTO: incluirla.
+3. **Merge a `main`.** No auto-aprobado a propósito. `inbox-ai` (Fovente, en producción) consume
+   `github:cofoundy/ui#main`; su `node_modules` está en **v0.2.2** contra 0.6.1 actual, pinneado por
+   lockfile. Cuando alguien re-resuelva ese lockfile —justo lo que adoptar el skin requiere— salta
+   de golpe cruzando un major de Tailwind.
+4. **D-2 — deadline de la app de Fovente.** Sin respuesta se asumió que no hay. Si aparece, la
+   secuencia se invierte y es otra arquitectura, no un reordenamiento.
+
+## Deuda declarada, no reparada
+
+- Dos modelos de `Message` en el paquete, sin conversor. **Anotada en los propios archivos de tipos**,
+  no solo en `COMPONENTS.md`.
+- Branch coverage 79.63% contra 80%: las ramas faltantes son inalcanzables sin el adapter de iMessage,
+  fuera de alcance por diseño. No se bajó el umbral para pintar verde.
+- `main` de `packages/ui` ya estaba rojo antes del ciclo (`cofoundy/ui#21`).
+- `cofoundy-orchestrator#138`: el gate de blast-radius falla **abierto** con un contexto mal tipado.
