@@ -18,6 +18,7 @@
 | `src/__tests__/chat-sim/**` | – | – | – | – | – | **W** |
 | `COMPONENTS.md` | – | – | – | – | – | **W** |
 | `eslint` rules del ciclo (invariantes 4 y 5) | **W** | – | A | – | – | R |
+| build config de `chat-sim` (`vite.config.chat-sim.ts`) | **W** | – | A | A | A | R |
 | `src/index.ts` (barrel principal) | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ |
 | `src/styles/index.css` (sheet global) | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ |
 | `src/types/**` | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ | A |
@@ -47,6 +48,16 @@ opcional: sin el dato, `budget_overrun` es infireable y el threshold queda decor
 | **16 h acumuladas al cierre de la ola 3** | aviso temprano — el CTO **reproyecta** con 6 datos reales (24 − 8 de margen). **Si la reproyección fundada supera 24 h, escala AHÍ**, sin esperar a cruzarlas: a esa altura la proyección está fundada, no adivinada |
 | **24 h acumuladas** | **disparo duro ⇒ escala** |
 | **> USD 50** | escala (hoy ≈0: ninguna tarea usa servicios de terceros) |
+
+## `blockedBy` gatea el MERGE, no el arranque
+
+Sin esta definición las 5 olas son 8 tareas secuenciales y "tope de concurrencia 2-3" no describe
+nada: en cada ola la segunda lane está bloqueada por la primera.
+
+**Semántica: `blockedBy` gatea el MERGE.** Una lane arranca cuando su ola arranca y construye
+**contra la spec**, no contra la implementación de su predecesora — que es exactamente por qué la
+capa de tipos del contrato es entregable de T-001 en la ola 1 (D-1) y por qué los 16 campos del
+adapter están tabulados antes de implementarse. Lo que espera es el merge.
 
 ## Olas (respetan el tope de concurrencia 2-3)
 

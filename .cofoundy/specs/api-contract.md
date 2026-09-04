@@ -20,12 +20,27 @@ src/stories/chat-sim/**  ·  src/__tests__/chat-sim/**          [qa]
 **`src/index.ts` (barrel principal) NO se toca.** §12: el ciclo exporta solo por subpath
 `@cofoundy/ui/chat-sim`. Escribir ahí es violación de scope, no una optimización.
 
-## Tipos núcleo — `core/types.ts` [core]
+## Tipos núcleo — `core/types.ts` [core] · **entregable de T-001, ola 1**
+
+**Regla de partición (D-1, tras el REFUTE del task graph):** los **TIPOS** del contrato viven en
+`core/types.ts` y los entrega T-001 en la ola 1. Los **VALORES** que los pueblan (`caps.ts`,
+`registry.ts`, `whatsapp.ts`, `telegram.ts`, `validateScript`) son de `channel` y llegan en T-005.
+
+Por qué: la matriz ya da `R` sobre `core/**` a las seis lanes, así que T-002 satisface su fixture
+de capabilities **leyendo**, sin forkear. La dirección de imports queda acíclica
+(`adapters → core`, nunca al revés).
+
+Arruga honesta: `caps.ts` deja de "no importar nada" — importa un tipo. Es `import type`, se borra
+en compilación y no puede crear ciclo en runtime. La propiedad de hoja del arch es **sobre valores**.
 
 ```ts
 type Tick = number;            // ms virtuales enteros desde t0
 type MsgId = string;           // estable, asignado en compile
 type ChannelId = 'whatsapp' | 'telegram' | 'imessage';
+
+// Los 3 tipos que la ola 1 necesita y que ANTES estaban en disputa entre core y channel:
+interface ChannelAdapter { /* los 16 campos de adapter-interface-draft.md, cero opcionales */ }
+interface Diagnostic { code: string; msg: string; stepIdx?: number }
 
 type Ev =
   | { k:'post';    id:MsgId; step:SimStep }
