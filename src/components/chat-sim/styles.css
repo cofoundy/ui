@@ -43,6 +43,13 @@
   --cf-cs-reaction-bg: #ffffff;
   --cf-cs-reaction-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 
+  /* iMessage's per-channel accent (its bubble blue) — architecture-v1.md §9 iteration 3 splits
+   * this cycle's iMessage work into "the token + the ChannelId" (this token; ChannelId landed in
+   * T-001) vs. the full adapter/bubble styling, which is out of scope. Unconditional per §12
+   * point 2 ("Incluye --channel-imessage de A-5") — carried by T-006 because styles.css is
+   * [skin]'s cell, not because it's audio-related; it just has nowhere else to land this cycle. */
+  --channel-imessage: #0a84ff;
+
   display: flex;
   flex-direction: column;
   font-family: var(--cf-cs-sans);

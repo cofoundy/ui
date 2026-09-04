@@ -1,6 +1,94 @@
-wall_clock_minutes: 150
+wall_clock_minutes: 195
 
-# skin — T-002 (stylesheet scoped + element + layout WhatsApp)
+# skin — T-002 + T-006 (stylesheet/element/layout, then sound packs + iMessage token)
+
+# T-006 — sound packs + token iMessage
+
+## Delivered
+
+- `sound/types.ts` — declarative schema (`Wave`, `CueLayer`, `Cue`, `CuePack`), reading
+  `ChannelId`/`SoundId` from `core/types.ts` (read-only). Corrects the four prior-art defects
+  named in `research-findings/03-capabilities-y-fracturas-de-canal.md` §4: per-channel taxonomy
+  (not a global union), `wave` includes `noise`, envelope/attack are per-layer, cancellation is a
+  first-class operation (below).
+- `sound/synth.ts` — pure-JS, deterministic PCM renderer (`renderLayer`/`renderCue`/`renderPack`).
+  Zero Web Audio API surface — this is math over `Float32Array`, so it runs in plain Node with no
+  browser polyfill. Noise + jitter draw from core's own exported positional PRNG (`rand`), never
+  `Math.random` — same inputs always render the same buffer. Also `pcmDigest` (reuses core's
+  `digestOf` rather than writing a second hash — quantizes to Int16, packs one sample per UTF-16
+  code unit).
+- `sound/packs.ts` — the actual cue-pack DATA: 3 cues per channel (WhatsApp: sine-only, bright,
+  two-tone "ding"; Telegram: every cue carries a filtered-noise layer — texture, per finding 03
+  §4, not pitch). Well under the ≤6/≤3 cap by choice, not by struggle.
+- `sound/audio-sink.ts` — `AudioSink`: schedule-and-cancel per architecture-v1.md §1 class 5.
+  Depends on `AudioContextLike`, a minimal structural subset of the real `AudioContext` (typed via
+  `lib.dom.d.ts`, which this tsconfig already includes) — so it's unit-testable under plain
+  vitest/jsdom (no Web Audio polyfill exists in this repo, and jsdom doesn't implement one) while
+  a real `new AudioContext()` satisfies it with zero adapter code. One buffer per scheduled cue
+  (layers are already mixed down by `renderCue`) feeding a shared master gain that controls ONLY
+  global mute — the prior-art defect ("un solo GainNode para todas las capas") doesn't recur
+  because there's nothing per-layer left to starve by the time audio reaches the sink.
+- `sound/audition.html` + `audition-entry.ts` + `audition.bundle.js` — the "story de audición."
+  **Not** a Storybook story: `src/stories/chat-sim/**` is `[qa]`'s exclusive write cell
+  (file-ownership-matrix.md) — a real `.stories.tsx` there is T-008's job. This lives inside
+  `sound/**` instead, same "commit the bundle, no build step to open" contract as T-002's
+  `demo/index.html`. Verified live in headless Chrome: buttons for all 6 cues + a mute toggle +
+  `cancelAll()`, zero console errors, per-channel PCM digests displayed on the page.
+- `styles.css` — added `--channel-imessage` (architecture-v1.md §12 point 2, §9 iteration 3):
+  incondicional, outside the audio scope cap — it's here because `styles.css` is `[skin]`'s cell,
+  not because it's sound-related.
+- `sound/__tests__/` (16 tests): `audio-sink.test.ts` (acceptance #1 + #4, via a hand-written
+  `FakeAudioContext` that records start/stop so cancellation is actually observable),
+  `synth.test.ts` (acceptance #3: per-channel digest difference + determinism positive twin + a
+  single-field-mutation sensitivity check), `no-samples.test.ts` (acceptance #2: static scan for
+  audio-asset files/`fetch()`, same pattern as `core/__tests__/purity.test.ts`), and a
+  `bundle-freshness.test.ts` for `audition.bundle.js` (same gate team-lead asked for on T-002's
+  demo bundle — applied here too rather than leaving a second ungated artifact).
+
+## Acceptance status
+
+1. Seek-during-a-scheduled-cue cancels it, sink UNMUTED — **pass**. `FakeAudioContext` tracks
+   live nodes; `liveNodeCount` goes `0 → >0 → 0` across schedule/cancelAll. Also verified mute
+   state doesn't affect the bookkeeping (a muted sink cancels identically — the acceptance text's
+   own point about why "run unmuted" matters).
+2. Zero third-party samples — **pass**, static scan (no audio file extensions, no `fetch()`/audio
+   import in `sound/**`) + everything actually is synthesized in `synth.ts`.
+3. Audition story + per-channel PCM digest differs — **pass**. WhatsApp/Telegram packs digest to
+   different values; same pack twice digests identically (determinism); a single mutated field
+   (gain) changes the digest (probe sensitivity, not just difference-by-luck).
+4. Degenerate case (`packs = {}`, sink doesn't throw) reachable by subtraction — **pass**. `CuePack`
+   is `Partial<Record<ChannelId, ...>>`; a missing channel key is `undefined`, handled by `?? []`
+   at the call site, never a thrown error. Sink itself never throws when constructed and
+   `cancelAll()`ed with nothing scheduled.
+8. `wall_clock_minutes` — top of file (shared across T-002 and T-006 per the report's per-lane,
+   not per-task, scope).
+
+## Deviations / scope notes
+
+- **`element/**` integration (wiring `AudioSink` to the real `Timeline`/playhead so `cue` events
+  actually fire) is explicitly NOT in T-006's scope.write.** The task's own Alcance is "schema +
+  cue packs as data + AudioSink to the class-5 policy + one story" — not end-to-end wiring. Also:
+  there is currently no way to even AUTHOR a `cue` in a `SimScript` (the `Ev.cue` variant exists
+  in `core/types.ts`, but no `SimStep` produces one, and I didn't check whether `core`'s
+  in-flight T-003 work adds one — that's their file, not mine to read mid-edit for a scope
+  decision). `AudioSink.schedule()`/`cancelAll()` are tested directly against their own API, not
+  through a compiled `Timeline` — this is consistent with T-002's caps-fixture precedent (test the
+  layer that's actually owned, not the integration that isn't built yet).
+- **`--channel-imessage` landed in `styles.css`, not a new file** — there's no dedicated
+  "iMessage tokens" location in the matrix; `styles.css` is the only cell I own that a CSS custom
+  property could live in.
+- **Concurrent worktree activity**, noted so nobody reads it as damage from this commit: at the
+  time of this commit, `core`'s T-003 work is uncommitted in the shared worktree
+  (`core/compile.ts`, `core/seek.ts`, `core/playhead.ts`, `core/draft-intervals.ts`,
+  `core/__tests__/queries.test.ts`, `chat-sim/index.ts`), and `src/components/chat-sim/react/`
+  (T-007, `[app]`'s cell) already exists. Running the FULL `chat-sim/` suite right now shows 3
+  failures outside this commit's scope: 2 in `core/__tests__/queries.test.ts` (core's own WIP,
+  not committed) and 1 in `element/__tests__/bundle-freshness.test.ts` (T-002's demo bundle is
+  transitively stale because `core/**` changed underneath it — team-lead's own coordination
+  decision is that regenerating it is my job, done as the LAST step before merge with a clean
+  tree, not now). `sound/**`'s own 16 tests are all green in isolation and in the full run.
+
+## Iteration 4 — bottom anchor, date separator, and a pushback on blue receipts
 
 ## Iteration 4 — bottom anchor, date separator, and a pushback on blue receipts
 
