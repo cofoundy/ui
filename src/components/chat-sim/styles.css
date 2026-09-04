@@ -1,0 +1,354 @@
+/* chat-sim/styles.css — self-contained, scoped stylesheet (architecture-v1.md §12).
+ *
+ * Ships by subpath (@cofoundy/ui/chat-sim/styles.css), never touches src/styles/index.css.
+ * ALL tokens live under `.cf-chat-sim` — zero new declarations at `:root` (T-002 acceptance #2).
+ * ZERO Tailwind utility classes anywhere in this family (T-002 acceptance #3) — every rule below
+ * is a semantic class the element/ layer sets itself, styled here in plain CSS, the same
+ * language products/fovente-landingpage/src/components/ChatDemo.astro already speaks in
+ * production (that continuity is deliberate — architecture-v1.md §12 point 4).
+ *
+ * Structure is adapter-driven, not channel-driven: every selector below keys off a `data-*`
+ * attribute that element/render.ts sets FROM `ChannelAdapter` fields (tail, timestamp,
+ * receiptGlyph, reactions, quote) — never off a `[data-channel="whatsapp"]`-style rule. That's
+ * what keeps the caps fixture (T-002 #6) meaningful: flipping the adapter changes which
+ * attribute values appear, and these rules just render whatever's there.
+ */
+
+.cf-chat-sim {
+  /* ── tokens ─────────────────────────────────────────────────────────── */
+  --cf-cs-radius: 11px;
+  --cf-cs-radius-lg: 16px;
+  --cf-cs-tail-w: 7px;
+  --cf-cs-tail-h: 11px;
+  --cf-cs-gap: 0.45rem;
+  --cf-cs-pad: 44px; /* reserved inline space for the inside-pad timestamp trick; JS re-measures it */
+
+  --cf-cs-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --cf-cs-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --cf-cs-surface: #e9edef;
+  --cf-cs-card: #ffffff;
+  --cf-cs-ink: #111b21;
+  --cf-cs-ink-muted: #667781;
+  --cf-cs-hairline: rgba(0, 0, 0, 0.08);
+
+  --cf-cs-bubble-in: #ffffff;
+  --cf-cs-bubble-out: #d9fdd3;
+  --cf-cs-bubble-in-meta: #8696a0;
+  --cf-cs-bubble-out-meta: #5b8a55;
+  --cf-cs-bubble-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+
+  --cf-cs-accent: #25d366;
+  --cf-cs-accent-ink: #ffffff;
+  --cf-cs-reaction-bg: #ffffff;
+  --cf-cs-reaction-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+
+  display: block;
+  font-family: var(--cf-cs-sans);
+  color: var(--cf-cs-ink);
+  background: var(--cf-cs-surface);
+  border-radius: var(--cf-cs-radius-lg);
+  overflow: hidden;
+}
+
+.cf-chat-sim[data-wallpaper='pattern'] .cf-log {
+  background-image: radial-gradient(circle at 1px 1px, var(--cf-cs-hairline) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+/* ── message list ───────────────────────────────────────────────────── */
+
+.cf-log {
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-cs-gap);
+  min-height: 200px;
+}
+
+.cf-msg {
+  display: flex;
+  max-width: 100%;
+}
+.cf-msg[hidden] {
+  display: none;
+}
+.cf-msg[data-dir='in'] {
+  justify-content: flex-start;
+  padding-left: 7px;
+}
+.cf-msg[data-dir='out'] {
+  justify-content: flex-end;
+  padding-right: 7px;
+}
+
+/* consecutive same-actor messages sit tight; only the streak's edge (per adapter.tail) softens
+   the corner and grows the tail — see element/render.ts computeGroupFlags(). */
+.cf-msg[data-grouped] {
+  margin-top: -0.28rem;
+}
+
+/* ── bubble ─────────────────────────────────────────────────────────── */
+
+.cf-bubble {
+  position: relative;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--cf-cs-radius);
+  max-width: 86%;
+  white-space: pre-line;
+  filter: drop-shadow(var(--cf-cs-bubble-shadow));
+}
+.cf-msg[data-dir='in'] .cf-bubble {
+  background: var(--cf-cs-bubble-in);
+  color: var(--cf-cs-ink);
+}
+.cf-msg[data-dir='out'] .cf-bubble {
+  background: var(--cf-cs-bubble-out);
+  color: var(--cf-cs-ink);
+}
+
+/* the tail — only the message computeGroupFlags() marked [data-tail] grows one, per
+   adapter.tail ('first' of the racha for WhatsApp, 'last' for Telegram/iMessage). */
+.cf-msg[data-tail][data-dir='in'] .cf-bubble {
+  border-top-left-radius: 0;
+}
+.cf-msg[data-tail][data-dir='out'] .cf-bubble {
+  border-top-right-radius: 0;
+}
+.cf-msg[data-tail][data-dir='in'] .cf-bubble::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--cf-cs-tail-w));
+  width: var(--cf-cs-tail-w);
+  height: var(--cf-cs-tail-h);
+  background: var(--cf-cs-bubble-in);
+  clip-path: path('M1.34,2.17 L7,9.47 V0 H2.46 C0.91,0 0.42,0.98 1.34,2.17 Z');
+}
+.cf-msg[data-tail][data-dir='out'] .cf-bubble::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: calc(-1 * var(--cf-cs-tail-w));
+  width: var(--cf-cs-tail-w);
+  height: var(--cf-cs-tail-h);
+  background: var(--cf-cs-bubble-out);
+  clip-path: path('M4.54,0 H0 V9.47 L5.66,2.17 C6.59,0.98 6.09,0 4.54,0 Z');
+}
+
+.cf-text {
+  display: inline;
+}
+
+/* ── quote (adapter.quote: color-bar | thin-bar | stacked-bubble) ─────── */
+
+.cf-quote {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin-bottom: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+}
+.cf-quote[data-style='color-bar'] {
+  border-left: 3px solid var(--cf-cs-accent);
+}
+.cf-quote[data-style='thin-bar'] {
+  border-left: 1px solid var(--cf-cs-accent);
+}
+.cf-quote[data-style='stacked-bubble'] {
+  border-left: none;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: calc(var(--cf-cs-radius) - 4px);
+}
+.cf-quote-author {
+  color: var(--cf-cs-accent);
+  font-weight: 600;
+}
+.cf-quote-text {
+  color: var(--cf-cs-ink-muted);
+}
+
+/* ── stamp: time + edited label + views + receipt ──────────────────────
+   placement is adapter.timestamp-driven, not a fixed rule — element/render.ts decides WHICH of
+   the three DOM shapes below gets built; each shape below is legitimately different CSS. */
+
+.cf-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cf-msg[data-dir='in'] .cf-stamp {
+  color: var(--cf-cs-bubble-in-meta);
+}
+.cf-msg[data-dir='out'] .cf-stamp {
+  color: var(--cf-cs-bubble-out-meta);
+}
+
+/* inside-pad (WhatsApp): .cf-pad reserves the trailing inline gap the text wraps around; .cf-stamp
+   sits absolutely over it — the exact trick ChatDemo.astro/global.css already ships. */
+.cf-bubble > .cf-pad {
+  display: inline-block;
+  width: var(--cf-cs-pad);
+  height: 1px;
+}
+.cf-bubble > .cf-pad + .cf-stamp {
+  position: absolute;
+  right: 0.8rem;
+  bottom: 0.42rem;
+}
+
+/* inside-plain (Telegram): stamp is a normal trailing inline element, no space reservation. */
+.cf-bubble > .cf-stamp:not(.cf-pad + .cf-stamp) {
+  margin-left: 0.4rem;
+  opacity: 0.85;
+}
+
+/* gutter (iMessage): stamp is OUTSIDE the bubble entirely, its own line in the message column. */
+.cf-msg > .cf-stamp {
+  margin-top: 0.15rem;
+  padding: 0 0.2rem;
+}
+.cf-msg[data-dir='in'] > .cf-stamp {
+  align-self: flex-start;
+}
+.cf-msg[data-dir='out'] > .cf-stamp {
+  align-self: flex-end;
+}
+
+.cf-edited {
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.5625rem;
+  opacity: 0.85;
+}
+
+.cf-receipt {
+  flex: none;
+}
+.cf-receipt[data-read='true'] {
+  color: #53bdeb; /* the one spot color allowed to differ from ink — WhatsApp's read-blue */
+}
+.cf-receipt-label {
+  font-family: var(--cf-cs-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.5625rem;
+}
+.cf-views {
+  font-variant-numeric: tabular-nums;
+}
+.cf-views::before {
+  content: '👁 ';
+}
+
+/* ── reactions (adapter.reactions: overlay-below | own-row | overlay-edge) ─ */
+
+.cf-reactions {
+  display: flex;
+  gap: 0.15rem;
+}
+.cf-bubble > .cf-reactions[data-style='overlay-below'] {
+  position: absolute;
+  bottom: -0.55rem;
+  right: 0.4rem;
+  background: var(--cf-cs-reaction-bg);
+  border-radius: 999px;
+  padding: 0.1rem 0.3rem;
+  box-shadow: var(--cf-cs-reaction-shadow);
+}
+.cf-bubble > .cf-reactions[data-style='overlay-edge'] {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.3rem;
+  background: var(--cf-cs-reaction-bg);
+  border-radius: 999px;
+  padding: 0.05rem 0.25rem;
+  box-shadow: var(--cf-cs-reaction-shadow);
+  font-size: 0.75rem;
+}
+.cf-msg > .cf-reactions[data-style='own-row'] {
+  margin-top: 0.2rem;
+  padding: 0.1rem 0.2rem;
+}
+.cf-reaction {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+/* ── typing / draft indicator ───────────────────────────────────────── */
+
+.cf-typing-row {
+  display: flex;
+  justify-content: flex-end; /* ChatDemo.astro precedent: the outbound side is the one that "types" */
+  padding-right: 7px;
+}
+.cf-typing-row[hidden] {
+  display: none;
+}
+.cf-chat-sim[data-drafting] .cf-typing {
+  display: flex;
+}
+.cf-typing {
+  display: none;
+  gap: 3px;
+  padding: 0.6rem 0.7rem;
+  border-radius: var(--cf-cs-radius);
+  background: var(--cf-cs-bubble-in);
+  width: fit-content;
+}
+.cf-typing i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--cf-cs-bubble-in-meta);
+  animation: cf-cs-dot 1.2s ease-in-out infinite;
+}
+.cf-typing i:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.cf-typing i:nth-child(3) {
+  animation-delay: 0.36s;
+}
+@keyframes cf-cs-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+/* fade-in on reveal — pure opacity, no translate: a scrub/seek must be able to land on any step
+   without a stale mid-animation transform (architecture-v1.md §1, class 8: "hidratar-sin-animar
+   tras un seek"). `cf-static` (capture/settle-gate, T-004) disables this entirely. */
+.cf-msg:not([hidden]) {
+  animation: cf-cs-in 0.22s ease both;
+}
+.cf-chat-sim.cf-static .cf-msg {
+  animation: none !important;
+}
+@keyframes cf-cs-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cf-msg:not([hidden]) {
+    animation: none;
+  }
+}

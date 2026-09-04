@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>chat-sim — demo (wave 1: core + element + WhatsApp values)</title>
+    <!--
+      T-002 acceptance #1 / R-1: this file opens with no build step and no dev server — every
+      asset it references is a plain file the browser can load over file://. `chat-sim.bundle.js`
+      is a checked-in build ARTIFACT (produced once via esbuild, see the comment at the bottom of
+      this file); nothing here is a module import, so Chrome's file:// CORS restriction on
+      `type="module"` never comes into play.
+
+      Acceptance #5 ("renderiza idéntico servido como HTML plano, sin Tailwind del host"): this
+      page links only styles.css — no Tailwind, no framework CSS, nothing from any host app.
+    -->
+    <link rel="stylesheet" href="../src/components/chat-sim/styles.css" />
+    <style>
+      /* Page chrome only — everything under .cf-chat-sim is styles.css's, not this file's. */
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 2.5rem 1rem;
+        background: #f4ede9;
+        font-family: system-ui, sans-serif;
+      }
+      h1 {
+        font-size: 0.8125rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #7a6f68;
+        margin: 0;
+      }
+      .cf-chat-sim {
+        width: min(380px, 92vw);
+        height: 560px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
+      }
+      .cf-log {
+        height: 100%;
+        overflow-y: auto;
+      }
+      .controls {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        font-family: ui-monospace, monospace;
+        font-size: 0.75rem;
+      }
+      .controls input[type='range'] {
+        width: 220px;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>cf-chat-sim — WhatsApp, guion real, seed determinista</h1>
+
+    <cf-chat-sim channel="whatsapp" seed="7" t0="1767261600000" locale="es-PE" tz="America/Lima">
+      <script type="application/json">
+        [
+          { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 500 },
+          { "k": "draft", "by": "out:ai", "chars": 18, "delayMs": 450 },
+          { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad. ¿Para cuántas personas?", "delayMs": 850 },
+          { "k": "post", "by": "in", "text": "Para 4, por favor", "delayMs": 1500 },
+          { "k": "draft", "by": "out:ai", "chars": 30, "delayMs": 400 },
+          { "k": "post", "by": "out:ai", "text": "Perfecto, reservado para 4 el sábado a las 8pm 🎉", "delayMs": 900 },
+          { "k": "post", "by": "out:ai", "text": "Te llega la confirmación por este mismo chat.", "delayMs": 750 },
+          { "k": "flag", "key": "aiOn", "value": true, "delayMs": 0 }
+        ]
+      </script>
+    </cf-chat-sim>
+
+    <div class="controls">
+      <button id="replay">▶ replay</button>
+      <label>data-step <input id="step" type="range" min="0" max="8" value="8" /></label>
+      <span id="step-label">8</span>
+    </div>
+    <p style="max-width: 380px; font: 0.6875rem/1.4 monospace; color: #9a8f88; text-align: center">
+      Known upstream gap (core/fold.ts, T-001, tracked for T-003): a <code>draft</code> event never
+      clears on the following <code>post</code>, so the "…" bubble stays up after the reply lands.
+      This element renders <code>SimState.draft</code> faithfully — the fix belongs in the fold.
+    </p>
+
+    <!-- Plain <script>, not type="module": file:// + ES module imports hit Chrome's strict CORS
+         check and fail silently. This is a single self-executing bundle instead. -->
+    <script src="./chat-sim.bundle.js"></script>
+    <script>
+      var el = document.querySelector('cf-chat-sim');
+      var stepInput = document.getElementById('step');
+      var stepLabel = document.getElementById('step-label');
+      var replayBtn = document.getElementById('replay');
+
+      function play() {
+        el.dataset.step = '0';
+        el.play();
+      }
+
+      // data-step is the ONE public reveal knob (architecture-v1.md §13 #2) — dragging this
+      // slider and the internal rAF playhead both just write the same attribute.
+      stepInput.addEventListener('input', function () {
+        el.dataset.step = stepInput.value;
+        stepLabel.textContent = stepInput.value;
+      });
+      replayBtn.addEventListener('click', play);
+
+      // autoplay once on load
+      requestAnimationFrame(play);
+    </script>
+
+    <!--
+      Rebuild the bundle after editing element/**:
+        npx esbuild src/components/chat-sim/element/index.ts --bundle --format=iife \
+          --global-name=CfChatSim --outfile=demo/chat-sim.bundle.js --target=es2020
+    -->
+  </body>
+</html>
