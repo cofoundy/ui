@@ -161,3 +161,29 @@ volvieron a `~1.7e12+offset`) y en verde. Test de regresión directo agregado.
 transitivamente; ya dispuesto por el CTO que ellos regeneran al mergear) + `ChatInput`
 (heredado de `main`, no relacionado). `tsc --noEmit`: 0 errores en `core/**`. Commit `0c86277`,
 pusheado.
+
+---
+
+wall_clock_minutes: 10
+
+# Export de ChatSim en el barrel público
+
+Pedido de dos líneas del team-lead. `index.ts` gana `export { ChatSim } from './react'` +
+`export type { ChatSimMode, ChatSimProps } from './react'`. Test nuevo
+(`chatsim-barrel-export.test.ts`) importa SOLO del barrel público y falla si `ChatSim` no está —
+verificado en rojo (quité las dos líneas, el test falló) y verde.
+
+## Hallazgo bloqueante (NO arreglado acá — fuera de mi scope.write)
+Al correr `madge --circular` de rutina encontré un ciclo real que MI cambio cierra (no lo crea
+por sí solo, lo revela):
+`index.ts → react/index.ts → ChatSim.tsx → MessageThread.tsx → engine.ts → ../index`
+
+`react/engine.ts` importa `draftIntervals`/`stateAtStep` desde `'../index'` (el barrel) en vez
+de directo desde `'../core/seek'` + `'../core/draft-intervals'` (donde realmente viven), y
+además los re-exporta. Cualquier export nuevo de `react/**` que aterrice en `index.ts` cierra
+este mismo ciclo — no es específico de `ChatSim`. `react/**` es celda `W` de `app`, no la toco.
+Flagueado directo al team-lead (mensaje, no task file — es un fix de una línea, más rápido
+rutearlo a `app` en el momento).
+
+52/52 en `core` con el export puesto. `tsc --noEmit`: 0 errores en `core/**`. Commit `089989f`,
+pusheado.

@@ -140,3 +140,34 @@ son idénticos. El bug vivía exactamente en la costura que la duplicación habr
 El `Int32Array` que el refute-pass declaró correcto ("los ticks son relativos") era **síntoma** del
 mismo bug: el refuter verificó contra el documento, no contra el código. Tercera vez en el ciclo
 que pasa — me pasó a mí con la máquina de entrega, y al refuter acá.
+
+## Hallazgo metodológico: TODOS los bugs serios vivieron en costuras entre lanes
+
+Ninguno fue un error de implementación dentro de una tarea. Los cuatro fueron de integración, y en
+los cuatro **el que encontró no era el dueño del código**:
+
+| Bug | Lo encontró | Dueño | Por qué la lane dueña no podía verlo |
+|---|---|---|---|
+| `channel="telegram"` renderiza chrome de WhatsApp | `app` | `skin` | `skin` construyó contra un stub porque T-005 no existía; su fixture inyecta el adapter directo, así prueba el renderer y no el cableado |
+| `Frame.t` absoluto ⇒ `t0` contado dos veces | `core` | `core` | apareció solo al escribir el cross-check de la **promoción**; todos los tests previos usaban `t0: 0`, donde absoluto y relativo son el mismo número |
+| `Int32Array` desborda con `t0` real | `capture` | `core` | era **síntoma** del anterior; `capture` fue la primera en usar un `t0` realista de punta a punta |
+| Ciclo de imports por el barrel | `core` | `app` | latente: `madge` pasaba mientras `react/**` no aterrizara en `index.ts`. Exportar `ChatSim` lo hizo visible |
+
+**Lo que esto dice de la matriz de propiedad estricta:** su costo es fricción — la lane que
+encuentra no puede arreglar, tiene que reportar y esperar. Ese costo **es** el beneficio: obliga a
+que el hallazgo se verbalice y quede ruteado en vez de arreglarse en silencio dentro de un commit
+ajeno. Los cuatro bugs se documentaron porque alguien tuvo que escribirlos para pedir el arreglo.
+
+Con propiedad difusa, `app` habría cableado el adapter de `skin` de paso y nadie habría sabido que
+la promesa multi-canal estuvo rota. La fricción es el instrumento.
+
+**Corolario para el retro:** las acceptance por-tarea no cubren costuras por construcción. Los dos
+instrumentos que sí las cubrieron fueron **cross-lane**: el snapshot cruzado `element` ↔ `react`
+(T-007 #1) y el cross-check `stateAtStep` ↔ `seek` (promoción). Un ciclo futuro debería exigir al
+menos un test cruzado por par de lanes que comparta contrato, no solo acceptance por tarea.
+
+## Regla de arquitectura que faltó escribir
+
+**Un módulo hoja importa de hojas, nunca del barrel.** Ya la habíamos adoptado un nivel más abajo
+—`caps.ts` no importa nada y `registry.ts` vive aparte, copiado del Python de `inbox-ai`— pero no
+la generalizamos, y el ciclo de imports entró por ahí. Va a `api-contract.md` para el próximo.
