@@ -58,3 +58,41 @@ Invariantes que el engine DEBE cumplir y que el prior art no cumple:
 
 (Secciones 2-cont a 7 pendientes del agente: llamadas, push, avatar, markdown, code blocks,
 link preview, sonido, estados visuales, WhatsApp vs Telegram.)
+
+---
+
+## Veredicto de pureza — el modelo `estado(t) = f(guion, seed, t)` AGUANTA
+
+El engine del prior art es **~95% puro**: no toca DOM, no lee `window` salvo para sonido. Progreso
+de upload, grabación, las 9 fases del contact-picker, push, llamadas y avatar son todas secuencias
+`updateState`+`sleep` con constantes literales ⇒ compilables a timeline.
+
+**Las 9 clases que rompen la pureza, con su remedio. Cada una es requisito del arch, no un detalle:**
+
+| # | Clase | Dónde (prior art) | Por qué rompe | Remedio |
+|---|---|---|---|---|
+| 1 | Reloj de pared | `new Date()` al postear (`:745,951,1135,1183`); pre-roll falso (`:301-308`) | el *contenido* (timestamp) depende de cuándo corriste | **clock virtual `t0+t`** |
+| 2 | Sorteos perezosos | `Math.random()` por tecla/backspace/caption (`:691,698,723,729,827,1078`) | la posición del paso N+1 depende de los sorteos de N ⇒ `seek` no puede ser O(1) | **sortear en compile-time**: guion+seed → timeline (~1–2k draws/min, trivial); seek = binary search |
+| 3 | Medición de DOM | knob de llamada por `getBoundingClientRect` (`IncomingCallModal.tsx:35-50`) | estado local disparado por un *flanco*, no por `t` | distancia en **%**, o reportar la medida al estado |
+| 4 | Integradores físicos | tilt con `useScroll`+`useSpring` (`WhatsAppSimulator.tsx:359-371`) | un spring tiene **memoria**: depende del historial de scroll | **NO seekeable** ⇒ el tilt-por-scroll queda fuera del path de captura. El tilt por keyframes SÍ (es tween, `:519-525`) |
+| 5 | Relojes fuera de banda | Web Audio agenda 3 pulsos hasta +1.38 s sin handle de cancelación (`audio-synth.ts:148-181`) | tercer dominio temporal; un seek deja la cola sonando | **schedule-and-cancel**, o mute-on-scrub |
+| 6 | Red en runtime | `fetch` a `api.microlink.io` al montar (`LinkPreviewBadge.tsx:37-79`) | la tarjeta en `t` depende del RTT | **resolver en compile-time / precargar en el guion** ⚠️ además es una llamada a un tercero desde una página de marketing |
+| 7 | Derivado de layout | auto-grow por `scrollHeight` (`ChatInput.tsx:26-32`) | reconstruible, pero sólo tras un layout pass ⇒ el primer frame post-seek está mal | settle gate antes de capturar |
+| 8 | Animaciones de entrada | `initial/animate` por burbuja (`MessageBubble.tsx:150-152`) | tras un seek, los N del pre-roll montan juntos ⇒ **confeti** | modo **"hidratar sin animar"** — que es justo lo que el reveal-por-clase de `ChatDemo.astro` ya resuelve |
+| 9 | Scroll animado | `scrollTo({behavior:"smooth"})` + catch-ups a 60/180 ms | posición con animación propia | `scroll = f(último índice)`, instantáneo al seekear |
+| 10 | Interacción del espectador | playback de nota de voz (`MessageBubble.tsx:20-21,241`) | segundo dominio temporal dirigido por el usuario | dominio aparte, fuera de la timeline. *(Bonus: `setPlaybackProgress` nunca se llama — la waveform no anima. Código muerto.)* |
+
+### El bug de raíz que el playhead unificado mata
+
+El ticker `setInterval(50)` acumula `elapsedTime` en **tiempo real** (`:352-359`) mientras el guion
+avanza por `sleep` ⇒ **derivan**. Y la cámara de la timeline se elige desde ese `elapsedTime`
+(`WhatsAppSimulator.tsx:442-455`), o sea que está esclava de un reloj que deriva.
+
+Con un playhead único: el bug desaparece por construcción, y `calculateScriptDuration` — el modelo
+paralelo que miente — se vuelve simplemente `last.t`.
+
+### Invariante de diseño derivado
+
+**Un solo dominio temporal para la timeline.** Todo lo que tenga reloj propio (audio, playback de
+nota de voz, springs de scroll) vive FUERA de ella y se declara explícitamente como no-seekeable,
+con política de scrub definida (cancelar / mutear / resetear).
