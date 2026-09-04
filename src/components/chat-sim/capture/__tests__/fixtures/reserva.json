@@ -1,0 +1,10 @@
+[
+  { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 500 },
+  { "k": "draft", "by": "out:ai", "chars": 18, "delayMs": 450 },
+  { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad. ¿Para cuántas personas?", "delayMs": 850 },
+  { "k": "post", "by": "in", "text": "Para 4, por favor", "delayMs": 1500 },
+  { "k": "draft", "by": "out:ai", "chars": 30, "delayMs": 400 },
+  { "k": "post", "by": "out:ai", "text": "Perfecto, reservado para 4 el sábado a las 8pm 🎉", "delayMs": 900 },
+  { "k": "post", "by": "out:ai", "text": "Te llega la confirmación por este mismo chat.", "delayMs": 750 },
+  { "k": "flag", "key": "aiOn", "value": true, "delayMs": 0 }
+]
