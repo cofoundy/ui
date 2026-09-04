@@ -39,18 +39,35 @@ mvp_scope:
     - "element/: custom element para las landings Astro — pre-render + reveal por clase"
     - "capture/: CLI headless -> PNG/WebP deterministas + secuencia a video"
     - "Token y tipo de canal para iMessage (hoy faltan; el resto de los 7 ya existen)"
+    - "sound/: AudioSink cancelable + cue packs de WhatsApp y Telegram COMO DATOS, cota <=6 cues
+       por canal y <=3 capas por cue, muteado por default + story de audicion.
+       ENTRO POR A-1 del gate de Fase 2 — no estaba en el brief original; se escribe aca en vez de
+       viajar tacito. Rastrea a una queja explicita del operador sobre los sonidos."
     - "MobileBaseline para todo lo nuevo + resolución real del teclado (visualViewport/dvh)"
   excluye:
     - "iMessage como adapter completo — se diseña la interfaz contra 3 canales, se implementan 2"
     - "Reemplazar el ConversationView de inbox-ai (el ciclo entrega el skin, no migra su app)"
     - "Release público (queda tras gate humano D-1)"
 
+# CADA criterio nombra la sonda que lo mide y COMO SE PONE ROJA.
+# Hallazgo del gate de Fase 5: la Falsifiable Instrument Gate se habia aplicado a las tareas y
+# nunca a esta lista — 3 de 5 podian terminar verdes sin medirse.
 definicion_de_exito:
-  - "estado(t) es funcion pura: dos corridas del mismo guion+seed dan PNG byte-identicos"
-  - "El mismo guion renderiza en WhatsApp y en Telegram con diferencias estructurales reales (no solo color)"
-  - "Las dos landings Astro pueden montarlo sin agregar React"
-  - "Medible: N KB del fork de inbox-ai quedan reemplazables sin regresion visual"
-  - "El teclado movil se resuelve de forma que el fork de MobileComposer pierda su razon de ser"
+  - criterio: "estado(t) es funcion pura: dos corridas del mismo guion+seed dan PNG byte-identicos"
+    sonda: "T-004 #1 sha256 de dos corridas"
+    se_pone_roja_si: "T-004 #2 — cambiar la seed NO rompe el byte-compare"
+  - criterio: "El mismo guion renderiza en WhatsApp y Telegram con diferencias ESTRUCTURALES, no solo color"
+    sonda: "T-002 #6 fixture de capabilities invertidas (ola 1)"
+    se_pone_roja_si: "el DOM no cambia al invertir tail/receiptGlyph/wallpaper => hay hardcode"
+  - criterio: "Las dos landings Astro pueden montarlo sin agregar React"
+    sonda: "T-002 #7 assert de cero React en el bundle de element/ + T-002 #5 render sin Tailwind del host"
+    se_pone_roja_si: "el bundle importa react/react-dom, o el layout depende de utilidades del host"
+  - criterio: "Medible: N KB del fork de inbox-ai quedan reemplazables sin regresion visual"
+    sonda: "T-008 #1 story tipada contra inbox-ai api.ts:229 + T-008 #5 calculo de N publicado"
+    se_pone_roja_si: "el tipo no calza => la story no compila; o N no tiene comando que lo mida"
+  - criterio: "El teclado movil se resuelve y el fork de MobileComposer pierde su razon de ser"
+    sonda: "T-007 #2 test mecanico de visualViewport + T-007 #3 checklist de N filas del fork real"
+    se_pone_roja_si: "el composer sale del viewport visible, o queda una fila no-cubierta"
 
 restricciones:
   - "NO romper la continuidad visual entre el hero de fovente.cofoundy.ai y el inbox de app.fovente — es deliberada"

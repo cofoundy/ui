@@ -37,6 +37,17 @@ Ninguna fila tiene dos `W`. Las cuatro superficies que tentaban a colisionar, re
 | `package.json` | dos lanes tocarían `exports` | solo `core`, y **solo el campo `exports`**, en la iteración 1 |
 | Reportes | append paralelo al log del ciclo | cada lane escribe `.cofoundy/state/reports/{lane}.md` (nombre único, cero colisión); el CTO es el ÚNICO que escribe el índice |
 
+## Telemetría de presupuesto (B-7)
+
+Cada `.cofoundy/state/reports/{lane}.md` **debe** abrir con `wall_clock_minutes: <n>`. No es
+opcional: sin el dato, `budget_overrun` es infireable y el threshold queda decorativo.
+
+| Umbral | Acción |
+|---|---|
+| **16 h acumuladas al cierre de la ola 3** | aviso temprano — el CTO reproyecta (24 − 8 de margen) |
+| **24 h acumuladas** | **disparo duro ⇒ escala** |
+| **> USD 50** | escala (hoy ≈0: ninguna tarea usa servicios de terceros) |
+
 ## Olas (respetan el tope de concurrencia 2-3)
 
 | Ola | Lanes | Desbloquea |
