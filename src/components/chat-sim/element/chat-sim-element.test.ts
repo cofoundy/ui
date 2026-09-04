@@ -77,18 +77,15 @@ describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
     expect(msgs[4].hasAttribute('data-tail')).toBe(false);
   });
 
-  it('the draft flag surfaces on the root as data-drafting once a draft event has fired', () => {
-    // Two things flagged for [core] in the T-002 termination report (not this task's to fix —
-    // core/** is a write cell this lane only reads):
-    //  1. `Ev`'s `draft` variant carries only `{idx, chars}` — compile.ts's stepToEv() and
-    //     fold.ts's applyEvent() both drop `SimStep.draft.by`, so `state.draft.by` is always ''.
-    //  2. fold.ts's `post` case spreads `...state` without clearing `draft`, so once a draft
-    //     fires it never clears — even after the real `post` that draft was standing in for.
-    // This element renders `state.draft` faithfully either way (data-drafting presence only,
-    // per styles.css) — that's a correctness property, not a place to paper over #2.
-    const el = mount(2); // frames 0,1 applied: post(in), draft(out:ai)
+  it('the draft flag surfaces on the root as data-drafting, named by actor, and clears once posted', () => {
+    // Both gaps flagged in the T-002 report against core/fold.ts (draft dropping `by`, and never
+    // clearing on the following post) were fixed by [core] mid-review — verified live here now
+    // that `state.draft.by` and the post-clears-draft behavior both work.
+    const el = mount(2); // frames 0,1 applied: post(in), draft(out:ai) — draft active, not yet posted
     expect(el.hasAttribute('data-drafting')).toBe(true);
-    expect(el.getAttribute('data-drafting')).toBe('');
+    expect(el.getAttribute('data-drafting')).toBe('out:ai');
+    el.setAttribute('data-step', '3'); // frame 2 applied: post(out:ai) — the draft resolves
+    expect(el.hasAttribute('data-drafting')).toBe(false);
   });
 
   it('formats a real time-of-day label from t0 + the posted tick (not a placeholder string)', () => {

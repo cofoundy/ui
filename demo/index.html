@@ -37,12 +37,8 @@
       }
       .cf-chat-sim {
         width: min(380px, 92vw);
-        height: 560px;
+        height: 620px;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
-      }
-      .cf-log {
-        height: 100%;
-        overflow-y: auto;
       }
       .controls {
         display: flex;
@@ -63,7 +59,15 @@
   <body>
     <h1>cf-chat-sim — WhatsApp, guion real, seed determinista</h1>
 
-    <cf-chat-sim channel="whatsapp" seed="7" t0="1767261600000" locale="es-PE" tz="America/Lima">
+    <cf-chat-sim
+      channel="whatsapp"
+      seed="7"
+      t0="1767261600000"
+      locale="es-PE"
+      tz="America/Lima"
+      contact-name="Fovente — Reservas"
+      contact-status="en línea"
+    >
       <script type="application/json">
         [
           { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 500 },
@@ -83,11 +87,6 @@
       <label>data-step <input id="step" type="range" min="0" max="8" value="8" /></label>
       <span id="step-label">8</span>
     </div>
-    <p style="max-width: 380px; font: 0.6875rem/1.4 monospace; color: #9a8f88; text-align: center">
-      Known upstream gap (core/fold.ts, T-001, tracked for T-003): a <code>draft</code> event never
-      clears on the following <code>post</code>, so the "…" bubble stays up after the reply lands.
-      This element renders <code>SimState.draft</code> faithfully — the fix belongs in the fold.
-    </p>
 
     <!-- Plain <script>, not type="module": file:// + ES module imports hit Chrome's strict CORS
          check and fail silently. This is a single self-executing bundle instead. -->

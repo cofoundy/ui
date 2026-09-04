@@ -97,12 +97,12 @@ var CfChatSim = (() => {
 
   // src/components/chat-sim/core/compile.ts
   var JITTER_MS_MAX = 400;
-  function stepToEv(step, id, idx) {
+  function stepToEv(step, id) {
     switch (step.k) {
       case "post":
         return { k: "post", id, step };
       case "draft":
-        return { k: "draft", idx, chars: step.chars };
+        return { k: "draft", by: step.by, chars: step.chars };
       case "flag":
         return { k: "flag", key: step.key, value: step.value };
     }
@@ -115,7 +115,7 @@ var CfChatSim = (() => {
       const jitter = Math.floor(rand(o.seed, stepIdx, 0) * JITTER_MS_MAX);
       clock += (step.delayMs ?? 0) + jitter;
       const id = step.k === "post" ? `m${nextMsgId++}` : "";
-      frames.push({ t: clock, ev: stepToEv(step, id, stepIdx) });
+      frames.push({ t: clock, ev: stepToEv(step, id) });
     });
     const keys = Int32Array.from(frames.map((f) => f.t));
     const duration = frames.length > 0 ? frames[frames.length - 1].t : o.t0;
@@ -162,10 +162,10 @@ var CfChatSim = (() => {
         };
         const msgs = new Map(state.msgs);
         msgs.set(ev.id, msg);
-        return { ...state, msgs, order: [...state.order, ev.id], scrollId: ev.id };
+        return { ...state, msgs, order: [...state.order, ev.id], scrollId: ev.id, draft: null };
       }
       case "draft": {
-        const draft = { by: "", chars: ev.chars };
+        const draft = { by: ev.by, chars: ev.chars };
         return { ...state, draft };
       }
       case "flag":
@@ -488,7 +488,7 @@ var CfChatSim = (() => {
       editedLabel: msg.v > 0 ? editedLabel : void 0
     };
   }
-  var _timeline, _postedAt, _msgEls, _log, _typingEl, _playhead, _adapter, _CfChatSimElement_instances, readScript_fn, applyStep_fn, reconcile_fn;
+  var _timeline, _postedAt, _msgEls, _log, _typingEl, _playhead, _adapter, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn;
   var CfChatSimElement = class extends HTMLElement {
     constructor() {
       super(...arguments);
@@ -525,9 +525,10 @@ var CfChatSim = (() => {
       const t0 = Number(this.getAttribute("t0") ?? String(Date.UTC(2026, 0, 1, 9, 0, 0)));
       __privateSet(this, _timeline, compile(script, { seed, channel, locale, tz, t0 }));
       __privateSet(this, _postedAt, postedAtByMsgId(__privateGet(this, _timeline).frames));
+      this.textContent = "";
+      this.appendChild(__privateMethod(this, _CfChatSimElement_instances, buildHead_fn).call(this));
       __privateSet(this, _log, document.createElement("ol"));
       __privateGet(this, _log).className = "cf-log";
-      this.textContent = "";
       this.appendChild(__privateGet(this, _log));
       const finalState = stateAtStep(__privateGet(this, _timeline), __privateGet(this, _timeline).frames.length);
       finalState.order.forEach((id) => {
@@ -542,6 +543,7 @@ var CfChatSim = (() => {
       __privateGet(this, _typingEl).hidden = true;
       __privateGet(this, _typingEl).innerHTML = '<span class="cf-typing"><i></i><i></i><i></i></span>';
       __privateGet(this, _log).appendChild(__privateGet(this, _typingEl));
+      this.appendChild(__privateMethod(this, _CfChatSimElement_instances, buildComposer_fn).call(this));
       const initialStep = this.hasAttribute("data-step") ? Number(this.getAttribute("data-step")) : __privateGet(this, _timeline).frames.length;
       this.dataset.step = String(initialStep);
       __privateMethod(this, _CfChatSimElement_instances, applyStep_fn).call(this, initialStep);
@@ -579,6 +581,41 @@ var CfChatSim = (() => {
   _playhead = new WeakMap();
   _adapter = new WeakMap();
   _CfChatSimElement_instances = new WeakSet();
+  /** Header — ChatDemo.astro precedent (`.chat-head`: avatar + name + meta). Visual-only, driven
+   * by attributes so any consumer can set it; falls back to a channel-neutral default rather than
+   * hardcoding a business name into a shared component. */
+  buildHead_fn = function() {
+    const name = this.getAttribute("contact-name") || "Chat";
+    const status = this.getAttribute("contact-status") || "";
+    const head = document.createElement("header");
+    head.className = "cf-head";
+    const avatar = document.createElement("span");
+    avatar.className = "cf-avatar";
+    avatar.textContent = name.charAt(0).toUpperCase();
+    head.appendChild(avatar);
+    const who = document.createElement("span");
+    who.className = "cf-who";
+    const nameEl = document.createElement("b");
+    nameEl.textContent = name;
+    who.appendChild(nameEl);
+    if (status) {
+      const statusEl = document.createElement("em");
+      statusEl.textContent = status;
+      who.appendChild(statusEl);
+    }
+    head.appendChild(who);
+    return head;
+  };
+  /** Composer — WhatsApp always shows one (visual-only for this wave; a real, operable composer
+   * with mobile keyboard handling is react/'s T-007). Its absence read as "broken" rather than
+   * "conversation ended" in review — this closes that gap without claiming interactivity it
+   * doesn't have. */
+  buildComposer_fn = function() {
+    const bar = document.createElement("div");
+    bar.className = "cf-composer";
+    bar.innerHTML = '<span class="cf-composer-icon" aria-hidden="true">\u{1F60A}</span><span class="cf-composer-input" aria-hidden="true">Mensaje</span><span class="cf-composer-icon cf-composer-send" aria-hidden="true">\u27A4</span>';
+    return bar;
+  };
   readScript_fn = function() {
     const inline = this.querySelector('script[type="application/json"]');
     const raw = inline?.textContent ?? this.getAttribute("script");
@@ -589,6 +626,19 @@ var CfChatSim = (() => {
     if (!__privateGet(this, _timeline) || !__privateGet(this, _log)) return;
     const state = stateAtStep(__privateGet(this, _timeline), step);
     __privateMethod(this, _CfChatSimElement_instances, reconcile_fn).call(this, state);
+  };
+  /** ChatDemo.astro's exact trick (`s.offsetWidth + 10`, global.css's `measure()`): `--cf-cs-pad`
+   * (styles.css) is a static FALLBACK only — a stamp with a receipt glyph is measurably wider
+   * than one without (measured live: 50px vs 31px), so one static reservation either overlaps
+   * the wider ones or over-gaps the narrower ones. Re-measured per message, per step, since
+   * content driving stamp width (receipt glyph, views counter) can change between steps. Only
+   * meaningful for `timestamp: 'inside-pad'` — the other two placements don't use `.cf-pad`. */
+  measurePad_fn = function(li) {
+    if (__privateGet(this, _adapter).timestamp !== "inside-pad") return;
+    const bubble = li.querySelector(".cf-bubble");
+    const stamp = li.querySelector(".cf-stamp");
+    if (!bubble || !stamp) return;
+    bubble.style.setProperty("--cf-cs-pad", `${stamp.offsetWidth + 10}px`);
   };
   /** Pre-render contract: every MsgId's <li> already exists (built in connectedCallback from the
    * final state) — this only repopulates content for currently-visible messages and flips
@@ -609,6 +659,7 @@ var CfChatSim = (() => {
       if (!li) return;
       populateMessageElement(li, rm, __privateGet(this, _adapter), flags.get(rm.id));
       li.hidden = false;
+      __privateMethod(this, _CfChatSimElement_instances, measurePad_fn).call(this, li);
     });
     __privateGet(this, _msgEls).forEach((li, id) => {
       if (!visibleIds.has(id)) li.hidden = true;

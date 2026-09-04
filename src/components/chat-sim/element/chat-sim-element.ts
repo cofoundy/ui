@@ -120,9 +120,11 @@ export class CfChatSimElement extends HTMLElement {
     this.#timeline = compile(script, { seed, channel, locale, tz, t0 });
     this.#postedAt = postedAtByMsgId(this.#timeline.frames);
 
+    this.textContent = '';
+    this.appendChild(this.#buildHead());
+
     this.#log = document.createElement('ol');
     this.#log.className = 'cf-log';
-    this.textContent = '';
     this.appendChild(this.#log);
 
     // Pre-render del hilo completo (T-002 Alcance): every message the script will EVER post gets
@@ -146,11 +148,56 @@ export class CfChatSimElement extends HTMLElement {
     this.#typingEl.innerHTML = '<span class="cf-typing"><i></i><i></i><i></i></span>';
     this.#log.appendChild(this.#typingEl);
 
+    this.appendChild(this.#buildComposer());
+
     const initialStep = this.hasAttribute('data-step')
       ? Number(this.getAttribute('data-step'))
       : this.#timeline.frames.length;
     this.dataset.step = String(initialStep);
     this.#applyStep(initialStep);
+  }
+
+  /** Header — ChatDemo.astro precedent (`.chat-head`: avatar + name + meta). Visual-only, driven
+   * by attributes so any consumer can set it; falls back to a channel-neutral default rather than
+   * hardcoding a business name into a shared component. */
+  #buildHead(): HTMLElement {
+    const name = this.getAttribute('contact-name') || 'Chat';
+    const status = this.getAttribute('contact-status') || '';
+    const head = document.createElement('header');
+    head.className = 'cf-head';
+
+    const avatar = document.createElement('span');
+    avatar.className = 'cf-avatar';
+    avatar.textContent = name.charAt(0).toUpperCase();
+    head.appendChild(avatar);
+
+    const who = document.createElement('span');
+    who.className = 'cf-who';
+    const nameEl = document.createElement('b');
+    nameEl.textContent = name;
+    who.appendChild(nameEl);
+    if (status) {
+      const statusEl = document.createElement('em');
+      statusEl.textContent = status;
+      who.appendChild(statusEl);
+    }
+    head.appendChild(who);
+
+    return head;
+  }
+
+  /** Composer — WhatsApp always shows one (visual-only for this wave; a real, operable composer
+   * with mobile keyboard handling is react/'s T-007). Its absence read as "broken" rather than
+   * "conversation ended" in review — this closes that gap without claiming interactivity it
+   * doesn't have. */
+  #buildComposer(): HTMLElement {
+    const bar = document.createElement('div');
+    bar.className = 'cf-composer';
+    bar.innerHTML =
+      '<span class="cf-composer-icon" aria-hidden="true">😊</span>' +
+      '<span class="cf-composer-input" aria-hidden="true">Mensaje</span>' +
+      '<span class="cf-composer-icon cf-composer-send" aria-hidden="true">➤</span>';
+    return bar;
   }
 
   disconnectedCallback(): void {
@@ -195,6 +242,20 @@ export class CfChatSimElement extends HTMLElement {
     this.#reconcile(state);
   }
 
+  /** ChatDemo.astro's exact trick (`s.offsetWidth + 10`, global.css's `measure()`): `--cf-cs-pad`
+   * (styles.css) is a static FALLBACK only — a stamp with a receipt glyph is measurably wider
+   * than one without (measured live: 50px vs 31px), so one static reservation either overlaps
+   * the wider ones or over-gaps the narrower ones. Re-measured per message, per step, since
+   * content driving stamp width (receipt glyph, views counter) can change between steps. Only
+   * meaningful for `timestamp: 'inside-pad'` — the other two placements don't use `.cf-pad`. */
+  #measurePad(li: HTMLLIElement): void {
+    if (this.#adapter.timestamp !== 'inside-pad') return;
+    const bubble = li.querySelector<HTMLElement>('.cf-bubble');
+    const stamp = li.querySelector<HTMLElement>('.cf-stamp');
+    if (!bubble || !stamp) return;
+    bubble.style.setProperty('--cf-cs-pad', `${stamp.offsetWidth + 10}px`);
+  }
+
   /** Pre-render contract: every MsgId's <li> already exists (built in connectedCallback from the
    * final state) — this only repopulates content for currently-visible messages and flips
    * `hidden`. It never creates, removes, or reorders nodes. */
@@ -223,6 +284,7 @@ export class CfChatSimElement extends HTMLElement {
       if (!li) return; // shouldn't happen — every eventual MsgId was pre-built in connectedCallback
       populateMessageElement(li, rm, this.#adapter, flags.get(rm.id)!);
       li.hidden = false;
+      this.#measurePad(li);
     });
 
     // Not (yet, or no longer) in `order` at this step => hidden, never removed — the nodes stay

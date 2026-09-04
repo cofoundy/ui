@@ -43,7 +43,8 @@
   --cf-cs-reaction-bg: #ffffff;
   --cf-cs-reaction-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 
-  display: block;
+  display: flex;
+  flex-direction: column;
   font-family: var(--cf-cs-sans);
   color: var(--cf-cs-ink);
   background: var(--cf-cs-surface);
@@ -51,9 +52,57 @@
   overflow: hidden;
 }
 
+/* Doodle-textured wallpaper (adapter.wallpaper === 'pattern' — WhatsApp AND Telegram; 'none' for
+   iMessage leaves the log a plain --cf-cs-surface). Hand-authored inline SVG, no external asset:
+   a loose scatter of a few tiny line-glyphs (leaf / chat-tail / dot), tiled — closer to WhatsApp's
+   actual wallpaper texture than a bare dot grid (flagged in review as reading "placeholder"). */
 .cf-chat-sim[data-wallpaper='pattern'] .cf-log {
-  background-image: radial-gradient(circle at 1px 1px, var(--cf-cs-hairline) 1px, transparent 0);
-  background-size: 22px 22px;
+  background-color: var(--cf-cs-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cg fill='none' stroke='%23000' stroke-opacity='0.045' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M12 8c4 0 6 3 6 7s-3 6-6 6'/%3E%3Ccircle cx='58' cy='14' r='3'/%3E%3Cpath d='M44 46c3-3 8-3 10 0s0 7-3 9-8 1-9-2 0-5 2-7z'/%3E%3Cpath d='M76 62c3 1 5 4 4 7s-4 4-7 3'/%3E%3Ccircle cx='16' cy='70' r='2.4'/%3E%3Cpath d='M30 20l4 4m-4 0l4-4'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 90px 90px;
+}
+.cf-chat-sim[data-wallpaper='none'] .cf-log {
+  background: var(--cf-cs-surface);
+}
+
+/* ── header (ChatDemo.astro precedent: .chat-head) ─────────────────────── */
+
+.cf-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: none;
+  padding: 0.65rem 0.9rem;
+  background: var(--cf-cs-card);
+  border-bottom: 1px solid var(--cf-cs-hairline);
+}
+.cf-avatar {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--cf-cs-accent);
+  color: var(--cf-cs-accent-ink);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+.cf-who {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.cf-who b {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.cf-who em {
+  font-style: normal;
+  font-size: 0.6875rem;
+  color: var(--cf-cs-ink-muted);
 }
 
 /* ── message list ───────────────────────────────────────────────────── */
@@ -65,7 +114,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--cf-cs-gap);
-  min-height: 200px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .cf-msg {
@@ -75,13 +126,19 @@
 .cf-msg[hidden] {
   display: none;
 }
+/* The opposite-side reserve (not just max-width on the bubble) is what makes direction legible
+   regardless of content length: a max-width alone still lets a long message fill nearly the
+   whole row from EITHER side, so without this a long inbound and a long outbound bubble can end
+   up nearly indistinguishable (measured: 17px apart in a 380px log — team-lead review, wave 1). */
 .cf-msg[data-dir='in'] {
   justify-content: flex-start;
   padding-left: 7px;
+  padding-right: 15%;
 }
 .cf-msg[data-dir='out'] {
   justify-content: flex-end;
   padding-right: 7px;
+  padding-left: 15%;
 }
 
 /* consecutive same-actor messages sit tight; only the streak's edge (per adapter.tail) softens
@@ -98,7 +155,7 @@
   line-height: 1.45;
   padding: 0.55rem 0.8rem;
   border-radius: var(--cf-cs-radius);
-  max-width: 86%;
+  max-width: 100%; /* the opposite-side 15% reserve on .cf-msg does the real capping now */
   white-space: pre-line;
   filter: drop-shadow(var(--cf-cs-bubble-shadow));
 }
@@ -328,6 +385,41 @@
   30% {
     opacity: 1;
   }
+}
+
+/* ── composer (visual-only — a real, operable one is react/'s T-007) ───── */
+
+.cf-composer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+  padding: 0.5rem 0.7rem;
+  background: var(--cf-cs-card);
+  border-top: 1px solid var(--cf-cs-hairline);
+}
+.cf-composer-icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  font-size: 0.9375rem;
+  color: var(--cf-cs-ink-muted);
+}
+.cf-composer-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: var(--cf-cs-surface);
+  color: var(--cf-cs-ink-muted);
+  font-size: 0.8125rem;
+}
+.cf-composer-send {
+  background: var(--cf-cs-accent);
+  color: var(--cf-cs-accent-ink);
+  border-radius: 50%;
 }
 
 /* fade-in on reveal — pure opacity, no translate: a scrub/seek must be able to land on any step

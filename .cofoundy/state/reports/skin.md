@@ -1,6 +1,46 @@
-wall_clock_minutes: 55
+wall_clock_minutes: 90
 
 # skin — T-002 (stylesheet scoped + element + layout WhatsApp)
+
+## Iteration 2 — visual review (team-lead, DOM-measured, not eyeballed)
+
+7 findings, all addressed:
+
+1. **No left/right geometry** (measured: 17px apart in a 380px log). Root cause: `.cf-bubble`'s
+   `max-width: 86%` alone lets a long message fill nearly the whole row from EITHER direction —
+   capping isn't the same as reserving a gutter. Fix: `.cf-msg[data-dir]` now reserves 15% padding
+   on the OPPOSITE side (`.cf-bubble` max-width relaxed to 100%, since the reserve does the real
+   work) — direction is now legible regardless of content length.
+2. **No header.** Added `.cf-head` (avatar-initial + name + status) to the element itself, per
+   ChatDemo.astro's `.chat-head` — driven by `contact-name`/`contact-status` attributes, not
+   hardcoded, so it's reusable outside this one demo script.
+3. **No composer.** Added `.cf-composer` (visual-only — a real, operable one with mobile keyboard
+   handling is `react/`'s T-007, not this wave's job) — closes the "reads as broken, not ended"
+   gap.
+4. **Tail not visible.** Investigated via computed style + a 4×-zoomed crop of the actual pixels —
+   the tail IS rendering correctly (7×11px `::after`, correct clip-path, correct offset); it was
+   just too small to read at the review's screenshot scale. No code change; confirmed with a crop
+   saved during this session.
+5. **Stamp placement inconsistent between short/long messages.** Real bug, not a design tension:
+   `--cf-cs-pad` was a STATIC 44px fallback, but a stamp WITH a receipt glyph measures ~50px and
+   one without measures ~31px (measured live) — one static reservation either under- or
+   over-reserves depending on content. Fixed by adopting ChatDemo.astro's own mechanism exactly
+   (`global.css`'s `measure()`: `stamp.offsetWidth + 10`, JS-computed): `#measurePad()` now sets
+   `--cf-cs-pad` per message, per step, right after each reveal.
+6. **Wallpaper read as a generic dot grid.** Replaced the polka-dot radial-gradient with a
+   hand-authored inline SVG doodle pattern (a scatter of small line-glyphs), still zero external
+   assets, tiled via `background-image: url("data:image/svg+xml,...")`.
+7. **Arbitrary bubble width.** Resolved as a side effect of #1's fix — width now tracks content
+   up to the reserved-gutter cap consistently in both directions, instead of both directions
+   independently chasing an 86%-of-container ceiling.
+
+Re-verified after: 44/44 chat-sim tests green, typecheck clean, fresh headless screenshot
+(pre- and post-fix, both saved during session) confirms all 7 visually.
+
+Also picked up mid-review: `core` fixed both draft-related bugs flagged below in iteration 1
+(`draft.by` now populated, `post` now clears `draft`) — verified live, updated
+`chat-sim-element.test.ts` to assert the corrected behavior, removed the now-stale disclosure
+paragraph from the demo page.
 
 ## Delivered
 
@@ -60,15 +100,13 @@ wall_clock_minutes: 55
 
 ## Deviations / flags for the CTO
 
-- **Two bugs found in `core/**` (T-001, not mine to fix — `R` only on that cell), disclosed +
-  worked around defensively, not silently patched:**
-  1. `core/fold.ts`'s `draft` case and `core/compile.ts`'s `stepToEv()` both drop `SimStep.draft.by`
-     — `Ev`'s `draft` variant only carries `{idx, chars}`. `state.draft.by` is always `''` today.
-  2. `core/fold.ts`'s `post` case spreads `...state` without clearing `draft` — once a draft fires
-     it never resolves, even after the `post` it was standing in for. Visible live in the demo (the
-     "…" bubble stays up after the reply lands) — disclosed on the demo page itself so it doesn't
-     read as a `skin` defect. `element/` renders `SimState.draft` faithfully either way; I did not
-     paper over #2 in this layer.
+- **Two bugs found in `core/**` (T-001, not mine to fix — `R` only on that cell) — both now FIXED
+  by `core`, verified live during iteration 2:**
+  1. `core/fold.ts`'s `draft` case dropped `SimStep.draft.by` (`state.draft.by` was always `''`) —
+     `Ev`'s `draft` variant now carries `by: ActorId`.
+  2. `core/fold.ts`'s `post` case didn't clear `draft` on landing — `post` now sets `draft: null`.
+  Originally disclosed on the demo page itself so it wouldn't read as a `skin` defect; that
+  disclosure paragraph is removed now that it's resolved.
 - **`demo/index.html` + `demo/chat-sim.bundle.js` are not covered by ANY scope.write glob** (mine
   is `element/**` + `styles.css`; `demo/**` isn't in file-ownership-matrix.md at all, for any
   lane). The task file's own prose ("Más `demo/index.html`") and architecture-v1.md §9 ("`core/` +
