@@ -134,3 +134,47 @@ el único puente. Transports y stores usan exclusivamente el modelo B.
 
 ⇒ El skin se ancla a `UniversalMessage` (es el que ya habla de canales) y el ciclo debe entregar
 el adaptador B→A que hoy falta, o declarar explícitamente que no lo toca.
+
+---
+
+# Guía de adopción para `inbox-ai` (entregada por `recon-inbox` al cierre)
+
+## Prod
+Rama por defecto `main`; deploya en **Railway** (backend+frontend+PG+Redis, GH Actions on push to
+main, `DEPLOYMENT.md:9,118`) en inbox.cofoundy.dev. **`dev` NO existe.**
+
+## Su `Message` como canónico, con 3 recortes
+
+Copiar literal: `direction`, `sender.type` de 4 valores, `reply_to` denormalizado,
+`channel_revoked`, y **los dos relojes** (`timestamp` del evento vs `created_at` de ingesta).
+
+Recortar: reacciones deben ser **campo de primera clase** (hoy se anclan por `channel_message_id`);
+`delivery_status` cerrado **sin** `draft|discarded` (eso es vocabulario de producto Fovente); y
+tipar `media`, hoy `any[]` (`api.ts:236`).
+
+## 🔴 Corrección a NUESTRO modelo: `channel` ≠ `provider`
+
+`kapso` es un **proveedor de WhatsApp**, no un canal. Nuestro `ChannelId` los conflaciona igual que
+el `ChannelType` de ellos. Separarlos: `channel` es **presentación** (cómo se ve), `provider` es
+**transporte** (por dónde viaja). Un mismo canal puede tener varios proveedores.
+
+No bloquea este ciclo —solo implementamos whatsapp y telegram, sin proveedores alternos— pero es
+deuda de diseño conocida antes de agregar el canal 4.
+
+## Riesgos al adoptar el skin, en orden
+
+1. **`"@cofoundy/ui": "github:cofoundy/ui#main"` en 139 archivos de prod, pin flotante.**
+   **Pinnear a un tag ANTES de tocar messaging.** (Hoy el lockfile lo congela en v0.2.2, así que el
+   riesgo se materializa al re-resolver — que es justo lo que adoptar el skin requiere.)
+2. No filtrar vocabulario de producto al skin: `draft`, `is_sandbox`, `ai_paused_reason` son de
+   Fovente, no del componente.
+3. **`can_edit` y `delete_reaches_customer` se reciben como props, NUNCA se derivan de `channel`** —
+   ellos lo prohíben explícitamente en `api.ts:288`. Son política del servidor, no de presentación.
+4. Separar `channel` de `provider` (arriba).
+
+## Qué les sirve HOY
+
+(1) la burbuja completa —tail + ticks + stamp + grouping—, hoy 68 KB propios copiados a mano del
+simulador de la landing; (2) el capability model en TS, hoy re-derivado a mano en la UI; (3) el
+composer móvil con el teclado resuelto (no usan `visualViewport` ni `dvh` — es el hueco real) ⇒ mata
+su fork; (4) el wallpaper doodle (`globals.css:1254`).
