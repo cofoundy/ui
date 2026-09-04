@@ -37,11 +37,15 @@ wall_clock_minutes: 55
 
 1. `demo/index.html` opens and plays a real script — **pass**, screenshot-verified (see below).
 2. All tokens under `.cf-chat-sim`, zero new `:root` — **pass**, `grep '^:root' styles.css` empty.
-3. Zero Tailwind utility classes; lint rejects — **partial**. Grepped clean myself (no `className`
-   string ever holds a utility class — every class this family sets is a semantic `cf-*` name).
-   The CI-enforcing lint itself is `[core]`'s write cell (file-ownership-matrix.md, "eslint rules
-   del ciclo") and hasn't landed yet — no `eslint.config.*` exists in the repo at all right now.
-   Cannot demonstrate "el lint las rechaza" until that lands; flagging for the CTO, not blocking.
+3. Zero Tailwind utility classes; the instrument rejects them — **pass**, via a static-scan vitest
+   test (`element/__tests__/no-tailwind.test.ts`), per the team-lead's resolution of E-001 (no
+   ESLint infra in the repo, `core` hit the same gap for T-001's own purity lint and set the
+   pattern in `core/__tests__/purity.test.ts` — this test copies that shape, not its content).
+   Scans `chat-sim/**/*.{ts,tsx,html}` + `demo/**/*.html` for `class`/`className`/`classList.add`
+   tokens matching a Tailwind-utility shape. Positive twin included (automated), AND ran the
+   literal manual version the acceptance text describes: added `classList.add('flex',
+   'items-center')` to `chat-sim-element.ts`, watched the test go red naming the file and the
+   token, reverted (`git diff --stat` confirms clean).
 4. `git diff --exit-code src/index.ts src/styles/index.css` vs merge-base — **pass**, verified,
    exit 0.
 5. Renders identical served as plain HTML, no host Tailwind — **pass** by construction: the demo
