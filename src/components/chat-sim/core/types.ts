@@ -100,10 +100,39 @@ export interface FlagStepData {
   readonly value: Json;
 }
 
+// edit/delete/react/pin/unpin/receipt/read/views (T-003) target a MsgId directly — unlike
+// `post`, they mutate a message that already exists, so there's no id to *assign*, only to
+// *reference*. compile() assigns post ids deterministically in script order (`m0`, `m1`, ...),
+// so a script author writes the target id the same way they'd write any other stable identifier
+// — these SimStep variants are structurally identical to their Ev counterpart (+ delayMs).
 export type SimStep =
   | ({ readonly k: 'post'; readonly delayMs?: number } & PostStepData)
   | ({ readonly k: 'draft'; readonly delayMs?: number } & DraftStepData)
-  | ({ readonly k: 'flag'; readonly delayMs?: number } & FlagStepData);
+  | ({ readonly k: 'flag'; readonly delayMs?: number } & FlagStepData)
+  | { readonly k: 'edit'; readonly delayMs?: number; readonly id: MsgId; readonly v: number }
+  | {
+      readonly k: 'delete';
+      readonly delayMs?: number;
+      readonly id: MsgId;
+      readonly scope: 'me' | 'all';
+    }
+  | {
+      readonly k: 'react';
+      readonly delayMs?: number;
+      readonly id: MsgId;
+      readonly emoji: string;
+      readonly by: ActorId;
+      readonly remove?: boolean;
+    }
+  | { readonly k: 'pin' | 'unpin'; readonly delayMs?: number; readonly id: MsgId }
+  | {
+      readonly k: 'receipt';
+      readonly delayMs?: number;
+      readonly id: MsgId;
+      readonly to: DeliveryState;
+    }
+  | { readonly k: 'read'; readonly delayMs?: number; readonly upTo: MsgId }
+  | { readonly k: 'views'; readonly delayMs?: number; readonly id: MsgId; readonly n: number };
 
 export type SimScript = readonly SimStep[];
 
