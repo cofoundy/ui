@@ -503,6 +503,14 @@ var CfChatSim = (() => {
       new Date(t0Epoch + tick)
     );
   }
+  function dayKeyOf(t0Epoch, tick, tz) {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date(t0Epoch + tick));
+  }
+  function dayLabelOf(t0Epoch, tick, locale, tz) {
+    return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", timeZone: tz }).format(
+      new Date(t0Epoch + tick)
+    );
+  }
   function toRenderMessage(msg, atLabel, editedLabel) {
     return {
       id: msg.id,
@@ -515,7 +523,7 @@ var CfChatSim = (() => {
       editedLabel: msg.v > 0 ? editedLabel : void 0
     };
   }
-  var _timeline, _postedAt, _msgEls, _log, _typingIntervals, _playhead, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn;
+  var _timeline, _postedAt, _msgEls, _log, _typingIntervals, _dateSeps, _playhead, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn;
   var CfChatSimElement = class extends HTMLElement {
     constructor() {
       super(...arguments);
@@ -525,6 +533,7 @@ var CfChatSim = (() => {
       __privateAdd(this, _msgEls, /* @__PURE__ */ new Map());
       __privateAdd(this, _log, null);
       __privateAdd(this, _typingIntervals, []);
+      __privateAdd(this, _dateSeps, []);
       __privateAdd(this, _playhead, null);
       __privateAdd(this, _adapter, WHATSAPP_REFERENCE_ADAPTER);
       /** Guards against redoing any work when `data-step` is set to the value it already holds — the
@@ -570,6 +579,19 @@ var CfChatSim = (() => {
         li.hidden = true;
         __privateGet(this, _msgEls).set(id, li);
         __privateGet(this, _log).appendChild(li);
+      });
+      let lastDayKey = null;
+      finalState.order.forEach((id) => {
+        const tick = __privateGet(this, _postedAt).get(id) ?? 0;
+        const dayKey = dayKeyOf(t0, tick, tz);
+        if (dayKey === lastDayKey) return;
+        lastDayKey = dayKey;
+        const sep = document.createElement("li");
+        sep.className = "cf-date-sep";
+        sep.hidden = true;
+        sep.innerHTML = `<span class="cf-date-pill">${dayLabelOf(t0, tick, locale, tz)}</span>`;
+        __privateGet(this, _log).insertBefore(sep, __privateGet(this, _msgEls).get(id));
+        __privateGet(this, _dateSeps).push({ triggerId: id, li: sep });
       });
       const intervals = draftIntervals(__privateGet(this, _timeline));
       intervals.forEach((interval) => {
@@ -619,6 +641,7 @@ var CfChatSim = (() => {
   _msgEls = new WeakMap();
   _log = new WeakMap();
   _typingIntervals = new WeakMap();
+  _dateSeps = new WeakMap();
   _playhead = new WeakMap();
   _adapter = new WeakMap();
   _lastStep = new WeakMap();
@@ -708,12 +731,28 @@ var CfChatSim = (() => {
     __privateGet(this, _msgEls).forEach((li, id) => {
       if (!visibleIds.has(id)) li.hidden = true;
     });
+    __privateGet(this, _dateSeps).forEach((sep) => {
+      sep.li.hidden = !visibleIds.has(sep.triggerId);
+    });
     if (state.draft) this.setAttribute("data-drafting", state.draft.by);
     else this.removeAttribute("data-drafting");
     __privateGet(this, _typingIntervals).forEach((interval) => {
       if (!interval.li) return;
       interval.li.hidden = !(step >= interval.appearStep && step < interval.vanishStep);
     });
+    __privateMethod(this, _CfChatSimElement_instances, applyBottomAnchor_fn).call(this);
+  };
+  /** Team-lead, iteration 3: measured 41% of the log's height sitting empty at the BOTTOM (216px
+   * of 522px) — a short thread should hug the composer and grow upward, not float at the top.
+   * `.cf-anchor-top` (styles.css) only ever lives on the first VISIBLE child at any moment; date
+   * separators (below) and typing rows are ordinary flex items too, so whichever of the three
+   * kinds happens to be first-and-visible gets it. */
+  applyBottomAnchor_fn = function() {
+    if (!__privateGet(this, _log)) return;
+    const prev = __privateGet(this, _log).querySelector(".cf-anchor-top");
+    if (prev) prev.classList.remove("cf-anchor-top");
+    const firstVisible = [...__privateGet(this, _log).children].find((el) => !el.hidden);
+    firstVisible?.classList.add("cf-anchor-top");
   };
   __publicField(CfChatSimElement, "observedAttributes", ["data-step"]);
   customElements.define("cf-chat-sim", CfChatSimElement);

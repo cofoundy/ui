@@ -119,6 +119,37 @@
   overflow-y: auto;
 }
 
+/* Stacks from the BOTTOM, like a real thread — ChatDemo.astro's documented reason
+   (global.css:358-361) for why this is `margin-top: auto` on the first VISIBLE item and NOT
+   `justify-content: flex-end`: combined with `overflow-y`, flex-end pushes overflowing content
+   OUT of the scrollable area (the top becomes unreachable). `margin-top:auto` has no such failure
+   mode — it only ever consumes free space that exists; once content fills/overflows the log,
+   there's none left to consume and the thread behaves like a normal top-to-bottom scroll.
+   element/chat-sim-element.ts's #applyBottomAnchor() moves this class to whichever <li> is
+   currently first-and-visible (hidden pre-rendered siblings before it don't count). */
+.cf-anchor-top {
+  margin-top: auto;
+}
+
+/* ── date separator ─────────────────────────────────────────────────── */
+
+.cf-date-sep {
+  display: flex;
+  justify-content: center;
+}
+.cf-date-sep[hidden] {
+  display: none;
+}
+.cf-date-pill {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--cf-cs-ink-muted);
+  background: var(--cf-cs-card);
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  box-shadow: var(--cf-cs-bubble-shadow);
+}
+
 .cf-msg {
   display: flex;
   max-width: 100%;

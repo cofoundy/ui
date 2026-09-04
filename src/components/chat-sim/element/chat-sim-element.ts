@@ -117,6 +117,23 @@ function formatTime(t0Epoch: number, tick: number, locale: string, tz: string): 
   );
 }
 
+/** `en-CA` always renders `YYYY-MM-DD` regardless of the CALLER's `locale` — used only as a
+ * stable comparison key for "did the day change", never shown. Deliberately NOT "HOY"/"AYER":
+ * that reads real-world wall-clock "now" at VIEW time, which would make the same
+ * (script, seed, channel, locale, tz) render different text depending on which day you open the
+ * page — breaking exactly the determinism architecture-v1.md §1 invariant 2 exists to guarantee
+ * (T-004's byte-identical PNG comparison would be false for this exact reason). The date pill
+ * always shows the actual formatted date instead. */
+function dayKeyOf(t0Epoch: number, tick: number, tz: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date(t0Epoch + tick));
+}
+
+function dayLabelOf(t0Epoch: number, tick: number, locale: string, tz: string): string {
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', timeZone: tz }).format(
+    new Date(t0Epoch + tick),
+  );
+}
+
 function toRenderMessage(
   msg: MsgState,
   atLabel: string,
@@ -142,6 +159,7 @@ export class CfChatSimElement extends HTMLElement {
   #msgEls = new Map<MsgId, HTMLLIElement>();
   #log: HTMLOListElement | null = null;
   #typingIntervals: TypingInterval[] = [];
+  #dateSeps: { triggerId: MsgId; li: HTMLLIElement }[] = [];
   #playhead: Playhead | null = null;
   #adapter: ChannelAdapter = WHATSAPP_REFERENCE_ADAPTER;
   /** Guards against redoing any work when `data-step` is set to the value it already holds — the
@@ -202,6 +220,25 @@ export class CfChatSimElement extends HTMLElement {
       li.hidden = true;
       this.#msgEls.set(id, li);
       this.#log!.appendChild(li);
+    });
+
+    // Date separators (team-lead, iteration 3): "sin ella, la captura no se lee como una
+    // conversación real." One pill per calendar-day boundary crossed by the script, built once at
+    // its real position — same pre-render contract as messages and typing rows. Hidden until the
+    // message it introduces is actually revealed (#reconcile), so it can't appear ahead of the
+    // step that's supposed to introduce it.
+    let lastDayKey: string | null = null;
+    finalState.order.forEach((id) => {
+      const tick = this.#postedAt.get(id) ?? 0;
+      const dayKey = dayKeyOf(t0, tick, tz);
+      if (dayKey === lastDayKey) return;
+      lastDayKey = dayKey;
+      const sep = document.createElement('li');
+      sep.className = 'cf-date-sep';
+      sep.hidden = true;
+      sep.innerHTML = `<span class="cf-date-pill">${dayLabelOf(t0, tick, locale, tz)}</span>`;
+      this.#log!.insertBefore(sep, this.#msgEls.get(id)!);
+      this.#dateSeps.push({ triggerId: id, li: sep });
     });
 
     // Typing/"…" indicators: ONE stable <li> per draft window, built here at its real position in
@@ -375,6 +412,11 @@ export class CfChatSimElement extends HTMLElement {
       if (!visibleIds.has(id)) li.hidden = true;
     });
 
+    // A separator reveals exactly when the message it introduces does — never ahead of it.
+    this.#dateSeps.forEach((sep) => {
+      sep.li.hidden = !visibleIds.has(sep.triggerId);
+    });
+
     if (state.draft) this.setAttribute('data-drafting', state.draft.by);
     else this.removeAttribute('data-drafting');
 
@@ -385,6 +427,21 @@ export class CfChatSimElement extends HTMLElement {
       if (!interval.li) return;
       interval.li.hidden = !(step >= interval.appearStep && step < interval.vanishStep);
     });
+
+    this.#applyBottomAnchor();
+  }
+
+  /** Team-lead, iteration 3: measured 41% of the log's height sitting empty at the BOTTOM (216px
+   * of 522px) — a short thread should hug the composer and grow upward, not float at the top.
+   * `.cf-anchor-top` (styles.css) only ever lives on the first VISIBLE child at any moment; date
+   * separators (below) and typing rows are ordinary flex items too, so whichever of the three
+   * kinds happens to be first-and-visible gets it. */
+  #applyBottomAnchor(): void {
+    if (!this.#log) return;
+    const prev = this.#log.querySelector<HTMLElement>('.cf-anchor-top');
+    if (prev) prev.classList.remove('cf-anchor-top');
+    const firstVisible = [...this.#log.children].find((el) => !(el as HTMLElement).hidden);
+    (firstVisible as HTMLElement | undefined)?.classList.add('cf-anchor-top');
   }
 }
 customElements.define('cf-chat-sim', CfChatSimElement);

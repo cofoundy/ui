@@ -150,4 +150,60 @@ describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
       expect(el.querySelector('.cf-typing-row')).toBe(before);
     });
   });
+
+  describe('bottom anchor (team-lead, iteration 3: measured 41% of the log empty at the bottom)', () => {
+    it('marks the first VISIBLE item — never a hidden pre-rendered one — as the anchor', () => {
+      const el = mount(1); // only m0 (and the date separator introducing it) visible
+      const anchored = el.querySelector('.cf-anchor-top');
+      expect(anchored).not.toBeNull();
+      // the date separator sits BEFORE m0 in the DOM and reveals at the same step — it, not m0,
+      // is genuinely first-and-visible; asserting against .cf-date-sep keeps this test honest
+      // about DOM order instead of asserting what "should" be first.
+      expect(anchored).toBe(el.querySelector('.cf-date-sep'));
+      expect((anchored as HTMLElement).hidden).toBe(false);
+    });
+
+    it('follows the first-visible item as it changes, and drops the class entirely when nothing is visible', () => {
+      const el = mount(3); // m0, m1 visible — the date separator (before m0) is first-and-visible
+      const anchorAtStep3 = el.querySelector('.cf-anchor-top');
+      expect(anchorAtStep3).toBe(el.querySelector('.cf-date-sep'));
+
+      el.setAttribute('data-step', '0'); // scrub back to nothing visible
+      expect(el.querySelectorAll('.cf-anchor-top')).toHaveLength(0); // no visible item => no anchor
+
+      el.setAttribute('data-step', String(FRAME_COUNT)); // forward again
+      // the anchor is back on the true first-visible item, not a stale reference from step 3
+      expect(el.querySelector('.cf-anchor-top')).toBe(el.querySelector('.cf-date-sep'));
+    });
+
+    it('never puts the anchor class on more than one element at a time', () => {
+      const el = mount();
+      expect(el.querySelectorAll('.cf-anchor-top')).toHaveLength(1);
+    });
+  });
+
+  describe('date separator (team-lead, iteration 3)', () => {
+    it('renders exactly one pill for a script that all happens on the same day, positioned before the first message', () => {
+      const el = mount();
+      const seps = el.querySelectorAll('.cf-date-sep');
+      expect(seps).toHaveLength(1);
+      const children = [...el.querySelector('.cf-log')!.children];
+      expect(children.indexOf(seps[0])).toBeLessThan(children.indexOf(el.querySelector('.cf-msg')!));
+    });
+
+    it('stays hidden until the message it introduces is actually revealed — never ahead of its step', () => {
+      const el = mount(0);
+      expect(el.querySelector('.cf-date-sep')!.hasAttribute('hidden')).toBe(true);
+      el.setAttribute('data-step', '1'); // m0 (the trigger) is now visible
+      expect(el.querySelector('.cf-date-sep')!.hasAttribute('hidden')).toBe(false);
+    });
+
+    it('never shows a relative label ("HOY"/"AYER") — determinism (architecture-v1.md §1 invariant 2)', () => {
+      const el = mount();
+      const label = el.querySelector('.cf-date-pill')!.textContent ?? '';
+      expect(label.toLowerCase()).not.toContain('hoy');
+      expect(label.toLowerCase()).not.toContain('ayer');
+      expect(label.length).toBeGreaterThan(0);
+    });
+  });
 });

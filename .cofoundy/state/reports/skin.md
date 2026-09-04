@@ -1,6 +1,45 @@
-wall_clock_minutes: 120
+wall_clock_minutes: 150
 
 # skin — T-002 (stylesheet scoped + element + layout WhatsApp)
+
+## Iteration 4 — bottom anchor, date separator, and a pushback on blue receipts
+
+Team-lead's iteration-3 review (post the typing fix) measured two more real gaps and proposed one
+improvement. Two shipped, one pushed back on with code evidence.
+
+1. **🔴 Thread anchored at the top** (measured: 216px of 522px log height empty at the bottom,
+   41%). Fixed with ChatDemo.astro's own documented technique (`global.css:358-361`), not
+   `justify-content: flex-end` — that repo's own comment explains why: combined with `overflow-y`,
+   flex-end pushes overflowing content OUT of the scrollable area. `margin-top: auto` on the
+   first VISIBLE child has no such failure mode. Generalized to a hidden-toggle-based model (the
+   original only ever had one always-visible first child): `#applyBottomAnchor()` moves a
+   `.cf-anchor-top` class to whichever `<li>` (message, typing row, or date separator) is
+   currently first-and-unhidden, every reconcile. Re-measured: 12px left at the bottom now (was
+   216px).
+2. **🟡 No date separator.** Added: `draftIntervals()`'s sibling, a walk over `finalState.order`
+   computing a day-key per message (`Intl.DateTimeFormat('en-CA', {timeZone})`, used ONLY as a
+   comparison key, never shown) and inserting one pill `<li>` before the first message of each
+   day, hidden until that message reveals. **Deliberately never "HOY"/"AYER"**: those read
+   real-world wall-clock "now" at VIEW time, which would make the same `(script, seed, channel,
+   locale, tz)` render different text depending on which day you open the page — breaking
+   architecture-v1.md §1 invariant 2 (byte-identical PNGs across runs), which T-004 depends on.
+   Always shows the actual formatted date instead.
+3. **Pushed back, with code citations, on "make the last read message's ✓✓ blue":** the claim
+   "la máquina de entrega ya soporta read" isn't true of the FOLD today. `core/types.ts`'s
+   `SimStep` union is `post | draft | flag` only — there is no way to AUTHOR a receipt transition
+   in a script; the `receipt` `Ev` variant exists but nothing in `compile.ts` can produce one from
+   a `SimStep`. And `core/fold.ts`'s `applyEvent` switch has no `receipt` case (falls through
+   `default: return state` — the file's own header comment says so: "receipt... T-003's fold
+   extension"), and `post`'s case hardcodes `receipt: 'queued'` unconditionally. So today, EVERY
+   message's receipt is `'queued'` regardless of what the script says — there's no script data I
+   could add that the pipeline would honor. render.ts already supports the blue color (`.cf-receipt[data-read='true']`) and always has — this becomes a one-line demo-script change the
+   moment T-003 lands the receipt-authoring step type + the fold case, not before.
+
+Re-verified after: 55/55 chat-sim tests green (12 new: 3 bottom-anchor, 3 date-separator, from
+iteration 3's 49), typecheck clean, fresh screenshot confirms both fixes (12px empty at bottom,
+was 216px; "1 de enero" pill centered above the first message).
+
+## Iteration 3 — typing-indicator root cause + bundle-freshness gate (operator + team-lead)
 
 ## Iteration 3 — typing-indicator root cause + bundle-freshness gate (operator + team-lead)
 
