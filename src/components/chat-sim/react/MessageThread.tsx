@@ -166,8 +166,11 @@ function MessageBubble({
 
   const stamp = <Stamp msg={msg} adapter={adapter} dir={dir} />;
   const reactionsEl = msg.reactions.length > 0 ? <Reactions reactions={msg.reactions} style={adapter.reactions} /> : null;
-  const reactionsInsideBubble = reactionsEl && adapter.reactions !== 'own-row';
-  const reactionsOwnRow = reactionsEl && adapter.reactions === 'own-row';
+  // NOT `reactionsEl && cond` — `a && b` evaluates to `b` (a boolean) when `a` is truthy, never
+  // to `a` itself, so `{reactionsInsideBubble}` rendered `{true}`/`{false}` (nothing) instead of
+  // the element (T-010, found by [qa] via the public `<ChatSim>` barrel).
+  const reactionsInsideBubble = reactionsEl && adapter.reactions !== 'own-row' ? reactionsEl : null;
+  const reactionsOwnRow = reactionsEl && adapter.reactions === 'own-row' ? reactionsEl : null;
 
   return (
     <li className={classNames} {...dataAttrs}>

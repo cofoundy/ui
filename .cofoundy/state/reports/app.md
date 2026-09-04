@@ -1,6 +1,6 @@
-wall_clock_minutes: 45
+wall_clock_minutes: 70
 
-# app — T-007 (react renderer + mobile-first composer)
+# app — T-007 (react renderer + mobile-first composer) + follow-ups (circular import, T-010)
 
 ## Delivered
 
@@ -94,3 +94,35 @@ two `bundle-freshness` tests not closing) — an environment quirk, not somethin
   back into a `Timeline`/persisted `SimState` — `mode="live"`'s sends are local optimistic UI
   (`onLiveSend` callback + an in-memory list) by design; nothing in api-contract.md or
   architecture-v1.md asks for persistence, and none of the 3 acceptance lines depend on it.
+
+## Follow-up 1 — circular import (team-lead, post-review, no task number)
+
+`react/engine.ts` imported `stateAtStep`/`draftIntervals` from `'../index'` (the `chat-sim`
+subpath barrel) instead of their leaf modules (`../core/seek`, `../core/draft-intervals`) —
+latent until [core] exported `ChatSim` through that same barrel, at which point it closed a real
+cycle team-lead caught with `madge`. Fixed: leaf imports only, same rule
+`adapters/caps.ts`/`registry.ts` already encodes. Added
+`react/__tests__/no-circular-imports.test.ts` — static DFS cycle detector over
+`chat-sim/**/*.{ts,tsx}` (no lint/CI infra exists here, same convention as `no-tailwind.test.ts`).
+Verified red against the actual pre-fix import (reproduced team-lead's exact cycle path) before
+confirming green, plus two in-memory twins. `npx madge --circular` clean. Commit `27da5b9`.
+
+## Follow-up 2 — T-010: reactions never rendered via `<ChatSim>`, any channel
+
+Found by [qa] (`src/__tests__/chat-sim/chatsim-cross-channel-states.test.tsx`, two `it.fails`
+tripwires — not edited, that file is qa's write cell and T-010.md's own acceptance says not to
+touch it). Root cause: `MessageThread.tsx:169-170` wrote `reactionsEl && adapter.reactions !==
+'own-row'` — `a && b` evaluates to `b` (a boolean) when `a` is truthy, never to `a` itself, so
+`{reactionsInsideBubble}`/`{reactionsOwnRow}` rendered `{true}`/`{false}` (nothing) regardless of
+channel. Fix: `cond ? reactionsEl : null` instead of `reactionsEl && cond`.
+
+Verified: ran qa's test file (without editing it) — both `it.fails` blocks now report "Expect
+test to fail" (the underlying assertions pass, which is what a `.fails` tripwire is supposed to
+catch once the bug is fixed; qa or team-lead flips those two to plain `it` in their own cell).
+Added `react/__tests__/reactions.test.tsx` (4 tests) covering acceptance #1/#2 directly at
+`<ChatSim>` level (WhatsApp overlay-below nested in `.cf-bubble`, Telegram own-row as a sibling)
+plus the negative twin (zero reactions renders neither node) and the adapter-inversion twin named
+in T-010's acceptance #2, at the `MessageThread` level (same `SimState`, swap
+`adapter.reactions` between `overlay-below`/`own-row`, assert the DOM placement moves).
+
+38/38 green in `react/**` (`npx vitest run src/components/chat-sim/react`), tsc clean.
