@@ -81,7 +81,7 @@ El producto que corre en `app.fovente.cofoundy.ai` es `inbox-ai`. No hay repo ap
 | Estilos | `frontend/src/app/layout.tsx:4` `import "@cofoundy/ui/styles"` |
 | Build | `next.config.mjs:15` `transpilePackages` + `tailwind.config.ts:9` escanea el src del paquete |
 
-## H-5 — 🔴 RIESGO DE ESTE CICLO: la dependencia NO está pinneada
+## H-5 — ⚠️ CORREGIDO: la dependencia SÍ está pinneada por el lockfile
 
 `github:cofoundy/ui#main` sigue la rama. **Cada push a `ui/main` entra a Fovente en prod sin
 gate.** No es hipotético: 139 archivos y `MessageComposer` en el `ConversationView` real.

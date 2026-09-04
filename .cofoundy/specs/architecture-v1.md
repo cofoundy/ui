@@ -286,3 +286,68 @@ atribución en build-time, y el release público ya está fuera del alcance del 
 | 3 | El adapter no aguanta el canal 4 | Ya se probó en papel contra 3 y rindió 3 campos nuevos. Regla: **cero opcionales** — un `?` es un `if` diferido |
 | 4 | Determinismo falso: PNG que difieren por fuentes o layout | Gate de settle (fuentes + `--pad`) antes de capturar. Test que compara dos corridas byte a byte — **la sonda tiene gemelo positivo**: un cambio conocido debe romperla |
 | 5 | Release OSS sin decisión de atribución (D-1) | Gate humano antes del push público. No bloquea el build |
+
+
+---
+
+## 12. Contrato de estilado — `chat-sim` es self-contained y scoped
+
+**Añadido tras el REFUTE `esc-c1b8c98e0ecfa2` (honrado). El remedio está FORZADO, no elegido.**
+
+### Por qué la mitigación anterior era falsa
+
+| Hecho | Verificado en |
+|---|---|
+| El `content` glob de inbox-ai escanea `node_modules/@cofoundy/ui/src/**` **por path, no por import** | `inbox-ai/frontend/tailwind.config.ts:9` |
+| El CSS del paquete es **un solo sheet global, cero `@layer`** | `packages/ui/src/styles/index.css` (1128 líneas) |
+| Se importa en la raíz del App Router **antes** de `globals.css`, que lo sombrea | `inbox-ai/frontend/src/app/layout.tsx:4` |
+
+⇒ El mapa de `exports` no tiene autoridad sobre ninguna de las tres. Un subpath gatea resolución de
+módulos, no escaneo de archivos ni cascada de CSS.
+
+### Las cuatro superficies no comparten Tailwind
+
+| Consumidor | Tailwind |
+|---|---|
+| `fovente-landingpage` (fovente.cofoundy.ai) | **ninguno** |
+| `landing-page-v3` (cofoundy.dev) | v4.1 |
+| `inbox-ai` (app.fovente) | **v3.4** + puente manual + safelist |
+| `packages/ui` (productor) | v4.1.18, **sin `tailwind.config`** |
+
+Reconciliar v3/v4 **no resuelve**: una de las dos landings objetivo no tiene Tailwind en absoluto.
+Un componente que dependa del Tailwind del host no puede shipear ahí. La opción se colapsa a una.
+
+### El contrato
+
+1. **`chat-sim` ships su propio stylesheet self-contained**, en `chat-sim/styles.css`, importado por
+   subpath. No toca `src/styles/index.css`.
+2. **Todos los tokens bajo `.cf-chat-sim`**, no en `:root`. Incluye `--channel-imessage` de A-5 —
+   que era justamente el token que iba a aterrizar en la superficie compartida.
+3. **Cero utilidades Tailwind en el source de la familia.** Regla fundacional de autoría: si un
+   `.tsx` de `chat-sim/` contiene una clase de utilidad, falla el lint. Es lo que hace que el glob
+   de inbox-ai escanee nuestros archivos y no encuentre nada que compilar.
+4. **Precedente propio, no invención:** `ChatDemo.astro` ya renderiza este lenguaje visual con
+   clases semánticas sobre CSS plano y custom properties, en un repo sin Tailwind, en producción.
+
+### Lo que esto compra
+
+El mismo artefacto renderiza idéntico en Storybook (v4), en `capture/` headless, en dos landings
+Astro y en Fovente (v3) — **sin depender del compilador de CSS del consumidor**. Es la única forma
+de que los golden PNG byte-comparados de las iteraciones 2-3 signifiquen algo, y de que el criterio
+de éxito #4 ("sin regresión visual") sea medible en vez de afirmado.
+
+**Costo de tomarla ahora:** este párrafo. **Costo en la iteración 4:** reestilar `element/` +
+`react/` e invalidar todos los golden byte-comparados.
+
+---
+
+## 13. Correcciones menores del refute-pass (SUSTAIN, se arreglan durante)
+
+| # | Hueco | Arreglo |
+|---|---|---|
+| 1 | `compile(script, {seed, channel, locale, t0})` **no recibe timezone**, pero §1 formatea con `fmt(t0+f.t, locale, TZ)`. Dos corridas en la misma máquina pasan el test y la propiedad igual es falsa cross-machine | `tz` entra a la firma de `compile` y al `digest`. Un campo |
+| 2 | `element/` revela con **clases acumuladas** (monótono), pero el fold existe por mutaciones **no monótonas** (`edit`/`delete`/`react`/`pin`) | `data-step` en la raíz en vez de clases acumuladas. `capture/` ya ejercita `seek` desde la iteración 2 |
+
+El #1 es notable: es un test que pasa y una propiedad que es falsa — exactamente un instrumento
+que no puede fallar. `Int32Array` y el orden de `Map` sí se sostienen (los ticks son relativos a
+`t0`, y `order` es explícito).
