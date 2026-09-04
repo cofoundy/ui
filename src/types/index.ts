@@ -25,6 +25,11 @@ export type {
 export type MessageSendStatus = 'sending' | 'sent' | 'delivered' | 'failed';
 
 // Chat message types
+/**
+ * DEUDA CONOCIDA — dos modelos de Message. Ver el bloque en src/types/message.ts:
+ * este es el role-based del widget; aquel es el omnicanal direction-based. No hay
+ * conversor entre ambos. Aislado, no reparado, por el ciclo chat-sim-rewrite.
+ */
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'tool';

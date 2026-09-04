@@ -60,6 +60,21 @@ export interface ToolExecution {
  * Universal message type that supports both widget and inbox use cases.
  * This is the canonical message type for all Cofoundy messaging components.
  */
+/**
+ * DEUDA CONOCIDA — dos modelos de Message coexisten en este paquete y NO son intercambiables.
+ *
+ * - `UniversalMessage` (este archivo): omnicanal, direction-based, con `channel`,
+ *   `deliveryStatus` (5 estados incl. `queued`/`read`), `sender`, `media`.
+ * - `Message` (src/types/index.ts): widget/Zustand, role-based, `sendStatus` (4 estados
+ *   incl. `sending`). Sin `channel`, `sender` ni `media`.
+ *
+ * NO existe funcion de conversion entre ambos. El campo `role?` de abajo es el unico
+ * puente y es parcial. Transports y stores usan exclusivamente el segundo.
+ *
+ * El ciclo chat-sim-rewrite (2026-09-04) AISLA esta deuda en vez de repararla: escribir
+ * el conversor toca transports/stores y el chat-widget de TimelyAI, superficies sin
+ * criterio de exito ni tests en ese ciclo. Ver `.cofoundy/specs/architecture-v1.md` §5.
+ */
 export interface UniversalMessage {
   id: string;
   timestamp: Date;
