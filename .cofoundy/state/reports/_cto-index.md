@@ -117,3 +117,26 @@ tests: el contador de pasos y el gemelo de escalado 500↔5000. **El acceptance 
 
 Van cuatro sondas propias defectuosas en la sesión. Tres las cacé con gemelo positivo o leyendo el
 código; una (el `eval` vacío) la cacé sola. Ninguna llegó a un reporte al operador como verdad.
+
+## Olas 2-4 — lo verificado
+
+| Commit | Lane | Verificación del CTO (mutación, no reporte) |
+|---|---|---|
+| `e70693f` | channel | agregué `'delivered'` a Telegram ⇒ **rojo**: *"telegram has no delivered state"*. Allowlist 73/73 idéntico a `inbox-ai` prod, comparado normalizando U+FE0F |
+| `76a3a31` | capture | `sha256` propios: runA == runB ✅ · seed7 ≠ seed99 ✅ |
+| `1327af1` | skin | `sound/**` 16/16 aislado. El test trae los 3 chequeos: digest distinto por canal, gemelo de determinismo, y **sensibilidad a un solo campo** (`gain`) |
+| `0c86277` | core | restauré `t: o.t0 + clock` ⇒ rompe **3 tests**, incluido el cross-check `stateAtStep` ↔ `seek` |
+
+## La decisión que más rindió: promover en vez de duplicar
+
+`app` pidió `stateAtStep`/`draftIntervals` y propuso una copia mínima con comentario cruzado.
+Rechazado por el `problema_real` del brief. Al escribir la versión compartida, `core` necesitó un
+cross-check con `t0` **realista** — y ahí apareció que `Frame.t` era absoluto contra una fórmula de
+formateo que exige relativo. El demo sumaba `t0` dos veces en cada timestamp.
+
+**Ninguna lane lo habría encontrado sola**: cada una probaba con `t0: 0`, donde absoluto y relativo
+son idénticos. El bug vivía exactamente en la costura que la duplicación habría dejado sin coser.
+
+El `Int32Array` que el refute-pass declaró correcto ("los ticks son relativos") era **síntoma** del
+mismo bug: el refuter verificó contra el documento, no contra el código. Tercera vez en el ciclo
+que pasa — me pasó a mí con la máquina de entrega, y al refuter acá.

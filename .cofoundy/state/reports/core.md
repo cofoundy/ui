@@ -119,3 +119,45 @@ wall_clock_minutes: 25
   CTO stasheó mi WIP no commiteado para aislar un rojo propio (riesgo que documentó en
   `_cto-index.md`) y el pop los reincorporó junto con su commit. Confirmé `git diff HEAD --
   core/` vacío: nada se perdió ni se mezcló mal. Pusheado.
+
+---
+
+wall_clock_minutes: 20
+
+# Promoción — stateAtStep/draftIntervals a core + bugfix t0
+
+Pedido directo del team-lead (desbloquea `app`, T-007). Entregado:
+- `core/seek.ts`: `stateAtStep(tl,n)` promovido desde `element/chat-sim-element.ts`, ahora
+  usando la misma máquina de checkpoints que `seek()` (`foldFromCheckpoint` compartido) — gana
+  el mismo bound O(log n + 64), no solo un copy-paste.
+- `core/draft-intervals.ts` (nuevo): `draftIntervals(tl)` + tipo `DraftInterval`, promovido
+  igual. Sin el campo `li: HTMLLIElement` de la copia de `skin` — eso es bookkeeping de DOM,
+  queda local a `element/` cuando `skin` cambie a consumir esto (no lo toqué, fuera de mi scope).
+- `index.ts`: exporta ambos + `DraftInterval`.
+
+## Bug real encontrado (no buscado, apareció al escribir el test de acceptance #3)
+`compile.ts` calculaba `Frame.t = t0 + offset` (absoluto). `architecture-v1.md §1` formatea con
+`fmt(t0 + f.t, ...)` — fórmula que solo es válida si `f.t` EXCLUYE `t0`. `element/`'s
+`formatTime` ya asumía esto último correctamente ⇒ el timestamp mostrado en el demo suma `t0`
+DOS veces. También explica por qué `keys` es `Int32Array`: un epoch real (~1.7e12) desborda
+Int32; solo offsets relativos chicos entraban. Todos los tests previos usaban `t0:0`
+(absoluto==relativo, oculta el bug). Encontrado al escribir un test con epoch real para
+acceptance #3 (`stateAtStep` vs `seek` debían coincidir y no coincidían — Int32Array desbordado
+daba `keys` corruptos). Fix: `clock` arranca en `0` en `compile()`, `virtualT` arranca en `0` en
+`createPlayhead()`. Verificado en rojo (revertí compile.ts, corrí compile.test.ts, ticks
+volvieron a `~1.7e12+offset`) y en verde. Test de regresión directo agregado.
+
+## Acceptance — status
+1. Ambas exportadas desde `core/`, consumibles sin importar `element/**` — `queries.test.ts`
+   importa desde `../../index` y `../seek`/`../draft-intervals` directamente. **passed**
+2. Lint de pureza sigue verde — `purity.test.ts` escanea todo `core/**/*.ts`, cero cambios
+   necesarios. **passed**
+3. `stateAtStep(tl,n)` coincide con `seek(tl,t)` en el `t` de ese frame, para cada `n` del
+   guion + gemelo de sensibilidad (no ambos triviales) + clamping — `queries.test.ts`.
+   **passed**
+
+50/50 en `core`. Repo completo: 626/629 — los 3 rojos son los 2 gates de frescura de bundle
+(esperados: mi cambio en `core/**` invalida bundles que `skin`/`capture` bundlean
+transitivamente; ya dispuesto por el CTO que ellos regeneran al mergear) + `ChatInput`
+(heredado de `main`, no relacionado). `tsc --noEmit`: 0 errores en `core/**`. Commit `0c86277`,
+pusheado.
