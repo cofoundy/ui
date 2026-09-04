@@ -19,7 +19,10 @@ export interface Playhead {
 export function createPlayhead(tl: Timeline): Playhead {
   let playing = false;
   let playRate = 1;
-  let virtualT: Tick = tl.t0;
+  // Frame.t (and Timeline.duration) is relative to t0, not t0-inclusive (compile.ts) — the
+  // playhead's virtual clock starts at 0 for the same reason, and `emit()` calls `seek(tl, ·)`
+  // with that same relative tick, matching what compile() actually produced.
+  let virtualT: Tick = 0;
   let rafId: number | null = null;
   let lastWall: number | null = null;
   const listeners = new Set<(state: SimState, t: Tick) => void>();

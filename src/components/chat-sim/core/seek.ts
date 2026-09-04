@@ -1,8 +1,10 @@
-// seek(tl, t) — pure: same t twice must deep-equal. Binary search over `keys` for the upper
-// bound (O(log n)), then resume the fold from the nearest checkpoint instead of t0 — at most
-// CHECKPOINT_INTERVAL frames applied, regardless of how large the script is (architecture-v1.md
-// §1: O(log n + 64)). checkpoints[k] = state after exactly k*CHECKPOINT_INTERVAL frames
-// (compile.ts), so checkpoints[i >> 6] is always the closest snapshot at or before `i`.
+// seek(tl, t) and stateAtStep(tl, step) — two paths to the same SimState, one keyed by Tick and
+// one by frame count. Both pure: same input twice must deep-equal. Binary search / direct index
+// resolves the target frame, then the fold resumes from the nearest checkpoint instead of t0 —
+// at most CHECKPOINT_INTERVAL frames applied, regardless of how large the script is
+// (architecture-v1.md §1: O(log n + 64)). checkpoints[k] = state after exactly
+// k*CHECKPOINT_INTERVAL frames (compile.ts), so checkpoints[i >> 6] is always the closest
+// snapshot at or before `i`.
 
 import { CHECKPOINT_INTERVAL } from './compile';
 import { applyEvent } from './fold';
@@ -19,13 +21,15 @@ function upperBound(keys: Int32Array, t: Tick): number {
   return lo;
 }
 
-interface SeekResult {
+interface FoldResult {
   readonly state: SimState;
-  readonly foldSteps: number; // number of applyEvent() calls this seek actually performed
+  readonly foldSteps: number; // number of applyEvent() calls actually performed
 }
 
-function seekTraced(tl: Timeline, t: Tick): SeekResult {
-  const upto = upperBound(tl.keys, t);
+// Shared by seek() (upto resolved by Tick via binary search) and stateAtStep() (upto given
+// directly as a frame count) — both just need "fold from the nearest checkpoint up to frame
+// index `upto`", they differ only in how `upto` is computed.
+function foldFromCheckpoint(tl: Timeline, upto: number): FoldResult {
   const checkpointIdx = Math.floor(upto / CHECKPOINT_INTERVAL);
   const from = checkpointIdx * CHECKPOINT_INTERVAL;
   let state = tl.checkpoints[checkpointIdx];
@@ -35,6 +39,10 @@ function seekTraced(tl: Timeline, t: Tick): SeekResult {
     foldSteps++;
   }
   return { state, foldSteps };
+}
+
+function seekTraced(tl: Timeline, t: Tick): FoldResult {
+  return foldFromCheckpoint(tl, upperBound(tl.keys, t));
 }
 
 export function seek(tl: Timeline, t: Tick): SimState {
@@ -48,4 +56,19 @@ export function seek(tl: Timeline, t: Tick): SimState {
  */
 export function seekFoldSteps(tl: Timeline, t: Tick): number {
   return seekTraced(tl, t).foldSteps;
+}
+
+/**
+ * Exact frame count applied — the integer step counts frames, NOT a raw Tick
+ * (architecture-v1.md §13 #2: "N clases acumuladas" becomes "N frames applied"). Deliberately
+ * keyed by frame count instead of going through seek(tl, t): seek resolves by Tick, and two
+ * frames with equal jitter-adjusted ticks would make a Tick-keyed step ambiguous — frame count
+ * is unambiguous by construction. Promoted from element/chat-sim-element.ts (T-002/T-006) to
+ * core/ so app/ (T-007) and element/ read the same implementation instead of a third copy —
+ * this cycle's stated problema_real is "tres implementaciones que comparten código copiado, no
+ * abstracción".
+ */
+export function stateAtStep(tl: Timeline, step: number): SimState {
+  const upto = Math.max(0, Math.min(step, tl.frames.length));
+  return foldFromCheckpoint(tl, upto).state;
 }

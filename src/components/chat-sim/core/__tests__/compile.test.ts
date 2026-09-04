@@ -64,6 +64,19 @@ describe('compile()', () => {
     expect(Array.from(tl.keys)).toEqual(tl.frames.map((f) => f.t));
   });
 
+  it('regression: Frame.t is relative to t0, never t0-inclusive — architecture-v1.md §1 formats with fmt(t0 + f.t, ...)', () => {
+    // Found via a promoted-function test using a realistic epoch t0: with t0 folded into
+    // Frame.t, keys (an Int32Array) silently overflowed and every seek()/stateAtStep() query
+    // returned garbage. Direct regression: the same script compiled at t0:0 and at a large real
+    // epoch must produce IDENTICAL frame ticks, duration, and keys — only Timeline.t0 differs.
+    const atZero = compile(SCRIPT, { ...BASE, t0: 0 });
+    const atRealEpoch = compile(SCRIPT, { ...BASE, t0: 1_700_000_000_000 });
+    expect(atRealEpoch.frames.map((f) => f.t)).toEqual(atZero.frames.map((f) => f.t));
+    expect(atRealEpoch.duration).toBe(atZero.duration);
+    expect(Array.from(atRealEpoch.keys)).toEqual(Array.from(atZero.keys));
+    expect(atRealEpoch.t0).toBe(1_700_000_000_000); // t0 itself is still carried, just not folded in
+  });
+
   it('draft events carry the actor id verbatim, not lost/blanked (bug #2)', () => {
     const script: SimScript = [
       { k: 'draft', by: 'in', chars: 3 },

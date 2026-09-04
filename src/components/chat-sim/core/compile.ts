@@ -41,7 +41,13 @@ function stepToEv(step: SimScript[number], id: string): Ev {
 
 export function compile(script: SimScript, o: CompileOptions): import('./types').Timeline {
   const frames: Frame[] = [];
-  let clock: Tick = o.t0;
+  // Frame.t is RELATIVE to t0, never t0-inclusive — architecture-v1.md §1's own formatting
+  // formula is `fmt(t0 + f.t, locale, TZ)`, which only holds if f.t excludes t0. This also is
+  // why `keys` is an Int32Array (api-contract.md): a real epoch-ms t0 (~1.7e12) overflows
+  // Int32 on its own — only small, script-relative offsets were ever meant to live here.
+  // (Bug found via a new core/__tests__/queries.test.ts case using a realistic t0; every prior
+  // test used t0:0, where "absolute" and "relative" are numerically identical, hiding it.)
+  let clock: Tick = 0;
   let nextMsgId = 0;
 
   script.forEach((step, stepIdx) => {
@@ -53,7 +59,7 @@ export function compile(script: SimScript, o: CompileOptions): import('./types')
   });
 
   const keys = Int32Array.from(frames.map((f) => f.t));
-  const duration: Tick = frames.length > 0 ? frames[frames.length - 1].t : o.t0;
+  const duration: Tick = frames.length > 0 ? frames[frames.length - 1].t : 0;
   const digest = digestOf(
     JSON.stringify({ script, seed: o.seed, channel: o.channel, locale: o.locale, tz: o.tz }),
   );
