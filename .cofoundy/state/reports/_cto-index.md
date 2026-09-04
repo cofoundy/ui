@@ -171,3 +171,17 @@ menos un test cruzado por par de lanes que comparta contrato, no solo acceptance
 **Un módulo hoja importa de hojas, nunca del barrel.** Ya la habíamos adoptado un nivel más abajo
 —`caps.ts` no importa nada y `registry.ts` vive aparte, copiado del Python de `inbox-ai`— pero no
 la generalizamos, y el ciclo de imports entró por ahí. Va a `api-contract.md` para el próximo.
+
+## Falla de orquestación del CTO: conté despachos, no residentes
+
+Respeté el tope de concurrencia de 2-3 **agentes activos**, pero nunca conté los que ya habían
+entregado. Al final había **10 teammates vivos**, cuatro terminados hacía 5 horas. La máquina llegó
+a **200 MB libres de 24 GB** y Chrome dejó de poder responder llamadas de DevTools — lo que rompió
+la verificación del entregable principal.
+
+Liberarlos subió a 996 MB. El tope que apliqué medía lo fácil de contar (despachos simultáneos) en
+vez de lo que importaba (memoria residente). **Es la misma clase de error que este ciclo cazó cinco
+veces en otros: medir el proxy en vez del efecto.**
+
+**Regla para el próximo:** el shutdown de una lane es parte de aceptar su tarea, no del cierre del
+ciclo.

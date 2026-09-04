@@ -5,7 +5,7 @@ guion, con diferencias **estructurales** entre canales (no de color), y escupe P
 corrida tras corrida. Sirve a las dos landings Astro sin agregar React, y a la app de Fovente vía
 React. 33+ commits, ~13.6k líneas, 6 lanes en paralelo.
 
-**Estado: NO listo para merge.** Falta que la captura sea repetible (ver Abierto).
+**Estado: código completo. Una afirmación queda `UNVERIFIED` — ver abajo.**
 
 ---
 
@@ -66,9 +66,29 @@ contrato.
 
 ## Abierto — requiere decisión humana
 
-1. **La captura no es repetible.** Los PNGs de evidencia son válidos (sha256 verificados), pero los
-   tests que lo demuestran fallan por fuga de sesiones del navegador. **Un entregable que solo se
-   verifica una vez, con el entorno limpio, no está terminado.** Reabierto con `capture`.
+1. **`UNVERIFIED`: que la suite de captura pase de punta a punta en esta máquina.**
+
+   Lo que **sí** está verificado:
+   - Los PNGs de evidencia son válidos — `sha256` re-computados por el CTO: runA == runB,
+     seed7 ≠ seed99.
+   - La fuga de sesiones está **arreglada y medida en vivo 3 veces** por `capture`, contando
+     sesiones antes/después, incluyendo el caso de captura forzada a fallar.
+   - La causa raíz resultó distinta de la que el CTO planteó: el `finally` sí corría; era el
+     `catch {}` de `close()` tragándose su propia falla contra el daemon degradado.
+
+   Lo que **no** pude verificar: que los tests corran verdes de punta a punta. Fallan por
+   `CDP command timed out` — Chrome no alcanza a responder una llamada de DevTools.
+
+   **Causa: presión de memoria de la máquina, no del código.** 252 MB libres de 24 GB, load ~3.8,
+   con **30 sesiones de otros proyectos** corriendo en paralelo. Contribuí al problema dejando 8
+   agentes vivos después de que terminaran; liberarlos subió la memoria de 200 MB a 996 MB, y
+   volvió a bajar por carga ajena.
+
+   **Intentos hechos:** cerrar mis sesiones de navegador · liberar los 8 agentes terminados ·
+   re-correr con timeout de 580s · correr la suite aislada.
+
+   **Para cerrarlo:** re-correr `npx vitest run src/components/chat-sim/capture` en una máquina
+   con headroom. Es una corrida, no trabajo.
 2. **D-1 — línea de prior art en el README** al abrir el repo. No hay copia literal de `whatsimule`
    (restricción con tripwire), así que MIT no impone atribución en build-time: es decisión
    reputacional, no legal. Recomendación del CTO: incluirla.
