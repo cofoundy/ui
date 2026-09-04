@@ -30,7 +30,7 @@ type Ev =
   | { k:'receipt'; id:MsgId; to:DeliveryState }   // validado contra el canal (§2)
   | { k:'read';    upTo:MsgId }
   | { k:'views';   id:MsgId; n:number }           // canales de Telegram
-  | { k:'draft';   idx:number; chars:number }     // tecleo / borrado en el composer
+  | { k:'draft';   by:ActorId; chars:number }   // ENMIENDA 2026-09-04: era idx:number     // tecleo / borrado en el composer
   | { k:'flag';    key:string; value:Json }       // badge aiOn/aiOff, wallpaper, keyframe de tilt
   | { k:'overlay'; id:string; phase:string }      // llamada, push, contact-picker
   | { k:'cue';     sound:SoundId };               // EMITIDO, no aplicado por el reducer

@@ -51,7 +51,7 @@ type Ev =
   | { k:'receipt'; id:MsgId; to:DeliveryState }
   | { k:'read';    upTo:MsgId }
   | { k:'views';   id:MsgId; n:number }
-  | { k:'draft';   idx:number; chars:number }
+  | { k:'draft';   by:ActorId; chars:number }   // ENMIENDA 2026-09-04: era idx:number
   | { k:'flag';    key:string; value:Json }
   | { k:'overlay'; id:string; phase:string }
   | { k:'cue';     sound:SoundId };
@@ -91,3 +91,16 @@ determinismo es falsa cross-machine (§13).
 | 4 | `core/` es puro | lint `no-restricted-globals`: `Math.random`, `Date`, `fetch`, `window`, `document` |
 | 5 | Cero utilidades Tailwind en `chat-sim/**` | lint: una clase de utilidad en un `.tsx` de la familia falla CI |
 | 6 | `src/index.ts` sin cambios | CI: `git diff --exit-code src/index.ts` contra el merge-base |
+
+---
+
+## Enmiendas al contrato durante la ejecución
+
+| Fecha | Cambio | Quién lo pidió | Por qué |
+|---|---|---|---|
+| 2026-09-04 | `Ev.draft` pasa de `{idx:number, chars}` a `{by:ActorId, chars}` | `core` (T-001, reactivación) | El `idx` numérico obligaba a un registro de actores con indirección. `element/` ya trataba `ActorId` como group key verbatim (`in` / `out:ai` / `out:human:{id}`), que es el mismo criterio de `inbox-ai/lib/messageGrouping.ts:25`. La indirección era invención nuestra, no del dominio. |
+
+**Verificado por el CTO con test de mutación, no por reporte:** quitar `draft: null` del caso `post`
+en `fold.ts:39` rompe **2 tests, uno en cada lane** (`core/__tests__/fold.test.ts` y
+`element/chat-sim-element.test.ts`). Restaurado ⇒ 44/44 verdes. El fix está cubierto de los dos lados
+del contrato, no solo del que lo escribió.
