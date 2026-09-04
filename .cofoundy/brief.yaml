@@ -58,7 +58,7 @@ definicion_de_exito:
     se_pone_roja_si: "T-004 #2 — cambiar la seed NO rompe el byte-compare"
   - criterio: "El mismo guion renderiza en WhatsApp y Telegram con diferencias ESTRUCTURALES, no solo color"
     sonda: "T-002 #6 fixture de capabilities invertidas (ola 1)"
-    se_pone_roja_si: "el DOM no cambia al invertir tail/receiptGlyph/wallpaper => hay hardcode"
+    se_pone_roja_si: "el DOM no cambia al invertir los 4 ejes (tail/receiptGlyph/timestamp/reactions) => hay hardcode"
   - criterio: "Las dos landings Astro pueden montarlo sin agregar React"
     sonda: "T-002 #7 assert de cero React en el bundle de element/ + T-002 #5 render sin Tailwind del host"
     se_pone_roja_si: "el bundle importa react/react-dom, o el layout depende de utilidades del host"

@@ -44,7 +44,7 @@ opcional: sin el dato, `budget_overrun` es infireable y el threshold queda decor
 
 | Umbral | Acción |
 |---|---|
-| **16 h acumuladas al cierre de la ola 3** | aviso temprano — el CTO reproyecta (24 − 8 de margen) |
+| **16 h acumuladas al cierre de la ola 3** | aviso temprano — el CTO **reproyecta** con 6 datos reales (24 − 8 de margen). **Si la reproyección fundada supera 24 h, escala AHÍ**, sin esperar a cruzarlas: a esa altura la proyección está fundada, no adivinada |
 | **24 h acumuladas** | **disparo duro ⇒ escala** |
 | **> USD 50** | escala (hoy ≈0: ninguna tarea usa servicios de terceros) |
 
