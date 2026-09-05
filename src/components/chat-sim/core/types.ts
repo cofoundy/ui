@@ -30,6 +30,33 @@ export type Tail = 'first' | 'last';
 export type Wallpaper = 'pattern' | 'none';
 export type ReactionStyle = 'overlay-below' | 'own-row' | 'overlay-edge';
 
+// ---------------------------------------------------------------------------
+// Receipt model (T-011, telegram-fidelity-fix.md §F-1). Replaces the old
+// `receiptGlyph: 'double-tick'|'single-tick'|'trailing-label'`, which assumed a glyph fixed per
+// channel with the delivery state varying some other way. False on all 3 real channels: WhatsApp
+// varies COLOR (glyph fixed), Telegram 1:1/group varies GLYPH (color fixed), Telegram broadcast
+// channels have no ticks at all (a view METRIC instead), and iMessage uses TEXT placed below the
+// bubble and only on the last message of a run — none of which the old flat enum could carry.
+// ---------------------------------------------------------------------------
+
+export type ReceiptKind = 'ticks' | 'metric' | 'text' | 'none';
+export type ReceiptPlacement = 'in-bubble' | 'below-bubble';
+export type ReceiptScope = 'every' | 'last-only';
+
+export interface ReceiptStateStyle {
+  readonly glyph: string; // symbol (ticks/metric) or label text (text kind) — cero opcionales
+  readonly color: string;
+}
+
+/** Cero opcionales: every DeliveryState gets an explicit style even when `kind` doesn't vary
+ * by state (e.g. `metric`/`none`) — same convention as `allowlistSize: 0 when emoji === 'any'`. */
+export interface ReceiptModel {
+  readonly kind: ReceiptKind;
+  readonly states: Readonly<Record<DeliveryState, ReceiptStateStyle>>;
+  readonly placement: ReceiptPlacement;
+  readonly scope: ReceiptScope;
+}
+
 export interface ReactionConstraint {
   readonly emoji: 'any' | 'allowlist';
   readonly allowlistSize: number; // 0 when emoji === 'any'
@@ -42,7 +69,6 @@ export interface ReactionConstraint {
 // "actor puro, sin ventana temporal" — misma estrategia en los 3 canales hoy (adapter-interface-draft.md).
 export type GroupKeyStrategy = 'actor';
 
-export type ReceiptGlyph = 'double-tick' | 'single-tick' | 'trailing-label';
 export type Counter = 'views' | 'none';
 export type TimestampPlacement = 'inside-pad' | 'inside-plain' | 'gutter';
 export type QuoteStyle = 'color-bar' | 'thin-bar' | 'stacked-bubble';
@@ -60,7 +86,7 @@ export interface ChannelAdapter {
   readonly reactionConstraint: ReactionConstraint;
   readonly groupKey: GroupKeyStrategy;
   readonly deliveryStates: readonly DeliveryState[];
-  readonly receiptGlyph: ReceiptGlyph;
+  readonly receipt: ReceiptModel;
   readonly counter: Counter;
   readonly timestamp: TimestampPlacement;
   readonly quote: QuoteStyle;
