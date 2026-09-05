@@ -185,3 +185,41 @@ veces en otros: medir el proxy en vez del efecto.**
 
 **Regla para el próximo:** el shutdown de una lane es parte de aceptar su tarea, no del cierre del
 ciclo.
+
+---
+
+## 🔴 El error de método más caro del ciclo: capability de backend ≠ lenguaje visual
+
+Descubierto por el **operador**, mirando una captura real de Telegram al lado de la nuestra.
+
+Los adapters se especificaron desde `capabilities.py` de `inbox-ai`. Fue un gran hallazgo del recon
+—evitó que inventáramos el modelo de canal— **pero ese archivo describe qué puede observar un BOT
+por la Bot API, no cómo renderiza el CLIENTE.** Son dos dominios y los traté como uno.
+
+| Lo que pusimos | Por qué | La realidad |
+|---|---|---|
+| `receiptGlyph: 'single-tick'` | la Bot API de Telegram no expone "delivered" | **Telegram muestra ✓✓ en su UI.** Verificado en captura real del operador |
+| `counter: 'views'` en todo mensaje | el backend lo modela | es exclusivo de **canales broadcast**, no de chats 1:1 |
+| paleta compartida | nadie lo especificó | `--channel-telegram` existe hace meses y `styles.css` **no lo consume ni una vez** (grep: 0) |
+
+## Por qué NINGÚN instrumento del ciclo podía cazarlo
+
+El fixture de capabilities invierte `tail`, `receiptGlyph`, `timestamp`, `reactions` y verifica que
+el DOM cambie. **Verifica que el renderer OBEDEZCA al adapter — no que el adapter tenga RAZÓN.**
+
+Un `receiptGlyph` incorrecto pasa el gemelo perfectamente: el DOM cambia, sólo que hacia el valor
+equivocado. Es la diferencia entre *"el renderer obedece"* y *"el adapter describe la realidad"*.
+Instrumenté lo primero y asumí lo segundo.
+
+**Toda la batería de sondas del ciclo es de consistencia interna.** Ninguna compara contra el mundo.
+Y el ciclo entero se vendía como "diferencias estructurales reales, no sólo color" — una afirmación
+sobre el mundo, verificada sólo contra nosotros mismos.
+
+**Regla para el próximo ciclo:** cuando una acceptance afirma fidelidad a un artefacto externo
+(un canal, una marca, un formato), el gemelo tiene que ser una **referencia externa capturada**, no
+otra rama de nuestro propio adapter. Un baseline visual contra una captura real, aunque sea manual
+y de una sola vez.
+
+**Y la advertencia general:** un modelo de dominio prestado de otra capa —por bueno que sea, y éste
+lo era— trae las fronteras de ESA capa. `capabilities.py` es correcto para lo que hace. El error fue
+mío al no preguntar de qué dominio hablaba antes de espejarlo.
