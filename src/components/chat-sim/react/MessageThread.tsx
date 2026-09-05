@@ -54,25 +54,14 @@ export interface MessageThreadProps {
   readonly logRef?: RefObject<HTMLOListElement | null>;
 }
 
-function receiptGlyphLabel(state: DeliveryState): string {
-  switch (state) {
-    case 'read':
-      return 'Leído';
-    case 'delivered':
-      return 'Entregado';
-    case 'sent':
-      return 'Enviado';
-    case 'failed':
-      return 'Fallido';
-    case 'queued':
-    default:
-      return 'En cola';
-  }
-}
-
-/** Same two paths/viewBox/stroke as element/render.ts's `buildTickSvg` — the one visual detail
- * that must be byte-identical for the cross-check, since it's the one piece of inline SVG. */
-function TickSvg({ ticks, read }: { ticks: 1 | 2; read: boolean }) {
+// receipt/**/T-011,T-015: glyph + color are adapter data (ReceiptModel.states[state]), not a
+// fixed enum -> fixed-icon mapping — WhatsApp keeps one glyph and varies color, Telegram 1:1
+// keeps one color and varies glyph, so the renderer stays a pure projection of that data instead
+// of branching on channel. Mirrors element/render.ts's `buildReceiptGlyph`/`buildTickSvg`
+// byte-for-byte (same viewBox/paths, same '✓'-counting rule, same scope gate via `flags.tailHere`,
+// no `data-read`) — WhatsApp/Telegram both ship `kind:'ticks'`, so snapshot-cross-check.test.tsx
+// exercises this path for real and a plain-text vs SVG divergence would fail it outright.
+function TickSvg({ ticks, color }: { ticks: 1 | 2; color: string }) {
   return (
     <svg
       viewBox="0 0 18 12"
@@ -84,7 +73,7 @@ function TickSvg({ ticks, read }: { ticks: 1 | 2; read: boolean }) {
       strokeLinecap="round"
       strokeLinejoin="round"
       className="cf-receipt"
-      data-read={String(read)}
+      style={{ color }}
     >
       <path d={ticks === 2 ? 'M1 6.7 4.1 9.8 10.2 2.4' : 'M4.5 6.7 7.6 9.8 13.7 2.4'} />
       {ticks === 2 && <path d="M7.6 6.7 10.7 9.8 16.8 2.4" />}
@@ -92,18 +81,47 @@ function TickSvg({ ticks, read }: { ticks: 1 | 2; read: boolean }) {
   );
 }
 
-function Stamp({ msg, adapter, dir }: { msg: RenderMessage; adapter: ChannelAdapter; dir: 'in' | 'out' }) {
+function ReceiptGlyph({
+  adapter,
+  state,
+  flags,
+}: {
+  adapter: ChannelAdapter;
+  state: DeliveryState;
+  flags: GroupFlags;
+}): JSX.Element | null {
+  const { kind, states, scope } = adapter.receipt;
+  if (kind === 'none' || kind === 'metric') return null; // metric: the views counter IS the receipt (adapter.counter)
+  if (scope === 'last-only' && !flags.tailHere) return null;
+
+  const style = states[state];
+  const tickCount = (style.glyph.match(/✓/gu) ?? []).length;
+  if (kind === 'ticks' && tickCount > 0) {
+    return <TickSvg ticks={Math.min(tickCount, 2) as 1 | 2} color={style.color} />;
+  }
+
+  return (
+    <span className={kind === 'text' ? 'cf-receipt-label' : 'cf-receipt'} style={{ color: style.color }}>
+      {style.glyph}
+    </span>
+  );
+}
+
+function Stamp({
+  msg,
+  adapter,
+  inBubbleReceipt,
+}: {
+  msg: RenderMessage;
+  adapter: ChannelAdapter;
+  inBubbleReceipt: JSX.Element | null;
+}) {
   return (
     <span className="cf-stamp">
       {msg.editedLabel && <em className="cf-edited">{msg.editedLabel}</em>}
       <span className="cf-time">{msg.atLabel}</span>
       {adapter.counter === 'views' && <span className="cf-views">{msg.views}</span>}
-      {dir === 'out' &&
-        (adapter.receiptGlyph === 'trailing-label' ? (
-          <span className="cf-receipt-label">{receiptGlyphLabel(msg.receipt)}</span>
-        ) : (
-          <TickSvg ticks={adapter.receiptGlyph === 'double-tick' ? 2 : 1} read={msg.receipt === 'read'} />
-        ))}
+      {inBubbleReceipt}
     </span>
   );
 }
@@ -164,7 +182,17 @@ function MessageBubble({
   if (flags.tailHere) dataAttrs['data-tail'] = '';
   if (flags.grouped) dataAttrs['data-grouped'] = '';
 
-  const stamp = <Stamp msg={msg} adapter={adapter} dir={dir} />;
+  // receipt is a projection of ReceiptModel (T-011/T-015), never a `dir ===` special-case beyond
+  // "only outbound messages carry a delivery receipt" (true across all 4 §F-1 rows) — `kind`
+  // and `scope` (via `flags.tailHere`) are ReceiptGlyph's job, mirroring buildReceiptGlyph's own
+  // gate order. `placement` gates WHERE the result lands ('in-bubble', inside .cf-stamp, vs
+  // 'below-bubble', a sibling of .cf-bubble — nobody ships 'below-bubble' yet, T-015 acceptance
+  // #3 exists to prove the shape isn't a promise the renderer can't keep).
+  const receiptNode = dir === 'out' ? <ReceiptGlyph adapter={adapter} state={msg.receipt} flags={flags} /> : null;
+  const inBubbleReceipt = receiptNode && adapter.receipt.placement === 'in-bubble' ? receiptNode : null;
+  const belowBubbleReceipt = receiptNode && adapter.receipt.placement === 'below-bubble' ? receiptNode : null;
+
+  const stamp = <Stamp msg={msg} adapter={adapter} inBubbleReceipt={inBubbleReceipt} />;
   const reactionsEl = msg.reactions.length > 0 ? <Reactions reactions={msg.reactions} style={adapter.reactions} /> : null;
   // NOT `reactionsEl && cond` — `a && b` evaluates to `b` (a boolean) when `a` is truthy, never
   // to `a` itself, so `{reactionsInsideBubble}` rendered `{true}`/`{false}` (nothing) instead of
@@ -187,6 +215,7 @@ function MessageBubble({
         {reactionsInsideBubble}
       </span>
       {adapter.timestamp === 'gutter' && stamp}
+      {belowBubbleReceipt && <span className="cf-receipt-below">{belowBubbleReceipt}</span>}
       {reactionsOwnRow}
     </li>
   );
