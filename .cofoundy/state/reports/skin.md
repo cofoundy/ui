@@ -1,3 +1,92 @@
+# skin — T-013 (identidad visual de Telegram)
+
+El operador comparó una captura real de Telegram con la nuestra: "WhatsApp con otros ticks". 3
+señales por prioridad, todas scopeadas a `[data-channel='telegram']` (nunca tocan los defaults
+de WhatsApp/iMessage):
+
+1. **Píldora de fecha translúcida, texto blanco** (`rgba(0,0,0,.28)` + `#fff`, padding
+   3px/12px/4px/12px) — antes opaca clara con texto gris (estilo WhatsApp) en TODOS los canales.
+2. **Wallpaper propio**: doodle outline frío gris-azul (`#5a7a99`, stroke-opacity 0.03) sobre
+   `#DEE3E7` — dibujado a mano, silueta distinta del doodle relleno de WhatsApp (GPL de tdesktop:
+   cero copia, solo hechos observables). Oscuro: sólido `#0E1621`, sin patrón.
+3. **Radio 6px esquinas pegadas / 16px libres** — derivado en CSS puro con `:has(+ .cf-msg[data-grouped])`
+   sobre el `data-grouped` que YA emitía `element/render.ts` (T-002). Deliberadamente NO agregué un
+   atributo DOM nuevo: mi primer intento (`data-has-next`) rompió `react/__tests__/snapshot-cross-check.test.tsx`
+   (compara `element/` vs `react/` byte-a-byte, y `react/`'s implementación — fuera de mi
+   scope.write — no lo conocía). Revertido a un selector CSS puro antes de tocar nada compartido.
+
+Además (bonus, cheap, en Alcance): tokens `--channel-telegram`/`--channel-whatsapp` consumidos de
+verdad (avatar, send button, acento de reply-bar in/out) — antes declarados hace meses y usados 0
+veces en `styles.css` (grep ahora: 9). `msgOutBg` claro `#effdde` (vs `#d9fdd3` de WA — divergen
+poco a propósito, F-3 del spec). Composer: 📎 izquierda + 😊/enviar derecha en Telegram, WhatsApp
+mantiene 😊 izquierda + enviar derecha.
+
+**Dark mode: no existía NINGUNO en chat-sim antes de esta tarea.** Lo agregué end-to-end, puro CSS
+— el consumidor pone `data-theme="dark"` directo en `<cf-chat-sim>`, sin JS de por medio (es un
+selector de atributo). Telegram oscuro `#2b5278` sin sombra (`filter:none`); WhatsApp oscuro
+`#005c4b` con la sombra default — la divergencia real que el spec pedía (en claro casi convergen).
+
+## Migración no planeada: `receiptGlyph` → `ReceiptModel` (T-011, ampliación live de la CTO)
+
+A mitad de tarea, `core` cambió el contrato (`f951c61`) y el CTO amplió mi spec en caliente
+(E-002): `element/render.ts` + `element/fixtures.ts` dejaron de compilar. Lo detecté leyendo
+`history.jsonl`/`escalation-queue.jsonl` proactivamente, ANTES de que llegara el `SendMessage` del
+team-lead (llegó igual, minutos después — se lo confirmé, ya estaba resuelto).
+
+- `buildReceiptGlyph()` (nuevo): glifo/color desde `adapter.receipt.states[msg.receipt]`, no del
+  enum viejo. Cuento `'✓'` literales en el string del glifo para decidir 1 vs 2 ticks dibujados
+  (mantengo el SVG a mano por fidelidad — un `✓` crudo en la fuente del body no se ve como
+  WhatsApp/Telegram reales); glifos sin `✓` (reloj, `!`) caen a texto plano.
+- Respeta `scope: 'last-only'` (gatea en `flags.tailHere`) y `placement: 'below-bubble'` (sibling
+  propio fuera de la burbuja, independiente de dónde cae el timestamp) — ningún adapter real los
+  usa este ciclo (ambos son `in-bubble`/`every`), pero el contrato lo pide y compila limpio.
+- `element/fixtures.ts`: las 2 constantes wave-1 migradas a `ReceiptModel` inline (illustrativas,
+  no los valores reales de `adapters/**` — eso es T-012).
+- Retiré `.cf-receipt[data-read='true']` de `styles.css` (dead code: el color ahora es inline,
+  puesto por `render.ts` directo desde el modelo) — no dupliqué la fuente de verdad.
+- **2 tests en `chat-sim-element.test.ts` fallaban tras migrar, y el motivo confirmó que el modelo
+  viejo tenía el bug real que T-011 vino a arreglar**: el script de test nunca posteaba un step
+  `receipt`, así que los mensajes quedaban en `'queued'` (reloj, 0 ticks) — el render VIEJO
+  ignoraba el estado real y mostraba tick-count fijo por canal siempre. Arreglé el test (agregué 2
+  steps `receipt … to:'delivered'`, subí `FRAME_COUNT` 6→8), no el renderer — el renderer ya
+  estaba haciendo lo correcto.
+
+`npx tsc --noEmit` limpio en `element/**` (acceptance nuevo #5).
+
+## Colisión de worktree compartido (para que no se lea como daño de este commit)
+
+Corrí el suite completo 3 veces durante la tarea; las primeras 2 mostraron `bundle-freshness` y
+`snapshot-cross-check` en rojo por causas que NO eran mías: `channel2` (T-012, `adapters/**`) y
+`app2` (T-015, `react/MessageThread.tsx`) editaban/commiteaban en el mismo worktree mientras yo
+corría esbuild/vitest — mis bundles quedaban stale relativo a su HEAD en movimiento, y el
+cross-check comparaba contra un `react/` a medio migrar. Reconfirmé cada vez con `git status` +
+rebuild antes de creer un rojo mío. Estado final, ambos ya landeados: 176/180 verdes en
+`chat-sim/**`; los 4 rojos restantes son `agent-browser --session … ETIMEDOUT` en `capture/**`
+(infra Chrome real compartida — confirmé que es pre-existente con `git stash` antes de tocar nada,
+fuera de mi scope.write, no relacionado a esta tarea).
+
+## Verificación visual (Chrome real, no jsdom)
+
+`demo/telegram-vs-whatsapp.html` (nuevo, dentro de `demo/**`): WhatsApp y Telegram lado a lado,
+claro y oscuro, sin scrubbing (deja que `connectedCallback` revele el timeline completo por
+default). Screenshot vía `claude-in-chrome` + zoom a la costura entre 2 bubbles del mismo streak:
+radio 6px visiblemente más cerrado que el 16px libre de la primera bubble. Confirmé las 3 señales
++ el dark-mode de un vistazo — exactamente el gap que el operador señaló ya no se ve.
+
+## Deviations / flags
+
+- **Toqué `src/components/chat-sim/capture/capture.bundle.js`, fuera de mi `scope.write` nominal
+  (`element/**`, `styles.css`, `demo/**`)** — regeneré ese bundle porque es un artefacto mecánico
+  derivado de `element/index.ts` (mismo comando que `demo/chat-sim.bundle.js`, solo cambia
+  `--global-name`), y mi propio cambio en `element/**` lo dejaba stale (`capture/__tests__/bundle-freshness.test.ts`
+  rojo). Cero lógica propia agregada ahí — un rebuild, no una edición. Disclosure explícito, como
+  pide `agent-floor.md` §Scope discipline.
+- **`element/render.ts`/`element/fixtures.ts` migrados a `ReceiptModel`** — no estaba en mi
+  scope.write original; lo agregó el CTO en caliente (E-002) porque `element/**` SÍ es mi celda y
+  hoy no compilaba. Ver sección arriba.
+
+---
+
 wall_clock_minutes: 225
 
 # skin — T-002 + T-006 (stylesheet/element/layout, then sound packs + iMessage token)

@@ -16,8 +16,13 @@ const SCRIPT = JSON.stringify([
   { k: 'post', by: 'in', text: 'Para 4, por favor', delayMs: 300 },
   { k: 'post', by: 'out:ai', text: 'Perfecto, reservado para 4 🎉', delayMs: 200 },
   { k: 'post', by: 'out:ai', text: 'Te llega la confirmación por este chat.', delayMs: 400 },
+  // Posts default to 'queued' (T-011 ReceiptModel — clock glyph, zero ticks) until a `receipt`
+  // step advances them; without this the channel-attribute test below can't tell single- from
+  // double-tick apart. m3/m4 are the 4th/5th post (0-indexed), the out:ai streak the test reads.
+  { k: 'receipt', id: 'm3', to: 'delivered', delayMs: 0 },
+  { k: 'receipt', id: 'm4', to: 'delivered', delayMs: 0 },
 ]);
-const FRAME_COUNT = 6;
+const FRAME_COUNT = 8; // 6 post/draft steps + 2 `receipt` steps added for the tick-glyph test below
 const POST_COUNT = 5;
 
 function mount(step?: number): HTMLElement {
@@ -225,7 +230,8 @@ describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
       // adapter.tail === 'last' tails the OPPOSITE message from WhatsApp's.
       expect(msgs[3].hasAttribute('data-tail')).toBe(false);
       expect(msgs[4].hasAttribute('data-tail')).toBe(true);
-      // single-tick: exactly one <path> in the receipt SVG (WhatsApp's double-tick has two).
+      // Telegram at 'delivered' (real adapters/telegram.ts, T-012 §F-2): unreachable state that
+      // mirrors 'sent' — single '✓', one <path> (WhatsApp's 'delivered' is already double-tick).
       const receipt = msgs[3].querySelector('.cf-receipt');
       expect(receipt?.querySelectorAll('path')).toHaveLength(1);
       // inside-plain: no .cf-pad sibling reserving inline space before the stamp.
@@ -237,6 +243,7 @@ describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
       const msgs = [...el.querySelectorAll('.cf-msg')];
       expect(msgs[3].hasAttribute('data-tail')).toBe(true);
       expect(msgs[4].hasAttribute('data-tail')).toBe(false);
+      // WhatsApp's glyph is already double-tick at 'delivered' (color only flips at 'read').
       const receipt = msgs[3].querySelector('.cf-receipt');
       expect(receipt?.querySelectorAll('path')).toHaveLength(2);
       expect(msgs[0].querySelector('.cf-bubble > .cf-pad')).not.toBeNull();

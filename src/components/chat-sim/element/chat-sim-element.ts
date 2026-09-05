@@ -162,6 +162,12 @@ export class CfChatSimElement extends HTMLElement {
     // authoring error in the markup, not something to swallow into a silent WhatsApp fallback.
     this.#adapter = getAdapter(channel);
     this.dataset.wallpaper = this.#adapter.wallpaper;
+    // Brand identity (T-013): wallpaper texture, date-pill treatment, corner-radius scheme and
+    // composer icon order are NOT ChannelAdapter fields — they're per-brand chrome the 16-field
+    // contract deliberately excludes (same reasoning as `--channel-imessage`, styles.css:51).
+    // `data-channel` is the one attribute styles.css keys those off; every STRUCTURAL rule stays
+    // adapter-field-driven per this file's header.
+    this.dataset.channel = channel;
 
     this.#timeline = compile(script, { seed, channel, locale, tz, t0 });
     this.#postedAt = postedAtByMsgId(this.#timeline.frames);
@@ -222,7 +228,7 @@ export class CfChatSimElement extends HTMLElement {
       return { interval, li };
     });
 
-    this.appendChild(this.#buildComposer());
+    this.appendChild(this.#buildComposer(channel));
 
     const initialStep = this.hasAttribute('data-step')
       ? Number(this.getAttribute('data-step'))
@@ -260,17 +266,24 @@ export class CfChatSimElement extends HTMLElement {
     return head;
   }
 
-  /** Composer — WhatsApp always shows one (visual-only for this wave; a real, operable composer
-   * with mobile keyboard handling is react/'s T-007). Its absence read as "broken" rather than
-   * "conversation ended" in review — this closes that gap without claiming interactivity it
-   * doesn't have. */
-  #buildComposer(): HTMLElement {
+  /** Composer — always shown (visual-only for this wave; a real, operable composer with mobile
+   * keyboard handling is react/'s T-007). Its absence read as "broken" rather than "conversation
+   * ended" in review — this closes that gap without claiming interactivity it doesn't have.
+   * Icon order is brand identity, not adapter structure (T-013 fidelity fix, §"Composer"):
+   * Telegram puts 📎 on the LEFT with 😊 + send on the RIGHT; WhatsApp inverts that (😊 left,
+   * send right, no clip). */
+  #buildComposer(channel: ChannelId): HTMLElement {
     const bar = document.createElement('div');
     bar.className = 'cf-composer';
     bar.innerHTML =
-      '<span class="cf-composer-icon" aria-hidden="true">😊</span>' +
-      '<span class="cf-composer-input" aria-hidden="true">Mensaje</span>' +
-      '<span class="cf-composer-icon cf-composer-send" aria-hidden="true">➤</span>';
+      channel === 'telegram'
+        ? '<span class="cf-composer-icon" aria-hidden="true">📎</span>' +
+          '<span class="cf-composer-input" aria-hidden="true">Mensaje</span>' +
+          '<span class="cf-composer-icon" aria-hidden="true">😊</span>' +
+          '<span class="cf-composer-icon cf-composer-send" aria-hidden="true">➤</span>'
+        : '<span class="cf-composer-icon" aria-hidden="true">😊</span>' +
+          '<span class="cf-composer-input" aria-hidden="true">Mensaje</span>' +
+          '<span class="cf-composer-icon cf-composer-send" aria-hidden="true">➤</span>';
     return bar;
   }
 

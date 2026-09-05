@@ -460,8 +460,27 @@ var CfChatSimCapture = (() => {
     },
     groupKey: "actor",
     deliveryStates: ["queued", "sent", "read", "failed"],
-    receiptGlyph: "single-tick",
-    counter: "views",
+    // Real Telegram 1:1/group: color is constant, the GLYPH flips at `read` — the inverse twin of
+    // WhatsApp (telegram-fidelity-fix.md §F-2). `delivered` is unreachable (not in deliveryStates
+    // above) but `states` is a total map over DeliveryState (cero opcionales, core/types.ts) — it
+    // mirrors `sent`, same convention core/__tests__/receipt-model.test.ts already fixtures.
+    receipt: {
+      kind: "ticks",
+      states: {
+        queued: { glyph: "\u{1F550}", color: "var(--cf-cs-bubble-out-meta)" },
+        sent: { glyph: "\u2713", color: "var(--cf-cs-bubble-out-meta)" },
+        delivered: { glyph: "\u2713", color: "var(--cf-cs-bubble-out-meta)" },
+        // unreachable, mirrors sent
+        read: { glyph: "\u2713\u2713", color: "var(--cf-cs-bubble-out-meta)" },
+        // glyph flips, color doesn't
+        // Not in telegram-fidelity-fix.md (out of scope for the F-2 fix) — standard failed-send
+        // red, unconfirmed byte-exact against a real Telegram capture.
+        failed: { glyph: "!", color: "#e53935" }
+      },
+      placement: "in-bubble",
+      scope: "every"
+    },
+    counter: "none",
     timestamp: "inside-plain",
     quote: "thin-bar",
     bubbleTransport: "per-conversation",
@@ -487,7 +506,25 @@ var CfChatSimCapture = (() => {
     },
     groupKey: "actor",
     deliveryStates: ["queued", "sent", "delivered", "read", "failed"],
-    receiptGlyph: "double-tick",
+    // Real WhatsApp: glyph is constant across queued->sent->delivered->read (clock, then 1 tick,
+    // then 2 ticks that STAY 2 ticks) — only the COLOR flips at `read` (telegram-fidelity-fix.md
+    // §F-2). `#53bdeb` is the same literal styles.css already hardcodes at `.cf-receipt[data-read]`
+    // (T-011 escalation E-002) — sourcing it from here retires that selector, doesn't reinvent it.
+    receipt: {
+      kind: "ticks",
+      states: {
+        queued: { glyph: "\u{1F550}", color: "var(--cf-cs-bubble-out-meta)" },
+        sent: { glyph: "\u2713", color: "var(--cf-cs-bubble-out-meta)" },
+        delivered: { glyph: "\u2713\u2713", color: "var(--cf-cs-bubble-out-meta)" },
+        read: { glyph: "\u2713\u2713", color: "#53bdeb" },
+        // color flips, glyph doesn't
+        // Not in telegram-fidelity-fix.md (out of scope for the F-2 fix) — standard failed-send
+        // red, unconfirmed byte-exact against a real WhatsApp capture.
+        failed: { glyph: "!", color: "#e53935" }
+      },
+      placement: "in-bubble",
+      scope: "every"
+    },
     counter: "none",
     timestamp: "inside-pad",
     quote: "color-bar",
@@ -548,22 +585,7 @@ var CfChatSimCapture = (() => {
     if (order.length > 0) closeStreak(streakStart, order.length - 1);
     return out;
   }
-  function receiptGlyphLabel(state) {
-    switch (state) {
-      case "read":
-        return "Le\xEDdo";
-      case "delivered":
-        return "Entregado";
-      case "sent":
-        return "Enviado";
-      case "failed":
-        return "Fallido";
-      case "queued":
-      default:
-        return "En cola";
-    }
-  }
-  function buildTickSvg(ticks, read) {
+  function buildTickSvg(ticks, color) {
     const NS = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(NS, "svg");
     svg.setAttribute("viewBox", "0 0 18 12");
@@ -575,7 +597,7 @@ var CfChatSimCapture = (() => {
     svg.setAttribute("stroke-linecap", "round");
     svg.setAttribute("stroke-linejoin", "round");
     svg.classList.add("cf-receipt");
-    svg.dataset.read = String(read);
+    svg.style.color = color;
     const p1 = document.createElementNS(NS, "path");
     p1.setAttribute("d", ticks === 2 ? "M1 6.7 4.1 9.8 10.2 2.4" : "M4.5 6.7 7.6 9.8 13.7 2.4");
     svg.appendChild(p1);
@@ -586,7 +608,22 @@ var CfChatSimCapture = (() => {
     }
     return svg;
   }
-  function buildStamp(msg, adapter, dir) {
+  function buildReceiptGlyph(msg, adapter, flags) {
+    const { kind, states, scope } = adapter.receipt;
+    if (kind === "none" || kind === "metric") return null;
+    if (scope === "last-only" && !flags.tailHere) return null;
+    const style = states[msg.receipt];
+    const tickCount = (style.glyph.match(/✓/gu) ?? []).length;
+    if (kind === "ticks" && tickCount > 0) {
+      return buildTickSvg(Math.min(tickCount, 2), style.color);
+    }
+    const el = document.createElement("span");
+    el.className = kind === "text" ? "cf-receipt-label" : "cf-receipt";
+    el.style.color = style.color;
+    el.textContent = style.glyph;
+    return el;
+  }
+  function buildStamp(msg, adapter) {
     const stamp = document.createElement("span");
     stamp.className = "cf-stamp";
     if (msg.editedLabel) {
@@ -604,17 +641,6 @@ var CfChatSimCapture = (() => {
       views.className = "cf-views";
       views.textContent = String(msg.views);
       stamp.appendChild(views);
-    }
-    if (dir === "out") {
-      if (adapter.receiptGlyph === "trailing-label") {
-        const label = document.createElement("span");
-        label.className = "cf-receipt-label";
-        label.textContent = receiptGlyphLabel(msg.receipt);
-        stamp.appendChild(label);
-      } else {
-        const ticks = adapter.receiptGlyph === "double-tick" ? 2 : 1;
-        stamp.appendChild(buildTickSvg(ticks, msg.receipt === "read"));
-      }
     }
     return stamp;
   }
@@ -660,7 +686,9 @@ var CfChatSimCapture = (() => {
     text.className = "cf-text";
     text.textContent = msg.text;
     bubble.appendChild(text);
-    const stamp = buildStamp(msg, adapter, dir);
+    const stamp = buildStamp(msg, adapter);
+    const receiptEl = dir === "out" ? buildReceiptGlyph(msg, adapter, flags) : null;
+    if (receiptEl && adapter.receipt.placement === "in-bubble") stamp.appendChild(receiptEl);
     if (adapter.timestamp === "inside-pad") {
       const pad = document.createElement("span");
       pad.className = "cf-pad";
@@ -668,11 +696,18 @@ var CfChatSimCapture = (() => {
     } else if (adapter.timestamp === "inside-plain") {
       bubble.appendChild(stamp);
     }
+    let belowBubbleReceipt = null;
+    if (receiptEl && adapter.receipt.placement === "below-bubble") {
+      belowBubbleReceipt = document.createElement("span");
+      belowBubbleReceipt.className = "cf-receipt-below";
+      belowBubbleReceipt.appendChild(receiptEl);
+    }
     if (msg.reactions.length > 0) {
       const reactionsEl = buildReactions(msg.reactions, adapter.reactions);
       if (adapter.reactions === "own-row") {
         li.append(bubble);
         if (adapter.timestamp === "gutter") li.appendChild(stamp);
+        if (belowBubbleReceipt) li.appendChild(belowBubbleReceipt);
         li.appendChild(reactionsEl);
         return;
       }
@@ -681,6 +716,7 @@ var CfChatSimCapture = (() => {
     }
     li.appendChild(bubble);
     if (adapter.timestamp === "gutter") li.appendChild(stamp);
+    if (belowBubbleReceipt) li.appendChild(belowBubbleReceipt);
   }
   function buildMessageElement(msg, adapter, flags) {
     const li = document.createElement("li");
@@ -774,6 +810,7 @@ var CfChatSimCapture = (() => {
       const t0 = Number(this.getAttribute("t0") ?? String(Date.UTC(2026, 0, 1, 9, 0, 0)));
       __privateSet(this, _adapter, getAdapter(channel));
       this.dataset.wallpaper = __privateGet(this, _adapter).wallpaper;
+      this.dataset.channel = channel;
       __privateSet(this, _timeline, compile(script, { seed, channel, locale, tz, t0 }));
       __privateSet(this, _postedAt, postedAtByMsgId(__privateGet(this, _timeline).frames));
       this.textContent = "";
@@ -813,7 +850,7 @@ var CfChatSimCapture = (() => {
         __privateGet(this, _log).insertBefore(li, anchor);
         return { interval, li };
       }));
-      this.appendChild(__privateMethod(this, _CfChatSimElement_instances, buildComposer_fn).call(this));
+      this.appendChild(__privateMethod(this, _CfChatSimElement_instances, buildComposer_fn).call(this, channel));
       const initialStep = this.hasAttribute("data-step") ? Number(this.getAttribute("data-step")) : __privateGet(this, _timeline).frames.length;
       this.dataset.step = String(initialStep);
       __privateMethod(this, _CfChatSimElement_instances, applyStep_fn).call(this, initialStep);
@@ -878,14 +915,16 @@ var CfChatSimCapture = (() => {
     head.appendChild(who);
     return head;
   };
-  /** Composer — WhatsApp always shows one (visual-only for this wave; a real, operable composer
-   * with mobile keyboard handling is react/'s T-007). Its absence read as "broken" rather than
-   * "conversation ended" in review — this closes that gap without claiming interactivity it
-   * doesn't have. */
-  buildComposer_fn = function() {
+  /** Composer — always shown (visual-only for this wave; a real, operable composer with mobile
+   * keyboard handling is react/'s T-007). Its absence read as "broken" rather than "conversation
+   * ended" in review — this closes that gap without claiming interactivity it doesn't have.
+   * Icon order is brand identity, not adapter structure (T-013 fidelity fix, §"Composer"):
+   * Telegram puts 📎 on the LEFT with 😊 + send on the RIGHT; WhatsApp inverts that (😊 left,
+   * send right, no clip). */
+  buildComposer_fn = function(channel) {
     const bar = document.createElement("div");
     bar.className = "cf-composer";
-    bar.innerHTML = '<span class="cf-composer-icon" aria-hidden="true">\u{1F60A}</span><span class="cf-composer-input" aria-hidden="true">Mensaje</span><span class="cf-composer-icon cf-composer-send" aria-hidden="true">\u27A4</span>';
+    bar.innerHTML = channel === "telegram" ? '<span class="cf-composer-icon" aria-hidden="true">\u{1F4CE}</span><span class="cf-composer-input" aria-hidden="true">Mensaje</span><span class="cf-composer-icon" aria-hidden="true">\u{1F60A}</span><span class="cf-composer-icon cf-composer-send" aria-hidden="true">\u27A4</span>' : '<span class="cf-composer-icon" aria-hidden="true">\u{1F60A}</span><span class="cf-composer-input" aria-hidden="true">Mensaje</span><span class="cf-composer-icon cf-composer-send" aria-hidden="true">\u27A4</span>';
     return bar;
   };
   readScript_fn = function() {
@@ -964,6 +1003,18 @@ var CfChatSimCapture = (() => {
   customElements.define("cf-chat-sim", CfChatSimElement);
 
   // src/components/chat-sim/element/fixtures.ts
+  var DOUBLE_TICK_RECEIPT = {
+    kind: "ticks",
+    states: {
+      queued: { glyph: "\u{1F550}", color: "var(--cf-cs-bubble-out-meta)" },
+      sent: { glyph: "\u2713", color: "var(--cf-cs-bubble-out-meta)" },
+      delivered: { glyph: "\u2713\u2713", color: "var(--cf-cs-bubble-out-meta)" },
+      read: { glyph: "\u2713\u2713", color: "#53bdeb" },
+      failed: { glyph: "!", color: "#e34a4a" }
+    },
+    placement: "in-bubble",
+    scope: "every"
+  };
   var WHATSAPP_REFERENCE_ADAPTER = {
     tail: "first",
     wallpaper: "pattern",
@@ -978,7 +1029,7 @@ var CfChatSimCapture = (() => {
     },
     groupKey: "actor",
     deliveryStates: ["queued", "sent", "delivered", "read", "failed"],
-    receiptGlyph: "double-tick",
+    receipt: DOUBLE_TICK_RECEIPT,
     counter: "none",
     timestamp: "inside-pad",
     quote: "color-bar",
@@ -989,10 +1040,18 @@ var CfChatSimCapture = (() => {
     e2eNotice: true,
     avatarSide: "inbound"
   };
+  var SINGLE_TICK_RECEIPT = {
+    ...DOUBLE_TICK_RECEIPT,
+    states: {
+      ...DOUBLE_TICK_RECEIPT.states,
+      delivered: { glyph: "\u2713", color: DOUBLE_TICK_RECEIPT.states.sent.color },
+      read: { glyph: "\u2713", color: DOUBLE_TICK_RECEIPT.states.sent.color }
+    }
+  };
   var CAPS_FIXTURE_INVERTED_ADAPTER = {
     ...WHATSAPP_REFERENCE_ADAPTER,
     tail: "last",
-    receiptGlyph: "single-tick",
+    receipt: SINGLE_TICK_RECEIPT,
     timestamp: "inside-plain",
     reactions: "own-row"
   };

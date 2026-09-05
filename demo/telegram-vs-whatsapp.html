@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>chat-sim — Telegram vs WhatsApp fidelity (T-013)</title>
+    <!--
+      T-013 acceptance #1 evidence page: renders Telegram and WhatsApp side by side, light AND
+      dark, static (data-step fixed) so the DOM differences (wallpaper, date pill, glued-corner
+      radius) are directly comparable without scrubbing. Same file:// contract as index.html —
+      no build step, no Tailwind, links only styles.css + the checked-in bundle.
+    -->
+    <link rel="stylesheet" href="../src/components/chat-sim/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        padding: 2.5rem 1rem;
+        background: #f4ede9;
+        font-family: system-ui, sans-serif;
+      }
+      .row {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .row[data-theme='dark'] {
+        background: #0b1014;
+        padding: 1.5rem;
+        border-radius: 12px;
+      }
+      figure {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      figcaption {
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #7a6f68;
+      }
+      .row[data-theme='dark'] figcaption {
+        color: #9fb0bd;
+      }
+      .cf-chat-sim {
+        width: min(340px, 90vw);
+        height: 560px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="row" data-theme="light">
+      <figure>
+        <figcaption>WhatsApp · claro</figcaption>
+        <cf-chat-sim channel="whatsapp" seed="7" locale="es-PE" tz="America/Lima" contact-name="Fovente — Reservas" contact-status="en línea">
+          <script type="application/json">
+            [
+              { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad.", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "¿Para cuántas personas?", "delayMs": 0 },
+              { "k": "post", "by": "in", "text": "Para 4, por favor", "delayMs": 0 },
+              { "k": "receipt", "id": "m0", "to": "read", "delayMs": 0 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+      <figure>
+        <figcaption>Telegram · claro</figcaption>
+        <cf-chat-sim channel="telegram" seed="7" locale="es-PE" tz="America/Lima" contact-name="Fovente — Reservas" contact-status="en línea">
+          <script type="application/json">
+            [
+              { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad.", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "¿Para cuántas personas?", "delayMs": 0 },
+              { "k": "post", "by": "in", "text": "Para 4, por favor", "delayMs": 0 },
+              { "k": "receipt", "id": "m0", "to": "read", "delayMs": 0 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+    </div>
+
+    <div class="row" data-theme="dark">
+      <figure>
+        <figcaption>WhatsApp · oscuro</figcaption>
+        <cf-chat-sim data-theme="dark" channel="whatsapp" seed="7" locale="es-PE" tz="America/Lima" contact-name="Fovente — Reservas" contact-status="en línea">
+          <script type="application/json">
+            [
+              { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad.", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "¿Para cuántas personas?", "delayMs": 0 },
+              { "k": "post", "by": "in", "text": "Para 4, por favor", "delayMs": 0 },
+              { "k": "receipt", "id": "m0", "to": "read", "delayMs": 0 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+      <figure>
+        <figcaption>Telegram · oscuro</figcaption>
+        <cf-chat-sim data-theme="dark" channel="telegram" seed="7" locale="es-PE" tz="America/Lima" contact-name="Fovente — Reservas" contact-status="en línea">
+          <script type="application/json">
+            [
+              { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad.", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "¿Para cuántas personas?", "delayMs": 0 },
+              { "k": "post", "by": "in", "text": "Para 4, por favor", "delayMs": 0 },
+              { "k": "receipt", "id": "m0", "to": "read", "delayMs": 0 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+    </div>
+
+    <!-- Plain <script>, not type="module" — same file:// CORS reasoning as index.html. No
+         `data-step` attribute set on any <cf-chat-sim> above, so connectedCallback's own default
+         (full reveal — element/chat-sim-element.ts's `initialStep = timeline.frames.length`)
+         already lands every instance on its final, static frame. Nothing to drive here. -->
+    <script src="./chat-sim.bundle.js"></script>
+  </body>
+</html>

@@ -86,23 +86,16 @@ export function computeGroupFlags(
   return out;
 }
 
-function receiptGlyphLabel(state: DeliveryState): string {
-  switch (state) {
-    case 'read':
-      return 'Leído';
-    case 'delivered':
-      return 'Entregado';
-    case 'sent':
-      return 'Enviado';
-    case 'failed':
-      return 'Fallido';
-    case 'queued':
-    default:
-      return 'En cola';
-  }
-}
-
-function buildTickSvg(ticks: 1 | 2, read: boolean): SVGSVGElement {
+/**
+ * T-011 (core) replaced the flat `receiptGlyph` enum with `ReceiptModel` — glyph and color now
+ * come from `adapter.receipt.states[state]`, a plain string pair, not a channel-fixed shape. The
+ * hand-drawn tick SVG is worth keeping for visual fidelity (a real WhatsApp/Telegram screenshot
+ * shows vector checkmarks, not a raw ✓ glyph rendered in the body font) — so this counts literal
+ * '✓' characters in the STATE'S glyph string to decide how many ticks to draw, rather than
+ * hardcoding a channel or an old enum value. A glyph with zero '✓' (a clock, a bang, empty) falls
+ * through to plain text in `buildReceiptGlyph` below.
+ */
+function buildTickSvg(ticks: 1 | 2, color: string): SVGSVGElement {
   const NS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', '0 0 18 12');
@@ -114,7 +107,7 @@ function buildTickSvg(ticks: 1 | 2, read: boolean): SVGSVGElement {
   svg.setAttribute('stroke-linecap', 'round');
   svg.setAttribute('stroke-linejoin', 'round');
   svg.classList.add('cf-receipt');
-  svg.dataset.read = String(read);
+  svg.style.color = color;
 
   const p1 = document.createElementNS(NS, 'path');
   p1.setAttribute('d', ticks === 2 ? 'M1 6.7 4.1 9.8 10.2 2.4' : 'M4.5 6.7 7.6 9.8 13.7 2.4');
@@ -127,7 +120,41 @@ function buildTickSvg(ticks: 1 | 2, read: boolean): SVGSVGElement {
   return svg;
 }
 
-function buildStamp(msg: RenderMessage, adapter: ChannelAdapter, dir: 'in' | 'out'): HTMLElement {
+/**
+ * Builds the receipt indicator for one message, or `null` when there's nothing to show: `kind`
+ * is 'none', or 'metric' (that's `adapter.counter === 'views'` + `msg.views`'s job — the
+ * ReceiptModel's own `states` for a metric channel are a degenerate same-value placeholder per
+ * core/__tests__/receipt-model.test.ts, not live data), or `scope: 'last-only'` and this message
+ * isn't the streak's tail (`flags.tailHere` — adapter.tail already lands on the same message
+ * 'last-only' means, for every channel that could plausibly use it: T-013 telegram-fidelity-fix.md
+ * groups Telegram/iMessage tail as 'last').
+ */
+function buildReceiptGlyph(
+  msg: RenderMessage,
+  adapter: ChannelAdapter,
+  flags: GroupFlags,
+): HTMLElement | SVGSVGElement | null {
+  const { kind, states, scope } = adapter.receipt;
+  if (kind === 'none' || kind === 'metric') return null;
+  if (scope === 'last-only' && !flags.tailHere) return null;
+
+  const style = states[msg.receipt];
+  const tickCount = (style.glyph.match(/✓/gu) ?? []).length;
+  if (kind === 'ticks' && tickCount > 0) {
+    return buildTickSvg(Math.min(tickCount, 2) as 1 | 2, style.color);
+  }
+
+  const el = document.createElement('span');
+  el.className = kind === 'text' ? 'cf-receipt-label' : 'cf-receipt';
+  el.style.color = style.color;
+  el.textContent = style.glyph;
+  return el;
+}
+
+/** Time + edited-label + views only. The receipt indicator is built separately by
+ * `buildReceiptGlyph` and placed by the caller per `adapter.receipt.placement` — it isn't
+ * necessarily "in the stamp" any more (T-011's `below-bubble` case). */
+function buildStamp(msg: RenderMessage, adapter: ChannelAdapter): HTMLElement {
   const stamp = document.createElement('span');
   stamp.className = 'cf-stamp';
 
@@ -148,18 +175,6 @@ function buildStamp(msg: RenderMessage, adapter: ChannelAdapter, dir: 'in' | 'ou
     views.className = 'cf-views';
     views.textContent = String(msg.views);
     stamp.appendChild(views);
-  }
-
-  if (dir === 'out') {
-    if (adapter.receiptGlyph === 'trailing-label') {
-      const label = document.createElement('span');
-      label.className = 'cf-receipt-label';
-      label.textContent = receiptGlyphLabel(msg.receipt);
-      stamp.appendChild(label);
-    } else {
-      const ticks = adapter.receiptGlyph === 'double-tick' ? 2 : 1;
-      stamp.appendChild(buildTickSvg(ticks, msg.receipt === 'read'));
-    }
   }
 
   return stamp;
@@ -224,7 +239,9 @@ export function populateMessageElement(
   text.textContent = msg.text;
   bubble.appendChild(text);
 
-  const stamp = buildStamp(msg, adapter, dir);
+  const stamp = buildStamp(msg, adapter);
+  const receiptEl = dir === 'out' ? buildReceiptGlyph(msg, adapter, flags) : null;
+  if (receiptEl && adapter.receipt.placement === 'in-bubble') stamp.appendChild(receiptEl);
 
   if (adapter.timestamp === 'inside-pad') {
     const pad = document.createElement('span');
@@ -235,11 +252,22 @@ export function populateMessageElement(
   }
   // 'gutter': stamp is NOT appended to the bubble — it becomes a sibling below.
 
+  // T-011 `below-bubble` (iMessage's real shape, not exercised by any adapter this cycle —
+  // adapters/** stays WhatsApp/Telegram only, both `in-bubble`): its own sibling, independent of
+  // where the TIMESTAMP stamp landed above — the two placements are orthogonal fields now.
+  let belowBubbleReceipt: HTMLElement | null = null;
+  if (receiptEl && adapter.receipt.placement === 'below-bubble') {
+    belowBubbleReceipt = document.createElement('span');
+    belowBubbleReceipt.className = 'cf-receipt-below';
+    belowBubbleReceipt.appendChild(receiptEl);
+  }
+
   if (msg.reactions.length > 0) {
     const reactionsEl = buildReactions(msg.reactions, adapter.reactions);
     if (adapter.reactions === 'own-row') {
       li.append(bubble);
       if (adapter.timestamp === 'gutter') li.appendChild(stamp);
+      if (belowBubbleReceipt) li.appendChild(belowBubbleReceipt);
       li.appendChild(reactionsEl);
       return;
     }
@@ -250,6 +278,7 @@ export function populateMessageElement(
 
   li.appendChild(bubble);
   if (adapter.timestamp === 'gutter') li.appendChild(stamp);
+  if (belowBubbleReceipt) li.appendChild(belowBubbleReceipt);
 }
 
 export function buildMessageElement(
