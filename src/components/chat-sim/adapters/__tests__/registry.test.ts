@@ -20,7 +20,7 @@ describe('getAdapter', () => {
 describe('the two adapters implement all 16 fields with no optionals', () => {
   const FIELDS = [
     'tail', 'wallpaper', 'reactions', 'reactionConstraint', 'groupKey', 'deliveryStates',
-    'receiptGlyph', 'counter', 'timestamp', 'quote', 'bubbleTransport', 'senderKinds',
+    'receipt', 'counter', 'timestamp', 'quote', 'bubbleTransport', 'senderKinds',
     'keyboard', 'album', 'e2eNotice', 'avatarSide',
   ] as const;
 
@@ -47,5 +47,30 @@ describe('telegram has no delivered state; whatsapp does', () => {
 describe("telegram's reactionConstraint.allowlistSize is derived from caps.ts, never a bare literal", () => {
   it('equals 73', () => {
     expect(telegram.reactionConstraint.allowlistSize).toBe(73);
+  });
+});
+
+// T-012 acceptance #1 + #2: the two receipt twins. One twin alone would pass with a
+// half-broken model (e.g. every state sharing both glyph AND color); together they prove the
+// glyph axis and the color axis are independently wired per channel (telegram-fidelity-fix.md §F-2).
+describe('T-012 acceptance — receipt twins prove glyph and color are orthogonal axes', () => {
+  it('glyph twin: telegram sent vs read — different glyphs, same color', () => {
+    const { sent, read } = telegram.receipt.states;
+    expect(sent.glyph).not.toBe(read.glyph);
+    expect(sent.color).toBe(read.color);
+  });
+
+  it('color twin: whatsapp delivered vs read — same glyph, different colors', () => {
+    const { delivered, read } = whatsapp.receipt.states;
+    expect(delivered.glyph).toBe(read.glyph);
+    expect(delivered.color).not.toBe(read.color);
+  });
+});
+
+// T-012 acceptance #3: 👁 N is broadcast-only; the 1:1/group adapter this cycle covers must not
+// claim it (the slot belongs to the ticks instead).
+describe('T-012 acceptance — no 1:1 views counter', () => {
+  it('telegram counter is none, not views', () => {
+    expect(telegram.counter).toBe('none');
   });
 });
