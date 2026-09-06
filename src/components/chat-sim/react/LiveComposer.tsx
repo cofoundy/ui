@@ -20,6 +20,20 @@ import { useKeyboardInset } from './useKeyboardInset';
 const MAX_HEIGHT = 120; // same cap MobileComposer.tsx uses (auto-grow, then scroll internally)
 const TAP_TARGET = 44; // architecture-v1.md §8: tap targets >= 44px
 
+// T-019: was a literal '➤' character — an emoji/dingbat renders via the OS's own font, the same
+// cross-machine-rendering problem T-016 fixed for receipt ticks (capture/'s byte-identical-PNG
+// guarantee only ever held on the one machine it ran on), and it would also trip this task's
+// acceptance #3 (zero emoji in react/**). Self-contained: unlike DemoComposer's icons, this button
+// has no element/** counterpart to mirror (this file's own header — LiveComposer is `mode="live"`'s
+// real, operable composer, react-only, T-007) so there's no cross-check shape to match.
+function SendIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width={18} height={18} fill="currentColor" aria-hidden="true">
+      <path d="M3 11.5 20 4l-6.5 17-2.8-7.2L3 11.5z" />
+    </svg>
+  );
+}
+
 export interface LiveComposerProps {
   readonly placeholder: string;
   readonly onSend: (text: string) => void;
@@ -124,7 +138,7 @@ export function LiveComposer({ placeholder, onSend, logRef }: LiveComposerProps)
         aria-label="Enviar"
         style={sendStyle(canSend)}
       >
-        ➤
+        <SendIcon />
       </button>
     </div>
   );

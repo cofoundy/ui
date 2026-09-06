@@ -93,18 +93,26 @@ describe('T-015 acceptance #2 — receipt orthogonality, rendered', () => {
   });
 
   it('positive twin — the comparator actually discriminates (WhatsApp queued vs read: both glyph AND color differ)', () => {
-    // queued's glyph is the clock '🕐' — zero '✓', so it falls through to the plain-text span
-    // path (buildReceiptGlyph's own fallback), not the tick SVG — an even stronger glyph
-    // difference than tick-count, plus the color still flips.
+    // T-019: queued's glyph is the semantic id 'clock' (T-016 closed the raw-'🕐'-character hole),
+    // which now maps to a real clock SVG icon (element/icons.ts's `clockIcon`, mirrored here) —
+    // both queued and read render <svg class="cf-receipt">, so the discriminator moved from
+    // tag name to icon SHAPE (a ring+hand vs two tick paths) plus the color still flipping. This
+    // assertion changed from T-015's original (queued was a plain-text span fallback) because the
+    // underlying behavior changed, not because the test was loosened — flagged to [app-lead] per
+    // T-019 acceptance #1.
     const queuedScript: SimScript = [{ k: 'post', by: 'out:ai', text: 'hola' }];
     const readScript: SimScript = [
       { k: 'post', by: 'out:ai', text: 'hola' },
       { k: 'receipt', id: 'm0', to: 'read' },
     ];
-    const queuedEl = renderAt('whatsapp', queuedScript, full(queuedScript)).querySelector<HTMLElement>('.cf-receipt')!;
+    const queuedEl = renderAt('whatsapp', queuedScript, full(queuedScript)).querySelector<SVGSVGElement>('.cf-receipt')!;
     const readEl = renderAt('whatsapp', readScript, full(readScript)).querySelector<SVGSVGElement>('.cf-receipt')!;
-    expect(queuedEl.tagName.toLowerCase()).toBe('span');
+    expect(queuedEl.tagName.toLowerCase()).toBe('svg');
     expect(readEl.tagName.toLowerCase()).toBe('svg');
+    expect(queuedEl.querySelectorAll('path')).toHaveLength(1); // clock: ring + one hand path
+    expect(queuedEl.querySelectorAll('circle')).toHaveLength(1); // the ring
+    expect(readEl.querySelectorAll('path')).toHaveLength(2); // double-check: two tick paths
+    expect(readEl.querySelectorAll('circle')).toHaveLength(0); // no ring on a tick icon
     expect(queuedEl.style.color).not.toBe(readEl.style.color);
   });
 });

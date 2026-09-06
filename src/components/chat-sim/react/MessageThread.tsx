@@ -16,7 +16,7 @@
 
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import type { JSX, RefObject } from 'react';
-import type { ChannelAdapter, DeliveryState, MsgReaction, MsgState, QuoteStyle, Tick } from '../core/types';
+import type { ChannelAdapter, DeliveryState, MsgReaction, MsgState, QuoteStyle, ReceiptIconId, Tick } from '../core/types';
 import { actorDir, actorSenderKind, computeGroupFlags, groupKeyOf } from '../element/render';
 import type { GroupFlags, RenderMessage } from '../element/render';
 import {
@@ -54,13 +54,18 @@ export interface MessageThreadProps {
   readonly logRef?: RefObject<HTMLOListElement | null>;
 }
 
-// receipt/**/T-011,T-015: glyph + color are adapter data (ReceiptModel.states[state]), not a
-// fixed enum -> fixed-icon mapping — WhatsApp keeps one glyph and varies color, Telegram 1:1
+// receipt/**/T-011,T-015,T-016,T-019: glyph + color are adapter data (ReceiptModel.states[state]),
+// not a fixed enum -> fixed-icon mapping — WhatsApp keeps one glyph and varies color, Telegram 1:1
 // keeps one color and varies glyph, so the renderer stays a pure projection of that data instead
-// of branching on channel. Mirrors element/render.ts's `buildReceiptGlyph`/`buildTickSvg`
-// byte-for-byte (same viewBox/paths, same '✓'-counting rule, same scope gate via `flags.tailHere`,
-// no `data-read`) — WhatsApp/Telegram both ship `kind:'ticks'`, so snapshot-cross-check.test.tsx
-// exercises this path for real and a plain-text vs SVG divergence would fail it outright.
+// of branching on channel. T-016 closed core/'s '✓'-in-a-string hack: a `kind:'ticks'` state's
+// glyph is now a `ReceiptIconId` (semantics), never a raw Unicode character — so this is an
+// exhaustive lookup, not a heuristic on glyph content. Mirrors element/icons.ts +
+// element/render.ts's `TICK_ICONS` byte-for-byte (same viewBox/paths/circles, same `Record`
+// shape) — [skin]'s T-017 landed the same fix on the DOM side while this task was in flight
+// (E-003/E-004's "grep the consumers first" rule finally applied: `channel` caught both
+// react/MessageThread.tsx and react/DemoComposer.tsx before a 5th hole opened). WhatsApp/Telegram
+// both ship `kind:'ticks'`, so snapshot-cross-check.test.tsx exercises this path for real and any
+// divergence from element/icons.ts's shapes fails it outright.
 function TickSvg({ ticks, color }: { ticks: 1 | 2; color: string }) {
   return (
     <svg
@@ -81,6 +86,59 @@ function TickSvg({ ticks, color }: { ticks: 1 | 2; color: string }) {
   );
 }
 
+/** `queued` — mirrors element/icons.ts's `clockIcon` exactly (same viewBox/stroke-width/ring/hand). */
+function ClockIcon({ color }: { color: string }) {
+  return (
+    <svg
+      viewBox="0 0 14 14"
+      width="12"
+      height="12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.3}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="cf-receipt"
+      style={{ color }}
+    >
+      <circle cx={7} cy={7} r={5.8} />
+      <path d="M7 3.8V7l2.6 1.5" />
+    </svg>
+  );
+}
+
+/** `failed` — mirrors element/icons.ts's `alertIcon` exactly (same viewBox/stroke-width/ring/dot). */
+function AlertIcon({ color }: { color: string }) {
+  return (
+    <svg
+      viewBox="0 0 14 14"
+      width="12"
+      height="12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.3}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="cf-receipt"
+      style={{ color }}
+    >
+      <circle cx={7} cy={7} r={5.8} />
+      <path d="M7 4.2V8" />
+      <circle cx={7} cy={10.4} r={0.75} fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+// `Record` makes the mapping exhaustive at the type level — adding a 5th `ReceiptIconId` without
+// adding it here is a compile error, not a silent fallthrough (same reasoning as element/
+// render.ts's `TICK_ICONS`).
+const TICK_ICONS: Record<ReceiptIconId, (color: string) => JSX.Element> = {
+  clock: (color) => <ClockIcon color={color} />,
+  check: (color) => <TickSvg ticks={1} color={color} />,
+  'double-check': (color) => <TickSvg ticks={2} color={color} />,
+  alert: (color) => <AlertIcon color={color} />,
+};
+
 function ReceiptGlyph({
   adapter,
   state,
@@ -90,18 +148,21 @@ function ReceiptGlyph({
   state: DeliveryState;
   flags: GroupFlags;
 }): JSX.Element | null {
-  const { kind, states, scope } = adapter.receipt;
-  if (kind === 'none' || kind === 'metric') return null; // metric: the views counter IS the receipt (adapter.counter)
-  if (scope === 'last-only' && !flags.tailHere) return null;
+  const model = adapter.receipt;
+  if (model.kind === 'none' || model.kind === 'metric') return null; // metric: the views counter IS the receipt (adapter.counter)
+  if (model.scope === 'last-only' && !flags.tailHere) return null;
 
-  const style = states[state];
-  const tickCount = (style.glyph.match(/✓/gu) ?? []).length;
-  if (kind === 'ticks' && tickCount > 0) {
-    return <TickSvg ticks={Math.min(tickCount, 2) as 1 | 2} color={style.color} />;
+  if (model.kind === 'ticks') {
+    const style = model.states[state];
+    return TICK_ICONS[style.glyph](style.color);
   }
 
+  // kind === 'text': real content (e.g. iMessage's "Leído 9:41"), not a per-channel icon choice —
+  // `glyph` stays a literal string here (core/types.ts's LabelReceiptStateStyle), rendered as text
+  // on purpose.
+  const style = model.states[state];
   return (
-    <span className={kind === 'text' ? 'cf-receipt-label' : 'cf-receipt'} style={{ color: style.color }}>
+    <span className="cf-receipt-label" style={{ color: style.color }}>
       {style.glyph}
     </span>
   );
