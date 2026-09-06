@@ -33,7 +33,9 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const CHAT_SIM_DIR = join(__dirname, '..', '..');
-const SCAN_DIRS = ['adapters', 'element'];
+// E-005/E-007 (CTO): 'react' agregado. `app` (T-019) tuvo que hacer grep MANUAL porque el
+// gate no cubria su celda — un gate que no cubre un tercio del codigo no es un gate.
+const SCAN_DIRS = ['adapters', 'element', 'react'];
 
 // Same two Unicode blocks named in T-016's acceptance #2.
 const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu;
@@ -105,7 +107,10 @@ describe('adapters/** and element/** are free of literal emoji (T-016 acceptance
   // RED by design at this task's boundary — see the file header and E-003. Flip to plain `it`
   // once the real violations below are gone (T-017 covers element/**; adapters/** needs a
   // follow-up task this lane cannot claim, per scope.write).
-  it.fails('no receipt/composer glyph literal remains outside the content exceptions', () => {
+  // E-005 (CTO): era `it.fails` mientras T-017/T-018 tenian el gap abierto. Ambas cerraron,
+  // el tripwire dio pase-inesperado, y aca pasa a ser un gate normal. Lo hizo el CTO porque
+  // la lane duena (`core`) ya termino y el cambio es mecanico — disposition 3, con disclosure.
+  it('no receipt/composer glyph literal remains outside the content exceptions', () => {
     expect(scanRealFiles()).toEqual([]);
   });
 });

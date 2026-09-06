@@ -467,15 +467,15 @@ var CfChatSimCapture = (() => {
     receipt: {
       kind: "ticks",
       states: {
-        queued: { glyph: "\u{1F550}", color: "var(--cf-cs-bubble-out-meta)" },
-        sent: { glyph: "\u2713", color: "var(--cf-cs-bubble-out-meta)" },
-        delivered: { glyph: "\u2713", color: "var(--cf-cs-bubble-out-meta)" },
+        queued: { glyph: "clock", color: "var(--cf-cs-bubble-out-meta)" },
+        sent: { glyph: "check", color: "var(--cf-cs-bubble-out-meta)" },
+        delivered: { glyph: "check", color: "var(--cf-cs-bubble-out-meta)" },
         // unreachable, mirrors sent
-        read: { glyph: "\u2713\u2713", color: "var(--cf-cs-bubble-out-meta)" },
+        read: { glyph: "double-check", color: "var(--cf-cs-bubble-out-meta)" },
         // glyph flips, color doesn't
         // Not in telegram-fidelity-fix.md (out of scope for the F-2 fix) — standard failed-send
         // red, unconfirmed byte-exact against a real Telegram capture.
-        failed: { glyph: "!", color: "#e53935" }
+        failed: { glyph: "alert", color: "#e53935" }
       },
       placement: "in-bubble",
       scope: "every"
@@ -513,14 +513,14 @@ var CfChatSimCapture = (() => {
     receipt: {
       kind: "ticks",
       states: {
-        queued: { glyph: "\u{1F550}", color: "var(--cf-cs-bubble-out-meta)" },
-        sent: { glyph: "\u2713", color: "var(--cf-cs-bubble-out-meta)" },
-        delivered: { glyph: "\u2713\u2713", color: "var(--cf-cs-bubble-out-meta)" },
-        read: { glyph: "\u2713\u2713", color: "#53bdeb" },
+        queued: { glyph: "clock", color: "var(--cf-cs-bubble-out-meta)" },
+        sent: { glyph: "check", color: "var(--cf-cs-bubble-out-meta)" },
+        delivered: { glyph: "double-check", color: "var(--cf-cs-bubble-out-meta)" },
+        read: { glyph: "double-check", color: "#53bdeb" },
         // color flips, glyph doesn't
         // Not in telegram-fidelity-fix.md (out of scope for the F-2 fix) — standard failed-send
         // red, unconfirmed byte-exact against a real WhatsApp capture.
-        failed: { glyph: "!", color: "#e53935" }
+        failed: { glyph: "alert", color: "#e53935" }
       },
       placement: "in-bubble",
       scope: "every"
@@ -549,6 +549,97 @@ var CfChatSimCapture = (() => {
       );
     }
     return adapter;
+  }
+
+  // src/components/chat-sim/element/icons.ts
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  function svg(viewBox, width, height, strokeWidth) {
+    const el = document.createElementNS(SVG_NS, "svg");
+    el.setAttribute("viewBox", viewBox);
+    el.setAttribute("width", String(width));
+    el.setAttribute("height", String(height));
+    el.setAttribute("fill", "none");
+    el.setAttribute("stroke", "currentColor");
+    el.setAttribute("stroke-width", strokeWidth);
+    el.setAttribute("stroke-linecap", "round");
+    el.setAttribute("stroke-linejoin", "round");
+    return el;
+  }
+  function addPath(el, d) {
+    const p = document.createElementNS(SVG_NS, "path");
+    p.setAttribute("d", d);
+    el.appendChild(p);
+  }
+  function addDot(el, cx, cy, r) {
+    const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("cx", String(cx));
+    c.setAttribute("cy", String(cy));
+    c.setAttribute("r", String(r));
+    c.setAttribute("fill", "currentColor");
+    c.setAttribute("stroke", "none");
+    el.appendChild(c);
+  }
+  function addRing(el, cx, cy, r) {
+    const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("cx", String(cx));
+    c.setAttribute("cy", String(cy));
+    c.setAttribute("r", String(r));
+    el.appendChild(c);
+  }
+  function tickIcon(ticks, color) {
+    const el = svg("0 0 18 12", 15, 10, "1.7");
+    el.classList.add("cf-receipt");
+    el.style.color = color;
+    addPath(el, ticks === 2 ? "M1 6.7 4.1 9.8 10.2 2.4" : "M4.5 6.7 7.6 9.8 13.7 2.4");
+    if (ticks === 2) addPath(el, "M7.6 6.7 10.7 9.8 16.8 2.4");
+    return el;
+  }
+  function clockIcon(color) {
+    const el = svg("0 0 14 14", 12, 12, "1.3");
+    el.classList.add("cf-receipt");
+    el.style.color = color;
+    addRing(el, 7, 7, 5.8);
+    addPath(el, "M7 3.8V7l2.6 1.5");
+    return el;
+  }
+  function alertIcon(color) {
+    const el = svg("0 0 14 14", 12, 12, "1.3");
+    el.classList.add("cf-receipt");
+    el.style.color = color;
+    addRing(el, 7, 7, 5.8);
+    addPath(el, "M7 4.2V8");
+    addDot(el, 7, 10.4, 0.75);
+    return el;
+  }
+  function eyeIcon() {
+    const el = svg("0 0 16 16", 13, 13, "1.3");
+    addPath(el, "M1 8s2.8-5 7-5 7 5 7 5-2.8 5-7 5-7-5-7-5z");
+    addRing(el, 8, 8, 1.7);
+    return el;
+  }
+  function clipIcon() {
+    const el = svg("0 0 24 24", 15, 15, "2");
+    addPath(
+      el,
+      "M20.5 12.5 12 21a5.5 5.5 0 0 1-7.8-7.8l8.5-8.5a3.5 3.5 0 1 1 5 5L9.2 18.2a1.5 1.5 0 0 1-2.1-2.1l7.4-7.4"
+    );
+    return el;
+  }
+  function emojiIcon() {
+    const el = svg("0 0 24 24", 15, 15, "2");
+    addRing(el, 12, 12, 9.5);
+    addPath(el, "M8 14.5s1.6 2 4 2 4-2 4-2");
+    addDot(el, 9, 9.5, 0.9);
+    addDot(el, 15, 9.5, 0.9);
+    return el;
+  }
+  function micIcon() {
+    const el = svg("0 0 24 24", 14, 14, "2");
+    addPath(el, "M12 1.5a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0v-7a3 3 0 0 0-3-3z");
+    addPath(el, "M19 10.5v1.5a7 7 0 0 1-14 0v-1.5");
+    addPath(el, "M12 19v3");
+    addPath(el, "M8.5 22h7");
+    return el;
   }
 
   // src/components/chat-sim/element/render.ts
@@ -585,40 +676,23 @@ var CfChatSimCapture = (() => {
     if (order.length > 0) closeStreak(streakStart, order.length - 1);
     return out;
   }
-  function buildTickSvg(ticks, color) {
-    const NS = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(NS, "svg");
-    svg.setAttribute("viewBox", "0 0 18 12");
-    svg.setAttribute("width", "15");
-    svg.setAttribute("height", "10");
-    svg.setAttribute("fill", "none");
-    svg.setAttribute("stroke", "currentColor");
-    svg.setAttribute("stroke-width", "1.7");
-    svg.setAttribute("stroke-linecap", "round");
-    svg.setAttribute("stroke-linejoin", "round");
-    svg.classList.add("cf-receipt");
-    svg.style.color = color;
-    const p1 = document.createElementNS(NS, "path");
-    p1.setAttribute("d", ticks === 2 ? "M1 6.7 4.1 9.8 10.2 2.4" : "M4.5 6.7 7.6 9.8 13.7 2.4");
-    svg.appendChild(p1);
-    if (ticks === 2) {
-      const p2 = document.createElementNS(NS, "path");
-      p2.setAttribute("d", "M7.6 6.7 10.7 9.8 16.8 2.4");
-      svg.appendChild(p2);
-    }
-    return svg;
-  }
+  var TICK_ICONS = {
+    clock: clockIcon,
+    check: (color) => tickIcon(1, color),
+    "double-check": (color) => tickIcon(2, color),
+    alert: alertIcon
+  };
   function buildReceiptGlyph(msg, adapter, flags) {
-    const { kind, states, scope } = adapter.receipt;
-    if (kind === "none" || kind === "metric") return null;
-    if (scope === "last-only" && !flags.tailHere) return null;
-    const style = states[msg.receipt];
-    const tickCount = (style.glyph.match(/✓/gu) ?? []).length;
-    if (kind === "ticks" && tickCount > 0) {
-      return buildTickSvg(Math.min(tickCount, 2), style.color);
+    const model = adapter.receipt;
+    if (model.kind === "none" || model.kind === "metric") return null;
+    if (model.scope === "last-only" && !flags.tailHere) return null;
+    if (model.kind === "ticks") {
+      const style2 = model.states[msg.receipt];
+      return TICK_ICONS[style2.glyph](style2.color);
     }
+    const style = model.states[msg.receipt];
     const el = document.createElement("span");
-    el.className = kind === "text" ? "cf-receipt-label" : "cf-receipt";
+    el.className = "cf-receipt-label";
     el.style.color = style.color;
     el.textContent = style.glyph;
     return el;
@@ -639,7 +713,8 @@ var CfChatSimCapture = (() => {
     if (adapter.counter === "views") {
       const views = document.createElement("span");
       views.className = "cf-views";
-      views.textContent = String(msg.views);
+      views.appendChild(eyeIcon());
+      views.appendChild(document.createTextNode(String(msg.views)));
       stamp.appendChild(views);
     }
     return stamp;
@@ -760,7 +835,7 @@ var CfChatSimCapture = (() => {
       editedLabel: msg.v > 0 ? editedLabel : void 0
     };
   }
-  var _timeline, _postedAt, _msgEls, _log, _typingRows, _dateSeps, _playhead, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn;
+  var _timeline, _postedAt, _msgEls, _log, _typingRows, _dateSeps, _playhead, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, composerIcon_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn;
   var CfChatSimElement = class extends HTMLElement {
     constructor() {
       super(...arguments);
@@ -804,6 +879,7 @@ var CfChatSimCapture = (() => {
       if (!this.hasAttribute("role")) this.setAttribute("role", "log");
       const script = __privateMethod(this, _CfChatSimElement_instances, readScript_fn).call(this);
       const channel = this.getAttribute("channel") || "whatsapp";
+      const chrome = this.getAttribute("chrome") === "consistent" ? "consistent" : "fidelity";
       const seed = Number(this.getAttribute("seed") ?? "1");
       const locale = this.getAttribute("locale") || "es-PE";
       const tz = this.getAttribute("tz") || "America/Lima";
@@ -811,6 +887,7 @@ var CfChatSimCapture = (() => {
       __privateSet(this, _adapter, getAdapter(channel));
       this.dataset.wallpaper = __privateGet(this, _adapter).wallpaper;
       this.dataset.channel = channel;
+      this.dataset.chrome = chrome;
       __privateSet(this, _timeline, compile(script, { seed, channel, locale, tz, t0 }));
       __privateSet(this, _postedAt, postedAtByMsgId(__privateGet(this, _timeline).frames));
       this.textContent = "";
@@ -850,7 +927,7 @@ var CfChatSimCapture = (() => {
         __privateGet(this, _log).insertBefore(li, anchor);
         return { interval, li };
       }));
-      this.appendChild(__privateMethod(this, _CfChatSimElement_instances, buildComposer_fn).call(this, channel));
+      this.appendChild(__privateMethod(this, _CfChatSimElement_instances, buildComposer_fn).call(this, channel, chrome));
       const initialStep = this.hasAttribute("data-step") ? Number(this.getAttribute("data-step")) : __privateGet(this, _timeline).frames.length;
       this.dataset.step = String(initialStep);
       __privateMethod(this, _CfChatSimElement_instances, applyStep_fn).call(this, initialStep);
@@ -918,14 +995,38 @@ var CfChatSimCapture = (() => {
   /** Composer — always shown (visual-only for this wave; a real, operable composer with mobile
    * keyboard handling is react/'s T-007). Its absence read as "broken" rather than "conversation
    * ended" in review — this closes that gap without claiming interactivity it doesn't have.
-   * Icon order is brand identity, not adapter structure (T-013 fidelity fix, §"Composer"):
-   * Telegram puts 📎 on the LEFT with 😊 + send on the RIGHT; WhatsApp inverts that (😊 left,
-   * send right, no clip). */
-  buildComposer_fn = function(channel) {
+   *
+   * Icon order is brand identity, not adapter structure (T-013 fidelity fix, §"Composer": clip
+   * LEFT on Telegram, mirrored to the RIGHT on WhatsApp) — `ChannelAdapter` deliberately excludes
+   * it, same reasoning as wallpaper texture and date-pill treatment (file header). `chrome`
+   * (T-017 Alcance B) decides whether that per-channel mirroring happens at all: 'fidelity' keeps
+   * it (simulator/marketing — each channel looks like itself); 'consistent' always renders
+   * Telegram's arrangement, on both channels, so the app's operator never sees a control move
+   * between channels in the same session. Either way, `.cf-bubble`/`.cf-receipt`/wallpaper stay
+   * exactly what the channel and adapter say — only the composer's OWN chrome is what `chrome`
+   * touches (T-017 acceptance #3, "el gemelo").
+   */
+  buildComposer_fn = function(channel, chrome) {
     const bar = document.createElement("div");
     bar.className = "cf-composer";
-    bar.innerHTML = channel === "telegram" ? '<span class="cf-composer-icon" aria-hidden="true">\u{1F4CE}</span><span class="cf-composer-input" aria-hidden="true">Mensaje</span><span class="cf-composer-icon" aria-hidden="true">\u{1F60A}</span><span class="cf-composer-icon cf-composer-send" aria-hidden="true">\u27A4</span>' : '<span class="cf-composer-icon" aria-hidden="true">\u{1F60A}</span><span class="cf-composer-input" aria-hidden="true">Mensaje</span><span class="cf-composer-icon cf-composer-send" aria-hidden="true">\u27A4</span>';
+    const clip = __privateMethod(this, _CfChatSimElement_instances, composerIcon_fn).call(this, "clip", clipIcon());
+    const emoji = __privateMethod(this, _CfChatSimElement_instances, composerIcon_fn).call(this, "emoji", emojiIcon());
+    const mic = __privateMethod(this, _CfChatSimElement_instances, composerIcon_fn).call(this, "mic", micIcon(), "cf-composer-send");
+    const input = document.createElement("span");
+    input.className = "cf-composer-input";
+    input.setAttribute("aria-hidden", "true");
+    input.textContent = "Mensaje";
+    const fidelityOrder = channel === "telegram" ? [clip, input, emoji, mic] : [emoji, input, mic, clip];
+    bar.append(...chrome === "consistent" ? [clip, input, emoji, mic] : fidelityOrder);
     return bar;
+  };
+  composerIcon_fn = function(name, icon, extraClass) {
+    const span = document.createElement("span");
+    span.className = extraClass ? `cf-composer-icon ${extraClass}` : "cf-composer-icon";
+    span.dataset.icon = name;
+    span.setAttribute("aria-hidden", "true");
+    span.appendChild(icon);
+    return span;
   };
   readScript_fn = function() {
     const inline = this.querySelector('script[type="application/json"]');
@@ -1006,11 +1107,11 @@ var CfChatSimCapture = (() => {
   var DOUBLE_TICK_RECEIPT = {
     kind: "ticks",
     states: {
-      queued: { glyph: "\u{1F550}", color: "var(--cf-cs-bubble-out-meta)" },
-      sent: { glyph: "\u2713", color: "var(--cf-cs-bubble-out-meta)" },
-      delivered: { glyph: "\u2713\u2713", color: "var(--cf-cs-bubble-out-meta)" },
-      read: { glyph: "\u2713\u2713", color: "#53bdeb" },
-      failed: { glyph: "!", color: "#e34a4a" }
+      queued: { glyph: "clock", color: "var(--cf-cs-bubble-out-meta)" },
+      sent: { glyph: "check", color: "var(--cf-cs-bubble-out-meta)" },
+      delivered: { glyph: "double-check", color: "var(--cf-cs-bubble-out-meta)" },
+      read: { glyph: "double-check", color: "#53bdeb" },
+      failed: { glyph: "alert", color: "#e34a4a" }
     },
     placement: "in-bubble",
     scope: "every"
@@ -1044,8 +1145,8 @@ var CfChatSimCapture = (() => {
     ...DOUBLE_TICK_RECEIPT,
     states: {
       ...DOUBLE_TICK_RECEIPT.states,
-      delivered: { glyph: "\u2713", color: DOUBLE_TICK_RECEIPT.states.sent.color },
-      read: { glyph: "\u2713", color: DOUBLE_TICK_RECEIPT.states.sent.color }
+      delivered: { glyph: "check", color: DOUBLE_TICK_RECEIPT.states.sent.color },
+      read: { glyph: "check", color: DOUBLE_TICK_RECEIPT.states.sent.color }
     }
   };
   var CAPS_FIXTURE_INVERTED_ADAPTER = {
