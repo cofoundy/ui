@@ -187,11 +187,14 @@
   --cf-cs-bubble-in-meta: #7a95a8;
 }
 .cf-chat-sim[data-channel='telegram'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {
-  background: #2b5278;
+  /* Corregido por el operador 2026-09-06 contra su cliente real de Telegram. El #2b5278
+     anterior salio de night.tdesktop-theme (msgOutBg). La captura del operador manda. */
+  background: #3e6aa7;
   filter: none; /* spec: Telegram draws no shadow on the outgoing bubble in dark mode */
 }
 .cf-chat-sim[data-channel='whatsapp'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {
-  background: #005c4b; /* WhatsApp's real dark-mode outgoing green — keeps the default shadow */
+  /* Corregido por el operador 2026-09-06 contra su cliente real de WhatsApp. */
+  background: #154d38; /* keeps the default shadow */
 }
 /* WhatsApp dark-mode wallpaper (T-020 regression fix): the shared `[data-wallpaper='pattern']`
    rule above draws the doodle with a fixed BLACK stroke — tenue on the light surface, but
