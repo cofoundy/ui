@@ -43,19 +43,63 @@ export type ReceiptKind = 'ticks' | 'metric' | 'text' | 'none';
 export type ReceiptPlacement = 'in-bubble' | 'below-bubble';
 export type ReceiptScope = 'every' | 'last-only';
 
-export interface ReceiptStateStyle {
-  readonly glyph: string; // symbol (ticks/metric) or label text (text kind) — cero opcionales
+// ---------------------------------------------------------------------------
+// Receipt icon semantics (T-016 — operator, reading the render, asked why there were emoji).
+// `glyph: string` let a `kind: 'ticks'` state bake a raw Unicode character ('🕐', '✓') straight
+// into ReceiptStateStyle. An emoji/dingbat renders via the OS's own font (Apple Color Emoji,
+// Segoe UI Emoji, Noto) — two machines give two different pixel grids for the SAME state, so the
+// capture pipeline's byte-identical-PNG guarantee (capture/__tests__/determinism.test.ts) only
+// ever held on the one machine it ran on. Same failure class as the `tz` gap that caught the
+// earlier refute-pass: true locally, false crossing machines.
+//
+// `glyph: ReceiptIconId` closes that: the adapter declares WHICH icon (semantics), the renderer
+// owns HOW it draws (pixels) — SVG, not a font glyph.
+//
+// Scoped to `kind: 'ticks'` only. `metric`/`text` states hold real content a 4-value tick enum
+// can't express (a view-counter icon, a localized label like "Leído") and isn't this bug either
+// way — that content isn't a per-channel glyph choice, it's the thing being displayed. They keep
+// `glyph: string`.
+// ---------------------------------------------------------------------------
+
+export type ReceiptIconId = 'clock' | 'check' | 'double-check' | 'alert';
+
+export interface TickReceiptStateStyle {
+  readonly glyph: ReceiptIconId;
+  readonly color: string;
+}
+
+export interface LabelReceiptStateStyle {
+  readonly glyph: string; // literal content: a metric icon or a localized label — cero opcionales
   readonly color: string;
 }
 
 /** Cero opcionales: every DeliveryState gets an explicit style even when `kind` doesn't vary
  * by state (e.g. `metric`/`none`) — same convention as `allowlistSize: 0 when emoji === 'any'`. */
-export interface ReceiptModel {
-  readonly kind: ReceiptKind;
-  readonly states: Readonly<Record<DeliveryState, ReceiptStateStyle>>;
+export interface TicksReceiptModel {
+  readonly kind: 'ticks';
+  readonly states: Readonly<Record<DeliveryState, TickReceiptStateStyle>>;
   readonly placement: ReceiptPlacement;
   readonly scope: ReceiptScope;
 }
+
+export interface LabelReceiptModel {
+  readonly kind: 'metric' | 'text' | 'none';
+  readonly states: Readonly<Record<DeliveryState, LabelReceiptStateStyle>>;
+  readonly placement: ReceiptPlacement;
+  readonly scope: ReceiptScope;
+}
+
+export type ReceiptModel = TicksReceiptModel | LabelReceiptModel;
+
+// ---------------------------------------------------------------------------
+// Chrome axis (T-016 — reencuadre de brief.yaml, operador 2026-09-06). Typed here only; no
+// consumer wiring in core/. Fidelity: cada canal se ve como sí mismo (simulador, marketing) —
+// clip/controles del composer se mueven de lado por canal. Consistent: cromo Cofoundy fijo, solo
+// el mensaje cambia por canal — para la app, donde mover los controles entre canales es un bug de
+// UX ("el cliente de Fovente no se confunde con los botones que estén cambiando"), no fidelidad.
+// ---------------------------------------------------------------------------
+
+export type Chrome = 'fidelity' | 'consistent';
 
 export interface ReactionConstraint {
   readonly emoji: 'any' | 'allowlist';

@@ -7,18 +7,20 @@
 // this change's blast radius on out-of-scope consumers).
 
 import { describe, expect, it } from 'vitest';
-import type { ReceiptModel } from '../types';
+import type { ReceiptIconId, ReceiptModel, TickReceiptStateStyle } from '../types';
 
 describe('ReceiptModel expresses all 4 §F-1 cases (acceptance #2)', () => {
   it('WhatsApp — glyph fixed, COLOR varies at read', () => {
+    // T-016: `kind: 'ticks'` states carry a `ReceiptIconId` (semantics), never a raw glyph
+    // character — the renderer, not this fixture, owns which pixels 'check'/'double-check' draw.
     const whatsapp: ReceiptModel = {
       kind: 'ticks',
       states: {
-        queued: { glyph: '🕐', color: 'var(--wa-tick-gray)' },
-        sent: { glyph: '✓', color: 'var(--wa-tick-gray)' },
-        delivered: { glyph: '✓✓', color: 'var(--wa-tick-gray)' },
-        read: { glyph: '✓✓', color: 'var(--wa-tick-blue)' }, // color flips, glyph doesn't
-        failed: { glyph: '!', color: 'var(--wa-tick-red)' },
+        queued: { glyph: 'clock', color: 'var(--wa-tick-gray)' },
+        sent: { glyph: 'check', color: 'var(--wa-tick-gray)' },
+        delivered: { glyph: 'double-check', color: 'var(--wa-tick-gray)' },
+        read: { glyph: 'double-check', color: 'var(--wa-tick-blue)' }, // color flips, glyph doesn't
+        failed: { glyph: 'alert', color: 'var(--wa-tick-red)' },
       },
       placement: 'in-bubble',
       scope: 'every',
@@ -35,11 +37,11 @@ describe('ReceiptModel expresses all 4 §F-1 cases (acceptance #2)', () => {
     const telegramDirect: ReceiptModel = {
       kind: 'ticks',
       states: {
-        queued: { glyph: '🕐', color: 'var(--tg-tick)' },
-        sent: { glyph: '✓', color: 'var(--tg-tick)' },
-        delivered: { glyph: '✓', color: 'var(--tg-tick)' }, // unreachable, mirrors `sent`
-        read: { glyph: '✓✓', color: 'var(--tg-tick)' }, // glyph flips, color doesn't
-        failed: { glyph: '!', color: 'var(--tg-tick-failed)' },
+        queued: { glyph: 'clock', color: 'var(--tg-tick)' },
+        sent: { glyph: 'check', color: 'var(--tg-tick)' },
+        delivered: { glyph: 'check', color: 'var(--tg-tick)' }, // unreachable, mirrors `sent`
+        read: { glyph: 'double-check', color: 'var(--tg-tick)' }, // glyph flips, color doesn't
+        failed: { glyph: 'alert', color: 'var(--tg-tick-failed)' },
       },
       placement: 'in-bubble',
       scope: 'every',
@@ -94,5 +96,21 @@ describe('ReceiptModel expresses all 4 §F-1 cases (acceptance #2)', () => {
     };
     expect(imessage.placement).toBe('below-bubble');
     expect(imessage.scope).toBe('last-only');
+  });
+});
+
+// T-016 acceptance #1: "ReceiptIconId es cerrado. Un carácter literal no compila."
+describe('ReceiptIconId is closed (T-016 acceptance #1)', () => {
+  it('accepts the 4 declared members', () => {
+    const ids: ReceiptIconId[] = ['clock', 'check', 'double-check', 'alert'];
+    expect(ids).toHaveLength(4);
+  });
+
+  it('rejects a raw glyph character — this is a compile-time proof, not a runtime one', () => {
+    // @ts-expect-error — '🕐' is a string, not a ReceiptIconId; this is the exact defect T-016
+    // closes (an emoji baked into a `kind: 'ticks'` state). If this stops erroring, the enum
+    // stopped being closed and this test should fail `tsc --noEmit` loudly.
+    const queued: TickReceiptStateStyle = { glyph: '🕐', color: 'var(--x)' };
+    expect(queued.glyph).toBe('🕐');
   });
 });

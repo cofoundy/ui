@@ -31,11 +31,11 @@ describe('type contract exports (acceptance #5)', () => {
       receipt: {
         kind: 'ticks',
         states: {
-          queued: { glyph: '🕐', color: 'var(--wa-tick-gray)' },
-          sent: { glyph: '✓', color: 'var(--wa-tick-gray)' },
-          delivered: { glyph: '✓✓', color: 'var(--wa-tick-gray)' },
-          read: { glyph: '✓✓', color: 'var(--wa-tick-blue)' },
-          failed: { glyph: '!', color: 'var(--wa-tick-red)' },
+          queued: { glyph: 'clock', color: 'var(--wa-tick-gray)' },
+          sent: { glyph: 'check', color: 'var(--wa-tick-gray)' },
+          delivered: { glyph: 'double-check', color: 'var(--wa-tick-gray)' },
+          read: { glyph: 'double-check', color: 'var(--wa-tick-blue)' },
+          failed: { glyph: 'alert', color: 'var(--wa-tick-red)' },
         },
         placement: 'in-bubble',
         scope: 'every',
