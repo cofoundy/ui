@@ -223,3 +223,27 @@ y de una sola vez.
 **Y la advertencia general:** un modelo de dominio prestado de otra capa —por bueno que sea, y éste
 lo era— trae las fronteras de ESA capa. `capabilities.py` es correcto para lo que hace. El error fue
 mío al no preguntar de qué dominio hablaba antes de espejarlo.
+
+## Patrón en MI comportamiento: cambio de contrato = productor asignado, consumidores olvidados
+
+Tres veces, la misma forma:
+
+| # | Contrato | Asigné | Olvidé | Lo encontró |
+|---|---|---|---|---|
+| E-002 | `receiptGlyph` → `ReceiptModel` | core (tipo), channel (valores) | `element/**`, `react/**` | `core`, con un typecheck de proyecto que su tarea no pedía |
+| E-003 | `glyph` → `ReceiptIconId` | core (tipo), skin (`element/**`) | `adapters/**` | `core`, otra vez |
+
+E-002 se resolvió con la frase *"la matriz necesita otra pasada"*. Hice la pasada — y repetí el
+error en el ciclo siguiente, con la misma clase de contrato.
+
+**El diagnóstico correcto no es "prestar más atención".** Es que escribo el task graph pensando en
+**quién produce el cambio**, y el grafo de consumidores no está en ningún lado que yo lea al
+escribirlo. La matriz de propiedad dice quién ESCRIBE cada path; no dice quién IMPORTA de quién.
+
+**Regla mecánica para el próximo, que no depende de que me acuerde:** ante cualquier cambio de un
+tipo exportado, correr `grep -rl "<símbolo>" src/` **antes** de escribir las tareas, y que cada
+archivo del resultado tenga dueño asignado en el graph. Es un comando, no una virtud.
+
+Nota: en ambos casos lo encontró `core` corriendo un typecheck de **proyecto** que su propia
+acceptance no pedía. La lane hizo más de lo que le pedí, dos veces, y las dos veces eso tapó un
+hueco mío.

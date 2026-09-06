@@ -187,3 +187,43 @@ rutearlo a `app` en el momento).
 
 52/52 en `core` con el export puesto. `tsc --noEmit`: 0 errores en `core/**`. Commit `089989f`,
 pusheado.
+
+---
+
+wall_clock_minutes: 35
+
+# T-016 — glyph deja de ser char literal, ReceiptIconId cerrado
+
+El operador vio el reloj `🕐` en el render y preguntó por qué había emojis: un emoji se pinta con
+la fuente del sistema (Apple Color Emoji / Segoe / Noto), así que dos máquinas dan píxeles
+distintos para el mismo estado — la garantía de PNG byte-idéntico de `capture/` solo valía en la
+máquina donde corrió el test. Misma clase de bug que el `tz` que cazó el refute-pass anterior.
+
+`ReceiptStateStyle.glyph: string` → cerrado a `ReceiptIconId = 'clock'|'check'|'double-check'|'alert'`,
+pero SOLO para `kind: 'ticks'`. Tomado literal ("glyph: string → glyph: ReceiptIconId" sobre el
+campo compartido) rompía las fixtures propias de T-011 para `kind:'metric'` (`glyph:'👁'`) y
+`kind:'text'` (`glyph:'Entregado'/'Leído'`, texto localizado real, no un glifo de canal) — un
+enum de 4 valores de tick no puede expresar "Leído" y tampoco es el bug (no hay elección de
+glifo por canal ahí, es el contenido mismo). Resuelto partiendo `ReceiptModel` en una unión
+discriminada por `kind`: `TicksReceiptModel` (glyph: ReceiptIconId) vs `LabelReceiptModel`
+(kind: metric|text|none, glyph sigue string). `ReceiptModel` como nombre de tipo se mantiene
+— nadie fuera de core lo tenía que re-importar con otro nombre.
+
+También tipeado (sin wiring, per spec): `Chrome = 'fidelity'|'consistent'`, el segundo eje del
+reencuadre de `brief.yaml` (operador, 2026-09-06).
+
+**Acceptance #2 (el gemelo):** `core/__tests__/emoji-scan.test.ts` — primitivo probado en rojo/verde
+contra strings sintéticos (no puedo tocar `adapters/**`/`element/**` ni transitoriamente, scope.write
+lo prohíbe), más un `it.fails` (mismo idioma que T-008/T-010) sobre los archivos reales de
+`adapters/**` + `element/**`. Excluye `adapters/caps.ts` (allowlist real de 73 emoji de reacciones
+Telegram, T-005, verificado byte-a-byte contra prod) y `*.test.ts(x)`/`__tests__` (mensajes/reacciones
+simuladas son emoji-como-CONTENIDO legítimo, no un glifo de render — mismo criterio que
+`purity.test.ts` ya usa para prosa). Con esas exclusiones quedan 5 violaciones reales: `adapters/{telegram,whatsapp}.ts`
+y `element/{fixtures,chat-sim-element,render}.ts` — ninguna en mi `scope.write`. `element/**` es de
+T-017 (blockedBy T-016, su acceptance #1 ya asume heredar este escaneo rojo); `adapters/**` (T-012)
+ya completó sin dependencia a T-016, así que queda sin dueño — filé E-003 (non_blocking) con el
+detalle y sugerí un follow-up task para `channel`.
+
+63/63 en `core`. `tsc --noEmit`: 0 errores en `core/**` (2 preexistentes en `hero-shader/*`
+confirmados no-relacionados vía `git stash`). `madge --circular core/**`: limpio. Commit `74960fe`,
+pusheado.
