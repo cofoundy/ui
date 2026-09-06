@@ -467,11 +467,17 @@
 .cf-msg[data-dir='out'] .cf-receipt-below {
   text-align: right;
 }
+/* icon is a drawn SVG (element/render.ts, element/icons.ts's eyeIcon) — was CSS
+   `content: '👁 '`, a font-rendered emoji pseudo-element with the same cross-machine pixel
+   problem T-016/T-017 fixed everywhere else (file header, "cero emoji en el DOM renderizado"). */
 .cf-views {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   font-variant-numeric: tabular-nums;
 }
-.cf-views::before {
-  content: '👁 ';
+.cf-views svg {
+  flex: none;
 }
 
 /* ── reactions (adapter.reactions: overlay-below | own-row | overlay-edge) ─ */

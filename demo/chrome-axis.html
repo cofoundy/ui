@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>chat-sim — chrome axis + SVG receipt icons (T-017)</title>
+    <!--
+      T-017 acceptance evidence page. Same script, same seed, four panes:
+
+        row "fidelity"   — each channel looks like itself; the composer's clip icon moves side
+                            (Telegram left, WhatsApp right, T-013 §"Composer").
+        row "consistent" — the app's chrome (T-017 Alcance B): composer icon order is IDENTICAL
+                            in both panes, but the bubble/tail/receipt-tick shape still differs by
+                            channel (the "gemelo", acceptance #3) — `consistent` fixes the chrome,
+                            not the message.
+
+      The script below drives one outbound message to each DeliveryState (queued/sent/delivered/
+      failed) so all four ReceiptIconId icons (clock/check/double-check/alert) are visible at once
+      — every one of them a drawn SVG now (element/icons.ts), never a font emoji (acceptance #1).
+      Same file:// contract as index.html — no build step, links only styles.css + the checked-in
+      bundle.
+    -->
+    <link rel="stylesheet" href="../src/components/chat-sim/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        padding: 2.5rem 1rem;
+        background: #f4ede9;
+        font-family: system-ui, sans-serif;
+      }
+      .row {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      figure {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      figcaption {
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #7a6f68;
+      }
+      h2 {
+        margin: 0 0 -1rem;
+        text-align: center;
+        font-size: 0.875rem;
+        color: #4a423d;
+      }
+      .cf-chat-sim {
+        width: min(340px, 90vw);
+        height: 480px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
+      }
+    </style>
+  </head>
+  <body>
+    <h2>chrome="fidelity" — el clip se mueve de lado por canal (simulador, marketing)</h2>
+    <div class="row">
+      <figure>
+        <figcaption>WhatsApp · fidelity</figcaption>
+        <cf-chat-sim chrome="fidelity" channel="whatsapp" seed="7" locale="es-PE" tz="America/Lima" contact-name="Fovente — Reservas" contact-status="en línea">
+          <script type="application/json">
+            [
+              { "k": "post", "by": "in", "text": "¿Tienen mesa para las 8pm?", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Un momento, reviso...", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Sí, hay disponibilidad", "delayMs": 0 },
+              { "k": "receipt", "id": "m2", "to": "sent", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Perfecto, quedas reservado", "delayMs": 0 },
+              { "k": "receipt", "id": "m3", "to": "delivered", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Te esperamos el sábado", "delayMs": 0 },
+              { "k": "receipt", "id": "m4", "to": "failed", "delayMs": 0 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+      <figure>
+        <figcaption>Telegram · fidelity</figcaption>
+        <cf-chat-sim chrome="fidelity" channel="telegram" seed="7" locale="es-PE" tz="America/Lima" contact-name="Fovente — Reservas" contact-status="en línea">
+          <script type="application/json">
+            [
+              { "k": "post", "by": "in", "text": "¿Tienen mesa para las 8pm?", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Un momento, reviso...", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Sí, hay disponibilidad", "delayMs": 0 },
+              { "k": "receipt", "id": "m2", "to": "sent", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Perfecto, quedas reservado", "delayMs": 0 },
+              { "k": "receipt", "id": "m3", "to": "delivered", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Te esperamos el sábado", "delayMs": 0 },
+              { "k": "receipt", "id": "m4", "to": "failed", "delayMs": 0 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+    </div>
+
+    <h2>chrome="consistent" — cromo Cofoundy fijo; solo el mensaje cambia por canal (la app)</h2>
+    <div class="row">
+      <figure>
+        <figcaption>WhatsApp · consistent</figcaption>
+        <cf-chat-sim chrome="consistent" channel="whatsapp" seed="7" locale="es-PE" tz="America/Lima" contact-name="Fovente — Reservas" contact-status="en línea">
+          <script type="application/json">
+            [
+              { "k": "post", "by": "in", "text": "¿Tienen mesa para las 8pm?", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Un momento, reviso...", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Sí, hay disponibilidad", "delayMs": 0 },
+              { "k": "receipt", "id": "m2", "to": "sent", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Perfecto, quedas reservado", "delayMs": 0 },
+              { "k": "receipt", "id": "m3", "to": "delivered", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Te esperamos el sábado", "delayMs": 0 },
+              { "k": "receipt", "id": "m4", "to": "failed", "delayMs": 0 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+      <figure>
+        <figcaption>Telegram · consistent</figcaption>
+        <cf-chat-sim chrome="consistent" channel="telegram" seed="7" locale="es-PE" tz="America/Lima" contact-name="Fovente — Reservas" contact-status="en línea">
+          <script type="application/json">
+            [
+              { "k": "post", "by": "in", "text": "¿Tienen mesa para las 8pm?", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Un momento, reviso...", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Sí, hay disponibilidad", "delayMs": 0 },
+              { "k": "receipt", "id": "m2", "to": "sent", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Perfecto, quedas reservado", "delayMs": 0 },
+              { "k": "receipt", "id": "m3", "to": "delivered", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Te esperamos el sábado", "delayMs": 0 },
+              { "k": "receipt", "id": "m4", "to": "failed", "delayMs": 0 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+    </div>
+
+    <!-- Plain <script>, not type="module" — same file:// CORS reasoning as index.html. -->
+    <script src="./chat-sim.bundle.js"></script>
+  </body>
+</html>

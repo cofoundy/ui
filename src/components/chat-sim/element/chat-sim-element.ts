@@ -26,6 +26,7 @@ import { getAdapter } from '../adapters/registry';
 import type {
   ChannelAdapter,
   ChannelId,
+  Chrome,
   Frame,
   MsgId,
   MsgState,
@@ -35,6 +36,7 @@ import type {
 } from '../core/types';
 import { actorDir, computeGroupFlags, populateMessageElement } from './render';
 import type { RenderMessage } from './render';
+import { clipIcon, emojiIcon, micIcon } from './icons';
 
 /** A `DraftInterval` (core/draft-intervals.ts — promoted from this file, T-002/T-006, so
  * app/'s T-007 and this file read the same implementation instead of a third copy) plus the
@@ -151,6 +153,13 @@ export class CfChatSimElement extends HTMLElement {
 
     const script = this.#readScript();
     const channel = (this.getAttribute('channel') as ChannelId) || 'whatsapp';
+    // Chrome axis (T-017 Alcance B, core/types.ts:94-102): 'fidelity' — each channel looks like
+    // itself, composer controls move side per real app (simulator, marketing capture). 'consistent'
+    // — Cofoundy's own composer layout, fixed regardless of channel (the app: an operator works
+    // both channels in one session, and controls moving between them reads as a UX bug, not
+    // fidelity). Not a `ChannelAdapter` field on purpose — it's how THIS component draws its own
+    // chrome, not a per-channel fact core/adapters own.
+    const chrome: Chrome = this.getAttribute('chrome') === 'consistent' ? 'consistent' : 'fidelity';
     const seed = Number(this.getAttribute('seed') ?? '1');
     const locale = this.getAttribute('locale') || 'es-PE';
     const tz = this.getAttribute('tz') || 'America/Lima';
@@ -168,6 +177,7 @@ export class CfChatSimElement extends HTMLElement {
     // `data-channel` is the one attribute styles.css keys those off; every STRUCTURAL rule stays
     // adapter-field-driven per this file's header.
     this.dataset.channel = channel;
+    this.dataset.chrome = chrome;
 
     this.#timeline = compile(script, { seed, channel, locale, tz, t0 });
     this.#postedAt = postedAtByMsgId(this.#timeline.frames);
@@ -228,7 +238,7 @@ export class CfChatSimElement extends HTMLElement {
       return { interval, li };
     });
 
-    this.appendChild(this.#buildComposer(channel));
+    this.appendChild(this.#buildComposer(channel, chrome));
 
     const initialStep = this.hasAttribute('data-step')
       ? Number(this.getAttribute('data-step'))
@@ -269,22 +279,45 @@ export class CfChatSimElement extends HTMLElement {
   /** Composer — always shown (visual-only for this wave; a real, operable composer with mobile
    * keyboard handling is react/'s T-007). Its absence read as "broken" rather than "conversation
    * ended" in review — this closes that gap without claiming interactivity it doesn't have.
-   * Icon order is brand identity, not adapter structure (T-013 fidelity fix, §"Composer"):
-   * Telegram puts 📎 on the LEFT with 😊 + send on the RIGHT; WhatsApp inverts that (😊 left,
-   * send right, no clip). */
-  #buildComposer(channel: ChannelId): HTMLElement {
+   *
+   * Icon order is brand identity, not adapter structure (T-013 fidelity fix, §"Composer": clip
+   * LEFT on Telegram, mirrored to the RIGHT on WhatsApp) — `ChannelAdapter` deliberately excludes
+   * it, same reasoning as wallpaper texture and date-pill treatment (file header). `chrome`
+   * (T-017 Alcance B) decides whether that per-channel mirroring happens at all: 'fidelity' keeps
+   * it (simulator/marketing — each channel looks like itself); 'consistent' always renders
+   * Telegram's arrangement, on both channels, so the app's operator never sees a control move
+   * between channels in the same session. Either way, `.cf-bubble`/`.cf-receipt`/wallpaper stay
+   * exactly what the channel and adapter say — only the composer's OWN chrome is what `chrome`
+   * touches (T-017 acceptance #3, "el gemelo").
+   */
+  #buildComposer(channel: ChannelId, chrome: Chrome): HTMLElement {
     const bar = document.createElement('div');
     bar.className = 'cf-composer';
-    bar.innerHTML =
-      channel === 'telegram'
-        ? '<span class="cf-composer-icon" aria-hidden="true">📎</span>' +
-          '<span class="cf-composer-input" aria-hidden="true">Mensaje</span>' +
-          '<span class="cf-composer-icon" aria-hidden="true">😊</span>' +
-          '<span class="cf-composer-icon cf-composer-send" aria-hidden="true">➤</span>'
-        : '<span class="cf-composer-icon" aria-hidden="true">😊</span>' +
-          '<span class="cf-composer-input" aria-hidden="true">Mensaje</span>' +
-          '<span class="cf-composer-icon cf-composer-send" aria-hidden="true">➤</span>';
+
+    const clip = this.#composerIcon('clip', clipIcon());
+    const emoji = this.#composerIcon('emoji', emojiIcon());
+    // Trailing action is always the mic, never a send arrow: `input` below is a static
+    // placeholder ("Mensaje"), never real typed text, so the idle affordance both real apps show
+    // for an empty box is the honest one here (icons.ts's micIcon doc comment).
+    const mic = this.#composerIcon('mic', micIcon(), 'cf-composer-send');
+
+    const input = document.createElement('span');
+    input.className = 'cf-composer-input';
+    input.setAttribute('aria-hidden', 'true');
+    input.textContent = 'Mensaje';
+
+    const fidelityOrder = channel === 'telegram' ? [clip, input, emoji, mic] : [emoji, input, mic, clip];
+    bar.append(...(chrome === 'consistent' ? [clip, input, emoji, mic] : fidelityOrder));
     return bar;
+  }
+
+  #composerIcon(name: 'clip' | 'emoji' | 'mic', icon: SVGSVGElement, extraClass?: string): HTMLElement {
+    const span = document.createElement('span');
+    span.className = extraClass ? `cf-composer-icon ${extraClass}` : 'cf-composer-icon';
+    span.dataset.icon = name;
+    span.setAttribute('aria-hidden', 'true');
+    span.appendChild(icon);
+    return span;
   }
 
   disconnectedCallback(): void {

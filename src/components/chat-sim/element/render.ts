@@ -16,9 +16,11 @@ import type {
   MsgId,
   MsgReaction,
   QuoteStyle,
+  ReceiptIconId,
   SenderKind,
   Tail,
 } from '../core/types';
+import { alertIcon, clockIcon, eyeIcon, tickIcon } from './icons';
 
 export interface RenderMessage {
   readonly id: MsgId;
@@ -87,38 +89,18 @@ export function computeGroupFlags(
 }
 
 /**
- * T-011 (core) replaced the flat `receiptGlyph` enum with `ReceiptModel` — glyph and color now
- * come from `adapter.receipt.states[state]`, a plain string pair, not a channel-fixed shape. The
- * hand-drawn tick SVG is worth keeping for visual fidelity (a real WhatsApp/Telegram screenshot
- * shows vector checkmarks, not a raw ✓ glyph rendered in the body font) — so this counts literal
- * '✓' characters in the STATE'S glyph string to decide how many ticks to draw, rather than
- * hardcoding a channel or an old enum value. A glyph with zero '✓' (a clock, a bang, empty) falls
- * through to plain text in `buildReceiptGlyph` below.
+ * T-016 closed the last thing here that could vary per machine: a `kind: 'ticks'` state's glyph
+ * is a `ReceiptIconId` (semantics — 'clock' | 'check' | 'double-check' | 'alert'), never a raw
+ * Unicode character, so this is a plain lookup instead of a heuristic on glyph content. `Record`
+ * makes the mapping exhaustive at the type level — adding a 5th `ReceiptIconId` without adding it
+ * here is a compile error, not a silent fallthrough.
  */
-function buildTickSvg(ticks: 1 | 2, color: string): SVGSVGElement {
-  const NS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 18 12');
-  svg.setAttribute('width', '15');
-  svg.setAttribute('height', '10');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '1.7');
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.classList.add('cf-receipt');
-  svg.style.color = color;
-
-  const p1 = document.createElementNS(NS, 'path');
-  p1.setAttribute('d', ticks === 2 ? 'M1 6.7 4.1 9.8 10.2 2.4' : 'M4.5 6.7 7.6 9.8 13.7 2.4');
-  svg.appendChild(p1);
-  if (ticks === 2) {
-    const p2 = document.createElementNS(NS, 'path');
-    p2.setAttribute('d', 'M7.6 6.7 10.7 9.8 16.8 2.4');
-    svg.appendChild(p2);
-  }
-  return svg;
-}
+const TICK_ICONS: Record<ReceiptIconId, (color: string) => SVGSVGElement> = {
+  clock: clockIcon,
+  check: (color) => tickIcon(1, color),
+  'double-check': (color) => tickIcon(2, color),
+  alert: alertIcon,
+};
 
 /**
  * Builds the receipt indicator for one message, or `null` when there's nothing to show: `kind`
@@ -134,18 +116,20 @@ function buildReceiptGlyph(
   adapter: ChannelAdapter,
   flags: GroupFlags,
 ): HTMLElement | SVGSVGElement | null {
-  const { kind, states, scope } = adapter.receipt;
-  if (kind === 'none' || kind === 'metric') return null;
-  if (scope === 'last-only' && !flags.tailHere) return null;
+  const model = adapter.receipt;
+  if (model.kind === 'none' || model.kind === 'metric') return null;
+  if (model.scope === 'last-only' && !flags.tailHere) return null;
 
-  const style = states[msg.receipt];
-  const tickCount = (style.glyph.match(/✓/gu) ?? []).length;
-  if (kind === 'ticks' && tickCount > 0) {
-    return buildTickSvg(Math.min(tickCount, 2) as 1 | 2, style.color);
+  if (model.kind === 'ticks') {
+    const style = model.states[msg.receipt];
+    return TICK_ICONS[style.glyph](style.color);
   }
 
+  // kind === 'text': real content (e.g. iMessage's "Leído 9:41"), not a per-channel icon choice —
+  // `glyph` stays a literal string here (types.ts:58-61), rendered as text on purpose.
+  const style = model.states[msg.receipt];
   const el = document.createElement('span');
-  el.className = kind === 'text' ? 'cf-receipt-label' : 'cf-receipt';
+  el.className = 'cf-receipt-label';
   el.style.color = style.color;
   el.textContent = style.glyph;
   return el;
@@ -173,7 +157,10 @@ function buildStamp(msg: RenderMessage, adapter: ChannelAdapter): HTMLElement {
   if (adapter.counter === 'views') {
     const views = document.createElement('span');
     views.className = 'cf-views';
-    views.textContent = String(msg.views);
+    // Was CSS `content: '👁 '` (styles.css) — same cross-machine font-glyph problem as the
+    // receipt icons above, fixed the same way: a drawn SVG instead of a character.
+    views.appendChild(eyeIcon());
+    views.appendChild(document.createTextNode(String(msg.views)));
     stamp.appendChild(views);
   }
 

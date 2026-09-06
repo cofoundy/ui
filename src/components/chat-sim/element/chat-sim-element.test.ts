@@ -49,6 +49,27 @@ function mountWithChannel(channel: string, step?: number): HTMLElement {
   return el;
 }
 
+/** Same as `mountWithChannel`, plus the `chrome` axis (T-017 Alcance B). */
+function mountWithChrome(channel: string, chrome: 'fidelity' | 'consistent'): HTMLElement {
+  const el = document.createElement('cf-chat-sim');
+  el.setAttribute('channel', channel);
+  el.setAttribute('chrome', chrome);
+  el.setAttribute('seed', '7');
+  el.setAttribute('t0', '1767261600000');
+  const scriptTag = document.createElement('script');
+  scriptTag.type = 'application/json';
+  scriptTag.textContent = SCRIPT;
+  el.appendChild(scriptTag);
+  document.body.appendChild(el);
+  return el;
+}
+
+function composerIconOrder(el: HTMLElement): string[] {
+  return [...el.querySelector('.cf-composer')!.children]
+    .map((c) => (c as HTMLElement).dataset.icon)
+    .filter((id): id is string => !!id);
+}
+
 describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
@@ -247,6 +268,51 @@ describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
       const receipt = msgs[3].querySelector('.cf-receipt');
       expect(receipt?.querySelectorAll('path')).toHaveLength(2);
       expect(msgs[0].querySelector('.cf-bubble > .cf-pad')).not.toBeNull();
+    });
+  });
+
+  describe('T-017 acceptance #1 — zero emoji in the rendered chrome, both channels', () => {
+    // Not the message BODY (SCRIPT's own "...4 🎉" is real chat content, not a rendering-glyph
+    // token — core/__tests__/emoji-scan.test.ts's own exclusion for exactly this case) — only
+    // the composer and the receipt/views chrome this task rewrote to SVG.
+    const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+
+    it.each(['telegram', 'whatsapp'] as const)('%s: composer and receipt glyphs are emoji-free', (channel) => {
+      const el = mountWithChannel(channel);
+      expect(EMOJI_RE.test(el.querySelector('.cf-composer')!.textContent ?? '')).toBe(false);
+      el.querySelectorAll('.cf-receipt, .cf-receipt-label, .cf-views').forEach((node) => {
+        expect(EMOJI_RE.test(node.textContent ?? '')).toBe(false);
+      });
+    });
+  });
+
+  describe('chrome axis (T-017 Alcance B — operator: "así el cliente de Fovente no se confunde con los botones que estén cambiando")', () => {
+    it('fidelity (default): the clip sits on opposite sides for Telegram vs WhatsApp', () => {
+      const tg = mountWithChannel('telegram');
+      const wa = mountWithChannel('whatsapp');
+      expect(composerIconOrder(tg)[0]).toBe('clip'); // Telegram: clip LEFT
+      expect(composerIconOrder(wa)[0]).not.toBe('clip');
+      expect(composerIconOrder(wa).at(-1)).toBe('clip'); // WhatsApp: clip RIGHT
+    });
+
+    it('consistent: same composer icon order regardless of channel — the axis this task adds', () => {
+      const tg = mountWithChrome('telegram', 'consistent');
+      const wa = mountWithChrome('whatsapp', 'consistent');
+      expect(composerIconOrder(tg)).toEqual(composerIconOrder(wa));
+    });
+
+    it('el gemelo (acceptance #3): consistent fixes the COMPOSER, not the message — bubble/ticks still differ by channel', () => {
+      const tg = mountWithChrome('telegram', 'consistent');
+      const wa = mountWithChrome('whatsapp', 'consistent');
+      // Same streak/state as the "channel attribute" describe above (msgs[3] === 'delivered').
+      const tgMsgs = [...tg.querySelectorAll('.cf-msg')];
+      const waMsgs = [...wa.querySelectorAll('.cf-msg')];
+      expect(tgMsgs[3].hasAttribute('data-tail')).toBe(false); // Telegram tails the LAST
+      expect(waMsgs[3].hasAttribute('data-tail')).toBe(true); // WhatsApp tails the FIRST
+      expect(tgMsgs[3].querySelector('.cf-receipt')?.querySelectorAll('path')).toHaveLength(1); // single-tick
+      expect(waMsgs[3].querySelector('.cf-receipt')?.querySelectorAll('path')).toHaveLength(2); // double-tick
+      // If this failed, 'consistent' would be fixing the message instead of the chrome — the bug
+      // T-017's acceptance #3 exists to catch.
     });
   });
 });

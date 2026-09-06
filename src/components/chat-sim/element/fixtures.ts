@@ -17,19 +17,21 @@ import type { ChannelAdapter, ReceiptModel } from '../core/types';
 
 /**
  * T-011 replaced the flat `receiptGlyph` enum with `ReceiptModel` — glyph varies by state here
- * (single '✓' pre-read, double '✓✓' at delivered/read), color fixed, matching this fixture's
- * original "double-tick" reading of adapter-interface-draft.md's WhatsApp column. These two
+ * (single tick pre-read, double tick at delivered/read), color fixed, matching this fixture's
+ * original "double-tick" reading of adapter-interface-draft.md's WhatsApp column. T-016 then
+ * closed `glyph: string` to `glyph: ReceiptIconId` — semantics ('clock'/'check'/'double-check'/
+ * 'alert'), never a raw Unicode character; render.ts owns which pixels each one draws. These two
  * fixtures are illustrative wave-1 values (this file's own header), not T-012's real per-channel
  * data — that's `adapters/whatsapp.ts` / `adapters/telegram.ts`'s job.
  */
 const DOUBLE_TICK_RECEIPT: ReceiptModel = {
   kind: 'ticks',
   states: {
-    queued: { glyph: '🕐', color: 'var(--cf-cs-bubble-out-meta)' },
-    sent: { glyph: '✓', color: 'var(--cf-cs-bubble-out-meta)' },
-    delivered: { glyph: '✓✓', color: 'var(--cf-cs-bubble-out-meta)' },
-    read: { glyph: '✓✓', color: '#53bdeb' },
-    failed: { glyph: '!', color: '#e34a4a' },
+    queued: { glyph: 'clock', color: 'var(--cf-cs-bubble-out-meta)' },
+    sent: { glyph: 'check', color: 'var(--cf-cs-bubble-out-meta)' },
+    delivered: { glyph: 'double-check', color: 'var(--cf-cs-bubble-out-meta)' },
+    read: { glyph: 'double-check', color: '#53bdeb' },
+    failed: { glyph: 'alert', color: '#e34a4a' },
   },
   placement: 'in-bubble',
   scope: 'every',
@@ -69,16 +71,17 @@ export const WHATSAPP_REFERENCE_ADAPTER: ChannelAdapter = {
  * measuring). Values otherwise borrowed from Telegram's column so the object stays internally
  * plausible, not just "WhatsApp with four fields negated" — but that plausibility isn't what's
  * under test, only that render.ts's DOM output changes on these four axes when it changes.
- * `receipt` flips to a constant single-tick model (glyph never reaches two '✓'s) — synthetic,
- * not Telegram's real §F-1 semantics (glyph varies to double at read: that's `adapters/telegram.ts`,
- * T-012's job), only different enough from WhatsApp's to prove the DOM changes.
+ * `receipt` flips to a constant single-tick model (glyph never reaches 'double-check') —
+ * synthetic, not Telegram's real §F-1 semantics (glyph varies to double at read: that's
+ * `adapters/telegram.ts`, T-012's job), only different enough from WhatsApp's to prove the DOM
+ * changes.
  */
 const SINGLE_TICK_RECEIPT: ReceiptModel = {
   ...DOUBLE_TICK_RECEIPT,
   states: {
     ...DOUBLE_TICK_RECEIPT.states,
-    delivered: { glyph: '✓', color: DOUBLE_TICK_RECEIPT.states.sent.color },
-    read: { glyph: '✓', color: DOUBLE_TICK_RECEIPT.states.sent.color },
+    delivered: { glyph: 'check', color: DOUBLE_TICK_RECEIPT.states.sent.color },
+    read: { glyph: 'check', color: DOUBLE_TICK_RECEIPT.states.sent.color },
   },
 };
 
