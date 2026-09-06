@@ -34,3 +34,14 @@ coverage/
 # Package manager (keep package-lock.json for reproducible builds)
 yarn.lock
 pnpm-lock.yaml
+
+# design-sync (transient; durable state under .design-sync/ IS committed)
+.design-sync/sb-reference/
+.design-sync/learnings/
+.design-sync/.cache/
+.design-sync/node_modules
+.design-sync/*.log
+.design-sync/upload-manifest.txt
+.design-sync/batch*.json
+.ds-sync/
+ds-bundle/

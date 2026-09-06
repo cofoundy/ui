@@ -1,0 +1,62 @@
+{
+  "projectId": "911e9a75-18a2-433b-b63a-4a739f1c2ef4",
+  "shape": "storybook",
+  "pkg": "@cofoundy/ui",
+  "globalName": "CofoundyUI",
+  "storybookConfigDir": ".storybook",
+  "storybookStatic": ".design-sync/sb-reference",
+  "buildCmd": "npx vite build --config vite.config.lib.ts && npx tsc -p tsconfig.build.json",
+  "entry": "./dist/index.mjs",
+  "cssEntry": ".design-sync/support/compiled.css",
+  "extraEntries": [
+    "./.design-sync/support/preview-theme.tsx"
+  ],
+  "provider": {
+    "component": "DsPreviewTheme",
+    "props": {
+      "theme": "dark"
+    }
+  },
+  "titleMap": {
+    "ChatWidget(Full)": "ChatWidget",
+    "CotizaciónFollowup": "CotizacionFollowup",
+    "Launcher": "FloatingLauncher",
+    "Sonner": "Toaster",
+    "ChatHeader": null,
+    "ChatInput": null,
+    "ConfirmationCard": null,
+    "Message": null,
+    "MessageList": null,
+    "QuickActions": null,
+    "TimeSlotGrid": null,
+    "ToolIndicator": null,
+    "TypingIndicator": null,
+    "Dashboard": null,
+    "Primitives": null,
+    "Animation": null,
+    "Colors": null,
+    "Spacing": null,
+    "Tokens": null,
+    "Typography": null
+  },
+  "overrides": {
+    "BarChart": {
+      "cardMode": "column"
+    },
+    "DonutChart": {
+      "cardMode": "column"
+    },
+    "Heatmap": {
+      "cardMode": "column"
+    }
+  },
+  "storyImports": {
+    "shim": [
+      "/src/components/ui/",
+      "/src/components/messaging/",
+      "/src/components/navigation/",
+      "/src/components/chat-widget/",
+      "/src/components/effects/"
+    ]
+  }
+}
