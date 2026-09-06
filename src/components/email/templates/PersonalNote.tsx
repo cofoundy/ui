@@ -10,8 +10,8 @@ import {
   Font,
   Preview,
   Button,
+  Markdown,
 } from '@react-email/components';
-import { Markdown } from '@react-email/markdown';
 import { colors, fontFamily, cofoundyInfo } from '../constants';
 import { TestBanner } from '../components/TestBanner';
 
