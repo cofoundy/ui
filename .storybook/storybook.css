@@ -25,9 +25,12 @@
   --color-secondary: #0D3A59;
   --color-dark: #020916;
 
-  /* Background/Foreground */
-  --color-background: #ffffff;
-  --color-foreground: #171717;
+  /* Background/Foreground — must track the DS dark tokens in
+     src/styles/index.css. Tailwind v4 derives `bg-background` /
+     `text-foreground` from these, so light values here render
+     near-black text on the dark canvas. */
+  --color-background: #020b1b;
+  --color-foreground: #ffffff;
 
   /* Custom border radius */
   --radius-lg: 24px;
