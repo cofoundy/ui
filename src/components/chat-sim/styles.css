@@ -186,6 +186,17 @@
 .cf-chat-sim[data-channel='whatsapp'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {
   background: #005c4b; /* WhatsApp's real dark-mode outgoing green — keeps the default shadow */
 }
+/* WhatsApp dark-mode wallpaper (T-020 regression fix): the shared `[data-wallpaper='pattern']`
+   rule above draws the doodle with a fixed BLACK stroke — tenue on the light surface, but
+   black-on-near-black once `--cf-cs-surface` flips dark (T-013), i.e. invisible. Unlike
+   Telegram (which drops its pattern entirely in dark mode, see above — that's correct, not a
+   gap), WhatsApp's real dark wallpaper keeps the texture, just re-inked light-on-dark. Same
+   silhouette as the light-mode SVG, opacity raised slightly (0.045 -> 0.06) since a light
+   stroke reads fainter against a dark ground at equal opacity. */
+.cf-chat-sim[data-channel='whatsapp'][data-theme='dark'] .cf-log {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.06' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M12 8c4 0 6 3 6 7s-3 6-6 6'/%3E%3Ccircle cx='58' cy='14' r='3'/%3E%3Cpath d='M44 46c3-3 8-3 10 0s0 7-3 9-8 1-9-2 0-5 2-7z'/%3E%3Cpath d='M76 62c3 1 5 4 4 7s-4 4-7 3'/%3E%3Ccircle cx='16' cy='70' r='2.4'/%3E%3Cpath d='M30 20l4 4m-4 0l4-4'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 90px 90px;
+}
 
 /* ── header (ChatDemo.astro precedent: .chat-head) ─────────────────────── */
 
