@@ -29,13 +29,13 @@ export const telegram: ChannelAdapter = {
   receipt: {
     kind: 'ticks',
     states: {
-      queued: { glyph: '🕐', color: 'var(--cf-cs-bubble-out-meta)' },
-      sent: { glyph: '✓', color: 'var(--cf-cs-bubble-out-meta)' },
-      delivered: { glyph: '✓', color: 'var(--cf-cs-bubble-out-meta)' }, // unreachable, mirrors sent
-      read: { glyph: '✓✓', color: 'var(--cf-cs-bubble-out-meta)' }, // glyph flips, color doesn't
+      queued: { glyph: 'clock', color: 'var(--cf-cs-bubble-out-meta)' },
+      sent: { glyph: 'check', color: 'var(--cf-cs-bubble-out-meta)' },
+      delivered: { glyph: 'check', color: 'var(--cf-cs-bubble-out-meta)' }, // unreachable, mirrors sent
+      read: { glyph: 'double-check', color: 'var(--cf-cs-bubble-out-meta)' }, // glyph flips, color doesn't
       // Not in telegram-fidelity-fix.md (out of scope for the F-2 fix) — standard failed-send
       // red, unconfirmed byte-exact against a real Telegram capture.
-      failed: { glyph: '!', color: '#e53935' },
+      failed: { glyph: 'alert', color: '#e53935' },
     },
     placement: 'in-bubble',
     scope: 'every',
