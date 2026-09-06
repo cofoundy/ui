@@ -7,6 +7,37 @@ repo: packages/ui
 branch: cto/chat-sim-rewrite
 worker: cto-d606f0
 
+# ── REENCUADRE DE PRIORIDAD — operador, 2026-09-06, confirmado ────────────────
+# Textual: "el engine q estamos construyendo quiero q sea mas q todo para q
+# funcionalmente el backend ya pueda mostrar el status correspondiente de acuerdo al chat"
+#
+# Invierte lo que el ciclo venia asumiendo. El CTO trataba el simulador y la captura
+# como el producto, y el skin de la app como consecuencia. Es al reves:
+#
+#   NUCLEO      la app renderiza el estado correcto POR CANAL, alimentada por el backend
+#   SUBPRODUCTO el simulador y las fotos de marketing
+#
+# Consecuencias sobre el alcance restante:
+#   - El modelo de recibos (T-011/012/015) NO era un arreglo de fidelidad: era el nucleo.
+#     Que WhatsApp cambie color y Telegram cambie glifo ES "el backend manda el estado y
+#     la UI lo muestra bien por canal".
+#   - mode="live" sube de prioridad sobre el simulador.
+#   - El baseline externo (T-014) baja: importa menos que Telegram se vea perfecto, y mas
+#     que `delivered` sea inexpresable donde no existe.
+#
+# ── SEGUNDO EJE QUE FALTABA: fidelidad vs consistencia ────────────────────────
+# El operador lo nombro: "tal vez si seria bueno q este en la izq xq asi el cliente de
+# fovente no se confunde con los botones q esten cambiando".
+#
+#   chrome: 'fidelity'    cada canal se ve como si mismo — el clip se mueve de lado.
+#                         Para simulador y captura de marketing.
+#   chrome: 'consistent'  cromo Cofoundy fijo; SOLO el mensaje cambia por canal.
+#                         Para la app: un operador trabaja los dos canales en la misma
+#                         sesion, y mover los botones es un bug de UX, no fidelidad.
+#
+# La arquitectura asumia que fidelidad era siempre el objetivo. Cierto para marketing,
+# FALSO para la app.
+
 goal: >
   Reescritura desde cero de un simulador de chat multi-canal en @cofoundy/ui, con arquitectura de
   channel-adapter, capa de captura determinista para marketing, y un skin reusable por la app de
