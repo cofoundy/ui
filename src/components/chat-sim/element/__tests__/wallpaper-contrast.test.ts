@@ -124,15 +124,72 @@ describe('WhatsApp wallpaper contrast (T-020 acceptance #1)', () => {
   });
 });
 
-describe('Telegram dark mode stays pattern-less (T-020 acceptance #2)', () => {
-  it('does NOT draw a wallpaper doodle in dark mode — this is correct fidelity to real Telegram, not a gap', () => {
-    const block = extractRuleBlock(css, TELEGRAM_DARK_RULE);
-    expect(block).toMatch(/background-image:\s*none/);
-    expect(block).not.toMatch(/background-image:\s*url\(/);
+// T-021 acceptance #1: this describe block used to assert the OPPOSITE — that Telegram-dark had
+// `background-image: none` and was "correct fidelity to real Telegram, not a gap". That assertion
+// came from telegram-fidelity-fix.md's own "~2% de contraste, casi imperceptible" number, which
+// that SAME research flagged as NOT verified ("el default vivo del servidor puede ser un gradiente
+// animado ... no lo pude verificar sin sesión"). The CTO shipped the unverified value anyway. The
+// operator's real Telegram screenshot shows a clearly visible wallpaper in both themes, contradicting
+// the spec — field truth wins over an admittedly-unverified number. So this block is inverted: it
+// now asserts Telegram's wallpaper IS visible (same instrument as the WhatsApp block above), and the
+// old "no image in dark mode" assertion is gone for good, not just weakened.
+const TELEGRAM_LIGHT_RULE = "[data-channel='telegram'] .cf-log {";
+
+function extractBackgroundColor(cssChunk: string): RGB {
+  return extractCustomProperty(cssChunk, 'background-color');
+}
+
+describe('Telegram wallpaper contrast (T-021 acceptance #1 — reverses T-020’s Telegram-dark call)', () => {
+  it('the doodle stroke is visibly distinct from the log background in LIGHT mode', () => {
+    const block = extractRuleBlock(css, TELEGRAM_LIGHT_RULE);
+    const surface = extractBackgroundColor(block);
+    const { color, opacity } = extractStroke(block);
+    const composited = compositeOver(color, opacity, surface);
+    expect(contrastRatio(composited, surface)).toBeGreaterThanOrEqual(VISIBLE_THRESHOLD);
   });
 
-  it('gemelo: a fixture that "fixes" Telegram-dark by adding a pattern IS caught by the same assertion shape', () => {
-    const patched = `${TELEGRAM_DARK_RULE}\n  background-color: #0e1621;\n  background-image: url("data:image/svg+xml,...");\n}`;
-    expect(patched).not.toMatch(/background-image:\s*none/);
+  it('the doodle stroke is visibly distinct from the log background in DARK mode', () => {
+    const block = extractRuleBlock(css, TELEGRAM_DARK_RULE);
+    const surface = extractBackgroundColor(block);
+    const { color, opacity } = extractStroke(block);
+    const composited = compositeOver(color, opacity, surface);
+    expect(contrastRatio(composited, surface)).toBeGreaterThanOrEqual(VISIBLE_THRESHOLD);
+  });
+
+  it('gemelo: reverting either theme back to the shipped 3% opacity DOES fail the check', () => {
+    const lightBlock = extractRuleBlock(css, TELEGRAM_LIGHT_RULE);
+    const lightSurface = extractBackgroundColor(lightBlock);
+    const { color: lightColor } = extractStroke(lightBlock);
+    const regressedLight = compositeOver(lightColor, 0.03, lightSurface);
+    expect(contrastRatio(regressedLight, lightSurface)).toBeLessThan(VISIBLE_THRESHOLD);
+
+    const darkBlock = extractRuleBlock(css, TELEGRAM_DARK_RULE);
+    const darkSurface = extractBackgroundColor(darkBlock);
+    const { color: darkColor } = extractStroke(darkBlock);
+    const regressedDark = compositeOver(darkColor, 0.03, darkSurface);
+    expect(contrastRatio(regressedDark, darkSurface)).toBeLessThan(VISIBLE_THRESHOLD);
+  });
+
+  it('gemelo: a fixture that reverts to `background-image: none` in dark mode is caught — that used to be the accepted state', () => {
+    const patched = `${TELEGRAM_DARK_RULE}\n  background-color: #0e1621;\n  background-image: none;\n}`;
+    expect(patched).not.toMatch(/background-image:\s*url\(/);
+  });
+});
+
+describe('Telegram vs WhatsApp doodle silhouettes stay distinct (T-021 acceptance #3)', () => {
+  it('the two light-mode background-image data URIs differ', () => {
+    const whatsappImage = extractRuleBlock(css, GENERIC_PATTERN_RULE).match(/background-image:\s*url\([^)]*\)/)?.[0];
+    const telegramImage = extractRuleBlock(css, TELEGRAM_LIGHT_RULE).match(/background-image:\s*url\([^)]*\)/)?.[0];
+    expect(whatsappImage).toBeTruthy();
+    expect(telegramImage).toBeTruthy();
+    expect(telegramImage).not.toBe(whatsappImage);
+  });
+
+  it('the two dark-mode background-image data URIs differ', () => {
+    const whatsappDarkImage = extractRuleBlock(css, WHATSAPP_DARK_RULE).match(/background-image:\s*url\([^)]*\)/)?.[0];
+    const telegramDarkImage = extractRuleBlock(css, TELEGRAM_DARK_RULE).match(/background-image:\s*url\([^)]*\)/)?.[0];
+    expect(whatsappDarkImage).toBeTruthy();
+    expect(telegramDarkImage).toBeTruthy();
+    expect(telegramDarkImage).not.toBe(whatsappDarkImage);
   });
 });
