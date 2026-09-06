@@ -247,3 +247,17 @@ archivo del resultado tenga dueño asignado en el graph. Es un comando, no una v
 Nota: en ambos casos lo encontró `core` corriendo un typecheck de **proyecto** que su propia
 acceptance no pedía. La lane hizo más de lo que le pedí, dos veces, y las dos veces eso tapó un
 hueco mío.
+
+### Cuarta vez, y con la regla ya escrita
+
+E-004: `react/MessageThread.tsx` y `react/DemoComposer.tsx` huerfanos ante el cambio de
+`glyph` a `ReceiptIconId`.
+
+**Un turno antes** de escribir T-017 y T-018 registre la regla que lo evitaba: correr
+`grep -rl "<simbolo>" src/` antes de repartir tareas. No la corri. La corri despues, tarde:
+tardo 30 segundos y nombro los dos archivos exactos.
+
+**Tener la regla escrita y no aplicarla es peor que no tenerla**, porque el registro da la
+impresion de que el problema esta resuelto. Una regla que depende de que yo me acuerde de
+ejecutarla no es una regla: es una intencion. Lo que la haria real es un gate — que el graph no se
+pueda cerrar sin el output del grep pegado adentro.
