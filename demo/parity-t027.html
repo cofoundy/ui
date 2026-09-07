@@ -62,7 +62,7 @@
     </style>
   </head>
   <body>
-    <h1>T-027 — scroll(scrollId) + loop + service + card + chrome="branded"</h1>
+    <h1>T-027 — scroll(scrollId) + loop + service + card + chrome="branded" + reply-in + link</h1>
     <div class="row">
       <figure>
         <figcaption>WhatsApp · chrome="branded" (Fovente red) · loop</figcaption>
@@ -78,6 +78,7 @@
           tz="America/Lima"
           contact-name="Fovente — Reservas"
           contact-status="en línea"
+          reply-label="Respondió en 4 s"
           style="--cf-cs-consumer-out: #c0392b; --cf-cs-consumer-out-meta: #7a2a20; --cf-cs-consumer-accent: #c0392b"
         >
           <script type="application/json">
@@ -85,9 +86,10 @@
               { "k": "post", "by": "system", "text": "Los mensajes están cifrados de extremo a extremo", "media": { "kind": "service", "variant": "neutral" }, "delayMs": 200 },
               { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 600 },
               { "k": "draft", "by": "out:ai", "chars": 18, "delayMs": 450 },
-              { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad", "delayMs": 850 },
+              { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad", "media": { "replyFast": true }, "delayMs": 850 },
               { "k": "post", "by": "system", "text": "Resumen de la reserva", "media": { "kind": "card", "bullets": ["Sábado 8:00pm", "4 personas", "Mesa junto a la ventana"], "action": "Confirmar reserva" }, "delayMs": 700 },
               { "k": "post", "by": "in", "text": "Perfecto, confirmo", "delayMs": 1400 },
+              { "k": "post", "by": "out:ai", "text": "Paga aquí: pagos.fovente.pe/r/8x2", "media": { "link": true }, "delayMs": 700 },
               { "k": "post", "by": "system", "text": "FOVENTE SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 },
               { "k": "post", "by": "system", "text": "RESERVA CONFIRMADA", "media": { "kind": "service", "variant": "success" }, "delayMs": 900 }
             ]
@@ -100,6 +102,7 @@
           id="fidelity"
           channel="telegram"
           chrome="fidelity"
+          reply-label="Respondió en 4 s"
           seed="7"
           t0="1789761600000"
           locale="es-PE"
@@ -112,9 +115,10 @@
               { "k": "post", "by": "system", "text": "Los mensajes están cifrados de extremo a extremo", "media": { "kind": "service", "variant": "neutral" }, "delayMs": 200 },
               { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 600 },
               { "k": "draft", "by": "out:ai", "chars": 18, "delayMs": 450 },
-              { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad", "delayMs": 850 },
+              { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad", "media": { "replyFast": true }, "delayMs": 850 },
               { "k": "post", "by": "system", "text": "Resumen de la reserva", "media": { "kind": "card", "bullets": ["Sábado 8:00pm", "4 personas", "Mesa junto a la ventana"], "action": "Confirmar reserva" }, "delayMs": 700 },
               { "k": "post", "by": "in", "text": "Perfecto, confirmo", "delayMs": 1400 },
+              { "k": "post", "by": "out:ai", "text": "Paga aquí: pagos.fovente.pe/r/8x2", "media": { "link": true }, "delayMs": 700 },
               { "k": "post", "by": "system", "text": "FOVENTE SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 },
               { "k": "post", "by": "system", "text": "RESERVA CONFIRMADA", "media": { "kind": "service", "variant": "success" }, "delayMs": 900 }
             ]

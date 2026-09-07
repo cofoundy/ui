@@ -365,4 +365,43 @@ describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
       expect(el.querySelectorAll('.cf-msg')).toHaveLength(POST_COUNT);
     });
   });
+
+  describe('reply-label attribute (T-027, found beyond A-E) — same split as edited-label: WHICH message via media.replyFast, TEXT via the attribute', () => {
+    const REPLY_SCRIPT = JSON.stringify([
+      { k: 'post', by: 'in', text: 'Hola', delayMs: 0 },
+      { k: 'post', by: 'out:ai', text: 'Ya llegó', media: { replyFast: true }, delayMs: 0 },
+    ]);
+
+    function mountReply(attrs: Record<string, string> = {}): HTMLElement {
+      const el = document.createElement('cf-chat-sim');
+      el.setAttribute('channel', 'whatsapp');
+      el.setAttribute('seed', '7');
+      el.setAttribute('t0', '1767261600000');
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+      const scriptTag = document.createElement('script');
+      scriptTag.type = 'application/json';
+      scriptTag.textContent = REPLY_SCRIPT;
+      el.appendChild(scriptTag);
+      document.body.appendChild(el);
+      return el;
+    }
+
+    it('uses the reply-label attribute verbatim when set', () => {
+      const el = mountReply({ 'reply-label': 'Respondió en 4 s' });
+      expect(el.querySelector('.cf-reply-in')?.textContent).toBe('Respondió en 4 s');
+    });
+
+    it('falls back to a default label when the attribute is absent — never blank, same convention as edited-label/"Editado"', () => {
+      const el = mountReply();
+      expect(el.querySelector('.cf-reply-in')?.textContent).not.toBe('');
+      expect(el.querySelector('.cf-reply-in')).not.toBeNull();
+    });
+
+    it('only the message flagged media.replyFast gets the label — the plain "Hola" message does not', () => {
+      const el = mountReply({ 'reply-label': 'Respondió en 4 s' });
+      const msgs = [...el.querySelectorAll('.cf-msg')];
+      expect(msgs[0].querySelector('.cf-reply-in')).toBeNull(); // "Hola" — no media
+      expect(msgs[1].querySelector('.cf-reply-in')?.textContent).toBe('Respondió en 4 s');
+    });
+  });
 });

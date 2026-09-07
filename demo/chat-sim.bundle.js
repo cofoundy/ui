@@ -661,6 +661,12 @@ var CfChatSim = (() => {
     const action = typeof media.action === "string" ? media.action : void 0;
     return { kind: "card", bullets, action };
   }
+  function asReplyFast(media) {
+    return isJsonRecord(media) && media.replyFast === true;
+  }
+  function asLinkBubble(media) {
+    return isJsonRecord(media) && media.link === true;
+  }
   function populateServiceElement(li, msg, service) {
     li.className = "cf-msg cf-msg-service";
     delete li.dataset.dir;
@@ -759,6 +765,12 @@ var CfChatSim = (() => {
   function buildStamp(msg, adapter) {
     const stamp = document.createElement("span");
     stamp.className = "cf-stamp";
+    if (msg.replyLabel) {
+      const reply = document.createElement("em");
+      reply.className = "cf-reply-in";
+      reply.textContent = msg.replyLabel;
+      stamp.appendChild(reply);
+    }
     if (msg.editedLabel) {
       const edited = document.createElement("em");
       edited.className = "cf-edited";
@@ -825,7 +837,7 @@ var CfChatSim = (() => {
     if (flags.grouped) li.dataset.grouped = "";
     else delete li.dataset.grouped;
     const bubble = document.createElement("span");
-    bubble.className = "cf-bubble";
+    bubble.className = asLinkBubble(msg.media) ? "cf-bubble cf-bubble-link" : "cf-bubble";
     if (msg.quote) bubble.appendChild(buildQuote(msg.quote, adapter.quote));
     const text = document.createElement("span");
     text.className = "cf-text";
@@ -893,7 +905,7 @@ var CfChatSim = (() => {
       new Date(t0Epoch + tick)
     );
   }
-  function toRenderMessage(msg, atLabel, editedLabel) {
+  function toRenderMessage(msg, atLabel, editedLabel, replyLabel) {
     return {
       id: msg.id,
       by: msg.by,
@@ -903,6 +915,9 @@ var CfChatSim = (() => {
       views: msg.views,
       reactions: msg.reactions,
       editedLabel: msg.v > 0 ? editedLabel : void 0,
+      // T-027: WHETHER is per-message (`media.replyFast`, script-authored), the TEXT is the
+      // caller's `reply-label` attribute (#reconcile) — same split as editedLabel/edited-label.
+      replyLabel: asReplyFast(msg.media) ? replyLabel : void 0,
       media: msg.media
     };
   }
@@ -1190,9 +1205,10 @@ var CfChatSim = (() => {
     const locale = this.getAttribute("locale") || "es-PE";
     const tz = this.getAttribute("tz") || "America/Lima";
     const editedLabel = this.getAttribute("edited-label") || "Editado";
+    const replyLabel = this.getAttribute("reply-label") || "Respondi\xF3 r\xE1pido";
     const visible = state.order.map((id) => state.msgs.get(id)).filter((m) => !!m && m.deleted === null).map((m) => {
       const tick = __privateGet(this, _postedAt).get(m.id) ?? 0;
-      return toRenderMessage(m, formatTime(t0, tick, locale, tz), editedLabel);
+      return toRenderMessage(m, formatTime(t0, tick, locale, tz), editedLabel, replyLabel);
     });
     const flags = computeGroupFlags(visible, __privateGet(this, _adapter).tail);
     const visibleIds = new Set(visible.map((m) => m.id));

@@ -34,7 +34,7 @@ import type {
   SimState,
   Timeline,
 } from '../core/types';
-import { actorDir, computeGroupFlags, populateMessageElement } from './render';
+import { actorDir, asReplyFast, computeGroupFlags, populateMessageElement } from './render';
 import type { RenderMessage } from './render';
 import { clipIcon, emojiIcon, micIcon } from './icons';
 
@@ -93,6 +93,7 @@ function toRenderMessage(
   msg: MsgState,
   atLabel: string,
   editedLabel: string | undefined,
+  replyLabel: string | undefined,
 ): RenderMessage {
   return {
     id: msg.id,
@@ -103,6 +104,9 @@ function toRenderMessage(
     views: msg.views,
     reactions: msg.reactions,
     editedLabel: msg.v > 0 ? editedLabel : undefined,
+    // T-027: WHETHER is per-message (`media.replyFast`, script-authored), the TEXT is the
+    // caller's `reply-label` attribute (#reconcile) — same split as editedLabel/edited-label.
+    replyLabel: asReplyFast(msg.media) ? replyLabel : undefined,
     media: msg.media,
   };
 }
@@ -468,13 +472,14 @@ export class CfChatSimElement extends HTMLElement {
     const locale = this.getAttribute('locale') || 'es-PE';
     const tz = this.getAttribute('tz') || 'America/Lima';
     const editedLabel = this.getAttribute('edited-label') || 'Editado';
+    const replyLabel = this.getAttribute('reply-label') || 'Respondió rápido';
 
     const visible: RenderMessage[] = state.order
       .map((id) => state.msgs.get(id))
       .filter((m): m is MsgState => !!m && m.deleted === null)
       .map((m) => {
         const tick = this.#postedAt.get(m.id) ?? 0;
-        return toRenderMessage(m, formatTime(t0, tick, locale, tz), editedLabel);
+        return toRenderMessage(m, formatTime(t0, tick, locale, tz), editedLabel, replyLabel);
       });
 
     const flags = computeGroupFlags(visible, this.#adapter.tail);

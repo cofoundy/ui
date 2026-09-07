@@ -33,6 +33,12 @@ export interface RenderMessage {
   readonly views: number;
   readonly reactions: readonly MsgReaction[];
   readonly editedLabel?: string; // e.g. "Editado" — set when v > 0; label text is caller's call (i18n)
+  /** T-027 (found beyond A-E, team-lead: "estaba en mi lista original y lo perdí") — ChatDemo.astro's
+   * `reply-in` ("respondió en 4 s"), same slot/pattern as `editedLabel` right above: WHETHER a
+   * message shows it is authored per-message (`media.replyFast`, see `asReplyFast` below), the
+   * TEXT is caller's call via the `reply-label` attribute (chat-sim-element.ts) — never a literal
+   * baked into this file, same discipline `editedLabel`/`edited-label` already established. */
+  readonly replyLabel?: string;
   readonly quote?: { readonly author: string; readonly text: string };
   /** T-027 A/C/D: verbatim passthrough of `MsgState.media` (core/types.ts's `Json`, already
    * carried by `post`/fold — zero core changes needed). `Json` stays opaque to core by design;
@@ -83,6 +89,23 @@ export function asCardMedia(media: Json | undefined): CardMedia | null {
     : [];
   const action = typeof media.action === 'string' ? media.action : undefined;
   return { kind: 'card', bullets, action };
+}
+
+// ---------------------------------------------------------------------------
+// reply-in / link (T-027, found beyond A-E) — ADDITIVE flags on an ORDINARY directional bubble,
+// unlike `kind: 'service' | 'card'` above (which replace the bubble entirely). A message can
+// carry either, both, or neither alongside a normal `media` — so these check specific keys
+// directly instead of a single discriminant `kind`, and `asServiceMedia`/`asCardMedia` staying
+// `kind`-gated means a `{ replyFast: true }` (no `kind`) message correctly falls through to the
+// normal bubble path in `populateMessageElement`.
+// ---------------------------------------------------------------------------
+
+export function asReplyFast(media: Json | undefined): boolean {
+  return isJsonRecord(media) && media.replyFast === true;
+}
+
+export function asLinkBubble(media: Json | undefined): boolean {
+  return isJsonRecord(media) && media.link === true;
 }
 
 /** Centered pill, `data-variant`-styled (styles.css) — the SAME primitive `.cf-date-pill`
@@ -248,6 +271,15 @@ function buildStamp(msg: RenderMessage, adapter: ChannelAdapter): HTMLElement {
   const stamp = document.createElement('span');
   stamp.className = 'cf-stamp';
 
+  // T-027: same slot/pattern as `editedLabel` right below — WHETHER via `media.replyFast`
+  // (per-message, authored), the TEXT via `msg.replyLabel` (caller's `reply-label` attribute).
+  if (msg.replyLabel) {
+    const reply = document.createElement('em');
+    reply.className = 'cf-reply-in';
+    reply.textContent = msg.replyLabel;
+    stamp.appendChild(reply);
+  }
+
   if (msg.editedLabel) {
     const edited = document.createElement('em');
     edited.className = 'cf-edited';
@@ -336,7 +368,10 @@ export function populateMessageElement(
   else delete li.dataset.grouped;
 
   const bubble = document.createElement('span');
-  bubble.className = 'cf-bubble';
+  // T-027: `media.link` (script-authored, `asLinkBubble`) — ChatDemo.astro's `.bubble.link`
+  // (a payment link rendered mono/underlined/accent-colored) — the TEXT is still `msg.text`,
+  // this only flags presentation, same additive-flag reasoning as `replyLabel` above.
+  bubble.className = asLinkBubble(msg.media) ? 'cf-bubble cf-bubble-link' : 'cf-bubble';
 
   if (msg.quote) bubble.appendChild(buildQuote(msg.quote, adapter.quote));
 

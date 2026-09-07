@@ -501,6 +501,17 @@
   display: inline;
 }
 
+/* T-027 (found beyond A-E) — ChatDemo.astro's `.bubble.link` (a payment link): mono, underlined,
+   accent-colored — `media.link` (asLinkBubble, render.ts) flags PRESENTATION only; the text
+   itself is still authored `msg.text` (a URL, a "Pagar aquí" label), never generated here. */
+.cf-bubble-link .cf-text {
+  font-family: var(--cf-cs-mono);
+  font-size: 0.75rem;
+  color: var(--cf-cs-accent-text, var(--cf-cs-accent));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* ── quote (adapter.quote: color-bar | thin-bar | stacked-bubble) ─────── */
 
 .cf-quote {
@@ -590,6 +601,20 @@
   letter-spacing: 0.04em;
   font-size: 0.5625rem;
   opacity: 0.85;
+}
+
+/* T-027 (found beyond A-E) — ChatDemo.astro's `reply-in` ("respondió en 4 s"): "mismo sitio que
+   el «Editado» de WhatsApp, en su mismo tono" (production's own comment) — same properties as
+   `.cf-edited` above, `mono` instead of the base sans (it reads as a system-generated label, not
+   authored text) and a small trailing margin since it sits BEFORE the time, not after. */
+.cf-reply-in {
+  font-family: var(--cf-cs-mono);
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.5625rem;
+  opacity: 0.9;
+  margin-right: 0.1rem;
 }
 
 /* Color is set inline by element/render.ts, straight from ReceiptModel.states[state].color
