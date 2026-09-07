@@ -905,7 +905,7 @@ var CfChatSim = (() => {
       media: msg.media
     };
   }
-  var _slides, _activeIndex, _frame, _tagEl, _tagIconEl, _tagLabelEl, _badgeFlagKey, _badgeOnLabel, _badgeOffLabel, _badgeEl, _playhead, _fromPlayhead, _scrollRaf, _scrollCatchup, _loop, _loopPauseMs, _loopTimer, _adapter, _CfChatSimElement_instances, active_get, buildHead_fn, buildTag_fn, applyTagForActiveSlide_fn, activateSlide_fn, buildComposer_fn, composerIcon_fn, onPlaybackComplete_fn, clearLoopTimer_fn, readScripts_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn, applyScroll_fn, cancelScrollAnimation_fn;
+  var _slides, _activeIndex, _frame, _tagEl, _tagIconEl, _tagLabelEl, _avatarEl, _nameEl, _statusEl, _badgeFlagKey, _badgeOnLabel, _badgeOffLabel, _badgeEl, _playhead, _fromPlayhead, _scrollRaf, _scrollCatchup, _loop, _loopPauseMs, _loopTimer, _adapter, _CfChatSimElement_instances, active_get, buildHead_fn, buildTag_fn, applyTagForActiveSlide_fn, applyContactForActiveSlide_fn, activateSlide_fn, buildComposer_fn, composerIcon_fn, onPlaybackComplete_fn, clearLoopTimer_fn, readScripts_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn, applyScroll_fn, cancelScrollAnimation_fn;
   var CfChatSimElement = class extends HTMLElement {
     constructor() {
       super(...arguments);
@@ -924,6 +924,12 @@ var CfChatSim = (() => {
       __privateAdd(this, _tagEl, null);
       __privateAdd(this, _tagIconEl, null);
       __privateAdd(this, _tagLabelEl, null);
+      /** Head refs, same reason as the tag refs above: the header is built ONCE, and rotation
+       * repaints its text instead of rebuilding it. Kept so `#applyContactForActiveSlide` can write
+       * into them without re-querying the DOM on every slide change. */
+      __privateAdd(this, _avatarEl, null);
+      __privateAdd(this, _nameEl, null);
+      __privateAdd(this, _statusEl, null);
       /** T-031 C — badge is a SLOT, not logic: `null` key means "consumer didn't ask for one", and
        * nothing renders. `#badgeFlagKey` names which `SimState.flags` key (core's existing `flag`
        * event, architecture-v1.md — T-001 already ships it) drives it; `#badgeEl` is only ever created
@@ -1003,7 +1009,9 @@ var CfChatSim = (() => {
       __privateSet(this, _frame, document.createElement("div"));
       __privateGet(this, _frame).className = "cf-frame";
       this.appendChild(__privateGet(this, _frame));
-      __privateGet(this, _frame).appendChild(__privateMethod(this, _CfChatSimElement_instances, buildHead_fn).call(this));
+      __privateGet(this, _frame).appendChild(
+        __privateMethod(this, _CfChatSimElement_instances, buildHead_fn).call(this, scripts.some(({ scriptEl }) => scriptEl?.hasAttribute("data-contact-status")))
+      );
       __privateSet(this, _slides, scripts.map(({ script, scriptEl }) => {
         const timeline = compile(script, { seed, channel, locale, tz, t0 });
         const postedAt = postedAtByMsgId(timeline.frames);
@@ -1050,6 +1058,7 @@ var CfChatSim = (() => {
       __privateSet(this, _activeIndex, 0);
       __privateGet(this, _slides)[0].log.hidden = false;
       __privateMethod(this, _CfChatSimElement_instances, applyTagForActiveSlide_fn).call(this);
+      __privateMethod(this, _CfChatSimElement_instances, applyContactForActiveSlide_fn).call(this);
       __privateGet(this, _frame).appendChild(__privateMethod(this, _CfChatSimElement_instances, buildComposer_fn).call(this, channel, chrome));
       const initialStep = this.hasAttribute("data-step") ? Number(this.getAttribute("data-step")) : __privateGet(this, _slides)[0].timeline.frames.length;
       this.dataset.step = String(initialStep);
@@ -1104,6 +1113,9 @@ var CfChatSim = (() => {
   _tagEl = new WeakMap();
   _tagIconEl = new WeakMap();
   _tagLabelEl = new WeakMap();
+  _avatarEl = new WeakMap();
+  _nameEl = new WeakMap();
+  _statusEl = new WeakMap();
   _badgeFlagKey = new WeakMap();
   _badgeOnLabel = new WeakMap();
   _badgeOffLabel = new WeakMap();
@@ -1123,7 +1135,7 @@ var CfChatSim = (() => {
   /** Header — ChatDemo.astro precedent (`.chat-head`: avatar + name + meta). Visual-only, driven
    * by attributes so any consumer can set it; falls back to a channel-neutral default rather than
    * hardcoding a business name into a shared component. */
-  buildHead_fn = function() {
+  buildHead_fn = function(anySlideStatus) {
     const name = this.getAttribute("contact-name") || "Chat";
     const status = this.getAttribute("contact-status") || "";
     const head = document.createElement("header");
@@ -1132,15 +1144,19 @@ var CfChatSim = (() => {
     avatar.className = "cf-avatar";
     avatar.textContent = name.charAt(0).toUpperCase();
     head.appendChild(avatar);
+    __privateSet(this, _avatarEl, avatar);
     const who = document.createElement("span");
     who.className = "cf-who";
     const nameEl = document.createElement("b");
     nameEl.textContent = name;
     who.appendChild(nameEl);
-    if (status) {
+    __privateSet(this, _nameEl, nameEl);
+    if (status || anySlideStatus) {
       const statusEl = document.createElement("em");
       statusEl.textContent = status;
+      statusEl.hidden = !status;
       who.appendChild(statusEl);
+      __privateSet(this, _statusEl, statusEl);
     }
     head.appendChild(who);
     if (__privateGet(this, _badgeFlagKey)) {
@@ -1189,6 +1205,30 @@ var CfChatSim = (() => {
     __privateGet(this, _tagIconEl).textContent = icon;
     __privateGet(this, _tagLabelEl).textContent = label;
   };
+  /** Same shape as `#applyTagForActiveSlide` above, for the header's contact: the ACTIVE slide's
+   * own `<script data-contact-name="…" data-contact-status="…">` wins, falling back to the
+   * host-level `contact-name`/`contact-status` for the single-script case.
+   *
+   * Why it exists: `#buildHead` reads those host attributes ONCE at mount, so before this the
+   * header kept one contact across every rubro while the script and the tag rotated underneath —
+   * visible as the same person selling catering, then running a restaurant, then a real-estate
+   * agency. `ChatDemo.astro` (production) rotates `contact.name`/`contact.meta` per rubro, so
+   * shipping without this would have been a regression in the hero of a live landing.
+   *
+   * The avatar letter is derived here too, not just the name. Rotating the name while the initial
+   * stays put reads worse than not rotating at all. */
+  applyContactForActiveSlide_fn = function() {
+    if (!__privateGet(this, _nameEl) || !__privateGet(this, _avatarEl)) return;
+    const el = __privateGet(this, _CfChatSimElement_instances, active_get)?.scriptEl ?? null;
+    const name = el?.getAttribute("data-contact-name") || this.getAttribute("contact-name") || "Chat";
+    const status = el?.getAttribute("data-contact-status") || this.getAttribute("contact-status") || "";
+    __privateGet(this, _nameEl).textContent = name;
+    __privateGet(this, _avatarEl).textContent = name.charAt(0).toUpperCase();
+    if (__privateGet(this, _statusEl)) {
+      __privateGet(this, _statusEl).textContent = status;
+      __privateGet(this, _statusEl).hidden = !status;
+    }
+  };
   /** T-031 B — advances rotation to slide `index`: hides the current slide's (already fully
    * built) log, shows the target's, and resets ITS `lastStep` guard so the next `#applyStep` does
    * a real reconcile even if `data-step` happens to already equal the value being written (the
@@ -1202,6 +1242,7 @@ var CfChatSim = (() => {
     next.log.hidden = false;
     next.lastStep = null;
     __privateMethod(this, _CfChatSimElement_instances, applyTagForActiveSlide_fn).call(this);
+    __privateMethod(this, _CfChatSimElement_instances, applyContactForActiveSlide_fn).call(this);
   };
   /** Composer — always shown (visual-only for this wave; a real, operable composer with mobile
    * keyboard handling is react/'s T-007). Its absence read as "broken" rather than "conversation

@@ -155,6 +155,12 @@ export class CfChatSimElement extends HTMLElement {
   #tagEl: HTMLElement | null = null;
   #tagIconEl: HTMLElement | null = null;
   #tagLabelEl: HTMLElement | null = null;
+  /** Head refs, same reason as the tag refs above: the header is built ONCE, and rotation
+   * repaints its text instead of rebuilding it. Kept so `#applyContactForActiveSlide` can write
+   * into them without re-querying the DOM on every slide change. */
+  #avatarEl: HTMLElement | null = null;
+  #nameEl: HTMLElement | null = null;
+  #statusEl: HTMLElement | null = null;
   /** T-031 C — badge is a SLOT, not logic: `null` key means "consumer didn't ask for one", and
    * nothing renders. `#badgeFlagKey` names which `SimState.flags` key (core's existing `flag`
    * event, architecture-v1.md — T-001 already ships it) drives it; `#badgeEl` is only ever created
@@ -290,7 +296,12 @@ export class CfChatSimElement extends HTMLElement {
     this.#frame.className = 'cf-frame';
     this.appendChild(this.#frame);
 
-    this.#frame.appendChild(this.#buildHead());
+    // `scripts` (read at the top, BEFORE `this.textContent = ''` wiped the light DOM) is the only
+    // place the per-slide contact data still exists at this point — the `<script>` nodes are
+    // detached by now, so `#buildHead` can't query for them itself.
+    this.#frame.appendChild(
+      this.#buildHead(scripts.some(({ scriptEl }) => scriptEl?.hasAttribute('data-contact-status'))),
+    );
 
     // T-031 B — one fully pre-rendered slide per script, exactly the T-002 pre-render contract
     // this loop used to run once for the single script. All N are built up front and stay in the
@@ -362,6 +373,10 @@ export class CfChatSimElement extends HTMLElement {
     this.#activeIndex = 0;
     this.#slides[0].log.hidden = false;
     this.#applyTagForActiveSlide();
+    // Slide 0 too, not just rotations: `#buildHead` only ever saw the HOST attributes, so without
+    // this the first pass would show the host contact and every later pass slide 0's own — a
+    // difference that only appears once the loop comes back around.
+    this.#applyContactForActiveSlide();
 
     this.#frame.appendChild(this.#buildComposer(channel, chrome));
 
@@ -375,7 +390,7 @@ export class CfChatSimElement extends HTMLElement {
   /** Header — ChatDemo.astro precedent (`.chat-head`: avatar + name + meta). Visual-only, driven
    * by attributes so any consumer can set it; falls back to a channel-neutral default rather than
    * hardcoding a business name into a shared component. */
-  #buildHead(): HTMLElement {
+  #buildHead(anySlideStatus: boolean): HTMLElement {
     const name = this.getAttribute('contact-name') || 'Chat';
     const status = this.getAttribute('contact-status') || '';
     const head = document.createElement('header');
@@ -385,16 +400,31 @@ export class CfChatSimElement extends HTMLElement {
     avatar.className = 'cf-avatar';
     avatar.textContent = name.charAt(0).toUpperCase();
     head.appendChild(avatar);
+    this.#avatarEl = avatar;
 
     const who = document.createElement('span');
     who.className = 'cf-who';
     const nameEl = document.createElement('b');
     nameEl.textContent = name;
     who.appendChild(nameEl);
-    if (status) {
+    this.#nameEl = nameEl;
+    // The `<em>` exists when the host declares a status OR when ANY slide does — not only when
+    // one is present at mount. Rotation repaints text, it never restructures the header, so a
+    // rubro carrying a status after one that doesn't would otherwise have nowhere to write it and
+    // the bug would surface on the second slide only — the kind that ships.
+    //
+    // Deliberately NOT unconditional: `react/__tests__/snapshot-cross-check.test.tsx` compares the
+    // element's DOM against React's node for node, and React emits no `<em>` when there is no
+    // status. An always-present empty `<em>` broke all 7 whatsapp cases of that cross-check
+    // (telegram passed — its fixture has a status, which is exactly why a partial run would have
+    // hidden this). Scanning the light DOM keeps both properties: same shape as React when nobody
+    // declares a status, and a place to write when somebody does.
+    if (status || anySlideStatus) {
       const statusEl = document.createElement('em');
       statusEl.textContent = status;
+      statusEl.hidden = !status;
       who.appendChild(statusEl);
+      this.#statusEl = statusEl;
     }
     head.appendChild(who);
 
@@ -455,6 +485,33 @@ export class CfChatSimElement extends HTMLElement {
     this.#tagLabelEl.textContent = label;
   }
 
+  /** Same shape as `#applyTagForActiveSlide` above, for the header's contact: the ACTIVE slide's
+   * own `<script data-contact-name="…" data-contact-status="…">` wins, falling back to the
+   * host-level `contact-name`/`contact-status` for the single-script case.
+   *
+   * Why it exists: `#buildHead` reads those host attributes ONCE at mount, so before this the
+   * header kept one contact across every rubro while the script and the tag rotated underneath —
+   * visible as the same person selling catering, then running a restaurant, then a real-estate
+   * agency. `ChatDemo.astro` (production) rotates `contact.name`/`contact.meta` per rubro, so
+   * shipping without this would have been a regression in the hero of a live landing.
+   *
+   * The avatar letter is derived here too, not just the name. Rotating the name while the initial
+   * stays put reads worse than not rotating at all. */
+  #applyContactForActiveSlide(): void {
+    // `#statusEl` is intentionally NOT in this guard: it is absent by design when nobody declares
+    // a status, and the name/avatar must still rotate in that case.
+    if (!this.#nameEl || !this.#avatarEl) return;
+    const el = this.#active?.scriptEl ?? null;
+    const name = el?.getAttribute('data-contact-name') || this.getAttribute('contact-name') || 'Chat';
+    const status = el?.getAttribute('data-contact-status') || this.getAttribute('contact-status') || '';
+    this.#nameEl.textContent = name;
+    this.#avatarEl.textContent = name.charAt(0).toUpperCase();
+    if (this.#statusEl) {
+      this.#statusEl.textContent = status;
+      this.#statusEl.hidden = !status;
+    }
+  }
+
   /** T-031 B — advances rotation to slide `index`: hides the current slide's (already fully
    * built) log, shows the target's, and resets ITS `lastStep` guard so the next `#applyStep` does
    * a real reconcile even if `data-step` happens to already equal the value being written (the
@@ -468,6 +525,7 @@ export class CfChatSimElement extends HTMLElement {
     next.log.hidden = false;
     next.lastStep = null;
     this.#applyTagForActiveSlide();
+    this.#applyContactForActiveSlide();
   }
 
   /** Composer — always shown (visual-only for this wave; a real, operable composer with mobile
