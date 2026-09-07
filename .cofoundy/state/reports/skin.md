@@ -536,3 +536,30 @@ my own scope, reversible)
   `.cf-chat-sim` — era exactamente el workaround que el operador reportó (cada demo fijaba SU
   PROPIO alto porque el componente no fijaba el suyo). Ya no hace falta: solo queda `width` +
   `box-shadow`, el alto lo pone el componente.
+
+## T-025 (follow-up dispatch, cerrado junto con T-031) — Telegram `.cf-quote-author` AA
+
+- Decisión del team-lead, con valores medidos por `qa` (T-032 Parte B): IN claro → `#2979a7`
+  (4.80:1), OUT claro → `#417f3a` (4.58:1), ambos **incondicionales** (aplican en cualquier
+  `chrome`). OUT oscuro (`#3e6aa7`, azul real de Telegram, no un verde oscurecido — T-013) **no
+  tiene fix del mismo tono que llegue a AA** (verificado por qa hasta `#2a5326`, el más oscuro que
+  T-023 D usó alguna vez, sigue bajo 4.5:1) — resuelto por el eje `chrome` ya existente:
+  `fidelity` retrata a Telegram tal cual (falla AA como el original — estamos retratando otra app,
+  nadie lee contenido real ahí); `consistent`/`branded` (la app de Fovente, gente real leyendo
+  contenido real) exige AA — reutiliza `--cf-cs-bubble-out-meta` (ya `#e9edef` para ese mismo fondo,
+  fix de T-023 A) en vez de un literal nuevo.
+- Tokens nuevos `--channel-telegram-quote-text` / `--channel-telegram-out-quote-text`, dedicados
+  solo al COLOR del texto — avatar, `composer-send` y el `border-left-color` de la reply-bar siguen
+  con `--channel-telegram`/`-out` sin tocar (T-023's "pueden quedar", test explícito de que no
+  cambiaron).
+- `element/__tests__/wallpaper-contrast.test.ts` (mi propio scope.write de T-025): describe nuevo
+  "Telegram quote-author text contrast", 8 tests — los 4 combinaciones + los 2 branches de `chrome`
+  en oscuro + el check de "lo decorativo no cambió" + el gemelo. Bug propio atrapado por mi primer
+  intento: comparé el IN-claro contra `--cf-cs-surface` (el wallpaper) en vez de `--cf-cs-bubble-in`
+  (el fondo real donde vive `.cf-quote-author`) — 4.06:1, no pasa; corregido al fondo correcto
+  (#ffffff) → 4.79:1, pasa. Suite completa de `chat-sim/`: 288/288.
+- No toqué `src/__tests__/chat-sim/telegram-quote-contrast.test.ts` (celda de `qa`) — sus 2
+  asserts que fijan `raw === 'var(--channel-telegram)'`/`'var(--channel-telegram-out)'` para
+  `.cf-quote-author` van a romper ahora que esa regla apunta a los tokens dedicados nuevos; es
+  exactamente lo que ese archivo mismo anticipaba ("this file also serves as the acceptance test
+  for T-025's eventual token values"). Flag para `qa`, no lo arreglo yo (fuera de mi scope.write).
