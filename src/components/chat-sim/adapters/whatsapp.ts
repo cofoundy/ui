@@ -22,15 +22,22 @@ export const whatsapp: ChannelAdapterWithCapabilities = {
   deliveryStates: ['queued', 'sent', 'delivered', 'read', 'failed'],
   // Real WhatsApp: glyph is constant across queued->sent->delivered->read (clock, then 1 tick,
   // then 2 ticks that STAY 2 ticks) — only the COLOR flips at `read` (telegram-fidelity-fix.md
-  // §F-2). `#53bdeb` is the same literal styles.css already hardcodes at `.cf-receipt[data-read]`
-  // (T-011 escalation E-002) — sourcing it from here retires that selector, doesn't reinvent it.
+  // §F-2). `#53bdeb` was the same literal styles.css hardcoded at `.cf-receipt[data-read]`
+  // (T-011 escalation E-002); both now resolve through `--channel-whatsapp-read` instead (T-028
+  // follow-up, team-lead/skin) so a `branded` chrome consumer can retint the read-tick color —
+  // the fallback keeps stock WhatsApp fidelity when nobody overrides the var.
   receipt: {
     kind: 'ticks',
     states: {
       queued: { glyph: 'clock', color: 'var(--cf-cs-bubble-out-meta)' },
       sent: { glyph: 'check', color: 'var(--cf-cs-bubble-out-meta)' },
       delivered: { glyph: 'double-check', color: 'var(--cf-cs-bubble-out-meta)' },
-      read: { glyph: 'double-check', color: '#53bdeb' }, // color flips, glyph doesn't
+      // `read` is the only one of the four that needs a brand override slot: the other three
+      // already resolve `var(--cf-cs-bubble-out-meta)` through real CSSOM (icons.ts sets
+      // `el.style.color = color`, not an inert SVG attribute), so a `branded` chrome consumer
+      // can already retint them; `read`'s literal couldn't. `skin` owns the
+      // `[data-chrome='branded']` override for this var.
+      read: { glyph: 'double-check', color: 'var(--channel-whatsapp-read, #53bdeb)' }, // color flips, glyph doesn't
       // Not in telegram-fidelity-fix.md (out of scope for the F-2 fix) — standard failed-send
       // red, unconfirmed byte-exact against a real WhatsApp capture.
       failed: { glyph: 'alert', color: '#e53935' },
