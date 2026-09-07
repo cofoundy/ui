@@ -78,6 +78,7 @@ var CfChatSim = (() => {
           v: 0,
           text: authored.k === "post" ? authored.text : void 0,
           media: authored.k === "post" ? authored.media : void 0,
+          at: authored.k === "post" ? authored.at : void 0,
           deleted: null,
           reactions: [],
           receipt: "queued",
@@ -1359,7 +1360,7 @@ var CfChatSim = (() => {
     const replyLabel = this.getAttribute("reply-label") || "Respondi\xF3 r\xE1pido";
     const visible = state.order.map((id) => state.msgs.get(id)).filter((m) => !!m && m.deleted === null).map((m) => {
       const tick = slide.postedAt.get(m.id) ?? 0;
-      return toRenderMessage(m, formatTime(t0, tick, locale, tz), editedLabel, replyLabel);
+      return toRenderMessage(m, m.at ?? formatTime(t0, tick, locale, tz), editedLabel, replyLabel);
     });
     const flags = computeGroupFlags(visible, __privateGet(this, _adapter).tail);
     const visibleIds = new Set(visible.map((m) => m.id));

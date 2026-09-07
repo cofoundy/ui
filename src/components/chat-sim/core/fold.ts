@@ -35,6 +35,7 @@ export function applyEvent(state: SimState, ev: Ev): SimState {
         v: 0,
         text: authored.k === 'post' ? authored.text : undefined,
         media: authored.k === 'post' ? authored.media : undefined,
+        at: authored.k === 'post' ? authored.at : undefined,
         deleted: null,
         reactions: [],
         receipt: 'queued',

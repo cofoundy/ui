@@ -179,6 +179,19 @@ export interface PostStepData {
   readonly by: ActorId;
   readonly text?: string;
   readonly media?: Json;
+  /** Displayed clock label, verbatim (e.g. `'20:15'`). OPTIONAL and inert when absent — the
+   * label then derives from the message's tick, exactly as before.
+   *
+   * It exists because the printed hour was coupled to the ANIMATION tick, so at a hero's cadence
+   * (~1s per step) a fourteen-step conversation printed the same minute fourteen times, while
+   * `ChatDemo.astro` (the production hero this replaces) shows 20:14 → 20:15 → 20:17 → 20:19.
+   * That span is the evidence that time passed, which is what the "respondió en 4 s" claim rests
+   * on — so it is content, not chrome.
+   *
+   * A STRING from the script, never a clock read: `core/` bans `Date`/`Date.now` (invariants 4 and
+   * 5) precisely so the same seed yields byte-identical PNGs, and a label sourced from wall time
+   * would break that on the first capture. */
+  readonly at?: string;
 }
 
 export interface DraftStepData {
@@ -268,6 +281,9 @@ export interface MsgState {
   readonly reactions: readonly MsgReaction[];
   readonly receipt: DeliveryState;
   readonly views: number;
+  /** The authored clock label, carried through the fold so a renderer can prefer it over the
+   * tick-derived one. See `PostStepData.at`. */
+  readonly at?: string;
 }
 
 export interface Draft {

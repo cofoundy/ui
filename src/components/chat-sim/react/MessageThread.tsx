@@ -337,7 +337,9 @@ export function MessageThread(props: MessageThreadProps): JSX.Element {
         .map((it) => {
           const m = msgs.get(it.id)!;
           const tick = postedAt.get(it.id) ?? 0;
-          return toRenderMessage(m, formatTime(t0, tick, locale, tz), editedLabel);
+          // Same precedence as element/ — `snapshot-cross-check` compares the two DOMs node for
+          // node, so honouring `at` on one side only would break all of its cases.
+          return toRenderMessage(m, m.at ?? formatTime(t0, tick, locale, tz), editedLabel);
         }),
     [visible, msgs, postedAt, t0, locale, tz, editedLabel],
   );

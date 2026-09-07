@@ -721,7 +721,8 @@ export class CfChatSimElement extends HTMLElement {
       .filter((m): m is MsgState => !!m && m.deleted === null)
       .map((m) => {
         const tick = slide.postedAt.get(m.id) ?? 0;
-        return toRenderMessage(m, formatTime(t0, tick, locale, tz), editedLabel, replyLabel);
+        // The script's own `at` wins over the tick-derived label; absent, nothing changes.
+        return toRenderMessage(m, m.at ?? formatTime(t0, tick, locale, tz), editedLabel, replyLabel);
       });
 
     const flags = computeGroupFlags(visible, this.#adapter.tail);
