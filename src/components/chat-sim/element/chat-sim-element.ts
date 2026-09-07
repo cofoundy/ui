@@ -103,8 +103,16 @@ function toRenderMessage(
     views: msg.views,
     reactions: msg.reactions,
     editedLabel: msg.v > 0 ? editedLabel : undefined,
+    media: msg.media,
   };
 }
+
+/** T-027 E: the third chrome value, LOCAL to element/ — `Chrome` (core/types.ts) stays exactly
+ * `'fidelity' | 'consistent'`, unchanged, because nothing in core/ or adapters/ ever branches on
+ * it (file header, core/types.ts:94-102: "typed here only; no consumer wiring in core"). Adding
+ * 'branded' to core's type would be a scope.write violation for zero benefit — this file is the
+ * ONLY reader, so widening the type here is exactly as safe and stays inside element/**. */
+type ChromeMode = Chrome | 'branded';
 
 export class CfChatSimElement extends HTMLElement {
   static readonly observedAttributes = ['data-step'];
@@ -116,6 +124,20 @@ export class CfChatSimElement extends HTMLElement {
   #typingRows: TypingRow[] = [];
   #dateSeps: { triggerId: MsgId; li: HTMLLIElement }[] = [];
   #playhead: Playhead | null = null;
+  /** T-027 A: true only while `dataset.step` is being written FROM `play()`'s own onFrame — i.e.
+   * a playback tick, not an external scrub/seek. `#applyStep` reads it synchronously (custom
+   * elements' `attributeChangedCallback` fires synchronously off the `dataset.step =` assignment
+   * below, same turn) to decide animate-vs-jump for `#applyScroll`. Defaults false, so the
+   * initial `connectedCallback` render and any manual `data-step` write (devtools, a consumer's
+   * own scrub UI) are always an instant jump — "seek debe ser instantáneo" (acceptance #1). */
+  #fromPlayhead = false;
+  #scrollRaf: number | null = null;
+  #scrollCatchup: ReturnType<typeof setTimeout> | null = null;
+  /** T-027 B: `<cf-chat-sim loop>` — read once in connectedCallback, immutable after (matches
+   * every other playback attribute here: channel/seed/locale/tz/t0 are all mount-time-only). */
+  #loop = false;
+  #loopPauseMs = 1500;
+  #loopTimer: ReturnType<typeof setTimeout> | null = null;
   /** Bug found by `app`, confirmed reading this file (T-002 iteration 5): this used to be a fixed
    * `WHATSAPP_REFERENCE_ADAPTER` fixture, and the `channel` attribute only ever fed `compile()` —
    * nothing ever called `getAdapter(channel)`, so `<cf-chat-sim channel="telegram">` silently
@@ -161,9 +183,16 @@ export class CfChatSimElement extends HTMLElement {
     // itself, composer controls move side per real app (simulator, marketing capture). 'consistent'
     // — Cofoundy's own composer layout, fixed regardless of channel (the app: an operator works
     // both channels in one session, and controls moving between them reads as a UX bug, not
-    // fidelity). Not a `ChannelAdapter` field on purpose — it's how THIS component draws its own
-    // chrome, not a per-channel fact core/adapters own.
-    const chrome: Chrome = this.getAttribute('chrome') === 'consistent' ? 'consistent' : 'fidelity';
+    // fidelity). 'branded' (T-027 E, element-local — see ChromeMode above) — Fovente's real
+    // production case: the outbound palette is the CONSUMER's brand color, not the channel's real
+    // one; structure (tail/ticks/grouping) stays exactly the channel's, only paints differently
+    // (styles.css `[data-chrome='branded']`). Not a `ChannelAdapter` field on purpose — it's how
+    // THIS component draws its own chrome, not a per-channel fact core/adapters own.
+    const chromeAttr = this.getAttribute('chrome');
+    const chrome: ChromeMode =
+      chromeAttr === 'consistent' ? 'consistent' : chromeAttr === 'branded' ? 'branded' : 'fidelity';
+    this.#loop = this.hasAttribute('loop');
+    this.#loopPauseMs = Number(this.getAttribute('loop-pause-ms') ?? '1500');
     const seed = Number(this.getAttribute('seed') ?? '1');
     const locale = this.getAttribute('locale') || 'es-PE';
     const tz = this.getAttribute('tz') || 'America/Lima';
@@ -294,7 +323,7 @@ export class CfChatSimElement extends HTMLElement {
    * exactly what the channel and adapter say — only the composer's OWN chrome is what `chrome`
    * touches (T-017 acceptance #3, "el gemelo").
    */
-  #buildComposer(channel: ChannelId, chrome: Chrome): HTMLElement {
+  #buildComposer(channel: ChannelId, chrome: ChromeMode): HTMLElement {
     const bar = document.createElement('div');
     bar.className = 'cf-composer';
 
@@ -326,6 +355,8 @@ export class CfChatSimElement extends HTMLElement {
 
   disconnectedCallback(): void {
     this.#playhead?.pause();
+    this.#cancelScrollAnimation();
+    this.#clearLoopTimer();
   }
 
   attributeChangedCallback(name: string): void {
@@ -335,10 +366,21 @@ export class CfChatSimElement extends HTMLElement {
   }
 
   /** Drives `data-step` from the real core playhead — see file header: same attribute, same path
-   * as manual scrubbing. Returns the Playhead so callers can pause()/rate() it. */
+   * as manual scrubbing. Returns the Playhead so callers can pause()/rate() it.
+   *
+   * T-027 B (loop): each call constructs a brand-NEW `createPlayhead(tl)` — never reuses
+   * `this.#playhead` — so it always starts from `virtualT = 0` regardless of why it's being
+   * called. That sidesteps the real quirk `core/__tests__` documents (calling `.play()` again on
+   * the SAME Playhead after natural completion does NOT reset its internal `virtualT`, so it
+   * "replays" the true last frame): since `#onPlaybackComplete` below calls `this.play()` again —
+   * a NEW Playhead — instead of reusing the old one's handle, the loop restarts from the real
+   * beginning for free. No DOM node is created or removed by this — `#applyStep`/`#reconcile`
+   * only ever repopulate/hide the SAME pre-built `<li>`s (connectedCallback), the exact contract
+   * T-017's typing-animation regression exists to protect (acceptance #2's gemelo). */
   play(): Playhead {
     if (!this.#timeline) throw new Error('cf-chat-sim: play() before connectedCallback');
     this.#playhead?.pause();
+    this.#clearLoopTimer();
     const tl = this.#timeline;
     const ph = createPlayhead(tl);
     ph.onFrame((_state, t) => {
@@ -346,11 +388,35 @@ export class CfChatSimElement extends HTMLElement {
       // attribute always reflects a real "N frames applied", never an interpolated Tick.
       let step = 0;
       while (step < tl.frames.length && tl.frames[step].t <= t) step++;
+      this.#fromPlayhead = true;
       this.dataset.step = String(step);
+      this.#fromPlayhead = false;
+      // emit() (core/playhead.ts) clamps virtualT to tl.duration and stops rescheduling exactly
+      // once it's reached — this fires exactly once per play() cycle, never mid-playback.
+      if (t >= tl.duration) this.#onPlaybackComplete();
     });
     this.#playhead = ph;
     ph.play();
     return ph;
+  }
+
+  /** T-027 B acceptance: "el loop reinicia sin recrear nodos" — restarting is just calling
+   * `play()` again (see its own comment above for why that's safe); the pause between rubros in
+   * ChatDemo.astro (4200ms, a full context-switch to a DIFFERENT script) doesn't apply here — this
+   * loops the SAME script, so the default is shorter and consumer-tunable via `loop-pause-ms`. */
+  #onPlaybackComplete(): void {
+    if (!this.#loop) return;
+    this.#loopTimer = setTimeout(() => {
+      this.#loopTimer = null;
+      this.play();
+    }, this.#loopPauseMs);
+  }
+
+  #clearLoopTimer(): void {
+    if (this.#loopTimer !== null) {
+      clearTimeout(this.#loopTimer);
+      this.#loopTimer = null;
+    }
   }
 
   #readScript(): SimScript {
@@ -370,8 +436,11 @@ export class CfChatSimElement extends HTMLElement {
     // animation state that repopulation was silently resetting.
     if (step === this.#lastStep) return;
     this.#lastStep = step;
+    // Captured BEFORE stateAtStep/#reconcile run: `#fromPlayhead` is only ever true for the exact
+    // synchronous turn play()'s onFrame wrote `dataset.step` (see that field's own comment).
+    const animate = this.#fromPlayhead;
     const state = stateAtStep(this.#timeline, step);
-    this.#reconcile(state, step);
+    this.#reconcile(state, step, animate);
   }
 
   /** ChatDemo.astro's exact trick (`s.offsetWidth + 10`, global.css's `measure()`): `--cf-cs-pad`
@@ -391,7 +460,7 @@ export class CfChatSimElement extends HTMLElement {
   /** Pre-render contract: every MsgId's <li> already exists (built in connectedCallback from the
    * final state) — this only repopulates content for currently-visible messages and flips
    * `hidden`. It never creates, removes, or reorders nodes. */
-  #reconcile(state: SimState, step: number): void {
+  #reconcile(state: SimState, step: number, animate: boolean): void {
     // `t0` IS the epoch: architecture-v1.md §1 defines it as "epoch virtual — dato del GUION, no
     // del reloj", and connectedCallback() compiles with a real epoch-ms value, so no fabrication
     // needed here — Timeline.t0 already carries it, untouched, straight from core/types.ts.
@@ -442,6 +511,7 @@ export class CfChatSimElement extends HTMLElement {
     });
 
     this.#applyBottomAnchor();
+    this.#applyScroll(state.scrollId, animate);
   }
 
   /** Team-lead, iteration 3: measured 41% of the log's height sitting empty at the BOTTOM (216px
@@ -455,6 +525,54 @@ export class CfChatSimElement extends HTMLElement {
     if (prev) prev.classList.remove('cf-anchor-top');
     const firstVisible = [...this.#log.children].find((el) => !(el as HTMLElement).hidden);
     (firstVisible as HTMLElement | undefined)?.classList.add('cf-anchor-top');
+  }
+
+  /** T-027 A — `core`'s `scrollId` (fold.ts: set to the MsgId on every `post`, types.ts:269)
+   * consumed for the first time: this is the ONLY place anything reads `state.scrollId`. Follows
+   * ChatDemo.astro's own `glide()` exactly (file header there): 220ms rAF, cubic ease-out, plus a
+   * hard 260ms catch-up `setTimeout` in case a late reflow (a `--cf-cs-pad` remeasure, a font
+   * swap) moved `scrollHeight` after the animation's own final frame already ran.
+   *
+   * `animate` is false for the initial render and any external/manual `data-step` write (devtools
+   * scrub, a consumer's own seek UI) — acceptance #1's "instantáneo al seek": those jump straight
+   * to bottom, never glide. `scrollId === null` (nothing posted yet) is a no-op. */
+  #applyScroll(scrollId: MsgId | null, animate: boolean): void {
+    if (!this.#log || scrollId === null) return;
+    this.#cancelScrollAnimation();
+    const log = this.#log;
+    const to = Math.max(0, log.scrollHeight - log.clientHeight);
+    const reduceMotion =
+      typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!animate || reduceMotion) {
+      log.scrollTop = to;
+      return;
+    }
+    const from = log.scrollTop;
+    if (to - from < 1) return;
+    const duration = 220;
+    const t0 = performance.now();
+    const tick = (now: number): void => {
+      const p = Math.min(1, (now - t0) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      log.scrollTop = from + (to - from) * eased;
+      this.#scrollRaf = p < 1 ? requestAnimationFrame(tick) : null;
+    };
+    this.#scrollRaf = requestAnimationFrame(tick);
+    this.#scrollCatchup = setTimeout(() => {
+      this.#scrollCatchup = null;
+      log.scrollTop = log.scrollHeight - log.clientHeight;
+    }, 260);
+  }
+
+  #cancelScrollAnimation(): void {
+    if (this.#scrollRaf !== null) {
+      cancelAnimationFrame(this.#scrollRaf);
+      this.#scrollRaf = null;
+    }
+    if (this.#scrollCatchup !== null) {
+      clearTimeout(this.#scrollCatchup);
+      this.#scrollCatchup = null;
+    }
   }
 }
 customElements.define('cf-chat-sim', CfChatSimElement);

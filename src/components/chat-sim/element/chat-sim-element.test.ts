@@ -49,8 +49,8 @@ function mountWithChannel(channel: string, step?: number): HTMLElement {
   return el;
 }
 
-/** Same as `mountWithChannel`, plus the `chrome` axis (T-017 Alcance B). */
-function mountWithChrome(channel: string, chrome: 'fidelity' | 'consistent'): HTMLElement {
+/** Same as `mountWithChannel`, plus the `chrome` axis (T-017 Alcance B / T-027 E). */
+function mountWithChrome(channel: string, chrome: 'fidelity' | 'consistent' | 'branded'): HTMLElement {
   const el = document.createElement('cf-chat-sim');
   el.setAttribute('channel', channel);
   el.setAttribute('chrome', chrome);
@@ -313,6 +313,56 @@ describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
       expect(waMsgs[3].querySelector('.cf-receipt')?.querySelectorAll('path')).toHaveLength(2); // double-tick
       // If this failed, 'consistent' would be fixing the message instead of the chrome — the bug
       // T-017's acceptance #3 exists to catch.
+    });
+  });
+
+  describe("chrome='branded' (T-027 E — operator: producción usa la paleta de Fovente, no la del canal)", () => {
+    // jsdom never loads styles.css (no `<link>`/`<style>` in these tests — same reasoning as
+    // every other test in this file), so `getComputedStyle` can't verify the actual resolved
+    // color here; that's styles.css's own concern (a browser/Storybook check, out of this
+    // scope.write's testable surface). What IS testable at this layer: the attribute the CSS
+    // keys off gets set correctly, the consumer's token round-trips onto the host element
+    // exactly as a consumer would set it, and — the acceptance's real point — that 'branded'
+    // does NOT collapse structure the way it collapses palette.
+
+    /** Same as `mountWithChrome`, plus an inline `--cf-cs-consumer-*` token — the consumer-set
+     * palette `chrome='branded'` reads (styles.css, appended at end of file on purpose). */
+    function mountBranded(channel: string, consumerOut: string): HTMLElement {
+      const el = mountWithChrome(channel, 'branded');
+      el.style.setProperty('--cf-cs-consumer-out', consumerOut);
+      return el;
+    }
+
+    it("sets data-chrome='branded' (the attribute styles.css's [data-chrome='branded'] rules key off)", () => {
+      const el = mountWithChrome('whatsapp', 'branded');
+      expect(el.dataset.chrome).toBe('branded');
+    });
+
+    it("the consumer's --cf-cs-consumer-out token round-trips onto the host element, identically for both channels", () => {
+      const wa = mountBranded('whatsapp', 'rgb(181, 50, 43)');
+      const tg = mountBranded('telegram', 'rgb(181, 50, 43)');
+      expect(wa.style.getPropertyValue('--cf-cs-consumer-out')).toBe('rgb(181, 50, 43)');
+      expect(tg.style.getPropertyValue('--cf-cs-consumer-out')).toBe('rgb(181, 50, 43)');
+    });
+
+    it('el gemelo (acceptance #4): palette convergence must NOT collapse structure — same assertions as the consistent-chrome gemelo above', () => {
+      const tg = mountBranded('telegram', 'rgb(181, 50, 43)');
+      const wa = mountBranded('whatsapp', 'rgb(181, 50, 43)');
+      const tgMsgs = [...tg.querySelectorAll('.cf-msg')];
+      const waMsgs = [...wa.querySelectorAll('.cf-msg')];
+      expect(tgMsgs[3].hasAttribute('data-tail')).toBe(false); // Telegram tails the LAST
+      expect(waMsgs[3].hasAttribute('data-tail')).toBe(true); // WhatsApp tails the FIRST
+      expect(tgMsgs[3].querySelector('.cf-receipt')?.querySelectorAll('path')).toHaveLength(1); // single-tick
+      expect(waMsgs[3].querySelector('.cf-receipt')?.querySelectorAll('path')).toHaveLength(2); // double-tick
+      // If this failed, 'branded' would have collapsed structure along with palette — exactly
+      // the over-reach the operator's twin ("branded acepta tokens... y no altera la estructura")
+      // exists to catch.
+    });
+
+    it('with no consumer token set, branded mounts and renders the thread exactly as any other chrome mode does', () => {
+      const el = mountWithChrome('whatsapp', 'branded');
+      expect(el.style.getPropertyValue('--cf-cs-consumer-out')).toBe('');
+      expect(el.querySelectorAll('.cf-msg')).toHaveLength(POST_COUNT);
     });
   });
 });

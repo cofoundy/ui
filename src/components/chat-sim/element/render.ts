@@ -13,6 +13,7 @@ import type {
   ActorId,
   ChannelAdapter,
   DeliveryState,
+  Json,
   MsgId,
   MsgReaction,
   QuoteStyle,
@@ -33,6 +34,111 @@ export interface RenderMessage {
   readonly reactions: readonly MsgReaction[];
   readonly editedLabel?: string; // e.g. "Editado" — set when v > 0; label text is caller's call (i18n)
   readonly quote?: { readonly author: string; readonly text: string };
+  /** T-027 A/C/D: verbatim passthrough of `MsgState.media` (core/types.ts's `Json`, already
+   * carried by `post`/fold — zero core changes needed). `Json` stays opaque to core by design;
+   * `asServiceMedia`/`asCardMedia` below are element/'s OWN reading of a `{ kind: 'service' | 'card', ... }`
+   * shape — a convention this file owns, not a core contract. */
+  readonly media?: Json;
+}
+
+// ---------------------------------------------------------------------------
+// service / card (T-027 C/D) — "no es vocabulario de Fovente": WhatsApp's e2e-encryption notice
+// and Telegram's unread-divider are both a `service` message with a different variant/text;
+// WhatsApp's contact/location cards and a generic AI-authored brief are both a `card`. Both ride
+// the ordinary `post` event (by/text/media) — no new SimStep/Ev variant, so this stays inside
+// element/**'s scope.write. `by` still participates in computeGroupFlags (a service/card message
+// legitimately breaks a same-actor streak, same as it would in a real thread) but neither kind
+// reads `flags`/`adapter.tail`/receipt/quote/reactions — those are per-bubble concerns and these
+// two render centered/full-width, not as a directional bubble.
+// ---------------------------------------------------------------------------
+
+export type ServiceVariant = 'neutral' | 'warn' | 'success';
+
+export interface ServiceMedia {
+  readonly kind: 'service';
+  readonly variant: ServiceVariant;
+}
+
+export interface CardMedia {
+  readonly kind: 'card';
+  readonly bullets: readonly string[];
+  readonly action?: string;
+}
+
+function isJsonRecord(v: Json | undefined): v is { readonly [key: string]: Json } {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
+export function asServiceMedia(media: Json | undefined): ServiceMedia | null {
+  if (!isJsonRecord(media) || media.kind !== 'service') return null;
+  const v = media.variant;
+  const variant: ServiceVariant = v === 'warn' || v === 'success' ? v : 'neutral';
+  return { kind: 'service', variant };
+}
+
+export function asCardMedia(media: Json | undefined): CardMedia | null {
+  if (!isJsonRecord(media) || media.kind !== 'card') return null;
+  const bullets = Array.isArray(media.bullets)
+    ? media.bullets.filter((b): b is string => typeof b === 'string')
+    : [];
+  const action = typeof media.action === 'string' ? media.action : undefined;
+  return { kind: 'card', bullets, action };
+}
+
+/** Centered pill, `data-variant`-styled (styles.css) — the SAME primitive `.cf-date-pill`
+ * already is (team-lead: "ya renderizamos uno"), generalized past dates: WhatsApp's e2e notice,
+ * Telegram's unread divider, Fovente's `stop`/`done`, all one shape with 3 tones. */
+function populateServiceElement(li: HTMLLIElement, msg: RenderMessage, service: ServiceMedia): void {
+  li.className = 'cf-msg cf-msg-service';
+  delete li.dataset.dir;
+  delete li.dataset.by;
+  delete li.dataset.tail;
+  delete li.dataset.grouped;
+  li.dataset.variant = service.variant;
+  li.setAttribute('aria-label', 'Mensaje del sistema');
+
+  const pill = document.createElement('span');
+  pill.className = 'cf-service-pill';
+  pill.textContent = msg.text;
+  li.appendChild(pill);
+}
+
+/** Full-width structured card (WhatsApp's contact/location cards, Fovente's `brief`). The
+ * accent treatment keys off `adapter.quote` (color-bar / thin-bar / stacked-bubble) — the SAME
+ * 16-field structural fact WhatsApp/Telegram already diverge on for quoted replies — instead of
+ * a new field or a `channel ===` branch (acceptance #3: "estructura por adapter, no hardcodeada"). */
+function populateCardElement(li: HTMLLIElement, msg: RenderMessage, adapter: ChannelAdapter, card: CardMedia): void {
+  li.className = 'cf-msg cf-msg-card';
+  delete li.dataset.dir;
+  delete li.dataset.by;
+  delete li.dataset.tail;
+  delete li.dataset.grouped;
+  li.dataset.quoteStyle = adapter.quote;
+  li.setAttribute('aria-label', 'Tarjeta');
+
+  const cardEl = document.createElement('span');
+  cardEl.className = 'cf-card';
+
+  const title = document.createElement('b');
+  title.className = 'cf-card-title';
+  title.textContent = msg.text;
+  cardEl.appendChild(title);
+
+  card.bullets.forEach((b) => {
+    const bl = document.createElement('span');
+    bl.className = 'cf-card-bullet';
+    bl.textContent = b;
+    cardEl.appendChild(bl);
+  });
+
+  if (card.action) {
+    const act = document.createElement('span');
+    act.className = 'cf-card-action';
+    act.textContent = card.action;
+    cardEl.appendChild(act);
+  }
+
+  li.appendChild(cardEl);
 }
 
 export interface GroupFlags {
@@ -206,6 +312,17 @@ export function populateMessageElement(
   // APPEND another .cf-bubble as a sibling each time, since element creation below never checks
   // for prior content — confirmed by screenshot: dozens of stacked bubbles inside one <li>.
   li.replaceChildren();
+
+  const service = asServiceMedia(msg.media);
+  if (service) {
+    populateServiceElement(li, msg, service);
+    return;
+  }
+  const card = asCardMedia(msg.media);
+  if (card) {
+    populateCardElement(li, msg, adapter, card);
+    return;
+  }
 
   const dir = actorDir(msg.by);
   li.className = 'cf-msg';

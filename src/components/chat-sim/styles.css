@@ -328,6 +328,97 @@
   box-shadow: var(--cf-cs-bubble-shadow);
 }
 
+/* ── service message (T-027 C) ──────────────────────────────────────────
+   Generalizes the SAME pill primitive `.cf-date-pill` already is (WhatsApp's e2e-encryption
+   notice, Telegram's unread divider, Fovente's `stop`/`done` are all "one centered service
+   message, three tones" — not per-brand vocabulary). `data-variant` is the only axis; per-channel
+   tone tinting (below) is the same declared exception `.cf-date-pill` above already takes
+   ([data-channel]-keyed brand chrome, file header), not a structural fact. */
+.cf-msg-service {
+  justify-content: center;
+}
+.cf-service-pill {
+  font-family: var(--cf-cs-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--cf-cs-ink-muted);
+  background: var(--cf-cs-card);
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  box-shadow: var(--cf-cs-bubble-shadow);
+}
+.cf-msg-service[data-variant='warn'] .cf-service-pill {
+  color: #92400e;
+  background: #fef3c7;
+}
+.cf-msg-service[data-variant='success'] .cf-service-pill {
+  color: #166534;
+  background: #dcfce7;
+}
+.cf-chat-sim[data-theme='dark'] .cf-msg-service[data-variant='warn'] .cf-service-pill {
+  color: #fde68a;
+  background: rgba(146, 64, 14, 0.35);
+}
+.cf-chat-sim[data-theme='dark'] .cf-msg-service[data-variant='success'] .cf-service-pill {
+  color: #bbf7d0;
+  background: rgba(22, 101, 52, 0.35);
+}
+
+/* ── card message (T-027 D) ─────────────────────────────────────────────
+   Full-width structured card (WhatsApp's contact/location cards, an AI-authored brief). The
+   accent bar reuses `adapter.quote` (color-bar | thin-bar | stacked-bubble) via `data-quote-style`
+   — the SAME field `.cf-quote` below already varies on — so WhatsApp and Telegram render this
+   with genuinely different structure, driven by the adapter, never a `channel ===` branch. */
+.cf-msg-card {
+  justify-content: stretch;
+}
+.cf-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  background: var(--cf-cs-bubble-in);
+  color: var(--cf-cs-ink);
+  border-left: 3px solid var(--cf-cs-accent);
+  border-radius: 0 var(--cf-cs-radius-lg) var(--cf-cs-radius-lg) 0;
+  padding: 0.7rem 0.8rem;
+  filter: drop-shadow(var(--cf-cs-bubble-shadow));
+}
+.cf-msg-card[data-quote-style='thin-bar'] .cf-card {
+  border-left-width: 2px;
+}
+.cf-msg-card[data-quote-style='stacked-bubble'] .cf-card {
+  border-left: none;
+  border-radius: var(--cf-cs-radius-lg);
+}
+.cf-card-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.cf-card-bullet {
+  font-size: 0.75rem;
+  color: var(--cf-cs-ink-muted);
+  padding-left: 0.7rem;
+  position: relative;
+}
+.cf-card-bullet::before {
+  content: '·';
+  position: absolute;
+  left: 0;
+  color: var(--cf-cs-accent);
+  font-weight: 700;
+}
+.cf-card-action {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cf-cs-accent-text, var(--cf-cs-accent));
+  margin-top: 0.15rem;
+}
+
 .cf-msg {
   display: flex;
   max-width: 100%;
@@ -713,4 +804,42 @@
   .cf-msg:not([hidden]) {
     animation: none;
   }
+}
+
+/* ── branded chrome axis (T-027 E) ────────────────────────────────────────
+   'branded' (element/chat-sim-element.ts's `ChromeMode` — core's own `Chrome` type stays exactly
+   'fidelity' | 'consistent', untouched) is Fovente's real production case: the outbound palette
+   is the CONSUMER's brand color, not the channel's real green/mint — it's the consumer wearing
+   chat clothes, not a channel simulation. Structure (tail position, tick glyph/count, grouping,
+   corner radius) stays exactly what the channel/adapter say — the gemelo test
+   (chat-sim-element.test.ts) asserts WhatsApp and Telegram keep differing structurally under
+   'branded', same as they do under 'fidelity'/'consistent'. Only the palette narrows to ONE
+   shared color, via `--cf-cs-consumer-*` custom properties a consumer sets inline
+   (`<cf-chat-sim chrome="branded" style="--cf-cs-consumer-out: #b5322b">`) — undeclared falls
+   back to the existing brand accent, so `chrome="branded"` with no consumer token is a harmless
+   no-op, never a blank bubble.
+
+   Placed last in the file on purpose: WhatsApp/Telegram both hardcode their outbound bubble
+   background directly (not via `--cf-cs-bubble-out`, see F-3/telegram-fidelity-fix.md above) at
+   equal-or-higher selector specificity, so only SOURCE ORDER lets this win the cascade.
+
+   Known residual gap (documented, not fixed here — outside element/**'s scope.write): WhatsApp's
+   receipt tick at delivery-state 'read' is a literal `#53bdeb` baked into adapters/whatsapp.ts's
+   ReceiptModel as an inline `style.color` (element/render.ts's buildReceiptGlyph), not a CSS var
+   — branded mode can't reach it from here. A core/[channel] task would need to make that one
+   state consumer-overridable too. */
+.cf-chat-sim[data-chrome='branded'] {
+  --cf-cs-bubble-out: var(--cf-cs-consumer-out, var(--cf-cs-accent));
+  --cf-cs-bubble-out-meta: var(--cf-cs-consumer-out-meta, var(--cf-cs-bubble-out-meta));
+}
+.cf-chat-sim[data-chrome='branded'][data-channel='telegram'] .cf-msg[data-dir='out'] .cf-bubble {
+  background: var(--cf-cs-consumer-out, var(--cf-cs-accent));
+}
+.cf-chat-sim[data-chrome='branded'][data-channel='telegram'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble,
+.cf-chat-sim[data-chrome='branded'][data-channel='whatsapp'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {
+  background: var(--cf-cs-consumer-out, var(--cf-cs-accent));
+}
+.cf-chat-sim[data-chrome='branded'] .cf-avatar,
+.cf-chat-sim[data-chrome='branded'] .cf-composer-send {
+  background: var(--cf-cs-consumer-accent, var(--cf-cs-accent));
 }

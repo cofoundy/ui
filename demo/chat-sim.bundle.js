@@ -646,6 +646,62 @@ var CfChatSim = (() => {
   }
 
   // src/components/chat-sim/element/render.ts
+  function isJsonRecord(v) {
+    return !!v && typeof v === "object" && !Array.isArray(v);
+  }
+  function asServiceMedia(media) {
+    if (!isJsonRecord(media) || media.kind !== "service") return null;
+    const v = media.variant;
+    const variant = v === "warn" || v === "success" ? v : "neutral";
+    return { kind: "service", variant };
+  }
+  function asCardMedia(media) {
+    if (!isJsonRecord(media) || media.kind !== "card") return null;
+    const bullets = Array.isArray(media.bullets) ? media.bullets.filter((b) => typeof b === "string") : [];
+    const action = typeof media.action === "string" ? media.action : void 0;
+    return { kind: "card", bullets, action };
+  }
+  function populateServiceElement(li, msg, service) {
+    li.className = "cf-msg cf-msg-service";
+    delete li.dataset.dir;
+    delete li.dataset.by;
+    delete li.dataset.tail;
+    delete li.dataset.grouped;
+    li.dataset.variant = service.variant;
+    li.setAttribute("aria-label", "Mensaje del sistema");
+    const pill = document.createElement("span");
+    pill.className = "cf-service-pill";
+    pill.textContent = msg.text;
+    li.appendChild(pill);
+  }
+  function populateCardElement(li, msg, adapter, card) {
+    li.className = "cf-msg cf-msg-card";
+    delete li.dataset.dir;
+    delete li.dataset.by;
+    delete li.dataset.tail;
+    delete li.dataset.grouped;
+    li.dataset.quoteStyle = adapter.quote;
+    li.setAttribute("aria-label", "Tarjeta");
+    const cardEl = document.createElement("span");
+    cardEl.className = "cf-card";
+    const title = document.createElement("b");
+    title.className = "cf-card-title";
+    title.textContent = msg.text;
+    cardEl.appendChild(title);
+    card.bullets.forEach((b) => {
+      const bl = document.createElement("span");
+      bl.className = "cf-card-bullet";
+      bl.textContent = b;
+      cardEl.appendChild(bl);
+    });
+    if (card.action) {
+      const act = document.createElement("span");
+      act.className = "cf-card-action";
+      act.textContent = card.action;
+      cardEl.appendChild(act);
+    }
+    li.appendChild(cardEl);
+  }
   function actorDir(by) {
     return by === "in" ? "in" : "out";
   }
@@ -749,6 +805,16 @@ var CfChatSim = (() => {
   }
   function populateMessageElement(li, msg, adapter, flags) {
     li.replaceChildren();
+    const service = asServiceMedia(msg.media);
+    if (service) {
+      populateServiceElement(li, msg, service);
+      return;
+    }
+    const card = asCardMedia(msg.media);
+    if (card) {
+      populateCardElement(li, msg, adapter, card);
+      return;
+    }
     const dir = actorDir(msg.by);
     li.className = "cf-msg";
     li.setAttribute("aria-label", dir === "out" ? "Mensaje enviado" : "Mensaje recibido");
@@ -836,10 +902,11 @@ var CfChatSim = (() => {
       receipt: msg.receipt,
       views: msg.views,
       reactions: msg.reactions,
-      editedLabel: msg.v > 0 ? editedLabel : void 0
+      editedLabel: msg.v > 0 ? editedLabel : void 0,
+      media: msg.media
     };
   }
-  var _timeline, _postedAt, _msgEls, _log, _typingRows, _dateSeps, _playhead, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, composerIcon_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn;
+  var _timeline, _postedAt, _msgEls, _log, _typingRows, _dateSeps, _playhead, _fromPlayhead, _scrollRaf, _scrollCatchup, _loop, _loopPauseMs, _loopTimer, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, composerIcon_fn, onPlaybackComplete_fn, clearLoopTimer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn, applyScroll_fn, cancelScrollAnimation_fn;
   var CfChatSimElement = class extends HTMLElement {
     constructor() {
       super(...arguments);
@@ -851,6 +918,20 @@ var CfChatSim = (() => {
       __privateAdd(this, _typingRows, []);
       __privateAdd(this, _dateSeps, []);
       __privateAdd(this, _playhead, null);
+      /** T-027 A: true only while `dataset.step` is being written FROM `play()`'s own onFrame — i.e.
+       * a playback tick, not an external scrub/seek. `#applyStep` reads it synchronously (custom
+       * elements' `attributeChangedCallback` fires synchronously off the `dataset.step =` assignment
+       * below, same turn) to decide animate-vs-jump for `#applyScroll`. Defaults false, so the
+       * initial `connectedCallback` render and any manual `data-step` write (devtools, a consumer's
+       * own scrub UI) are always an instant jump — "seek debe ser instantáneo" (acceptance #1). */
+      __privateAdd(this, _fromPlayhead, false);
+      __privateAdd(this, _scrollRaf, null);
+      __privateAdd(this, _scrollCatchup, null);
+      /** T-027 B: `<cf-chat-sim loop>` — read once in connectedCallback, immutable after (matches
+       * every other playback attribute here: channel/seed/locale/tz/t0 are all mount-time-only). */
+      __privateAdd(this, _loop, false);
+      __privateAdd(this, _loopPauseMs, 1500);
+      __privateAdd(this, _loopTimer, null);
       /** Bug found by `app`, confirmed reading this file (T-002 iteration 5): this used to be a fixed
        * `WHATSAPP_REFERENCE_ADAPTER` fixture, and the `channel` attribute only ever fed `compile()` —
        * nothing ever called `getAdapter(channel)`, so `<cf-chat-sim channel="telegram">` silently
@@ -883,7 +964,10 @@ var CfChatSim = (() => {
       if (!this.hasAttribute("role")) this.setAttribute("role", "group");
       const script = __privateMethod(this, _CfChatSimElement_instances, readScript_fn).call(this);
       const channel = this.getAttribute("channel") || "whatsapp";
-      const chrome = this.getAttribute("chrome") === "consistent" ? "consistent" : "fidelity";
+      const chromeAttr = this.getAttribute("chrome");
+      const chrome = chromeAttr === "consistent" ? "consistent" : chromeAttr === "branded" ? "branded" : "fidelity";
+      __privateSet(this, _loop, this.hasAttribute("loop"));
+      __privateSet(this, _loopPauseMs, Number(this.getAttribute("loop-pause-ms") ?? "1500"));
       const seed = Number(this.getAttribute("seed") ?? "1");
       const locale = this.getAttribute("locale") || "es-PE";
       const tz = this.getAttribute("tz") || "America/Lima";
@@ -938,6 +1022,8 @@ var CfChatSim = (() => {
     }
     disconnectedCallback() {
       __privateGet(this, _playhead)?.pause();
+      __privateMethod(this, _CfChatSimElement_instances, cancelScrollAnimation_fn).call(this);
+      __privateMethod(this, _CfChatSimElement_instances, clearLoopTimer_fn).call(this);
     }
     attributeChangedCallback(name) {
       if (name === "data-step" && __privateGet(this, _timeline)) {
@@ -945,16 +1031,30 @@ var CfChatSim = (() => {
       }
     }
     /** Drives `data-step` from the real core playhead — see file header: same attribute, same path
-     * as manual scrubbing. Returns the Playhead so callers can pause()/rate() it. */
+     * as manual scrubbing. Returns the Playhead so callers can pause()/rate() it.
+     *
+     * T-027 B (loop): each call constructs a brand-NEW `createPlayhead(tl)` — never reuses
+     * `this.#playhead` — so it always starts from `virtualT = 0` regardless of why it's being
+     * called. That sidesteps the real quirk `core/__tests__` documents (calling `.play()` again on
+     * the SAME Playhead after natural completion does NOT reset its internal `virtualT`, so it
+     * "replays" the true last frame): since `#onPlaybackComplete` below calls `this.play()` again —
+     * a NEW Playhead — instead of reusing the old one's handle, the loop restarts from the real
+     * beginning for free. No DOM node is created or removed by this — `#applyStep`/`#reconcile`
+     * only ever repopulate/hide the SAME pre-built `<li>`s (connectedCallback), the exact contract
+     * T-017's typing-animation regression exists to protect (acceptance #2's gemelo). */
     play() {
       if (!__privateGet(this, _timeline)) throw new Error("cf-chat-sim: play() before connectedCallback");
       __privateGet(this, _playhead)?.pause();
+      __privateMethod(this, _CfChatSimElement_instances, clearLoopTimer_fn).call(this);
       const tl = __privateGet(this, _timeline);
       const ph = createPlayhead(tl);
       ph.onFrame((_state, t) => {
         let step = 0;
         while (step < tl.frames.length && tl.frames[step].t <= t) step++;
+        __privateSet(this, _fromPlayhead, true);
         this.dataset.step = String(step);
+        __privateSet(this, _fromPlayhead, false);
+        if (t >= tl.duration) __privateMethod(this, _CfChatSimElement_instances, onPlaybackComplete_fn).call(this);
       });
       __privateSet(this, _playhead, ph);
       ph.play();
@@ -968,6 +1068,12 @@ var CfChatSim = (() => {
   _typingRows = new WeakMap();
   _dateSeps = new WeakMap();
   _playhead = new WeakMap();
+  _fromPlayhead = new WeakMap();
+  _scrollRaf = new WeakMap();
+  _scrollCatchup = new WeakMap();
+  _loop = new WeakMap();
+  _loopPauseMs = new WeakMap();
+  _loopTimer = new WeakMap();
   _adapter = new WeakMap();
   _lastStep = new WeakMap();
   _CfChatSimElement_instances = new WeakSet();
@@ -1032,6 +1138,23 @@ var CfChatSim = (() => {
     span.appendChild(icon);
     return span;
   };
+  /** T-027 B acceptance: "el loop reinicia sin recrear nodos" — restarting is just calling
+   * `play()` again (see its own comment above for why that's safe); the pause between rubros in
+   * ChatDemo.astro (4200ms, a full context-switch to a DIFFERENT script) doesn't apply here — this
+   * loops the SAME script, so the default is shorter and consumer-tunable via `loop-pause-ms`. */
+  onPlaybackComplete_fn = function() {
+    if (!__privateGet(this, _loop)) return;
+    __privateSet(this, _loopTimer, setTimeout(() => {
+      __privateSet(this, _loopTimer, null);
+      this.play();
+    }, __privateGet(this, _loopPauseMs)));
+  };
+  clearLoopTimer_fn = function() {
+    if (__privateGet(this, _loopTimer) !== null) {
+      clearTimeout(__privateGet(this, _loopTimer));
+      __privateSet(this, _loopTimer, null);
+    }
+  };
   readScript_fn = function() {
     const inline = this.querySelector('script[type="application/json"]');
     const raw = inline?.textContent ?? this.getAttribute("script");
@@ -1042,8 +1165,9 @@ var CfChatSim = (() => {
     if (!__privateGet(this, _timeline) || !__privateGet(this, _log)) return;
     if (step === __privateGet(this, _lastStep)) return;
     __privateSet(this, _lastStep, step);
+    const animate = __privateGet(this, _fromPlayhead);
     const state = stateAtStep(__privateGet(this, _timeline), step);
-    __privateMethod(this, _CfChatSimElement_instances, reconcile_fn).call(this, state, step);
+    __privateMethod(this, _CfChatSimElement_instances, reconcile_fn).call(this, state, step, animate);
   };
   /** ChatDemo.astro's exact trick (`s.offsetWidth + 10`, global.css's `measure()`): `--cf-cs-pad`
    * (styles.css) is a static FALLBACK only — a stamp with a receipt glyph is measurably wider
@@ -1061,7 +1185,7 @@ var CfChatSim = (() => {
   /** Pre-render contract: every MsgId's <li> already exists (built in connectedCallback from the
    * final state) — this only repopulates content for currently-visible messages and flips
    * `hidden`. It never creates, removes, or reorders nodes. */
-  reconcile_fn = function(state, step) {
+  reconcile_fn = function(state, step, animate) {
     const t0 = __privateGet(this, _timeline).t0;
     const locale = this.getAttribute("locale") || "es-PE";
     const tz = this.getAttribute("tz") || "America/Lima";
@@ -1091,6 +1215,7 @@ var CfChatSim = (() => {
       row.li.hidden = !(step >= row.interval.appearStep && step < row.interval.vanishStep);
     });
     __privateMethod(this, _CfChatSimElement_instances, applyBottomAnchor_fn).call(this);
+    __privateMethod(this, _CfChatSimElement_instances, applyScroll_fn).call(this, state.scrollId, animate);
   };
   /** Team-lead, iteration 3: measured 41% of the log's height sitting empty at the BOTTOM (216px
    * of 522px) — a short thread should hug the composer and grow upward, not float at the top.
@@ -1103,6 +1228,51 @@ var CfChatSim = (() => {
     if (prev) prev.classList.remove("cf-anchor-top");
     const firstVisible = [...__privateGet(this, _log).children].find((el) => !el.hidden);
     firstVisible?.classList.add("cf-anchor-top");
+  };
+  /** T-027 A — `core`'s `scrollId` (fold.ts: set to the MsgId on every `post`, types.ts:269)
+   * consumed for the first time: this is the ONLY place anything reads `state.scrollId`. Follows
+   * ChatDemo.astro's own `glide()` exactly (file header there): 220ms rAF, cubic ease-out, plus a
+   * hard 260ms catch-up `setTimeout` in case a late reflow (a `--cf-cs-pad` remeasure, a font
+   * swap) moved `scrollHeight` after the animation's own final frame already ran.
+   *
+   * `animate` is false for the initial render and any external/manual `data-step` write (devtools
+   * scrub, a consumer's own seek UI) — acceptance #1's "instantáneo al seek": those jump straight
+   * to bottom, never glide. `scrollId === null` (nothing posted yet) is a no-op. */
+  applyScroll_fn = function(scrollId, animate) {
+    if (!__privateGet(this, _log) || scrollId === null) return;
+    __privateMethod(this, _CfChatSimElement_instances, cancelScrollAnimation_fn).call(this);
+    const log = __privateGet(this, _log);
+    const to = Math.max(0, log.scrollHeight - log.clientHeight);
+    const reduceMotion = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!animate || reduceMotion) {
+      log.scrollTop = to;
+      return;
+    }
+    const from = log.scrollTop;
+    if (to - from < 1) return;
+    const duration = 220;
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      log.scrollTop = from + (to - from) * eased;
+      __privateSet(this, _scrollRaf, p < 1 ? requestAnimationFrame(tick) : null);
+    };
+    __privateSet(this, _scrollRaf, requestAnimationFrame(tick));
+    __privateSet(this, _scrollCatchup, setTimeout(() => {
+      __privateSet(this, _scrollCatchup, null);
+      log.scrollTop = log.scrollHeight - log.clientHeight;
+    }, 260));
+  };
+  cancelScrollAnimation_fn = function() {
+    if (__privateGet(this, _scrollRaf) !== null) {
+      cancelAnimationFrame(__privateGet(this, _scrollRaf));
+      __privateSet(this, _scrollRaf, null);
+    }
+    if (__privateGet(this, _scrollCatchup) !== null) {
+      clearTimeout(__privateGet(this, _scrollCatchup));
+      __privateSet(this, _scrollCatchup, null);
+    }
   };
   __publicField(CfChatSimElement, "observedAttributes", ["data-step"]);
   customElements.define("cf-chat-sim", CfChatSimElement);

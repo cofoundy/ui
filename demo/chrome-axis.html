@@ -141,6 +141,52 @@
       </figure>
     </div>
 
+    <h2>chrome="branded" (T-027 E) — consumer palette, channel structure (WhatsApp/Telegram still differ)</h2>
+    <div class="row">
+      <figure>
+        <figcaption>WhatsApp · branded (Fovente red)</figcaption>
+        <cf-chat-sim
+          chrome="branded"
+          channel="whatsapp"
+          seed="7"
+          locale="es-PE"
+          tz="America/Lima"
+          contact-name="Fovente — Reservas"
+          contact-status="en línea"
+          style="--cf-cs-consumer-out: #c0392b; --cf-cs-consumer-accent: #c0392b"
+        >
+          <script type="application/json">
+            [
+              { "k": "post", "by": "in", "text": "¿Tienen mesa para las 8pm?", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Sí, hay disponibilidad", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Perfecto, quedas reservado", "delayMs": 0 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+      <figure>
+        <figcaption>Telegram · branded (Fovente red) — same accent, still tails LAST + single-tick</figcaption>
+        <cf-chat-sim
+          chrome="branded"
+          channel="telegram"
+          seed="7"
+          locale="es-PE"
+          tz="America/Lima"
+          contact-name="Fovente — Reservas"
+          contact-status="en línea"
+          style="--cf-cs-consumer-out: #c0392b; --cf-cs-consumer-accent: #c0392b"
+        >
+          <script type="application/json">
+            [
+              { "k": "post", "by": "in", "text": "¿Tienen mesa para las 8pm?", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Sí, hay disponibilidad", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Perfecto, quedas reservado", "delayMs": 0 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+    </div>
+
     <!-- Plain <script>, not type="module" — same file:// CORS reasoning as index.html. -->
     <script src="./chat-sim.bundle.js"></script>
   </body>
