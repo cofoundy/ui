@@ -5,7 +5,9 @@ guion, con diferencias **estructurales** entre canales (no de color), y escupe P
 corrida tras corrida. Sirve a las dos landings Astro sin agregar React, y a la app de Fovente vía
 React. 33+ commits, ~13.6k líneas, 6 lanes en paralelo.
 
-**Estado final: 73 commits · 302/302 · integrado en preview de la landing de Fovente, sin mergear.**
+**Estado final: 83 commits · 23.4k líneas · 361/362 · preview de la landing de Fovente regenerado y
+verificado en navegador, sin mergear.** El único rojo del gate es ajeno y está fileado
+(`cofoundy/ui#25`); se probó ajeno corriendo el control a HEAD sin el commit sospechoso.
 
 ## Segunda mitad del ciclo: lo que encontró el operador mirando la pantalla
 
@@ -28,8 +30,15 @@ cazó**. Es el dato más importante de todo el ciclo:
 adapter. **Ninguno verifica que el adapter tenga razón.** Un valor incorrecto pasa cualquier gemelo:
 el DOM cambia, sólo que hacia lo equivocado.
 
-Por eso **T-014 —el baseline contra referencia externa— es la tarea más importante que quedó sin
-hacer**, y no una más de la lista.
+Por eso **el baseline contra referencia externa era la tarea más importante que quedaba**, y no una
+más de la lista. **Se hizo** (T-032, `819490f`): fidelidad medida contra fuentes primarias de
+Telegram, no contra nuestra propia spec.
+
+Su hallazgo más incómodo: **Telegram real falla WCAG AA** en el autor de la cita en modo oscuro
+(2.56:1, su color contra su propio fondo). Se resolvió por el eje `chrome` en vez de elegir entre
+fidelidad y accesibilidad — `fidelity` reproduce el fallo porque está retratando una captura de otra
+app; `consistent`/`branded` lo corrige porque ahí hay personas leyendo contenido real (T-025,
+`7e64b90`).
 
 ## Fallas de método del CTO, con su recurrencia
 
@@ -151,3 +160,62 @@ contrato.
   fuera de alcance por diseño. No se bajó el umbral para pintar verde.
 - `main` de `packages/ui` ya estaba rojo antes del ciclo (`cofoundy/ui#21`).
 - `cofoundy-orchestrator#138`: el gate de blast-radius falla **abierto** con un contexto mal tipado.
+
+## Cierre del ciclo — lo que entró después del primer "estado final"
+
+**Los dos defectos que reportó el operador mirando la pantalla, cerrados y con sonda:**
+
+- **El alto del mock se movía.** Fijado en `.cf-frame` (T-031). La sonda **en navegador real** mide
+  `getBoundingClientRect().height` avanzando **un mismo elemento** por toda su timeline y comparando
+  en cada `data-step` (`651b245` + `7b4d5ec`). El gemelo negativo quedó **permanente en la suite**:
+  con `height:auto` la lista de muestras a la deriva no está vacía — exactamente la lista que el test
+  positivo afirma vacía. Se re-demuestra en cada corrida en vez de depender de que alguien repita un
+  ritual manual.
+- **El reloj no transicionaba.** No estaba roto: los guiones no tenían pasos de acuse y un mensaje
+  nace en `queued`. Sobre el mismo mensaje, scrubbeando `data-step`: reloj → ✓ → ✓✓ → ✓✓ azul.
+
+**El preview de la landing pasó de 2/10 a 8 completas + 1 parcial + 1 cortada** (`97f4646` en
+`feat/chat-sim-preview`), con cada `sí` probado renderizándolo en navegador, no leyendo `types.ts`.
+Lo parcial: la rotación cambia guion y etiqueta pero **no el contacto** (`#buildHead` lee
+`contact-name` una sola vez al montar). Lo cortado: la card del brief, que no es primitiva nativa de
+WhatsApp.
+
+### La sonda que no medía, y por qué importa más que el bug
+
+El test que supuestamente cubría el alto afirmaba que la **custom property estaba seteada**. Mutar el
+default a `auto` lo dejaba 16/16 en verde: jsdom no hace layout, así que no puede medir un alto
+renderizado. Es la 7ª sonda del ciclo que no medía nada.
+
+**La regla que sale de acá:** un gemelo demostrado una vez a mano es un ritual que nadie repite. El
+gemelo tiene que vivir **dentro de la suite** como su propio `it()`, afirmando lo contrario del test
+positivo sobre la misma medición. Patrón adoptado para el resto del paquete.
+
+### Tres gates del repo que no miden nada (fileados, no arreglados)
+
+Encontrados de paso al cerrar, verificados corriendo el comando:
+
+- **`npm run lint` sale 127** — eslint no instalado, **cero** archivos de config. Los invariantes 4 y
+  5 de esta misma arquitectura ("purity by lint": `core/` prohíbe `Math.random`, `Date`, `fetch`,
+  `window`, `document`) están especificados como aplicados por lint. **El lint nunca corrió.**
+  `cofoundy/ui#24`.
+  **Mitigante medido:** `core/` **sí es puro de hecho** — grep de los 5 símbolos da 6 hits y los 6
+  son comentarios declarando el invariante. Aguantó por convención, que es justo lo que la
+  arquitectura decía no querer depender de.
+- **`session-lifecycle.test.ts` compara el set global de sesiones de navegador** ⇒ rojo
+  **determinista**, no flaky, desde que existe un segundo archivo que abre sesión. Estaba registrado
+  como "contención intermitente"; un gate que lo trate así reintentaría para siempre.
+  `cofoundy/ui#25`.
+- **`tsc --noEmit` arrastra 2 errores preexistentes** en `hero-shader/`, cero en chat-sim. Importa
+  porque `tsc` es el único gate contra una mutación pura de tipos — TS los borra en runtime y ningún
+  test los ve. `cofoundy/ui#26`. EPIC: `cofoundy/ui#23`.
+
+### Dos fallas más del CTO en esta mitad
+
+- **Dispatch duplicado por leer mal a una lane.** Una lane mandó una notificación de idle repitiendo
+  su reporte anterior; lo leí como "no recibió el encargo", pedí su shutdown y lancé una segunda lane
+  sobre el mismo archivo. La segunda **haltó antes de escribir** y trajo la evidencia medida. La
+  fricción de la matriz de propiedad es el instrumento, no el costo.
+- **Un HTTP 200 que respondía la pregunta equivocada.** Reporté "el dev server responde" como si
+  fuera "sirve mi artefacto". Servía un borrador huérfano, sobre otra rama, **con los dos defectos
+  todavía adentro**. Misma clase que los tres errores de estado-reportado-vs-efecto que ya llevaba el
+  ciclo, esta vez en mi propia sonda.
