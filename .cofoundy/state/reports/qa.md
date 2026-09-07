@@ -119,3 +119,71 @@ story/test imports from `react/index.ts` to the real subpath barrel to match.
 `npx vitest run src/__tests__/chat-sim` — 4 files, 47/47 green in isolation. Full
 `src/components/chat-sim src/__tests__/chat-sim` (excluding the 2 flagged-above exclusions) —
 29/29 files, 202/202 tests green. `npx tsc --noEmit` clean (2 pre-existing unrelated errors only).
+
+---
+
+# qa — T-032 (baseline de fidelidad externa + contraste de quote Telegram)
+
+wall_clock_minutes: 40
+
+## A — `fidelity-baseline.test.ts` (T-014, el instrumento que faltó)
+
+Nuevo: `src/__tests__/chat-sim/fidelity-baseline.test.ts`. Lee los adapters REALES
+(`adapters/telegram.ts`, `adapters/whatsapp.ts`), nunca un fixture re-tipeado, y cada `it` cita la
+fila exacta de `telegram-fidelity-fix.md` (§F-1/§F-2/adapter-interface-draft.md) que justifica el
+valor esperado. Distinto en CLASE de todo lo existente (`receipt-model.test.ts` incluido): esos
+prueban que el tipo es internamente consistente; este prueba que el VALOR coincide con la fuente
+externa citada.
+
+**Gemelo obligatorio verificado en vivo, no solo inline:** mutable `adapters/telegram.ts:35`
+(`read: { glyph: 'double-check', ... }` → `{ glyph: 'check', color: 'var(--channel-telegram-read,
+#37a1de)' }`, el tick-simple viejo) y corrí el archivo — `1 failed / 10 passed`, el assert exacto
+que exige `states.read.glyph === 'double-check'` se pone rojo. Revertido el archivo después
+(`git diff` limpio, verificado). El gemelo INLINE del archivo (construye el objeto regresado sin
+tocar el archivo real) también está y pasa — ambas formas del mismo hecho.
+
+Las 3 "no verificadas" de la spec (color exacto del tick leído, gradiente vivo del wallpaper,
+silueta de la colita) **no se rellenaron** — el describe final es un drift-detector: falla si
+alguien edita la spec y borra esos 3 caveats sin que se re-evalúen, nunca inventa un valor.
+
+## B — `telegram-quote-contrast.test.ts` (T-025, contraste del quote de Telegram)
+
+**Colisión de scope real, no hipotética:** T-025 (role `skin`, filed durante T-023) ya tiene esta
+misma tabla de hallazgos con `scope.write` sobre `styles.css` **y**
+`element/__tests__/wallpaper-contrast.test.ts` — el archivo que T-032 me pide "extender". Ninguno
+de los dos está en mi `scope.write`, y `file-ownership-matrix.md` fija `styles.css` en 1 writer
+(skin). Resuelto sin tocar ninguno de los dos: instrumento equivalente en mi propia celda
+(`src/__tests__/chat-sim/telegram-quote-contrast.test.ts`), leyendo el `styles.css` REAL (no una
+copia de los hex).
+
+Confirmado contra el sheet en vivo — 3 de 4 combinaciones siguen fallando AA hoy:
+IN/claro `#37a1de` sobre `#fff` = 2.87:1, OUT/claro `#5eb854` sobre `#effdde` = 2.34:1, OUT/oscuro
+`#5eb854` sobre `#3e6aa7` = 2.21:1 (IN/oscuro ya pasa, 5.41:1 — regression-guarded).
+
+**Valores propuestos (para que skin los aplique en T-025), 2 de 3 son seguros:**
+- IN, solo tema claro: oscurecer a `#2979a7` (k=0.75 sobre `#37a1de`) → 4.80:1. Tema oscuro se deja
+  intacto (ya pasa). Necesita un token dedicado (`--channel-telegram-quote-text`, revertido a
+  `--channel-telegram` en `[data-theme='dark']`) para no tocar avatar/reply-bar, que comparten el
+  token base.
+- OUT, solo tema claro: oscurecer a `#417f3a` (k=0.69 sobre `#5eb854`) → 4.58:1.
+
+**ESCALO, no fuerzo (instrucción explícita del team-lead):** OUT en tema oscuro no tiene arreglo
+del mismo hue. El bubble oscuro de Telegram (`#3e6aa7`) es AZUL, no un verde oscurecido (T-013
+invierte el hue entre temas a propósito) — oscurecer el verde hacia negro **reduce** el contraste
+contra ese fondo azul medio (verificado en todo el rango; el punto más oscuro razonable,
+`#2a5326`, da apenas ~1.6:1). Solo un verde pastel (≥80% hacia blanco) llega a AA, y a esa altura
+ya no lee como el verde saliente de Telegram — es la MISMA clase de decisión que T-025 ya nombra
+("posiblemente theme-aware... requiere sus propios valores") sin resolverla. Necesita elegir entre
+perder AA o perder identidad de marca en ese caso puntual — decisión de marca, se la paso al
+team-lead para escalar, no la fuerzo.
+
+## Test coverage (T-032)
+
+`npx vitest run src/__tests__/chat-sim` — 12 files, 132/132 green. Full
+`src/components/chat-sim src/__tests__/chat-sim` — 49/49 files, 332/332 green (verificado antes de
+la mutación manual de arriba; después de revertirla, re-verificado 10/10 files, 110/110 green en
+el subconjunto adapters+__tests__/chat-sim+receipt-model). Nota: una corrida completa a mitad de
+sesión mostró 8 archivos rojos en `element/**`/`capture/**`/`react/**` — pre-existente, causado por
+WIP sin commitear de otra lane en `element/chat-sim-element.ts` en este worktree compartido (mismo
+patrón que T-023 ya documentó), no por mis archivos — confirmado con `git status` (solo
+`chat-sim-element.ts` modificado, cero relación con `adapters/**`).
