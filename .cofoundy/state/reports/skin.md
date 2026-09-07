@@ -485,3 +485,54 @@ my own scope, reversible)
   (`stateAtStep`, using the exported `initialState`/`applyEvent`) rather than reusing `seek(tl,t)`
   by Tick, since two frames can share a jitter-adjusted tick and a Tick-keyed step would be
   ambiguous; a frame-count isn't.
+
+## T-031 — alto fijo, rotación multi-guion, badge, etiqueta de rubro (operator report)
+
+- **A (🔴, reportado por el operador mirando la pantalla)**: `.cf-chat-sim` no fijaba ningún alto —
+  crecía/encogía con el contenido. Split `.cf-chat-sim` (ahora solo el flex-column wrapper) en un
+  `.cf-frame` interior que carga `--cf-cs-height` (default 440px, literal de `ChatDemo.astro`),
+  configurable vía el atributo `height` (número desnudo → px, cualquier otra cosa pasa verbatim).
+  El tag pill (D) queda FUERA de `.cf-frame` a propósito — "encima del chat" no debe comerse el
+  presupuesto de píxeles fijo. Gemelo verificado: dos guiones de largo muy distinto en el mismo
+  `<cf-chat-sim>` fijan el mismo `--cf-cs-height` (test + captura en vivo, ver abajo).
+- **B**: `<cf-chat-sim>` ahora acepta N `<script type="application/json">` hijos (uno por rubro);
+  el atributo `script` sigue siendo el fallback de un solo guion, sin cambios. Cada guion es un
+  "slide" — timeline + `<ol class="cf-log">` propio — pre-renderizado COMPLETO en
+  `connectedCallback` exactamente como el contrato de un solo guion (T-002), y solo
+  `log.hidden` cambia al rotar. `loop` (el mismo atributo, mismo `loop-pause-ms`) ahora encadena al
+  SIGUIENTE guion en vez de reiniciar el mismo cuando hay >1; al terminar el último vuelve al
+  primero. N=1 es un no-op total sobre el comportamiento anterior — la suite de `loop.test.ts`
+  (T-027 B) pasa sin tocar una línea.
+- **C**: badge de estado, slot puro. `badge-flag` nombra qué `SimState.flags[key]` observar (el
+  evento `flag` ya existía en `core`, T-001 — cero lógica nueva); `badge-on-label`/`badge-off-label`
+  son las etiquetas del consumidor. Sin `badge-flag` no se renderiza nada — ningún "IA ACTIVA" por
+  default.
+- **D**: pill de rubro, mismo slot discipline. `tag-icon`/`tag-label` a nivel del host son el
+  default; un `<script data-tag-icon="…" data-tag-label="…">` por slide lo sobreescribe cuando esa
+  rotación está activa — así cada rubro puede llevar su propio ícono/etiqueta sin que el renderer
+  conozca ningún nombre de rubro.
+- **Regla que no se negocia (cumplida)**: `grep -rn "IA ACTIVA\|EVENTOS\|CATERING"
+  src/components/chat-sim/element/ src/components/chat-sim/styles.css` → cero hits. Esos strings
+  solo existen en `demo/rotation-badge-tag.html` (datos del consumidor).
+- **Tests**: `element/__tests__/t031.test.ts`, 16 tests nuevos (4 por letra), incluyendo el gemelo
+  de cada acceptance. Suite completa de `element/` (`vitest run src/components/chat-sim/element`):
+  106/106 verdes. Suite completa de `chat-sim/` (todas las lanes): 852/852... salvo la línea de
+  abajo.
+- **Verificación visual en vivo** (`agent-browser`, `demo/rotation-badge-tag.html`, file://, sin
+  dev server): capturas en `.cofoundy/state/reports/renders/` —
+  `t031-slide-catering.png` (alto fijo, tag, badge ON), `t031-height-override.png` (badge OFF tras
+  el flag de `stop`, panel `height="300"` visiblemente más corto que el default 440px con el MISMO
+  guion), `t031-rotated-slide.png` (confirmado programáticamente vía `dataset.step`/`.cf-tag-label`
+  que rotó a "SOPORTE TÉCNICO" y de vuelta a catering — el "vuelve al primero" de la acceptance).
+- **Flag para el CTO — bundle acoplado fuera de mi scope**: `capture/capture.bundle.js` (celda `W`
+  de `[capture]`) bundlea `element/index.ts` transitivamente, igual que `demo/chat-sim.bundle.js`
+  (mío) — cualquier cambio a `element/**` lo deja stale. Mismo acoplamiento que `_cto-index.md` ya
+  documentó en la ola 1, esta vez del lado de `[capture]`. No lo toqué (solo tengo `R`) — filé
+  `T-033.md` (`role: capture`) con el comando de regen exacto y el gate que lo verifica.
+- **`demo/chat-sim.bundle.js` regenerado** (comando de siempre) — el gate de frescura de mi propio
+  bundle sigue verde.
+- **`demo/index.html`, `demo/parity-t027.html`, `demo/telegram-vs-whatsapp.html`,
+  `demo/chrome-axis.html`**: sus `<style>` de página tenían un `height` fijo hardcodeado en
+  `.cf-chat-sim` — era exactamente el workaround que el operador reportó (cada demo fijaba SU
+  PROPIO alto porque el componente no fijaba el suyo). Ya no hace falta: solo queda `width` +
+  `box-shadow`, el alto lo pone el componente.

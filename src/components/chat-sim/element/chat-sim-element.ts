@@ -50,6 +50,26 @@ interface TypingRow {
   readonly li: HTMLLIElement;
 }
 
+/** T-031 B — one per script the element was handed (`<script type="application/json">` children,
+ * in document order; the single `script` attribute still works exactly as before and just yields
+ * an array of length 1). Every slide's DOM is pre-built ONCE in `connectedCallback` — same
+ * pre-render contract as a single script — so cycling back to an already-visited slide during
+ * rotation only ever flips `log.hidden`, never rebuilds it (acceptance #2's gemelo: "no se
+ * recrean"). `scriptEl` is the actual `<script>` child when the slide came from inline JSON
+ * (`null` for the attribute-sourced fallback) — T-031 D reads its `data-tag-*` attributes for a
+ * PER-SLIDE label override, the same "element/'s own reading of a convention" pattern
+ * `asServiceMedia` (render.ts) already established for `media.kind`. */
+interface Slide {
+  readonly scriptEl: Element | null;
+  readonly timeline: Timeline;
+  readonly postedAt: Map<MsgId, number>;
+  readonly log: HTMLOListElement;
+  readonly msgEls: Map<MsgId, HTMLLIElement>;
+  readonly typingRows: TypingRow[];
+  readonly dateSeps: { triggerId: MsgId; li: HTMLLIElement }[];
+  lastStep: number | null;
+}
+
 /** First `post` frame per MsgId → the Tick to format as this message's displayed time. `Frame.t`
  * already includes t0 + cumulative delay/jitter (core/compile.ts), so no arithmetic is redone
  * here — just a lookup, formatted with Intl (element/ is NOT core/, the no-Date lint doesn't
@@ -121,12 +141,29 @@ type ChromeMode = Chrome | 'branded';
 export class CfChatSimElement extends HTMLElement {
   static readonly observedAttributes = ['data-step'];
 
-  #timeline: Timeline | null = null;
-  #postedAt = new Map<MsgId, number>();
-  #msgEls = new Map<MsgId, HTMLLIElement>();
-  #log: HTMLOListElement | null = null;
-  #typingRows: TypingRow[] = [];
-  #dateSeps: { triggerId: MsgId; li: HTMLLIElement }[] = [];
+  /** T-031 B — one entry per script; N===1 is the pre-existing single-script shape verbatim (same
+   * fields that used to live directly on the instance, just addressed through `this.#active` now
+   * — see that getter's own comment for why every existing single-script code path is unchanged
+   * by this indirection). */
+  #slides: Slide[] = [];
+  #activeIndex = 0;
+  /** T-031 A/D — the visual "phone frame" (head + logs + composer): fixed-height and the tag
+   * pill (D) live OUTSIDE it, as siblings on the host, so an optional tag never eats into the
+   * fixed pixel budget acceptance #1 asks for. `null` only for the instant before
+   * `connectedCallback` runs. */
+  #frame: HTMLDivElement | null = null;
+  #tagEl: HTMLElement | null = null;
+  #tagIconEl: HTMLElement | null = null;
+  #tagLabelEl: HTMLElement | null = null;
+  /** T-031 C — badge is a SLOT, not logic: `null` key means "consumer didn't ask for one", and
+   * nothing renders. `#badgeFlagKey` names which `SimState.flags` key (core's existing `flag`
+   * event, architecture-v1.md — T-001 already ships it) drives it; `#badgeEl` is only ever created
+   * by `#buildHead` when the key is set. Mount-time-only, same as every other playback attribute
+   * here (channel/seed/locale/tz/t0/loop). */
+  #badgeFlagKey: string | null = null;
+  #badgeOnLabel = 'ON';
+  #badgeOffLabel = 'OFF';
+  #badgeEl: HTMLElement | null = null;
   #playhead: Playhead | null = null;
   /** T-027 A: true only while `dataset.step` is being written FROM `play()`'s own onFrame — i.e.
    * a playback tick, not an external scrub/seek. `#applyStep` reads it synchronously (custom
@@ -150,11 +187,13 @@ export class CfChatSimElement extends HTMLElement {
    * and nobody closed the loop. `connectedCallback` overwrites this with the real adapter before
    * anything gets built; the default here only matters for the instant before that runs. */
   #adapter: ChannelAdapter = getAdapter('whatsapp');
-  /** Guards against redoing any work when `data-step` is set to the value it already holds — the
-   * root cause of the animation bug (team-lead, iteration 3): the playhead writes this attribute
-   * on EVERY rAF tick (~60/s), and most ticks land between script steps, so without this guard
-   * every visible node got repopulated/reinserted dozens of times per script step for no reason. */
-  #lastStep: number | null = null;
+
+  /** The slide currently shown — every method below that used to read a singular `#timeline` /
+   * `#log` / `#msgEls` / etc. field now reads it off this. `undefined` only before
+   * `connectedCallback` has built at least one slide. */
+  get #active(): Slide | undefined {
+    return this.#slides[this.#activeIndex];
+  }
 
   /** Settable so a caller (a devtools console, a future capture/ harness, or T-005's real
    * `getAdapter(channel)` once it lands) can swap the whole 16-field object and see the DOM
@@ -168,9 +207,15 @@ export class CfChatSimElement extends HTMLElement {
     this.dataset.wallpaper = next.wallpaper;
     // Force the next #applyStep through even if `data-step`'s value is literally unchanged — the
     // step-unchanged guard exists to skip REDUNDANT work, and this isn't redundant: the adapter
-    // itself changed, so every visible node's structure needs repopulating against it.
-    this.#lastStep = null;
-    if (this.#timeline) this.#applyStep(Number(this.dataset.step ?? this.#timeline.frames.length));
+    // itself changed, so every visible node's structure needs repopulating against it. Every
+    // slide gets the guard reset (the adapter is global, not per-slide) even though only the
+    // ACTIVE one re-renders immediately — an inactive slide picks up the new adapter the moment
+    // rotation activates it (see #activateSlide).
+    this.#slides.forEach((s) => {
+      s.lastStep = null;
+    });
+    const active = this.#active;
+    if (active) this.#applyStep(Number(this.dataset.step ?? active.timeline.frames.length));
   }
 
   connectedCallback(): void {
@@ -181,7 +226,7 @@ export class CfChatSimElement extends HTMLElement {
     // here, so `role="group"` (not `log`/`aria-live`, which would narrate decorative content).
     if (!this.hasAttribute('role')) this.setAttribute('role', 'group');
 
-    const script = this.#readScript();
+    const scripts = this.#readScripts();
     const channel = (this.getAttribute('channel') as ChannelId) || 'whatsapp';
     // Chrome axis (T-017 Alcance B, core/types.ts:94-102): 'fidelity' — each channel looks like
     // itself, composer controls move side per real app (simulator, marketing capture). 'consistent'
@@ -216,70 +261,113 @@ export class CfChatSimElement extends HTMLElement {
     this.dataset.channel = channel;
     this.dataset.chrome = chrome;
 
-    this.#timeline = compile(script, { seed, channel, locale, tz, t0 });
-    this.#postedAt = postedAtByMsgId(this.#timeline.frames);
+    // T-031 A: fixed-height, configurable-not-hardcoded (operator: "el ratio del celular mocked
+    // tiene que ser fixed, como la izquierda" — ChatDemo.astro's own comment: "el alto de la caja
+    // es FIJO, igual para todos los rubros, no se achica"). A bare number is treated as px;
+    // anything else (`"60vh"`, `"100%"`) passes through verbatim. The default lives in
+    // styles.css's `--cf-cs-height` token (440px, ChatDemo.astro's own value) — an unset attribute
+    // is a no-op, never a blank/collapsed frame.
+    const heightAttr = this.getAttribute('height');
+    if (heightAttr) {
+      this.style.setProperty('--cf-cs-height', /^\d+$/.test(heightAttr) ? `${heightAttr}px` : heightAttr);
+    }
+
+    // T-031 C: badge is an opt-in SLOT — no `badge-flag` means no badge, ever (no default text
+    // imposed on every consumer, no vocabulary guessed on their behalf). `#buildHead` below only
+    // creates `#badgeEl` when this is set.
+    this.#badgeFlagKey = this.getAttribute('badge-flag');
+    this.#badgeOnLabel = this.getAttribute('badge-on-label') || 'ON';
+    this.#badgeOffLabel = this.getAttribute('badge-off-label') || 'OFF';
 
     this.textContent = '';
-    this.appendChild(this.#buildHead());
 
-    this.#log = document.createElement('ol');
-    this.#log.className = 'cf-log';
-    this.appendChild(this.#log);
+    // T-031 D — the tag pill lives OUTSIDE `#frame` (built next), a sibling on the host itself:
+    // "encima del chat" literally, not eating into the fixed-height budget above.
+    this.#tagEl = this.#buildTag();
+    this.appendChild(this.#tagEl);
 
-    // Pre-render del hilo completo (T-002 Alcance): every message the script will EVER post gets
-    // its <li> now, in final order, hidden — before any reveal happens. From here on, `data-step`
-    // only ever toggles `hidden` + repopulates content on the nodes built here; it never creates
-    // or reorders nodes. `deleted` messages (T-003) still get a node — hidden is what stands in
-    // for "not shown" per architecture-v1.md §10 (delete-for-all has no chrome, so hidden IS the
-    // whole treatment, not a placeholder for a tombstone that's out of scope).
-    const finalState = stateAtStep(this.#timeline, this.#timeline.frames.length);
-    finalState.order.forEach((id) => {
-      const li = document.createElement('li');
-      li.className = 'cf-msg'; // #reconcile only ever repopulates children, never this base class
-      li.hidden = true;
-      this.#msgEls.set(id, li);
-      this.#log!.appendChild(li);
+    this.#frame = document.createElement('div');
+    this.#frame.className = 'cf-frame';
+    this.appendChild(this.#frame);
+
+    this.#frame.appendChild(this.#buildHead());
+
+    // T-031 B — one fully pre-rendered slide per script, exactly the T-002 pre-render contract
+    // this loop used to run once for the single script. All N are built up front and stay in the
+    // DOM for the component's whole lifetime (only `log.hidden` ever toggles) — that's what makes
+    // "cycling back to slide 0 doesn't recreate it" true by construction, not by a cache that
+    // could go stale.
+    this.#slides = scripts.map(({ script, scriptEl }) => {
+      const timeline = compile(script, { seed, channel, locale, tz, t0 });
+      const postedAt = postedAtByMsgId(timeline.frames);
+      const msgEls = new Map<MsgId, HTMLLIElement>();
+      const dateSeps: { triggerId: MsgId; li: HTMLLIElement }[] = [];
+
+      const log = document.createElement('ol');
+      log.className = 'cf-log';
+      log.hidden = true; // activated below, after every slide exists
+
+      // Pre-render del hilo completo (T-002 Alcance): every message the script will EVER post
+      // gets its <li> now, in final order, hidden — before any reveal happens. From here on,
+      // `data-step` only ever toggles `hidden` + repopulates content on the nodes built here; it
+      // never creates or reorders nodes. `deleted` messages (T-003) still get a node — hidden is
+      // what stands in for "not shown" per architecture-v1.md §10.
+      const finalState = stateAtStep(timeline, timeline.frames.length);
+      finalState.order.forEach((id) => {
+        const li = document.createElement('li');
+        li.className = 'cf-msg'; // #reconcile only ever repopulates children, never this base class
+        li.hidden = true;
+        msgEls.set(id, li);
+        log.appendChild(li);
+      });
+
+      // Date separators (team-lead, iteration 3): "sin ella, la captura no se lee como una
+      // conversación real." One pill per calendar-day boundary crossed by the script, built once
+      // at its real position — same pre-render contract as messages and typing rows. Hidden until
+      // the message it introduces is actually revealed (#reconcile), so it can't appear ahead of
+      // the step that's supposed to introduce it.
+      let lastDayKey: string | null = null;
+      finalState.order.forEach((id) => {
+        const tick = postedAt.get(id) ?? 0;
+        const dayKey = dayKeyOf(t0, tick, tz);
+        if (dayKey === lastDayKey) return;
+        lastDayKey = dayKey;
+        const sep = document.createElement('li');
+        sep.className = 'cf-date-sep';
+        sep.hidden = true;
+        sep.innerHTML = `<span class="cf-date-pill">${dayLabelOf(t0, tick, locale, tz)}</span>`;
+        log.insertBefore(sep, msgEls.get(id)!);
+        dateSeps.push({ triggerId: id, li: sep });
+      });
+
+      // Typing/"…" indicators: ONE stable <li> per draft window, built here at its real position
+      // in the flow (never moved, never re-populated during playback — see TypingRow's comment).
+      const typingRows = draftIntervals(timeline).map((interval) => {
+        const li = document.createElement('li');
+        li.className = 'cf-typing-row';
+        li.dataset.dir = actorDir(interval.by);
+        li.hidden = true;
+        li.innerHTML = '<span class="cf-bubble cf-typing"><i></i><i></i><i></i></span>';
+
+        const anchorIdx = interval.afterMsgId ? finalState.order.indexOf(interval.afterMsgId) + 1 : 0;
+        const anchor = anchorIdx < finalState.order.length ? msgEls.get(finalState.order[anchorIdx])! : null;
+        log.insertBefore(li, anchor);
+        return { interval, li };
+      });
+
+      this.#frame!.appendChild(log);
+      return { scriptEl, timeline, postedAt, log, msgEls, typingRows, dateSeps, lastStep: null };
     });
 
-    // Date separators (team-lead, iteration 3): "sin ella, la captura no se lee como una
-    // conversación real." One pill per calendar-day boundary crossed by the script, built once at
-    // its real position — same pre-render contract as messages and typing rows. Hidden until the
-    // message it introduces is actually revealed (#reconcile), so it can't appear ahead of the
-    // step that's supposed to introduce it.
-    let lastDayKey: string | null = null;
-    finalState.order.forEach((id) => {
-      const tick = this.#postedAt.get(id) ?? 0;
-      const dayKey = dayKeyOf(t0, tick, tz);
-      if (dayKey === lastDayKey) return;
-      lastDayKey = dayKey;
-      const sep = document.createElement('li');
-      sep.className = 'cf-date-sep';
-      sep.hidden = true;
-      sep.innerHTML = `<span class="cf-date-pill">${dayLabelOf(t0, tick, locale, tz)}</span>`;
-      this.#log!.insertBefore(sep, this.#msgEls.get(id)!);
-      this.#dateSeps.push({ triggerId: id, li: sep });
-    });
+    this.#activeIndex = 0;
+    this.#slides[0].log.hidden = false;
+    this.#applyTagForActiveSlide();
 
-    // Typing/"…" indicators: ONE stable <li> per draft window, built here at its real position in
-    // the flow (never moved, never re-populated during playback — see TypingRow's comment).
-    this.#typingRows = draftIntervals(this.#timeline).map((interval) => {
-      const li = document.createElement('li');
-      li.className = 'cf-typing-row';
-      li.dataset.dir = actorDir(interval.by);
-      li.hidden = true;
-      li.innerHTML = '<span class="cf-bubble cf-typing"><i></i><i></i><i></i></span>';
-
-      const anchorIdx = interval.afterMsgId ? finalState.order.indexOf(interval.afterMsgId) + 1 : 0;
-      const anchor = anchorIdx < finalState.order.length ? this.#msgEls.get(finalState.order[anchorIdx])! : null;
-      this.#log!.insertBefore(li, anchor);
-      return { interval, li };
-    });
-
-    this.appendChild(this.#buildComposer(channel, chrome));
+    this.#frame.appendChild(this.#buildComposer(channel, chrome));
 
     const initialStep = this.hasAttribute('data-step')
       ? Number(this.getAttribute('data-step'))
-      : this.#timeline.frames.length;
+      : this.#slides[0].timeline.frames.length;
     this.dataset.step = String(initialStep);
     this.#applyStep(initialStep);
   }
@@ -310,7 +398,76 @@ export class CfChatSimElement extends HTMLElement {
     }
     head.appendChild(who);
 
+    // T-031 C — opt-in slot: only built when a consumer named a flag to watch (`badge-flag`,
+    // read in connectedCallback before this runs). `#reconcile` is the only place that ever
+    // touches its text/`data-on` after this — this method never renders "ON"/"OFF" itself, only
+    // creates the node the reconcile loop then drives from `SimState.flags`.
+    if (this.#badgeFlagKey) {
+      const badge = document.createElement('span');
+      badge.className = 'cf-badge';
+      head.appendChild(badge);
+      this.#badgeEl = badge;
+    }
+
     return head;
+  }
+
+  /** T-031 D — "encima del chat", cromo del CONSUMIDOR: an icon+label pill this element renders,
+   * but whose content is never a literal here — `#applyTagForActiveSlide` is the only place that
+   * ever sets `textContent` on `#tagIconEl`/`#tagLabelEl`, straight from attributes. Built once,
+   * hidden by default; a mount with no `tag-icon`/`tag-label` anywhere (host or per-slide) never
+   * shows it — same "opt-in slot" discipline as the badge above. */
+  #buildTag(): HTMLElement {
+    const tag = document.createElement('div');
+    tag.className = 'cf-tag';
+    tag.hidden = true;
+
+    const icon = document.createElement('span');
+    icon.className = 'cf-tag-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    tag.appendChild(icon);
+
+    const label = document.createElement('span');
+    label.className = 'cf-tag-label';
+    tag.appendChild(label);
+
+    this.#tagIconEl = icon;
+    this.#tagLabelEl = label;
+    return tag;
+  }
+
+  /** Reads the ACTIVE slide's own `<script data-tag-icon="…" data-tag-label="…">` first (T-031 B
+   * rotation — production's real shape: each rubro carries its own tag), falling back to the
+   * host-level `tag-icon`/`tag-label` attributes for the common single-script case. Neither source
+   * is a literal owned by this file — both are the consumer's data, read verbatim. */
+  #applyTagForActiveSlide(): void {
+    if (!this.#tagEl || !this.#tagIconEl || !this.#tagLabelEl) return;
+    const slide = this.#active;
+    const icon = slide?.scriptEl?.getAttribute('data-tag-icon') || this.getAttribute('tag-icon') || '';
+    const label = slide?.scriptEl?.getAttribute('data-tag-label') || this.getAttribute('tag-label') || '';
+    if (!icon && !label) {
+      this.#tagEl.hidden = true;
+      return;
+    }
+    this.#tagEl.hidden = false;
+    this.#tagIconEl.hidden = !icon;
+    this.#tagIconEl.textContent = icon;
+    this.#tagLabelEl.textContent = label;
+  }
+
+  /** T-031 B — advances rotation to slide `index`: hides the current slide's (already fully
+   * built) log, shows the target's, and resets ITS `lastStep` guard so the next `#applyStep` does
+   * a real reconcile even if `data-step` happens to already equal the value being written (the
+   * step-unchanged guard's own reasoning, applied across a slide switch instead of across rAF
+   * ticks). Never creates or removes a node — the gemelo (acceptance #2) this exists to satisfy. */
+  #activateSlide(index: number): void {
+    const current = this.#active;
+    if (current) current.log.hidden = true;
+    this.#activeIndex = index;
+    const next = this.#slides[index];
+    next.log.hidden = false;
+    next.lastStep = null;
+    this.#applyTagForActiveSlide();
   }
 
   /** Composer — always shown (visual-only for this wave; a real, operable composer with mobile
@@ -364,8 +521,9 @@ export class CfChatSimElement extends HTMLElement {
   }
 
   attributeChangedCallback(name: string): void {
-    if (name === 'data-step' && this.#timeline) {
-      this.#applyStep(Number(this.dataset.step ?? this.#timeline.frames.length));
+    const active = this.#active;
+    if (name === 'data-step' && active) {
+      this.#applyStep(Number(this.dataset.step ?? active.timeline.frames.length));
     }
   }
 
@@ -382,10 +540,11 @@ export class CfChatSimElement extends HTMLElement {
    * only ever repopulate/hide the SAME pre-built `<li>`s (connectedCallback), the exact contract
    * T-017's typing-animation regression exists to protect (acceptance #2's gemelo). */
   play(): Playhead {
-    if (!this.#timeline) throw new Error('cf-chat-sim: play() before connectedCallback');
+    const active = this.#active;
+    if (!active) throw new Error('cf-chat-sim: play() before connectedCallback');
     this.#playhead?.pause();
     this.#clearLoopTimer();
-    const tl = this.#timeline;
+    const tl = active.timeline;
     const ph = createPlayhead(tl);
     ph.onFrame((_state, t) => {
       // Convert Tick -> exact frame count via the same monotonic scan stateAtStep uses, so the
@@ -406,12 +565,23 @@ export class CfChatSimElement extends HTMLElement {
 
   /** T-027 B acceptance: "el loop reinicia sin recrear nodos" — restarting is just calling
    * `play()` again (see its own comment above for why that's safe); the pause between rubros in
-   * ChatDemo.astro (4200ms, a full context-switch to a DIFFERENT script) doesn't apply here — this
-   * loops the SAME script, so the default is shorter and consumer-tunable via `loop-pause-ms`. */
+   * ChatDemo.astro (4200ms, a full context-switch to a DIFFERENT script) doesn't apply here for
+   * the single-script case, so the default is shorter and consumer-tunable via `loop-pause-ms`.
+   *
+   * T-031 B extends this to N>1 scripts: when there's more than one slide, "restart" means
+   * "advance to the next one" (wrapping back to the first after the last — the acceptance's own
+   * "al terminar el último vuelve al primero"), gated behind the SAME `loop` attribute rather than
+   * being unconditional — consistent with every other opt-in playback attribute here (chrome,
+   * badge, tag). `#activateSlide` only ever hides/shows already-built logs, never recreates one,
+   * so `play()` right after it operates on `this.#active`'s (now the next slide's) real
+   * timeline — same "brand-new Playhead" reasoning as the single-script restart above. */
   #onPlaybackComplete(): void {
     if (!this.#loop) return;
     this.#loopTimer = setTimeout(() => {
       this.#loopTimer = null;
+      if (this.#slides.length > 1) {
+        this.#activateSlide((this.#activeIndex + 1) % this.#slides.length);
+      }
       this.play();
     }, this.#loopPauseMs);
   }
@@ -423,28 +593,42 @@ export class CfChatSimElement extends HTMLElement {
     }
   }
 
-  #readScript(): SimScript {
-    const inline = this.querySelector('script[type="application/json"]');
-    const raw = inline?.textContent ?? this.getAttribute('script');
+  /** T-031 B — every `<script type="application/json">` child, in document order, is its own
+   * rotation slide; the pre-existing single `script` ATTRIBUTE stays a single-slide fallback
+   * (unchanged priority: inline children win when both are present, exactly like `#readScript`
+   * did before this). `scriptEl` lets `#applyTagForActiveSlide` read a per-slide
+   * `data-tag-icon`/`data-tag-label` override straight off the markup — `null` for the
+   * attribute-sourced fallback, which has no element to read one from. */
+  #readScripts(): { script: SimScript; scriptEl: Element | null }[] {
+    const inlineScripts = [...this.querySelectorAll('script[type="application/json"]')];
+    if (inlineScripts.length > 0) {
+      return inlineScripts.map((scriptEl) => ({
+        script: JSON.parse(scriptEl.textContent ?? '[]') as SimScript,
+        scriptEl,
+      }));
+    }
+    const raw = this.getAttribute('script');
     if (!raw) throw new Error('cf-chat-sim: no script provided (attribute or inline JSON child)');
-    return JSON.parse(raw) as SimScript;
+    return [{ script: JSON.parse(raw) as SimScript, scriptEl: null }];
   }
 
   #applyStep(step: number): void {
-    if (!this.#timeline || !this.#log) return;
+    const slide = this.#active;
+    if (!slide) return;
     // The root cause behind both the duplicate-bubble bug (iteration 1) and the typing animation
     // never looping (iteration 3, team-lead's diagnosis): play()'s onFrame callback writes
     // `data-step` on EVERY rAF tick (~60/s), and only a fraction of those ticks land on a value
     // that actually differs from the last one applied. Without this guard, every visible node got
     // repopulated dozens of times per script step for no reason — including nodes whose CSS
-    // animation state that repopulation was silently resetting.
-    if (step === this.#lastStep) return;
-    this.#lastStep = step;
+    // animation state that repopulation was silently resetting. `#activateSlide` (T-031 B) resets
+    // this per-slide, so switching slides always forces a real reconcile too.
+    if (step === slide.lastStep) return;
+    slide.lastStep = step;
     // Captured BEFORE stateAtStep/#reconcile run: `#fromPlayhead` is only ever true for the exact
     // synchronous turn play()'s onFrame wrote `dataset.step` (see that field's own comment).
     const animate = this.#fromPlayhead;
-    const state = stateAtStep(this.#timeline, step);
-    this.#reconcile(state, step, animate);
+    const state = stateAtStep(slide.timeline, step);
+    this.#reconcile(slide, state, step, animate);
   }
 
   /** ChatDemo.astro's exact trick (`s.offsetWidth + 10`, global.css's `measure()`): `--cf-cs-pad`
@@ -464,11 +648,11 @@ export class CfChatSimElement extends HTMLElement {
   /** Pre-render contract: every MsgId's <li> already exists (built in connectedCallback from the
    * final state) — this only repopulates content for currently-visible messages and flips
    * `hidden`. It never creates, removes, or reorders nodes. */
-  #reconcile(state: SimState, step: number, animate: boolean): void {
+  #reconcile(slide: Slide, state: SimState, step: number, animate: boolean): void {
     // `t0` IS the epoch: architecture-v1.md §1 defines it as "epoch virtual — dato del GUION, no
     // del reloj", and connectedCallback() compiles with a real epoch-ms value, so no fabrication
     // needed here — Timeline.t0 already carries it, untouched, straight from core/types.ts.
-    const t0 = this.#timeline!.t0;
+    const t0 = slide.timeline.t0;
     const locale = this.getAttribute('locale') || 'es-PE';
     const tz = this.getAttribute('tz') || 'America/Lima';
     const editedLabel = this.getAttribute('edited-label') || 'Editado';
@@ -478,7 +662,7 @@ export class CfChatSimElement extends HTMLElement {
       .map((id) => state.msgs.get(id))
       .filter((m): m is MsgState => !!m && m.deleted === null)
       .map((m) => {
-        const tick = this.#postedAt.get(m.id) ?? 0;
+        const tick = slide.postedAt.get(m.id) ?? 0;
         return toRenderMessage(m, formatTime(t0, tick, locale, tz), editedLabel, replyLabel);
       });
 
@@ -486,7 +670,7 @@ export class CfChatSimElement extends HTMLElement {
     const visibleIds = new Set(visible.map((m) => m.id));
 
     visible.forEach((rm) => {
-      const li = this.#msgEls.get(rm.id);
+      const li = slide.msgEls.get(rm.id);
       if (!li) return; // shouldn't happen — every eventual MsgId was pre-built in connectedCallback
       populateMessageElement(li, rm, this.#adapter, flags.get(rm.id)!);
       li.hidden = false;
@@ -496,12 +680,12 @@ export class CfChatSimElement extends HTMLElement {
     // Not (yet, or no longer) in `order` at this step => hidden, never removed — the nodes stay
     // exactly where connectedCallback put them (post is append-only in T-001, so build order ===
     // final DOM order already; pin reordering is T-003's problem, not this loop's).
-    this.#msgEls.forEach((li, id) => {
+    slide.msgEls.forEach((li, id) => {
       if (!visibleIds.has(id)) li.hidden = true;
     });
 
     // A separator reveals exactly when the message it introduces does — never ahead of it.
-    this.#dateSeps.forEach((sep) => {
+    slide.dateSeps.forEach((sep) => {
       sep.li.hidden = !visibleIds.has(sep.triggerId);
     });
 
@@ -511,12 +695,21 @@ export class CfChatSimElement extends HTMLElement {
     // Typing indicators: flip `hidden` on the ALREADY-BUILT <li> for whichever window contains
     // `step` — never innerHTML, never appendChild/insertBefore here. That's what keeps the CSS
     // animation looping instead of restarting every time this runs (team-lead's diagnosis).
-    this.#typingRows.forEach((row) => {
+    slide.typingRows.forEach((row) => {
       row.li.hidden = !(step >= row.interval.appearStep && step < row.interval.vanishStep);
     });
 
-    this.#applyBottomAnchor();
-    this.#applyScroll(state.scrollId, animate);
+    // T-031 C — badge slot: reads whichever `SimState.flags` key the consumer named via
+    // `badge-flag`; no key set (`#badgeEl` never built) is the common no-op case. Never a literal
+    // "IA ACTIVA"/rubro string here — only the consumer's own on/off labels.
+    if (this.#badgeFlagKey && this.#badgeEl) {
+      const on = Boolean(state.flags[this.#badgeFlagKey]);
+      this.#badgeEl.textContent = on ? this.#badgeOnLabel : this.#badgeOffLabel;
+      this.#badgeEl.dataset.on = String(on);
+    }
+
+    this.#applyBottomAnchor(slide.log);
+    this.#applyScroll(slide.log, state.scrollId, animate);
   }
 
   /** Team-lead, iteration 3: measured 41% of the log's height sitting empty at the BOTTOM (216px
@@ -524,11 +717,10 @@ export class CfChatSimElement extends HTMLElement {
    * `.cf-anchor-top` (styles.css) only ever lives on the first VISIBLE child at any moment; date
    * separators (below) and typing rows are ordinary flex items too, so whichever of the three
    * kinds happens to be first-and-visible gets it. */
-  #applyBottomAnchor(): void {
-    if (!this.#log) return;
-    const prev = this.#log.querySelector<HTMLElement>('.cf-anchor-top');
+  #applyBottomAnchor(log: HTMLOListElement): void {
+    const prev = log.querySelector<HTMLElement>('.cf-anchor-top');
     if (prev) prev.classList.remove('cf-anchor-top');
-    const firstVisible = [...this.#log.children].find((el) => !(el as HTMLElement).hidden);
+    const firstVisible = [...log.children].find((el) => !(el as HTMLElement).hidden);
     (firstVisible as HTMLElement | undefined)?.classList.add('cf-anchor-top');
   }
 
@@ -541,10 +733,9 @@ export class CfChatSimElement extends HTMLElement {
    * `animate` is false for the initial render and any external/manual `data-step` write (devtools
    * scrub, a consumer's own seek UI) — acceptance #1's "instantáneo al seek": those jump straight
    * to bottom, never glide. `scrollId === null` (nothing posted yet) is a no-op. */
-  #applyScroll(scrollId: MsgId | null, animate: boolean): void {
-    if (!this.#log || scrollId === null) return;
+  #applyScroll(log: HTMLOListElement, scrollId: MsgId | null, animate: boolean): void {
+    if (scrollId === null) return;
     this.#cancelScrollAnimation();
-    const log = this.#log;
     const to = Math.max(0, log.scrollHeight - log.clientHeight);
     const reduceMotion =
       typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;

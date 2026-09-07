@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>chat-sim — T-031 (alto fijo, rotación, badge, etiqueta)</title>
+    <!--
+      T-031 acceptance evidence page — same no-build-step contract as index.html/parity-t027.html
+      (file:// only, checked-in bundle, no type="module").
+
+      Left: ONE <cf-chat-sim> with TWO scripts of very different length (acceptance #1's gemelo —
+      "dos guiones de largo muy distinto dan el MISMO alto medido") plus `loop`, so it rotates
+      catering -> eventos -> catering -> ... forever (acceptance #2). Each `<script>` child carries
+      its own `data-tag-icon`/`data-tag-label` (T-031 D) — the pill above the frame changes with
+      the active slide, read verbatim off the markup, never a literal in the renderer. `badge-flag`
+      watches the `aiOn` flag the core already emits (T-031 C): the catering script flips it off
+      near the end (Fovente stops, a human takes over) and the eventos script never touches it, so
+      the badge visibly differs between the two rotations without any new core event.
+
+      Right: the SAME two scripts, but `height="300"` on the host — the override still holds
+      across rotation (acceptance #1: "atributo de alto, con default sensato").
+    -->
+    <link rel="stylesheet" href="../src/components/chat-sim/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 2.5rem 1rem;
+        background: #f4ede9;
+        font-family: system-ui, sans-serif;
+      }
+      h1 {
+        font-size: 0.8125rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #7a6f68;
+        margin: 0;
+      }
+      .row {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        align-items: flex-start;
+      }
+      figure {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      figcaption {
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #7a6f68;
+      }
+      .cf-chat-sim {
+        width: min(360px, 92vw);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>T-031 — alto fijo (gemelo: 2 guiones, mismo alto) + rotación + badge + etiqueta</h1>
+    <div class="row">
+      <figure>
+        <figcaption>default height (440px) · loop rotates catering ⇄ eventos</figcaption>
+        <cf-chat-sim
+          id="rotator-default"
+          channel="whatsapp"
+          seed="7"
+          t0="1789761600000"
+          loop
+          loop-pause-ms="2200"
+          contact-name="Fovente — Reservas"
+          contact-status="en línea"
+          badge-flag="aiOn"
+          badge-on-label="IA ACTIVA"
+          badge-off-label="TE TOCA A TI"
+          tag-icon="💬"
+          tag-label="FOVENTE"
+        >
+          <script type="application/json" data-tag-icon="🎉" data-tag-label="EVENTOS / CATERING">
+            [
+              { "k": "flag", "key": "aiOn", "value": true, "delayMs": 0 },
+              { "k": "post", "by": "in", "text": "buenas, sale catering para 40 personas?", "delayMs": 400 },
+              { "k": "post", "by": "in", "text": "cuanto me saldria", "delayMs": 900 },
+              { "k": "draft", "by": "out:ai", "chars": 40, "delayMs": 700 },
+              { "k": "post", "by": "out:ai", "text": "¡Hola! Para 40 tenemos dos opciones", "delayMs": 850 },
+              { "k": "post", "by": "out:ai", "text": "Clásico — S/. 32 c/u\nPremium — S/. 48 c/u", "delayMs": 900 },
+              { "k": "post", "by": "out:ai", "text": "¿Es un evento de empresa o familiar?", "delayMs": 900 },
+              { "k": "post", "by": "in", "text": "familiar, ya me quedo con el clasico", "delayMs": 1500 },
+              { "k": "draft", "by": "out:ai", "chars": 30, "delayMs": 700 },
+              { "k": "post", "by": "out:ai", "text": "Paga aquí: pagos.fovente.pe/r/8x2", "media": { "link": true }, "delayMs": 900 },
+              { "k": "flag", "key": "aiOn", "value": false, "delayMs": 300 },
+              { "k": "post", "by": "system", "text": "FOVENTE SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 }
+            ]
+          </script>
+          <script type="application/json" data-tag-icon="🛠️" data-tag-label="SOPORTE TÉCNICO">
+            [
+              { "k": "flag", "key": "aiOn", "value": true, "delayMs": 0 },
+              { "k": "post", "by": "in", "text": "hola, tienen soporte hoy?", "delayMs": 400 },
+              { "k": "post", "by": "out:ai", "text": "¡Sí! ¿En qué te ayudo?", "delayMs": 700 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+      <figure>
+        <figcaption>height="300" (override) · mismos dos guiones</figcaption>
+        <cf-chat-sim
+          id="rotator-short"
+          channel="whatsapp"
+          seed="7"
+          t0="1789761600000"
+          height="300"
+          loop
+          loop-pause-ms="2200"
+          contact-name="Fovente — Reservas"
+          contact-status="en línea"
+          badge-flag="aiOn"
+          badge-on-label="IA ACTIVA"
+          badge-off-label="TE TOCA A TI"
+        >
+          <script type="application/json" data-tag-icon="🎉" data-tag-label="EVENTOS / CATERING">
+            [
+              { "k": "flag", "key": "aiOn", "value": true, "delayMs": 0 },
+              { "k": "post", "by": "in", "text": "buenas, sale catering para 40 personas?", "delayMs": 400 },
+              { "k": "post", "by": "in", "text": "cuanto me saldria", "delayMs": 900 },
+              { "k": "draft", "by": "out:ai", "chars": 40, "delayMs": 700 },
+              { "k": "post", "by": "out:ai", "text": "¡Hola! Para 40 tenemos dos opciones", "delayMs": 850 },
+              { "k": "post", "by": "out:ai", "text": "Clásico — S/. 32 c/u\nPremium — S/. 48 c/u", "delayMs": 900 },
+              { "k": "post", "by": "out:ai", "text": "¿Es un evento de empresa o familiar?", "delayMs": 900 },
+              { "k": "post", "by": "in", "text": "familiar, ya me quedo con el clasico", "delayMs": 1500 },
+              { "k": "draft", "by": "out:ai", "chars": 30, "delayMs": 700 },
+              { "k": "post", "by": "out:ai", "text": "Paga aquí: pagos.fovente.pe/r/8x2", "media": { "link": true }, "delayMs": 900 },
+              { "k": "flag", "key": "aiOn", "value": false, "delayMs": 300 },
+              { "k": "post", "by": "system", "text": "FOVENTE SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 }
+            ]
+          </script>
+          <script type="application/json" data-tag-icon="🛠️" data-tag-label="SOPORTE TÉCNICO">
+            [
+              { "k": "flag", "key": "aiOn", "value": true, "delayMs": 0 },
+              { "k": "post", "by": "in", "text": "hola, tienen soporte hoy?", "delayMs": 400 },
+              { "k": "post", "by": "out:ai", "text": "¡Sí! ¿En qué te ayudo?", "delayMs": 700 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+    </div>
+
+    <!-- Plain <script>, not type="module" — same file:// CORS reasoning as index.html. -->
+    <script src="./chat-sim.bundle.js"></script>
+    <script>
+      document.getElementById('rotator-default').play();
+      document.getElementById('rotator-short').play();
+    </script>
+
+    <!--
+      Rebuild the bundle after editing element/**:
+        npx esbuild src/components/chat-sim/element/index.ts --bundle --format=iife \
+          --global-name=CfChatSim --outfile=demo/chat-sim.bundle.js --target=es2020
+    -->
+  </body>
+</html>

@@ -35,9 +35,10 @@
         color: #7a6f68;
         margin: 0;
       }
+      /* T-031 A: the component now fixes its own frame height (styles.css's `--cf-cs-height`,
+         default 440px) — this page no longer needs to impose one. Only `width` is page chrome. */
       .cf-chat-sim {
         width: min(380px, 92vw);
-        height: 620px;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
       }
       .controls {

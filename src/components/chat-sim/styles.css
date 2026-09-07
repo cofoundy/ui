@@ -30,6 +30,14 @@
   --cf-cs-tail-h: 11px;
   --cf-cs-gap: 0.45rem;
   --cf-cs-pad: 44px; /* reserved inline space for the inside-pad timestamp trick; JS re-measures it */
+  /* T-031 A — the operator's own words: "el ratio del celular mocked tiene que ser fixed, como
+     la izquierda". 440px is ChatDemo.astro's own literal (its `measure()` comment: "el alto de la
+     caja es FIJO, igual para todos los rubros, no se achica") — same default, so a consumer who
+     sets nothing gets production's exact proportions. Applied to `.cf-frame` below, NOT to this
+     root element, so an optional `.cf-tag` (T-031 D) sits above the frame instead of eating into
+     this fixed budget. Overridable per-instance via the `height` attribute
+     (chat-sim-element.ts's connectedCallback) — never hardcoded past this one token. */
+  --cf-cs-height: 440px;
 
   --cf-cs-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
   --cf-cs-mono: ui-monospace, 'SF Mono', Menlo, monospace;
@@ -74,9 +82,48 @@
   flex-direction: column;
   font-family: var(--cf-cs-sans);
   color: var(--cf-cs-ink);
+}
+
+/* T-031 A/D — the actual "phone frame" (head + logs + composer): fixed height, the rounded card,
+   the overflow clip. Split out from `.cf-chat-sim` itself so `.cf-tag` (below) can sit as a
+   sibling ABOVE it — "encima del chat", not squeezed inside a fixed pixel budget it would
+   otherwise have to share. Every existing selector keyed off `.cf-chat-sim[data-*] .cf-log` /
+   `.cf-avatar` / etc. is a DESCENDANT combinator, so this extra nesting level changes nothing
+   about which rules match; CSS custom properties set on `.cf-chat-sim` still inherit straight
+   through it. */
+.cf-frame {
+  display: flex;
+  flex-direction: column;
+  height: var(--cf-cs-height);
   background: var(--cf-cs-surface);
   border-radius: var(--cf-cs-radius-lg);
   overflow: hidden;
+}
+
+/* ── tag pill (T-031 D) — "encima del chat", cromo del consumidor ─────────
+   Same discipline as `reply-label`/`edited-label`: zero literals here, `element/`'s
+   `#applyTagForActiveSlide` only ever writes attribute-sourced text into `.cf-tag-icon`/
+   `.cf-tag-label`. `hidden` by default (no `tag-icon`/`tag-label` anywhere ⇒ never rendered). */
+.cf-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: none;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cf-cs-ink-muted);
+}
+.cf-tag[hidden] {
+  display: none;
+}
+.cf-tag-icon {
+  flex: none;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+.cf-tag-icon[hidden] {
+  display: none;
 }
 
 /* Doodle-textured wallpaper (adapter.wallpaper === 'pattern' — WhatsApp AND Telegram; 'none' for
@@ -283,6 +330,27 @@
   color: var(--cf-cs-ink-muted);
 }
 
+/* T-031 C — badge slot: opt-in (only exists when `badge-flag` is set, chat-sim-element.ts's
+   `#buildHead`), pinned to the header's trailing edge. `data-on` (not a class) is what
+   `#reconcile` writes, straight from `SimState.flags[badgeFlagKey]` — no per-brand color, no
+   literal text, both are the consumer's own attributes. */
+.cf-badge {
+  margin-left: auto;
+  flex: none;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--cf-cs-hairline);
+  color: var(--cf-cs-ink-muted);
+}
+.cf-badge[data-on='true'] {
+  background: var(--cf-cs-accent);
+  color: var(--cf-cs-accent-ink);
+}
+
 /* ── message list ───────────────────────────────────────────────────── */
 
 .cf-log {
@@ -295,6 +363,14 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+}
+/* T-031 B — one `<ol class="cf-log">` per rotation slide, all built up front and left in the DOM
+   for the component's whole lifetime (chat-sim-element.ts's `#slides`); only the active one is
+   ever unhidden. Same reasoning as `.cf-msg[hidden]`/`.cf-typing-row[hidden]` below: the class
+   rule above sets `display: flex` at equal specificity to the UA `[hidden]` default, and author
+   styles win that tie — without this override an "inactive" log would still take flex space. */
+.cf-log[hidden] {
+  display: none;
 }
 
 /* Stacks from the BOTTOM, like a real thread — ChatDemo.astro's documented reason

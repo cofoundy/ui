@@ -49,9 +49,10 @@
       .row[data-theme='dark'] figcaption {
         color: #9fb0bd;
       }
+      /* T-031 A: the component now fixes its own frame height (styles.css's `--cf-cs-height`) —
+         this page no longer needs to impose one. */
       .cf-chat-sim {
         width: min(340px, 90vw);
-        height: 560px;
         box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
       }
     </style>
