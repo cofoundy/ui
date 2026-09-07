@@ -5,7 +5,51 @@ guion, con diferencias **estructurales** entre canales (no de color), y escupe P
 corrida tras corrida. Sirve a las dos landings Astro sin agregar React, y a la app de Fovente vía
 React. 33+ commits, ~13.6k líneas, 6 lanes en paralelo.
 
-**Estado: código completo. Una afirmación queda `UNVERIFIED` — ver abajo.**
+**Estado final: 73 commits · 302/302 · integrado en preview de la landing de Fovente, sin mergear.**
+
+## Segunda mitad del ciclo: lo que encontró el operador mirando la pantalla
+
+Tras el cierre inicial, el operador revisó el render y encontró **ocho defectos que ningún test
+cazó**. Es el dato más importante de todo el ciclo:
+
+| Reportó | Causa |
+|---|---|
+| El typing no se repetía | `play()` reescribía `data-step` ~60×/s ⇒ el re-render mataba el ciclo CSS |
+| Telegram no se parece a Telegram | derivamos el lenguaje visual del modelo de **backend** (qué observa un bot), no del cliente |
+| Telegram sí tiene doble tick | `receiptGlyph: 'single-tick'` era del transporte, no de la UI |
+| ¿Por qué hay emojis? | `glyph: '🕐'` literal ⇒ la fuente del sistema ⇒ **PNG distinto por máquina** |
+| Los colores de oscuro | `#005c4b`/`#2b5278` de la spec vs `#154D38`/`#3E6AA7` de sus clientes reales |
+| Se fueron los doodles | trazo negro al 4.5% sobre fondo oscuro = invisible |
+| No hay auto-scroll ni loop | `core` exponía `scrollId` y **ningún renderer lo consumía** |
+| El reloj nunca transiciona | los guiones de demo tenían **0 pasos `receipt`** |
+| La tarjeta no es nativa | el CTO racionalizó un primitivo inventado y salteó el real (`BUTTONS`/`LIST`) |
+
+**El patrón:** nuestros 9 gates verifican **consistencia interna** — que el renderer obedezca al
+adapter. **Ninguno verifica que el adapter tenga razón.** Un valor incorrecto pasa cualquier gemelo:
+el DOM cambia, sólo que hacia lo equivocado.
+
+Por eso **T-014 —el baseline contra referencia externa— es la tarea más importante que quedó sin
+hacer**, y no una más de la lista.
+
+## Fallas de método del CTO, con su recurrencia
+
+| Falla | Veces | Diagnóstico |
+|---|---|---|
+| Cambio de contrato sin asignar consumidores | **5** | escribí la regla del `grep -rl` y no la corrí 4 veces; a la 5ª sí, y predijo los 3 rotos |
+| Agentes vivos después de entregar | **2** | escribí "el shutdown es parte de aceptar la tarea" y dejé 2 idle una hora |
+| Sondas propias que no medían | **6** | `eval` vacío, mutaciones que no aplicaban, rebuild sobre árbol sucio |
+| Verificar contra el documento y no el código | **3** | máquina de entrega, `Int32Array`, y el wallpaper "no verificado" |
+
+**Una regla que depende de que el orquestador se acuerde no es una regla: es una intención.** Lo que
+las haría reales es un gate — que el task graph no se pueda cerrar sin el output del grep adentro.
+
+## Límite conocido de la regla del grep
+
+Busca **símbolos**. No ve el grafo de **valores**: cambiar `#53bdeb` por
+`var(--channel-whatsapp-read, #53bdeb)` rompió un test que afirmaba el color resuelto, y ningún
+grep de símbolos lo habría anticipado. Hace falta una **segunda** herramienta, de estilo de test
+(`grep` de `.style.color).toBe(` cruzado contra diffs que toquen `color:` en adapters), no una
+extensión de la primera.
 
 ---
 
