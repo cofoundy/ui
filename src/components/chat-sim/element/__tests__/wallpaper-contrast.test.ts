@@ -16,6 +16,13 @@
 // below (1.05) sits strictly between the measured BUG case (~1.009, black-on-dark) and both the
 // existing light-mode design and the fix (~1.10 / ~1.16) — see the twin test for the exact
 // numbers that justify it.
+//
+// T-023 grew this file past "just the wallpaper": B fixed a gemelo that asserted against a local
+// string instead of the real sheet (see the Telegram describe block below); A/D added WCAG text-
+// contrast coverage (dark-mode stamp/tick meta color, quote-author, avatar initial) and C added a
+// presence + readability check for `:focus-visible`. Same falsifiable-static-scan shape throughout
+// — "es el único gate del ciclo que mide percepción" is exactly why it grows here, not in a
+// parallel file.
 
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -63,6 +70,12 @@ function compositeOver(fg: RGB, alpha: number, bg: RGB): RGB {
  * twin test below for the numbers. */
 const VISIBLE_THRESHOLD = 1.05;
 
+/** WCAG 2.x AA: normal text needs >= 4.5:1 against its background (T-023 A/D). */
+const TEXT_AA_THRESHOLD = 4.5;
+
+/** WCAG 2.x AA: non-text UI components (e.g. a focus indicator) need >= 3:1 (T-023 C). */
+const NON_TEXT_AA_THRESHOLD = 3;
+
 /** Extract the first `stroke='%23HEX'` + `stroke-opacity='N'` pair out of a background-image
  * data-URI chunk of styles.css (the doodle SVGs only ever declare one stroke color). */
 function extractStroke(cssChunk: string): { color: RGB; opacity: number } {
@@ -76,7 +89,7 @@ function extractStroke(cssChunk: string): { color: RGB; opacity: number } {
   return { color: hexToRgb(hex), opacity };
 }
 
-/** Grabs the `background-image: url(...)` value immediately following `selector {`. */
+/** Grabs the CSS rule body immediately following `selector {`. */
 function extractRuleBlock(source: string, selectorLiteral: string): string {
   const idx = source.indexOf(selectorLiteral);
   if (idx === -1) throw new Error(`Selector not found in styles.css: ${selectorLiteral}`);
@@ -90,10 +103,46 @@ function extractCustomProperty(cssChunk: string, prop: string): RGB {
   return hexToRgb(m[1]);
 }
 
+/** Raw (un-parsed) value of a CSS property/custom-property — e.g. `"2px solid var(--cf-cs-ink)"`
+ * or `"var(--cf-cs-accent-text)"`. Used where the declared value isn't a literal hex (T-023). */
+function extractPropertyRaw(cssChunk: string, prop: string): string {
+  const m = cssChunk.match(new RegExp(`${prop.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&')}:\\s*([^;]+);`));
+  if (!m) throw new Error(`${prop} not found in chunk: ${cssChunk.slice(0, 200)}`);
+  return m[1].trim();
+}
+
+/** `{ "--token": "raw value" }` for every custom property declared directly in a rule block —
+ * used to resolve one level of `var(--x)` indirection (T-023: tokens like `--cf-cs-accent-text`
+ * are declared as `var(--cf-cs-accent)` in dark theme, not a literal hex). */
+function buildTokenMap(block: string): Record<string, string> {
+  const map: Record<string, string> = {};
+  const re = /(--[\w-]+):\s*([^;]+);/g;
+  let m: RegExpExecArray | null;
+  // eslint-disable-next-line no-cond-assign
+  while ((m = re.exec(block))) {
+    map[m[1]] = m[2].trim();
+  }
+  return map;
+}
+
+/** Resolves a raw CSS color value to RGB, following at most one `var(--token)` indirection
+ * through the supplied token map (this file's tokens never chain deeper than that). */
+function resolveColor(raw: string, tokens: Record<string, string>): RGB {
+  const varMatch = raw.match(/^var\((--[\w-]+)\)$/);
+  if (varMatch) {
+    const resolved = tokens[varMatch[1]];
+    if (!resolved) throw new Error(`Unresolved token ${varMatch[1]} (raw: ${raw})`);
+    return resolveColor(resolved, tokens);
+  }
+  return hexToRgb(raw);
+}
+
 const rootBlock = extractRuleBlock(css, '.cf-chat-sim {');
 const darkBlock = extractRuleBlock(css, "[data-theme='dark'] {");
 const LIGHT_SURFACE = extractCustomProperty(rootBlock, '--cf-cs-surface');
 const DARK_SURFACE = extractCustomProperty(darkBlock, '--cf-cs-surface');
+const ROOT_TOKENS = buildTokenMap(rootBlock);
+const DARK_TOKENS = { ...ROOT_TOKENS, ...buildTokenMap(darkBlock) };
 
 const GENERIC_PATTERN_RULE = "[data-wallpaper='pattern'] .cf-log {";
 const WHATSAPP_DARK_RULE = "[data-channel='whatsapp'][data-theme='dark'] .cf-log {";
@@ -163,16 +212,32 @@ describe('Telegram wallpaper contrast (T-021 acceptance #1 — reverses T-020’
     const regressedLight = compositeOver(lightColor, 0.03, lightSurface);
     expect(contrastRatio(regressedLight, lightSurface)).toBeLessThan(VISIBLE_THRESHOLD);
 
-    const darkBlock = extractRuleBlock(css, TELEGRAM_DARK_RULE);
-    const darkSurface = extractBackgroundColor(darkBlock);
-    const { color: darkColor } = extractStroke(darkBlock);
+    const darkBlock2 = extractRuleBlock(css, TELEGRAM_DARK_RULE);
+    const darkSurface = extractBackgroundColor(darkBlock2);
+    const { color: darkColor } = extractStroke(darkBlock2);
     const regressedDark = compositeOver(darkColor, 0.03, darkSurface);
     expect(contrastRatio(regressedDark, darkSurface)).toBeLessThan(VISIBLE_THRESHOLD);
   });
 
-  it('gemelo: a fixture that reverts to `background-image: none` in dark mode is caught — that used to be the accepted state', () => {
-    const patched = `${TELEGRAM_DARK_RULE}\n  background-color: #0e1621;\n  background-image: none;\n}`;
-    expect(patched).not.toMatch(/background-image:\s*url\(/);
+  // T-023 B: this used to be
+  //   const patched = `${TELEGRAM_DARK_RULE}\n  background-color: #0e1621;\n  background-image: none;\n}`;
+  //   expect(patched).not.toMatch(/background-image:\s*url\(/);
+  // — a check against a hand-built LOCAL STRING that never read `css`/`TELEGRAM_DARK_RULE`'s
+  // actual extracted content at all. It could not fail: the literal always lacked `url(`, no
+  // matter what styles.css said. An auditor injected exactly the regression this test claims to
+  // catch (styles.css:137 `background-image: none` in dark) and this test stayed green while its
+  // 3 siblings above went red. Fixed shape: read the REAL rule, assert on THAT, then prove the
+  // SAME assertion flips red when the real rule's content (not a disconnected literal) is mutated.
+  it('the dark-mode rule ships a real background-image, not `none`', () => {
+    const block = extractRuleBlock(css, TELEGRAM_DARK_RULE);
+    expect(block).toMatch(/background-image:\s*url\(/);
+  });
+
+  it('gemelo: reverting the REAL rule’s background-image to `none` in dark mode is caught by the same check', () => {
+    const block = extractRuleBlock(css, TELEGRAM_DARK_RULE);
+    expect(block).toMatch(/background-image:\s*url\(/); // sanity: starts passing, not red-only
+    const regressed = block.replace(/background-image:\s*url\([^)]*\)/, 'background-image: none');
+    expect(regressed).not.toMatch(/background-image:\s*url\(/);
   });
 });
 
@@ -191,5 +256,122 @@ describe('Telegram vs WhatsApp doodle silhouettes stay distinct (T-021 acceptanc
     expect(whatsappDarkImage).toBeTruthy();
     expect(telegramDarkImage).toBeTruthy();
     expect(telegramDarkImage).not.toBe(whatsappDarkImage);
+  });
+});
+
+// T-023 acceptance A: the dark theme block never redefined `--cf-cs-bubble-out-meta` (the stamp's
+// time/edited text color, and — via fixtures.ts/adapters/*.ts — the receipt-tick color too), so
+// it stayed the light-mode #5b8a55 against the operator's corrected dark outgoing bubbles.
+describe('Dark-mode outgoing-bubble meta text (time + ticks) contrast (T-023 acceptance A)', () => {
+  const WHATSAPP_DARK_ROOT_RULE = "[data-channel='whatsapp'][data-theme='dark'] {";
+  const TELEGRAM_DARK_ROOT_RULE = "[data-channel='telegram'][data-theme='dark'] {";
+  const WHATSAPP_DARK_OUT_BUBBLE_RULE = "[data-channel='whatsapp'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {";
+  const TELEGRAM_DARK_OUT_BUBBLE_RULE = "[data-channel='telegram'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {";
+
+  it('WhatsApp: meta text is WCAG AA readable against the operator-corrected dark outgoing bubble', () => {
+    const meta = extractCustomProperty(extractRuleBlock(css, WHATSAPP_DARK_ROOT_RULE), '--cf-cs-bubble-out-meta');
+    const bubbleBg = extractCustomProperty(extractRuleBlock(css, WHATSAPP_DARK_OUT_BUBBLE_RULE), 'background');
+    expect(contrastRatio(meta, bubbleBg)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
+  });
+
+  it('Telegram: meta text is WCAG AA readable against the operator-corrected dark outgoing bubble', () => {
+    const meta = extractCustomProperty(extractRuleBlock(css, TELEGRAM_DARK_ROOT_RULE), '--cf-cs-bubble-out-meta');
+    const bubbleBg = extractCustomProperty(extractRuleBlock(css, TELEGRAM_DARK_OUT_BUBBLE_RULE), 'background');
+    expect(contrastRatio(meta, bubbleBg)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
+  });
+
+  it('gemelo: the pre-fix shipped meta color (#5b8a55, no per-channel override) fails against both operator-corrected backgrounds', () => {
+    const shippedMeta: RGB = [0x5b, 0x8a, 0x55];
+    const whatsappBg = extractCustomProperty(extractRuleBlock(css, WHATSAPP_DARK_OUT_BUBBLE_RULE), 'background');
+    const telegramBg = extractCustomProperty(extractRuleBlock(css, TELEGRAM_DARK_OUT_BUBBLE_RULE), 'background');
+    expect(contrastRatio(shippedMeta, whatsappBg)).toBeLessThan(TEXT_AA_THRESHOLD);
+    expect(contrastRatio(shippedMeta, telegramBg)).toBeLessThan(TEXT_AA_THRESHOLD);
+  });
+});
+
+// T-023 acceptance D: text colored directly with the brand accent (#25d366) fails AA on the
+// surfaces it actually sits on. "Accent oscurecido para el texto; la barra y el fondo pueden
+// quedar" — the border-bar/background USES of --cf-cs-accent are untouched; only the two TEXT
+// uses (quote author, avatar initial) get a darkened value.
+describe('Quote-author + avatar-initial text contrast (T-023 acceptance D)', () => {
+  // Leading `\n` matters: `.cf-quote-author {` alone also matches inside the Telegram-scoped
+  // `.cf-msg[data-dir='in'] .cf-quote-author {` rules earlier in the file (indexOf finds the
+  // FIRST occurrence) — this pins it to the standalone top-level rule, which is what governs
+  // the default/WhatsApp case this describe block tests.
+  const QUOTE_AUTHOR_RULE = '\n.cf-quote-author {';
+  const AVATAR_RULE = '.cf-avatar {';
+  const TELEGRAM_ROOT_RULE = "[data-channel='telegram'] {";
+  const LIGHT_BUBBLE_IN = extractCustomProperty(rootBlock, '--cf-cs-bubble-in'); // #ffffff
+  const LIGHT_BUBBLE_OUT = extractCustomProperty(rootBlock, '--cf-cs-bubble-out'); // #d9fdd3
+
+  it('default/WhatsApp quote-author text is WCAG AA readable on the light inbound bubble', () => {
+    const raw = extractPropertyRaw(extractRuleBlock(css, QUOTE_AUTHOR_RULE), 'color');
+    const color = resolveColor(raw, ROOT_TOKENS);
+    expect(contrastRatio(color, LIGHT_BUBBLE_IN)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
+  });
+
+  it('default/WhatsApp quote-author text is WCAG AA readable on the light outbound bubble', () => {
+    const raw = extractPropertyRaw(extractRuleBlock(css, QUOTE_AUTHOR_RULE), 'color');
+    const color = resolveColor(raw, ROOT_TOKENS);
+    expect(contrastRatio(color, LIGHT_BUBBLE_OUT)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
+  });
+
+  it('gemelo: the pre-fix shipped color (--cf-cs-accent, #25d366 unresolved) fails on both light bubbles', () => {
+    const shipped = resolveColor('var(--cf-cs-accent)', ROOT_TOKENS);
+    expect(contrastRatio(shipped, LIGHT_BUBBLE_IN)).toBeLessThan(TEXT_AA_THRESHOLD);
+    expect(contrastRatio(shipped, LIGHT_BUBBLE_OUT)).toBeLessThan(TEXT_AA_THRESHOLD);
+  });
+
+  it('avatar-initial text is WCAG AA readable on the default/WhatsApp accent fill', () => {
+    const textRaw = extractPropertyRaw(extractRuleBlock(css, AVATAR_RULE), 'color');
+    const bgRaw = extractPropertyRaw(extractRuleBlock(css, AVATAR_RULE), 'background');
+    const text = resolveColor(textRaw, ROOT_TOKENS);
+    const bg = resolveColor(bgRaw, ROOT_TOKENS);
+    expect(contrastRatio(text, bg)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
+  });
+
+  it('avatar-initial text is ALSO WCAG AA readable on Telegram’s blue avatar fill (same token, no per-channel override needed)', () => {
+    const textRaw = extractPropertyRaw(extractRuleBlock(css, AVATAR_RULE), 'color');
+    const text = resolveColor(textRaw, ROOT_TOKENS);
+    const telegramAccent = extractCustomProperty(extractRuleBlock(css, TELEGRAM_ROOT_RULE), '--channel-telegram');
+    expect(contrastRatio(text, telegramAccent)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
+  });
+
+  it('gemelo: the pre-fix shipped avatar text (--cf-cs-accent-ink, #fff unresolved) fails on the accent fill', () => {
+    const shipped = resolveColor('var(--cf-cs-accent-ink)', ROOT_TOKENS);
+    const bg = resolveColor('var(--cf-cs-accent)', ROOT_TOKENS);
+    expect(contrastRatio(shipped, bg)).toBeLessThan(TEXT_AA_THRESHOLD);
+  });
+});
+
+// T-023 acceptance C: `grep -rn "focus-visible\|:focus" src/components/chat-sim/` returned ZERO
+// hits before this task. This is the static-scan equivalent of that grep, plus a check that the
+// ring it adds is actually readable (a focus indicator nobody can see doesn't satisfy the intent).
+describe('Focus-visible ring exists and is readable (T-023 acceptance C)', () => {
+  const FOCUS_VISIBLE_RULE = ':focus-visible {';
+
+  it('a :focus-visible rule exists for interactive elements in the family', () => {
+    expect(css).toMatch(/:focus-visible\s*\{/);
+  });
+
+  it('gemelo: a sheet with the rule stripped does NOT match', () => {
+    const stripped = css.replace(/[^{}]*:focus-visible[^{}]*\{[^}]*\}/g, '');
+    expect(stripped).not.toMatch(/:focus-visible\s*\{/);
+  });
+
+  it('the ring color clears the non-text 3:1 minimum against both themes’ surfaces', () => {
+    const block = extractRuleBlock(css, FOCUS_VISIBLE_RULE);
+    const outlineRaw = extractPropertyRaw(block, 'outline');
+    const varMatch = outlineRaw.match(/var\((--[\w-]+)\)/);
+    if (!varMatch) throw new Error(`Expected a var(--token) in outline value: ${outlineRaw}`);
+    const ringLight = resolveColor(`var(${varMatch[1]})`, ROOT_TOKENS);
+    const ringDark = resolveColor(`var(${varMatch[1]})`, DARK_TOKENS);
+    expect(contrastRatio(ringLight, LIGHT_SURFACE)).toBeGreaterThanOrEqual(NON_TEXT_AA_THRESHOLD);
+    expect(contrastRatio(ringDark, DARK_SURFACE)).toBeGreaterThanOrEqual(NON_TEXT_AA_THRESHOLD);
+  });
+
+  it('gemelo: the brand accent (the obvious-but-wrong choice) fails that same check in light mode', () => {
+    const accent = resolveColor('var(--cf-cs-accent)', ROOT_TOKENS);
+    expect(contrastRatio(accent, LIGHT_SURFACE)).toBeLessThan(NON_TEXT_AA_THRESHOLD);
   });
 });

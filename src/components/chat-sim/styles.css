@@ -48,6 +48,18 @@
 
   --cf-cs-accent: #25d366;
   --cf-cs-accent-ink: #ffffff;
+  /* Darkened variants for TEXT rendered directly in the accent color — #25d366 as a foreground
+   * on the surfaces it actually sits on (white bubble, light bubble-out, avatar/badge fill)
+   * measures 1.79-1.98:1, well under WCAG AA's 4.5:1 for normal text (T-023 D). The bar/border
+   * and background USES of --cf-cs-accent are NOT part of this — those stay the literal brand
+   * green on purpose (T-023 D acceptance: "la barra y el fondo pueden quedar"). Two separate
+   * tokens because they resolve two different failures: `-text` recolors text that reads AS the
+   * accent (quote author, on a light surface); `-avatar-ink` recolors text that sits ON a
+   * fixed accent-colored fill (the avatar initial) — that fill also backs Telegram's blue avatar
+   * (`--channel-telegram`), so a single dark value had to clear AA against both (verified: 7.31:1
+   * on #25d366, 5.05:1 on #37a1de) rather than needing a per-channel variant. */
+  --cf-cs-accent-text: #0d7a3f;
+  --cf-cs-avatar-ink: #0a3018;
   --cf-cs-reaction-bg: #ffffff;
   --cf-cs-reaction-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
 
@@ -185,6 +197,10 @@
   --cf-cs-hairline: rgba(255, 255, 255, 0.08);
   --cf-cs-bubble-in: #182533;
   --cf-cs-bubble-in-meta: #7a95a8;
+  /* Dark theme already had good contrast on the brand accent itself (7.84:1 / 4.92:1 against
+     the dark in/out bubbles) — only the LIGHT-mode value needed darkening (T-023 D), so this
+     reverts the root token's darkened default back to the plain accent for dark theme. */
+  --cf-cs-accent-text: var(--cf-cs-accent);
 }
 .cf-chat-sim[data-channel='telegram'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {
   /* Corregido por el operador 2026-09-06 contra su cliente real de Telegram. El #2b5278
@@ -195,6 +211,21 @@
 .cf-chat-sim[data-channel='whatsapp'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {
   /* Corregido por el operador 2026-09-06 contra su cliente real de WhatsApp. */
   background: #154d38; /* keeps the default shadow */
+}
+/* T-023 A: the dark block above never redefined `--cf-cs-bubble-out-meta` (used by the stamp's
+   time/edited text AND, via fixtures.ts/adapters/*.ts, the receipt-tick color — "la hora y los
+   ticks"), so it stayed the light-mode `#5b8a55` — 1.36:1 on Telegram's corrected #3e6aa7 and
+   2.42:1 on WhatsApp's corrected #154d38, both effectively invisible. Scoped per-channel (not in
+   the generic dark block above) because the generic/no-adapter case keeps a LIGHT out-bubble
+   (`--cf-cs-bubble-out` isn't overridden there) — a global redefinition here would break contrast
+   for that case instead of fixing it. #e9edef matches `--cf-cs-ink`'s own dark value (kept as a
+   literal, not `var(--cf-cs-ink)`, so the static-scan contrast instrument below can read it
+   without resolving a second level of indirection). */
+.cf-chat-sim[data-channel='telegram'][data-theme='dark'] {
+  --cf-cs-bubble-out-meta: #e9edef;
+}
+.cf-chat-sim[data-channel='whatsapp'][data-theme='dark'] {
+  --cf-cs-bubble-out-meta: #e9edef;
 }
 /* WhatsApp dark-mode wallpaper (T-020 regression fix): the shared `[data-wallpaper='pattern']`
    rule above draws the doodle with a fixed BLACK stroke — tenue on the light surface, but
@@ -228,7 +259,10 @@
   display: grid;
   place-items: center;
   background: var(--cf-cs-accent);
-  color: var(--cf-cs-accent-ink);
+  /* T-023 D: was --cf-cs-accent-ink (#fff) — 1.98:1 on this fill, fails AA. `--cf-cs-accent-ink`
+     stays untouched (react/LiveComposer.tsx's send button also reads it, for a white icon that's
+     fine there). This is scoped to the avatar's own initial letter only. */
+  color: var(--cf-cs-avatar-ink);
   font-weight: 600;
   font-size: 0.8125rem;
 }
@@ -398,7 +432,10 @@
   border-radius: calc(var(--cf-cs-radius) - 4px);
 }
 .cf-quote-author {
-  color: var(--cf-cs-accent);
+  /* T-023 D: was --cf-cs-accent (#25d366) — 1.98:1 on the light in-bubble, 1.79:1 on the light
+     out-bubble, fails AA. Telegram overrides this rule with its own (--channel-telegram /
+     -out) tokens below, so this only ever governs the default/WhatsApp case. */
+  color: var(--cf-cs-accent-text);
   font-weight: 600;
 }
 .cf-quote-text {
@@ -636,6 +673,23 @@
   background: var(--cf-cs-accent);
   color: var(--cf-cs-accent-ink);
   border-radius: 50%;
+}
+
+/* ── focus-visible (T-023 C) ─────────────────────────────────────────────
+   `grep -rn "focus-visible\|:focus" src/components/chat-sim/` returned ZERO hits before this —
+   nothing in the family drew a visible focus indicator. element/'s own composer icons are
+   `aria-hidden` spans (not focusable) so this rule has no live target YET on that side, but it's
+   the CSS floor for anything focusable the family renders now or later — including react/'s
+   real controls, which share `.cf-chat-sim`'s scope. `var(--cf-cs-ink)` (not `--cf-cs-accent`:
+   measured 1.98:1 / 1.68:1 against the light card/surface, fails the 3:1 non-text minimum) is
+   already the theme's own foreground color, so it's guaranteed high-contrast against that
+   theme's surfaces without a dedicated token (13.8-17.5:1 measured, both themes).
+   react/LiveComposer.tsx sets `outline: none` inline on its textarea (T-007) — that's `app`'s
+   file, out of this task's scope.write, and an inline style wins specificity over this rule
+   regardless; flagged separately, not fixed here. */
+.cf-chat-sim :is(button, [href], input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--cf-cs-ink);
+  outline-offset: 2px;
 }
 
 /* fade-in on reveal — pure opacity, no translate: a scrub/seek must be able to land on any step
