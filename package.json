@@ -11,6 +11,8 @@
     "./hero-shader": "./src/components/hero-shader/index.ts",
     "./scripts/reveal-on-scroll": "./src/scripts/reveal-on-scroll.ts",
     "./chat-sim": "./src/components/chat-sim/index.ts",
+    "./chat-sim/styles.css": "./src/components/chat-sim/styles.css",
+    "./chat-sim/element": "./src/components/chat-sim/element/index.ts",
     "./iife": {
       "import": "./dist/chat-widget.iife.js",
       "require": "./dist/chat-widget.iife.js"
