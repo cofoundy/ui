@@ -15,8 +15,8 @@ import * as chatSim from '../../index';
 import { getAdapter } from '../../adapters/registry';
 import { validateScript } from '../../adapters/validate';
 
-// The 16 fields, cero opcionales (adapter-interface-draft.md) — the exact field NAMES, not just
-// a count, so swapping in 16 different keys wouldn't slip past this.
+// The 17 fields, cero opcionales (adapter-interface-draft.md + T-029's `capabilities`) — the
+// exact field NAMES, not just a count, so swapping in 17 different keys wouldn't slip past this.
 const CHANNEL_ADAPTER_FIELDS: readonly (keyof ChannelAdapter)[] = [
   'tail',
   'wallpaper',
@@ -34,6 +34,7 @@ const CHANNEL_ADAPTER_FIELDS: readonly (keyof ChannelAdapter)[] = [
   'album',
   'e2eNotice',
   'avatarSide',
+  'capabilities',
 ];
 
 describe('type contract exports (acceptance #5)', () => {
@@ -67,5 +68,47 @@ describe('type contract exports (acceptance #5)', () => {
     // Real ChannelId member, exercised through the barrel's own getAdapter — not a bare literal
     // assignment (T-022 §B).
     expect(chatSim.getAdapter('telegram').tail).toBe('last');
+  });
+
+  it('a ChannelAdapter literal missing `capabilities` does not compile (T-029 acceptance #2)', () => {
+    // @ts-expect-error — `capabilities` is required (T-029: 17th field, cero opcionales). If this
+    // stops erroring, the field silently became optional and `tsc --noEmit` should fail loudly.
+    const missingCapabilities: ChannelAdapter = {
+      tail: 'first',
+      wallpaper: 'pattern',
+      reactions: 'overlay-below',
+      reactionConstraint: {
+        emoji: 'any',
+        allowlistSize: 0,
+        maxAgeDays: 0,
+        canTargetReaction: false,
+        canTargetOutbound: true,
+        maxPerMessage: 0,
+      },
+      groupKey: 'actor',
+      deliveryStates: ['queued', 'sent', 'delivered', 'read', 'failed'],
+      receipt: {
+        kind: 'metric',
+        states: {
+          queued: { glyph: 'x', color: 'x' },
+          sent: { glyph: 'x', color: 'x' },
+          delivered: { glyph: 'x', color: 'x' },
+          read: { glyph: 'x', color: 'x' },
+          failed: { glyph: 'x', color: 'x' },
+        },
+        placement: 'in-bubble',
+        scope: 'every',
+      },
+      counter: 'none',
+      timestamp: 'inside-pad',
+      quote: 'color-bar',
+      bubbleTransport: 'per-conversation',
+      senderKinds: ['human'],
+      keyboard: 'os-qwerty',
+      album: 'separate',
+      e2eNotice: false,
+      avatarSide: 'none',
+    };
+    expect(missingCapabilities.tail).toBe('first');
   });
 });

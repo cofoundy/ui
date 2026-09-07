@@ -21,8 +21,8 @@ export type ChannelId = 'whatsapp' | 'telegram' | 'imessage';
 export type DeliveryState = 'queued' | 'sent' | 'delivered' | 'read' | 'failed';
 
 // ---------------------------------------------------------------------------
-// ChannelAdapter — the 16 fields from adapter-interface-draft.md. Cero opcionales:
-// a slot that isn't used gets an explicit "none"/"—"-equivalent value, never `?`.
+// ChannelAdapter — the 17 fields from adapter-interface-draft.md + T-029's `capabilities`.
+// Cero opcionales: a slot that isn't used gets an explicit "none"/"—"-equivalent value, never `?`.
 // Values (whatsapp.ts, telegram.ts, imessage.ts, registry.ts) are T-005 [channel].
 // ---------------------------------------------------------------------------
 
@@ -122,7 +122,27 @@ export type Keyboard = 'os-qwerty' | 'inline-in-message';
 export type Album = 'grid-in-one-bubble' | 'separate';
 export type AvatarSide = 'inbound' | 'none';
 
-/** The 16 fields, cero opcionales (adapter-interface-draft.md). */
+// ---------------------------------------------------------------------------
+// Capability (T-029) — was a 17th field bolted on via `adapters/caps.ts`'s
+// `ChannelAdapterWithCapabilities extends ChannelAdapter` shim (T-028). `channel` stopped short
+// of forcing that in because it breaks `exports.test.ts`'s "exactly 16" guard — decision here is
+// to grow the contract, not weaken the guard: `capabilities` describes what a channel can DO, same
+// category as the other 16, not an anexo. Scoped to the two members script authoring needs today —
+// `REACTION` stays out on purpose, it already has `reactions`/`reactionConstraint` above and
+// folding it in here would be a second way to ask the same question.
+//
+// Key PRESENCE is the question, never a value's truthiness (`Partial`, not a total `Record`):
+// every entry's value is `null` today ("supported, nothing to constrain yet"), so absent-from-set
+// is how "unsupported" is spelled. Mirrors inbox-ai's `Capability` StrEnum + `registry.py`'s
+// `Constraint | None` map. Use `hasCapability` (adapters/caps.ts) to ask, never `cap in set` or a
+// value-truthiness check by hand.
+// ---------------------------------------------------------------------------
+
+export type Capability = 'buttons' | 'list';
+
+export type CapabilitySet = Readonly<Partial<Record<Capability, null>>>;
+
+/** The 17 fields, cero opcionales (adapter-interface-draft.md + T-029's `capabilities`). */
 export interface ChannelAdapter {
   readonly tail: Tail;
   readonly wallpaper: Wallpaper;
@@ -140,6 +160,7 @@ export interface ChannelAdapter {
   readonly album: Album;
   readonly e2eNotice: boolean;
   readonly avatarSide: AvatarSide;
+  readonly capabilities: CapabilitySet;
 }
 
 export interface Diagnostic {
