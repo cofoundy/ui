@@ -5,10 +5,10 @@
 // 👁 N slot in 1:1 is occupied by the ticks, not stacked alongside them). Reaction allowlist size
 // is DERIVED from `caps.ts`'s real set, never a bare literal `73` — the two can't drift apart.
 
-import type { ChannelAdapter } from '../core/types';
+import type { ChannelAdapterWithCapabilities } from './caps';
 import { TELEGRAM_REACTIONS } from './caps';
 
-export const telegram: ChannelAdapter = {
+export const telegram: ChannelAdapterWithCapabilities = {
   tail: 'last',
   wallpaper: 'pattern',
   reactions: 'own-row',
@@ -49,4 +49,13 @@ export const telegram: ChannelAdapter = {
   album: 'grid-in-one-bubble',
   e2eNotice: false,
   avatarSide: 'inbound',
+  // T-028: Telegram bots attach an inline keyboard TO the message (`keyboard:
+  // 'inline-in-message'` above) — the same interactive-buttons capability as WhatsApp, just its
+  // own chrome; render.ts reads `adapter.keyboard` for that, never a channel branch. `list` is
+  // deliberately ABSENT: the Bot API has no separate "list message" primitive the way WhatsApp
+  // does — a list is just more inline-keyboard rows, i.e. still `buttons`. Declaring it here
+  // would be the exact invented-primitive mistake T-028 exists to undo, one file over.
+  capabilities: {
+    buttons: null,
+  },
 };

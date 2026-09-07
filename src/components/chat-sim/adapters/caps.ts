@@ -4,7 +4,7 @@
 // (base -> capabilities -> whatsapp -> base). The `import type` below is erased at compile — it
 // cannot be the source of a runtime cycle (arruga honesta, adapter-interface-draft.md).
 
-import type { ChannelId } from '../core/types';
+import type { ChannelAdapter, ChannelId } from '../core/types';
 
 export const VARIATION_SELECTOR_16 = '\uFE0F';
 
@@ -61,4 +61,40 @@ export function isAllowedReactionEmoji(channel: ChannelId, emoji: string): boole
   const allowlist = REACTION_ALLOWLIST[channel];
   if (allowlist === null) return true;
   return allowlist.has(normalizeReactionEmoji(emoji));
+}
+
+// ---------------------------------------------------------------------------
+// Capability vocabulary (T-028) — mirrors inbox-ai's `Capability` StrEnum +
+// `registry.py`'s `Constraint | None` map, scoped to the two members this cycle's
+// script authoring actually needs. `REACTION`/`AUDIO_SEND` stay out: reactions already have
+// their own dedicated `reactions`/`reactionConstraint` fields (folding them in here would be a
+// second way to ask the same question, the exact drift `normalizeReactionEmoji`'s docstring
+// warns about above), and nothing in chat-sim sends outbound audio yet.
+//
+// A capability entry's VALUE is always `null` today — "supported, nothing (yet) to constrain",
+// same as prod's `Capability.BUTTONS: None`. What matters is KEY PRESENCE, not the value:
+// absent = unsupported. Ask `hasCapability`, never `cap in set` by hand, and never read the
+// value's truthiness — prod's own docstring flags this as the footgun
+// (`constraint_for(...) is None` does NOT mean unsupported).
+// ---------------------------------------------------------------------------
+
+export type Capability = 'buttons' | 'list';
+
+export type CapabilitySet = Readonly<Partial<Record<Capability, null>>>;
+
+export function hasCapability(capabilities: CapabilitySet, cap: Capability): boolean {
+  return cap in capabilities;
+}
+
+/**
+ * `ChannelAdapter` (core/types.ts, T-001) + `capabilities` — kept OUT of the core 16-field
+ * interface on purpose: T-028's `scope.write` is `adapters/**`, core/ is a different task's
+ * surface. `extends` makes this a NEW type, so core/types.ts stays untouched; every existing
+ * consumer of `ChannelAdapter` (element/render.ts, react/ChatSim.tsx, tests) keeps working
+ * unmodified because a `ChannelAdapterWithCapabilities` is structurally still a `ChannelAdapter`.
+ * If `capabilities` earns a permanent 17th slot, that's a follow-up task against core/types.ts,
+ * not this one.
+ */
+export interface ChannelAdapterWithCapabilities extends ChannelAdapter {
+  readonly capabilities: CapabilitySet;
 }

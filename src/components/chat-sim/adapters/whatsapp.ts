@@ -4,9 +4,9 @@
 // fixture is a wave-1 literal reading of the same table, kept only so `skin` could build against
 // it before this file existed; this is the real one `registry.ts` serves.
 
-import type { ChannelAdapter } from '../core/types';
+import type { ChannelAdapterWithCapabilities } from './caps';
 
-export const whatsapp: ChannelAdapter = {
+export const whatsapp: ChannelAdapterWithCapabilities = {
   tail: 'first',
   wallpaper: 'pattern',
   reactions: 'overlay-below',
@@ -47,4 +47,11 @@ export const whatsapp: ChannelAdapter = {
   album: 'grid-in-one-bubble',
   e2eNotice: true,
   avatarSide: 'inbound',
+  // T-028: WhatsApp Business's `interactive.type: "buttons"|"list"` — each its own native
+  // message type with its own chrome (reply-buttons, and a scrollable list opened via a button).
+  // Both supported, nothing to constrain yet (inbox-ai capabilities.py/registry.py's model).
+  capabilities: {
+    buttons: null,
+    list: null,
+  },
 };

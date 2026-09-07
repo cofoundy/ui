@@ -59,6 +59,35 @@ describe('validateScript — acceptance #2 (reaction emoji allowlist)', () => {
   });
 });
 
+// T-028 acceptance #3 — validateScript rejects an interactive message on a channel that
+// doesn't support it, with its gemelo positivo on one that does.
+describe('validateScript — acceptance #3 (interactive-message capability)', () => {
+  function interactiveScript(kind: 'buttons' | 'list'): SimScript {
+    return [{ k: 'post', by: 'in', text: 'elige una opción', media: { kind } }];
+  }
+
+  it("'list' on telegram compiles to a Diagnostic — the Bot API has no list-message primitive", () => {
+    const diagnostics = validateScript(interactiveScript('list'), 'telegram');
+    expect(diagnostics).toEqual([
+      expect.objectContaining({ code: 'unsupported-interactive-message', stepIdx: 0 }),
+    ]);
+  });
+
+  it('gemelo positivo: the SAME script compiles clean on whatsapp — list is a native WhatsApp interactive type', () => {
+    expect(validateScript(interactiveScript('list'), 'whatsapp')).toEqual([]);
+  });
+
+  it("'buttons' compiles clean on BOTH channels — reply-buttons (WhatsApp) and inline keyboard (Telegram) are the same capability, different chrome", () => {
+    expect(validateScript(interactiveScript('buttons'), 'whatsapp')).toEqual([]);
+    expect(validateScript(interactiveScript('buttons'), 'telegram')).toEqual([]);
+  });
+
+  it('a non-interactive post (plain text, no media.kind) never triggers this diagnostic', () => {
+    const script: SimScript = [{ k: 'post', by: 'in', text: 'hola' }];
+    expect(validateScript(script, 'telegram')).toEqual([]);
+  });
+});
+
 describe('validateScript — a clean script produces zero diagnostics on both implemented channels', () => {
   const script: SimScript = [
     { k: 'post', by: 'in', text: 'hola' },

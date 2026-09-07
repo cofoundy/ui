@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { isAllowedReactionEmoji, normalizeReactionEmoji, TELEGRAM_REACTIONS } from '../caps';
+import {
+  hasCapability,
+  isAllowedReactionEmoji,
+  normalizeReactionEmoji,
+  TELEGRAM_REACTIONS,
+} from '../caps';
 
 describe('TELEGRAM_REACTIONS', () => {
   it('has exactly 73 entries, no duplicates', () => {
@@ -41,5 +46,23 @@ describe('isAllowedReactionEmoji', () => {
   it('telegram accepts an allowlisted emoji with or without U+FE0F', () => {
     expect(isAllowedReactionEmoji('telegram', '❤')).toBe(true);
     expect(isAllowedReactionEmoji('telegram', '❤️')).toBe(true);
+  });
+});
+
+// T-028 — key PRESENCE is the question, never the value's truthiness. A capability entry's
+// value is always `null` today ("supported, nothing to constrain"), so `set.buttons` alone
+// would read as falsy even when supported — the exact footgun inbox-ai's own registry.py
+// docstring warns about (`constraint_for(...) is None` does NOT mean unsupported).
+describe('hasCapability', () => {
+  it('true when the key is present, even though its value is null', () => {
+    expect(hasCapability({ buttons: null }, 'buttons')).toBe(true);
+  });
+
+  it('false when the key is absent from the set', () => {
+    expect(hasCapability({ buttons: null }, 'list')).toBe(false);
+  });
+
+  it('false on an empty set', () => {
+    expect(hasCapability({}, 'buttons')).toBe(false);
   });
 });
