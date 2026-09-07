@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <!--
+      capture/'s own headless harness (T-004) — NOT demo/index.html, which belongs to [skin]
+      (file-ownership-matrix.md: demo/** is skin's W cell, capture only has R there). This page
+      starts completely empty; captureFrame() builds the <cf-chat-sim> element and drives it
+      entirely via `eval`, so there is nothing here to keep in sync with the script being
+      captured. No autoplay, no controls — capture never wants playback, only a single exact
+      state (T-004 delta: "usa seek del core, no esperes a que la reproducción llegue sola").
+    -->
+    <link rel="stylesheet" href="../styles.css" />
+    <style>
+      /* Page chrome only — everything under .cf-chat-sim is styles.css's, not this file's.
+         No fixed width/height on the body: the element is left free to size to its own content
+         (captureFrame sets only `.cf-chat-sim`'s width inline, height stays intrinsic) so a
+         screenshot scoped to the `.cf-chat-sim` selector crops tight with no empty margin. */
+      html,
+      body {
+        margin: 0;
+        background: #ffffff;
+      }
+    </style>
+  </head>
+  <body>
+    <!--
+      Rebuild after editing element/**  (element/__tests__/bundle-freshness.test.ts enforces this
+      byte-for-byte, same pattern as demo/'s — see that file's header comment):
+        npx esbuild src/components/chat-sim/element/index.ts --bundle --format=iife \
+          --global-name=CfChatSimCapture --outfile=src/components/chat-sim/capture/capture.bundle.js \
+          --target=es2020
+    -->
+    <script src="./capture.bundle.js"></script>
+  </body>
+</html>

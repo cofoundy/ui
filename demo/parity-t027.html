@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>chat-sim — T-027 paridad (scroll, loop, service, receipts, branded)</title>
+    <!--
+      T-027 acceptance evidence page — same no-build-step contract as index.html/chrome-axis.html
+      (file:// only, checked-in bundle, no type="module").
+
+      Left: WhatsApp, chrome="branded" with a Fovente-red consumer token + `loop` — this is
+      exactly ChatDemo.astro's production case (auto-scroll via scrollId, loop, `service`
+      encryption-notice/stop/done), reproduced through the real engine.
+      Right: Telegram, chrome="fidelity", same script — the gemelo: `service` renders in both
+      channels; `branded`'s palette does NOT leak into Telegram's own fidelity render.
+
+      Operator-reported gap (team-lead): neither this page nor the landing preview ever fired a
+      `receipt` step, so every message sat at `queued` (clock) forever — the receipt state
+      machine (core's "núcleo del engine") was invisible. Both scripts below now carry a real
+      `sent -> delivered -> read` progression on WhatsApp (color flips at `read`, glyph stays
+      double-check) and `sent -> read` on Telegram (no `delivered` in its deliveryStates — the
+      GLYPH flips instead, color stays put) — the channel difference is visible on its own,
+      nothing hardcoded to show it.
+
+      `card` (title+bullets+action) shipped in this task and was REMOVED (team-lead): the
+      rationalization that WhatsApp's contact/location cards made a free container "the same
+      family" was wrong. WhatsApp's real brief is markdown-styled plain text (bold + bullets) —
+      `msg.text` already renders it (`white-space: pre-line`), no component needed.
+    -->
+    <link rel="stylesheet" href="../src/components/chat-sim/styles.css" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 2.5rem 1rem;
+        background: #f4ede9;
+        font-family: system-ui, sans-serif;
+      }
+      h1 {
+        font-size: 0.8125rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #7a6f68;
+        margin: 0;
+      }
+      .row {
+        display: flex;
+        gap: 1.5rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      figure {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      figcaption {
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #7a6f68;
+      }
+      /* T-031 A: the component now fixes its own frame height (styles.css's `--cf-cs-height`) —
+         this page no longer needs to impose one. */
+      .cf-chat-sim {
+        width: min(360px, 92vw);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.14);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>T-027 — scroll(scrollId) + loop + service + receipts + chrome="branded" + reply-in + link</h1>
+    <div class="row">
+      <figure>
+        <figcaption>WhatsApp · chrome="branded" (Fovente red) · loop</figcaption>
+        <cf-chat-sim
+          id="branded-loop"
+          channel="whatsapp"
+          chrome="branded"
+          loop
+          loop-pause-ms="2200"
+          seed="7"
+          t0="1789761600000"
+          locale="es-PE"
+          tz="America/Lima"
+          contact-name="Fovente — Reservas"
+          contact-status="en línea"
+          reply-label="Respondió en 4 s"
+          style="--cf-cs-consumer-out: #c0392b; --cf-cs-consumer-out-meta: #7a2a20; --cf-cs-consumer-accent: #c0392b"
+        >
+          <script type="application/json">
+            [
+              { "k": "post", "by": "system", "text": "Los mensajes están cifrados de extremo a extremo", "media": { "kind": "service", "variant": "neutral" }, "delayMs": 200 },
+              { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 600 },
+              { "k": "draft", "by": "out:ai", "chars": 18, "delayMs": 450 },
+              { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad", "media": { "replyFast": true }, "delayMs": 850 },
+              { "k": "receipt", "id": "m2", "to": "sent", "delayMs": 400 },
+              { "k": "receipt", "id": "m2", "to": "delivered", "delayMs": 500 },
+              { "k": "post", "by": "out:ai", "text": "*Resumen de la reserva*\n• Sábado 8:00pm\n• 4 personas\n• Mesa junto a la ventana", "delayMs": 400 },
+              { "k": "post", "by": "in", "text": "Perfecto, confirmo", "delayMs": 1400 },
+              { "k": "receipt", "id": "m2", "to": "read", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Paga aquí: pagos.fovente.pe/r/8x2", "media": { "link": true }, "delayMs": 700 },
+              { "k": "receipt", "id": "m5", "to": "sent", "delayMs": 400 },
+              { "k": "receipt", "id": "m5", "to": "delivered", "delayMs": 500 },
+              { "k": "post", "by": "system", "text": "FOVENTE SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 },
+              { "k": "post", "by": "system", "text": "RESERVA CONFIRMADA", "media": { "kind": "service", "variant": "success" }, "delayMs": 900 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+      <figure>
+        <figcaption>Telegram · chrome="fidelity" · mismo guion</figcaption>
+        <cf-chat-sim
+          id="fidelity"
+          channel="telegram"
+          chrome="fidelity"
+          reply-label="Respondió en 4 s"
+          seed="7"
+          t0="1789761600000"
+          locale="es-PE"
+          tz="America/Lima"
+          contact-name="Fovente — Reservas"
+          contact-status="en línea"
+        >
+          <script type="application/json">
+            [
+              { "k": "post", "by": "system", "text": "Los mensajes están cifrados de extremo a extremo", "media": { "kind": "service", "variant": "neutral" }, "delayMs": 200 },
+              { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 600 },
+              { "k": "draft", "by": "out:ai", "chars": 18, "delayMs": 450 },
+              { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad", "media": { "replyFast": true }, "delayMs": 850 },
+              { "k": "receipt", "id": "m2", "to": "sent", "delayMs": 400 },
+              { "k": "post", "by": "out:ai", "text": "*Resumen de la reserva*\n• Sábado 8:00pm\n• 4 personas\n• Mesa junto a la ventana", "delayMs": 900 },
+              { "k": "post", "by": "in", "text": "Perfecto, confirmo", "delayMs": 1400 },
+              { "k": "receipt", "id": "m2", "to": "read", "delayMs": 0 },
+              { "k": "post", "by": "out:ai", "text": "Paga aquí: pagos.fovente.pe/r/8x2", "media": { "link": true }, "delayMs": 700 },
+              { "k": "receipt", "id": "m5", "to": "sent", "delayMs": 400 },
+              { "k": "receipt", "id": "m5", "to": "read", "delayMs": 500 },
+              { "k": "post", "by": "system", "text": "FOVENTE SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 },
+              { "k": "post", "by": "system", "text": "RESERVA CONFIRMADA", "media": { "kind": "service", "variant": "success" }, "delayMs": 900 }
+            ]
+          </script>
+        </cf-chat-sim>
+      </figure>
+    </div>
+
+    <!-- Plain <script>, not type="module" — same file:// CORS reasoning as index.html. -->
+    <script src="./chat-sim.bundle.js"></script>
+    <script>
+      document.getElementById('branded-loop').play();
+      document.getElementById('fidelity').play();
+    </script>
+
+    <!--
+      Rebuild the bundle after editing element/**:
+        npx esbuild src/components/chat-sim/element/index.ts --bundle --format=iife \
+          --global-name=CfChatSim --outfile=demo/chat-sim.bundle.js --target=es2020
+    -->
+  </body>
+</html>

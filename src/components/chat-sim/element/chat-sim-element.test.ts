@@ -1,0 +1,407 @@
+// End-to-end smoke test through the REAL pipeline: compile() -> fold -> seek/stateAtStep ->
+// reconcile -> render.ts, via the actual <cf-chat-sim> custom element (not render.ts in
+// isolation — render.test.ts already covers that). Exercises T-001's wave-1 events
+// (post/draft/flag) exactly as demo/index.html's script does.
+
+import { beforeEach, describe, expect, it } from 'vitest';
+import './chat-sim-element';
+
+// 6 frames total: post(in) / draft(out:ai) / post(out:ai) / post(in) / post(out:ai) / post(out:ai)
+// — the last two are a genuine same-actor streak (index 4,5), the only place `data-tail` can
+// meaningfully differ between "first" and "last" of a racha.
+const SCRIPT = JSON.stringify([
+  { k: 'post', by: 'in', text: 'Hola! ¿Tienen mesa para el sábado a las 8pm?', delayMs: 0 },
+  { k: 'draft', by: 'out:ai', chars: 18, delayMs: 100 },
+  { k: 'post', by: 'out:ai', text: '¡Hola! Sí, tenemos disponibilidad. ¿Para cuántas personas?', delayMs: 200 },
+  { k: 'post', by: 'in', text: 'Para 4, por favor', delayMs: 300 },
+  { k: 'post', by: 'out:ai', text: 'Perfecto, reservado para 4 🎉', delayMs: 200 },
+  { k: 'post', by: 'out:ai', text: 'Te llega la confirmación por este chat.', delayMs: 400 },
+  // Posts default to 'queued' (T-011 ReceiptModel — clock glyph, zero ticks) until a `receipt`
+  // step advances them; without this the channel-attribute test below can't tell single- from
+  // double-tick apart. m3/m4 are the 4th/5th post (0-indexed), the out:ai streak the test reads.
+  { k: 'receipt', id: 'm3', to: 'delivered', delayMs: 0 },
+  { k: 'receipt', id: 'm4', to: 'delivered', delayMs: 0 },
+]);
+const FRAME_COUNT = 8; // 6 post/draft steps + 2 `receipt` steps added for the tick-glyph test below
+const POST_COUNT = 5;
+
+function mount(step?: number): HTMLElement {
+  return mountWithChannel('whatsapp', step);
+}
+
+/** Mounts by ATTRIBUTE only — never touches `.adapter` directly. That distinction is the whole
+ * point of the test this helper serves (T-002 iteration 5, bug found by `app`): setting
+ * `.adapter` by hand exercises render.ts's caps-fixture correctly, but it can't catch
+ * connectedCallback failing to resolve `getAdapter(channel)` from the markup in the first place —
+ * which is exactly the bug that shipped (`<cf-chat-sim channel="telegram">` silently rendering
+ * WhatsApp chrome). */
+function mountWithChannel(channel: string, step?: number): HTMLElement {
+  const el = document.createElement('cf-chat-sim');
+  el.setAttribute('channel', channel);
+  el.setAttribute('seed', '7');
+  el.setAttribute('t0', '1767261600000');
+  if (step !== undefined) el.setAttribute('data-step', String(step));
+  const scriptTag = document.createElement('script');
+  scriptTag.type = 'application/json';
+  scriptTag.textContent = SCRIPT;
+  el.appendChild(scriptTag);
+  document.body.appendChild(el);
+  return el;
+}
+
+/** Same as `mountWithChannel`, plus the `chrome` axis (T-017 Alcance B / T-027 E). */
+function mountWithChrome(channel: string, chrome: 'fidelity' | 'consistent' | 'branded'): HTMLElement {
+  const el = document.createElement('cf-chat-sim');
+  el.setAttribute('channel', channel);
+  el.setAttribute('chrome', chrome);
+  el.setAttribute('seed', '7');
+  el.setAttribute('t0', '1767261600000');
+  const scriptTag = document.createElement('script');
+  scriptTag.type = 'application/json';
+  scriptTag.textContent = SCRIPT;
+  el.appendChild(scriptTag);
+  document.body.appendChild(el);
+  return el;
+}
+
+function composerIconOrder(el: HTMLElement): string[] {
+  return [...el.querySelector('.cf-composer')!.children]
+    .map((c) => (c as HTMLElement).dataset.icon)
+    .filter((id): id is string => !!id);
+}
+
+describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('pre-renders the full thread and shows everything at the default step', () => {
+    const el = mount();
+    const items = el.querySelectorAll('.cf-msg');
+    expect(items).toHaveLength(POST_COUNT);
+    expect(el.querySelector('.cf-log')).not.toBeNull();
+    expect(el.classList.contains('cf-chat-sim')).toBe(true);
+  });
+
+  it('data-step="0" reveals nothing yet, but every eventual message is already pre-rendered (hidden, not absent)', () => {
+    const el = mount(0);
+    const visible = [...el.querySelectorAll('.cf-msg')].filter((li) => !(li as HTMLElement).hidden);
+    expect(visible).toHaveLength(0);
+    // Pre-render del hilo completo: connectedCallback builds every <li> from the FINAL state
+    // up front — this is the acceptance-relevant bit, not "revealed" == "exists".
+    expect(el.querySelectorAll('.cf-msg')).toHaveLength(POST_COUNT);
+  });
+
+  it('scrubbing data-step reveals messages progressively, in order, without recreating nodes', () => {
+    const el = mount(3); // frames 0,1,2 => post(in), draft, post(out:ai) — 2 posts so far
+    const firstLi = el.querySelector('.cf-msg:not([hidden])');
+    expect(el.querySelectorAll('.cf-msg:not([hidden])')).toHaveLength(2);
+
+    el.setAttribute('data-step', String(FRAME_COUNT)); // full script
+    const visible = [...el.querySelectorAll('.cf-msg')].filter((li) => !(li as HTMLElement).hidden);
+    expect(visible).toHaveLength(POST_COUNT);
+    // node identity survives the later step change (pre-render contract, not rebuild-on-reveal).
+    expect(el.querySelectorAll('.cf-msg')[0]).toBe(firstLi);
+  });
+
+  it('renders WhatsApp values by default: tail on the first of a same-actor streak, double-tick glyph', () => {
+    const el = mount();
+    const msgs = [...el.querySelectorAll('.cf-msg')];
+    // order: in, out:ai, in, out:ai, out:ai — the last two (index 3,4) are the only streak;
+    // WhatsApp (adapter.tail === 'first') tails the FIRST of it.
+    expect(msgs[3].hasAttribute('data-tail')).toBe(true);
+    expect(msgs[4].hasAttribute('data-tail')).toBe(false);
+  });
+
+  it('the draft flag surfaces on the root as data-drafting, named by actor, and clears once posted', () => {
+    // Both gaps flagged in the T-002 report against core/fold.ts (draft dropping `by`, and never
+    // clearing on the following post) were fixed by [core] mid-review — verified live here now
+    // that `state.draft.by` and the post-clears-draft behavior both work.
+    const el = mount(2); // frames 0,1 applied: post(in), draft(out:ai) — draft active, not yet posted
+    expect(el.hasAttribute('data-drafting')).toBe(true);
+    expect(el.getAttribute('data-drafting')).toBe('out:ai');
+    el.setAttribute('data-step', '3'); // frame 2 applied: post(out:ai) — the draft resolves
+    expect(el.hasAttribute('data-drafting')).toBe(false);
+  });
+
+  it('formats a real time-of-day label from t0 + the posted tick (not a placeholder string)', () => {
+    const el = mount();
+    const label = el.querySelector('.cf-msg .cf-time')?.textContent ?? '';
+    expect(label).toMatch(/^\d{1,2}:\d{2}$/);
+  });
+
+  describe('typing indicator — pre-rendered once, revealed by hidden only (team-lead diagnosis, iteration 3)', () => {
+    it('is built exactly once per draft window, in the flow, not floating at the end of the log', () => {
+      const el = mount(); // full script — 1 draft window (frames 1..2, actor out:ai)
+      const rows = el.querySelectorAll('.cf-typing-row');
+      expect(rows).toHaveLength(1);
+      expect(rows[0].getAttribute('data-dir')).toBe('out'); // out:ai drafted it
+
+      // Positioned between the message it interrupted (m0, 'in') and the one that resolved it
+      // (m1, 'out:ai') — a sibling in the flow, not appended after everything at the end.
+      const children = [...el.querySelector('.cf-log')!.children];
+      const typingIdx = children.indexOf(rows[0]);
+      expect(children[typingIdx - 1]?.classList.contains('cf-msg')).toBe(true);
+      expect(children[typingIdx + 1]?.classList.contains('cf-msg')).toBe(true);
+    });
+
+    it('the SAME node stays visible across two different consecutive data-step values while the window is open — never recreated', () => {
+      // A dedicated script whose draft window spans TWO distinct steps (a `flag` sits between the
+      // draft and the post that resolves it, so `state.draft` stays truthy across steps 2 AND 3) —
+      // this is what actually exercises "same node across steps", unlike a 1-step-wide window
+      // where the step-unchanged guard alone would make the assertion vacuously true.
+      const script = JSON.stringify([
+        { k: 'post', by: 'in', text: 'hola', delayMs: 0 },
+        { k: 'draft', by: 'out:ai', chars: 5, delayMs: 50 },
+        { k: 'flag', key: 'tick', value: 1, delayMs: 50 },
+        { k: 'post', by: 'out:ai', text: 'hey', delayMs: 50 },
+      ]);
+      const el = document.createElement('cf-chat-sim');
+      el.setAttribute('t0', '1767261600000');
+      el.setAttribute('data-step', '2'); // frames 0,1 applied: post(in), draft(out:ai)
+      const scriptTag = document.createElement('script');
+      scriptTag.type = 'application/json';
+      scriptTag.textContent = script;
+      el.appendChild(scriptTag);
+      document.body.appendChild(el);
+
+      const nodeAtStep2 = el.querySelector<HTMLElement>('.cf-typing-row:not([hidden])');
+      expect(nodeAtStep2).not.toBeNull();
+
+      el.setAttribute('data-step', '3'); // frame 2 applied: flag — draft still active, no post yet
+      const nodeAtStep3 = el.querySelector<HTMLElement>('.cf-typing-row:not([hidden])');
+      expect(nodeAtStep3).not.toBeNull();
+      expect(nodeAtStep3).toBe(nodeAtStep2); // <- the assertion team-lead asked for, literally
+
+      el.setAttribute('data-step', '4'); // frame 3 applied: post(out:ai) — resolves the draft
+      expect(el.querySelector('.cf-typing-row:not([hidden])')).toBeNull();
+      // and the node itself is still there, just hidden — not removed and rebuilt on vanish either.
+      expect(el.querySelector('.cf-typing-row')).toBe(nodeAtStep2);
+    });
+
+    it("repopulating the SAME step twice (the guard's exact scenario) does not touch the typing node at all", () => {
+      const el = mount(2); // draft active
+      const before = el.querySelector('.cf-typing-row');
+      el.setAttribute('data-step', '2'); // same value — the playhead does this ~60x/s during playback
+      expect(el.querySelector('.cf-typing-row')).toBe(before);
+    });
+  });
+
+  describe('bottom anchor (team-lead, iteration 3: measured 41% of the log empty at the bottom)', () => {
+    it('marks the first VISIBLE item — never a hidden pre-rendered one — as the anchor', () => {
+      const el = mount(1); // only m0 (and the date separator introducing it) visible
+      const anchored = el.querySelector('.cf-anchor-top');
+      expect(anchored).not.toBeNull();
+      // the date separator sits BEFORE m0 in the DOM and reveals at the same step — it, not m0,
+      // is genuinely first-and-visible; asserting against .cf-date-sep keeps this test honest
+      // about DOM order instead of asserting what "should" be first.
+      expect(anchored).toBe(el.querySelector('.cf-date-sep'));
+      expect((anchored as HTMLElement).hidden).toBe(false);
+    });
+
+    it('follows the first-visible item as it changes, and drops the class entirely when nothing is visible', () => {
+      const el = mount(3); // m0, m1 visible — the date separator (before m0) is first-and-visible
+      const anchorAtStep3 = el.querySelector('.cf-anchor-top');
+      expect(anchorAtStep3).toBe(el.querySelector('.cf-date-sep'));
+
+      el.setAttribute('data-step', '0'); // scrub back to nothing visible
+      expect(el.querySelectorAll('.cf-anchor-top')).toHaveLength(0); // no visible item => no anchor
+
+      el.setAttribute('data-step', String(FRAME_COUNT)); // forward again
+      // the anchor is back on the true first-visible item, not a stale reference from step 3
+      expect(el.querySelector('.cf-anchor-top')).toBe(el.querySelector('.cf-date-sep'));
+    });
+
+    it('never puts the anchor class on more than one element at a time', () => {
+      const el = mount();
+      expect(el.querySelectorAll('.cf-anchor-top')).toHaveLength(1);
+    });
+  });
+
+  describe('date separator (team-lead, iteration 3)', () => {
+    it('renders exactly one pill for a script that all happens on the same day, positioned before the first message', () => {
+      const el = mount();
+      const seps = el.querySelectorAll('.cf-date-sep');
+      expect(seps).toHaveLength(1);
+      const children = [...el.querySelector('.cf-log')!.children];
+      expect(children.indexOf(seps[0])).toBeLessThan(children.indexOf(el.querySelector('.cf-msg')!));
+    });
+
+    it('stays hidden until the message it introduces is actually revealed — never ahead of its step', () => {
+      const el = mount(0);
+      expect(el.querySelector('.cf-date-sep')!.hasAttribute('hidden')).toBe(true);
+      el.setAttribute('data-step', '1'); // m0 (the trigger) is now visible
+      expect(el.querySelector('.cf-date-sep')!.hasAttribute('hidden')).toBe(false);
+    });
+
+    it('never shows a relative label ("HOY"/"AYER") — determinism (architecture-v1.md §1 invariant 2)', () => {
+      const el = mount();
+      const label = el.querySelector('.cf-date-pill')!.textContent ?? '';
+      expect(label.toLowerCase()).not.toContain('hoy');
+      expect(label.toLowerCase()).not.toContain('ayer');
+      expect(label.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('channel attribute actually resolves the real adapter (T-002 iteration 5 — bug found by app, confirmed by team-lead)', () => {
+    it('channel="telegram" renders Telegram chrome — tail on the LAST of a streak, single-tick, inside-plain timestamp', () => {
+      const el = mountWithChannel('telegram');
+      const msgs = [...el.querySelectorAll('.cf-msg')];
+      // same streak as the WhatsApp test below (index 3,4, both out:ai) — Telegram's
+      // adapter.tail === 'last' tails the OPPOSITE message from WhatsApp's.
+      expect(msgs[3].hasAttribute('data-tail')).toBe(false);
+      expect(msgs[4].hasAttribute('data-tail')).toBe(true);
+      // Telegram at 'delivered' (real adapters/telegram.ts, T-012 §F-2): unreachable state that
+      // mirrors 'sent' — single '✓', one <path> (WhatsApp's 'delivered' is already double-tick).
+      const receipt = msgs[3].querySelector('.cf-receipt');
+      expect(receipt?.querySelectorAll('path')).toHaveLength(1);
+      // inside-plain: no .cf-pad sibling reserving inline space before the stamp.
+      expect(msgs[0].querySelector('.cf-bubble > .cf-pad')).toBeNull();
+    });
+
+    it('twin: channel="whatsapp" (the default) renders WhatsApp chrome — same script, opposite answers', () => {
+      const el = mountWithChannel('whatsapp');
+      const msgs = [...el.querySelectorAll('.cf-msg')];
+      expect(msgs[3].hasAttribute('data-tail')).toBe(true);
+      expect(msgs[4].hasAttribute('data-tail')).toBe(false);
+      // WhatsApp's glyph is already double-tick at 'delivered' (color only flips at 'read').
+      const receipt = msgs[3].querySelector('.cf-receipt');
+      expect(receipt?.querySelectorAll('path')).toHaveLength(2);
+      expect(msgs[0].querySelector('.cf-bubble > .cf-pad')).not.toBeNull();
+    });
+  });
+
+  describe('T-017 acceptance #1 — zero emoji in the rendered chrome, both channels', () => {
+    // Not the message BODY (SCRIPT's own "...4 🎉" is real chat content, not a rendering-glyph
+    // token — core/__tests__/emoji-scan.test.ts's own exclusion for exactly this case) — only
+    // the composer and the receipt/views chrome this task rewrote to SVG.
+    const EMOJI_RE = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+
+    it.each(['telegram', 'whatsapp'] as const)('%s: composer and receipt glyphs are emoji-free', (channel) => {
+      const el = mountWithChannel(channel);
+      expect(EMOJI_RE.test(el.querySelector('.cf-composer')!.textContent ?? '')).toBe(false);
+      el.querySelectorAll('.cf-receipt, .cf-receipt-label, .cf-views').forEach((node) => {
+        expect(EMOJI_RE.test(node.textContent ?? '')).toBe(false);
+      });
+    });
+  });
+
+  describe('chrome axis (T-017 Alcance B — operator: "así el cliente de Fovente no se confunde con los botones que estén cambiando")', () => {
+    it('fidelity (default): the clip sits on opposite sides for Telegram vs WhatsApp', () => {
+      const tg = mountWithChannel('telegram');
+      const wa = mountWithChannel('whatsapp');
+      expect(composerIconOrder(tg)[0]).toBe('clip'); // Telegram: clip LEFT
+      expect(composerIconOrder(wa)[0]).not.toBe('clip');
+      expect(composerIconOrder(wa).at(-1)).toBe('clip'); // WhatsApp: clip RIGHT
+    });
+
+    it('consistent: same composer icon order regardless of channel — the axis this task adds', () => {
+      const tg = mountWithChrome('telegram', 'consistent');
+      const wa = mountWithChrome('whatsapp', 'consistent');
+      expect(composerIconOrder(tg)).toEqual(composerIconOrder(wa));
+    });
+
+    it('el gemelo (acceptance #3): consistent fixes the COMPOSER, not the message — bubble/ticks still differ by channel', () => {
+      const tg = mountWithChrome('telegram', 'consistent');
+      const wa = mountWithChrome('whatsapp', 'consistent');
+      // Same streak/state as the "channel attribute" describe above (msgs[3] === 'delivered').
+      const tgMsgs = [...tg.querySelectorAll('.cf-msg')];
+      const waMsgs = [...wa.querySelectorAll('.cf-msg')];
+      expect(tgMsgs[3].hasAttribute('data-tail')).toBe(false); // Telegram tails the LAST
+      expect(waMsgs[3].hasAttribute('data-tail')).toBe(true); // WhatsApp tails the FIRST
+      expect(tgMsgs[3].querySelector('.cf-receipt')?.querySelectorAll('path')).toHaveLength(1); // single-tick
+      expect(waMsgs[3].querySelector('.cf-receipt')?.querySelectorAll('path')).toHaveLength(2); // double-tick
+      // If this failed, 'consistent' would be fixing the message instead of the chrome — the bug
+      // T-017's acceptance #3 exists to catch.
+    });
+  });
+
+  describe("chrome='branded' (T-027 E — operator: producción usa la paleta de Fovente, no la del canal)", () => {
+    // jsdom never loads styles.css (no `<link>`/`<style>` in these tests — same reasoning as
+    // every other test in this file), so `getComputedStyle` can't verify the actual resolved
+    // color here; that's styles.css's own concern (a browser/Storybook check, out of this
+    // scope.write's testable surface). What IS testable at this layer: the attribute the CSS
+    // keys off gets set correctly, the consumer's token round-trips onto the host element
+    // exactly as a consumer would set it, and — the acceptance's real point — that 'branded'
+    // does NOT collapse structure the way it collapses palette.
+
+    /** Same as `mountWithChrome`, plus an inline `--cf-cs-consumer-*` token — the consumer-set
+     * palette `chrome='branded'` reads (styles.css, appended at end of file on purpose). */
+    function mountBranded(channel: string, consumerOut: string): HTMLElement {
+      const el = mountWithChrome(channel, 'branded');
+      el.style.setProperty('--cf-cs-consumer-out', consumerOut);
+      return el;
+    }
+
+    it("sets data-chrome='branded' (the attribute styles.css's [data-chrome='branded'] rules key off)", () => {
+      const el = mountWithChrome('whatsapp', 'branded');
+      expect(el.dataset.chrome).toBe('branded');
+    });
+
+    it("the consumer's --cf-cs-consumer-out token round-trips onto the host element, identically for both channels", () => {
+      const wa = mountBranded('whatsapp', 'rgb(181, 50, 43)');
+      const tg = mountBranded('telegram', 'rgb(181, 50, 43)');
+      expect(wa.style.getPropertyValue('--cf-cs-consumer-out')).toBe('rgb(181, 50, 43)');
+      expect(tg.style.getPropertyValue('--cf-cs-consumer-out')).toBe('rgb(181, 50, 43)');
+    });
+
+    it('el gemelo (acceptance #4): palette convergence must NOT collapse structure — same assertions as the consistent-chrome gemelo above', () => {
+      const tg = mountBranded('telegram', 'rgb(181, 50, 43)');
+      const wa = mountBranded('whatsapp', 'rgb(181, 50, 43)');
+      const tgMsgs = [...tg.querySelectorAll('.cf-msg')];
+      const waMsgs = [...wa.querySelectorAll('.cf-msg')];
+      expect(tgMsgs[3].hasAttribute('data-tail')).toBe(false); // Telegram tails the LAST
+      expect(waMsgs[3].hasAttribute('data-tail')).toBe(true); // WhatsApp tails the FIRST
+      expect(tgMsgs[3].querySelector('.cf-receipt')?.querySelectorAll('path')).toHaveLength(1); // single-tick
+      expect(waMsgs[3].querySelector('.cf-receipt')?.querySelectorAll('path')).toHaveLength(2); // double-tick
+      // If this failed, 'branded' would have collapsed structure along with palette — exactly
+      // the over-reach the operator's twin ("branded acepta tokens... y no altera la estructura")
+      // exists to catch.
+    });
+
+    it('with no consumer token set, branded mounts and renders the thread exactly as any other chrome mode does', () => {
+      const el = mountWithChrome('whatsapp', 'branded');
+      expect(el.style.getPropertyValue('--cf-cs-consumer-out')).toBe('');
+      expect(el.querySelectorAll('.cf-msg')).toHaveLength(POST_COUNT);
+    });
+  });
+
+  describe('reply-label attribute (T-027, found beyond A-E) — same split as edited-label: WHICH message via media.replyFast, TEXT via the attribute', () => {
+    const REPLY_SCRIPT = JSON.stringify([
+      { k: 'post', by: 'in', text: 'Hola', delayMs: 0 },
+      { k: 'post', by: 'out:ai', text: 'Ya llegó', media: { replyFast: true }, delayMs: 0 },
+    ]);
+
+    function mountReply(attrs: Record<string, string> = {}): HTMLElement {
+      const el = document.createElement('cf-chat-sim');
+      el.setAttribute('channel', 'whatsapp');
+      el.setAttribute('seed', '7');
+      el.setAttribute('t0', '1767261600000');
+      Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v));
+      const scriptTag = document.createElement('script');
+      scriptTag.type = 'application/json';
+      scriptTag.textContent = REPLY_SCRIPT;
+      el.appendChild(scriptTag);
+      document.body.appendChild(el);
+      return el;
+    }
+
+    it('uses the reply-label attribute verbatim when set', () => {
+      const el = mountReply({ 'reply-label': 'Respondió en 4 s' });
+      expect(el.querySelector('.cf-reply-in')?.textContent).toBe('Respondió en 4 s');
+    });
+
+    it('falls back to a default label when the attribute is absent — never blank, same convention as edited-label/"Editado"', () => {
+      const el = mountReply();
+      expect(el.querySelector('.cf-reply-in')?.textContent).not.toBe('');
+      expect(el.querySelector('.cf-reply-in')).not.toBeNull();
+    });
+
+    it('only the message flagged media.replyFast gets the label — the plain "Hola" message does not', () => {
+      const el = mountReply({ 'reply-label': 'Respondió en 4 s' });
+      const msgs = [...el.querySelectorAll('.cf-msg')];
+      expect(msgs[0].querySelector('.cf-reply-in')).toBeNull(); // "Hola" — no media
+      expect(msgs[1].querySelector('.cf-reply-in')?.textContent).toBe('Respondió en 4 s');
+    });
+  });
+});

@@ -1,0 +1,934 @@
+/* chat-sim/styles.css — self-contained, scoped stylesheet (architecture-v1.md §12).
+ *
+ * Ships by subpath (@cofoundy/ui/chat-sim/styles.css), never touches src/styles/index.css.
+ * ALL tokens live under `.cf-chat-sim` — zero new declarations at `:root` (T-002 acceptance #2).
+ * ZERO Tailwind utility classes anywhere in this family (T-002 acceptance #3) — every rule below
+ * is a semantic class the element/ layer sets itself, styled here in plain CSS, the same
+ * language products/fovente-landingpage/src/components/ChatDemo.astro already speaks in
+ * production (that continuity is deliberate — architecture-v1.md §12 point 4).
+ *
+ * Structure is adapter-driven, not channel-driven: every STRUCTURAL selector below keys off a
+ * `data-*` attribute that element/render.ts sets FROM `ChannelAdapter` fields (tail, timestamp,
+ * receipt, reactions, quote) — never off a `[data-channel="whatsapp"]`-style rule. That's
+ * what keeps the caps fixture (T-002 #6) meaningful: flipping the adapter changes which
+ * attribute values appear, and these rules just render whatever's there.
+ *
+ * Per-brand CHROME is the deliberate exception (T-013, telegram-fidelity-fix.md): wallpaper
+ * texture, date-pill treatment, glued-corner radius and composer icon order are NOT among the
+ * 16 `ChannelAdapter` fields — the contract excludes brand color/texture on purpose, same
+ * reasoning as the standalone `--channel-imessage` token below. Those rules key off
+ * `[data-channel]` (element/chat-sim-element.ts sets it verbatim from the `channel` attribute),
+ * scoped under `.cf-chat-sim[data-channel='…']` so they never touch the shared defaults other
+ * channels fall back to.
+ */
+
+.cf-chat-sim {
+  /* ── tokens ─────────────────────────────────────────────────────────── */
+  --cf-cs-radius: 11px;
+  --cf-cs-radius-lg: 16px;
+  --cf-cs-tail-w: 7px;
+  --cf-cs-tail-h: 11px;
+  --cf-cs-gap: 0.45rem;
+  --cf-cs-pad: 44px; /* reserved inline space for the inside-pad timestamp trick; JS re-measures it */
+  /* T-031 A — the operator's own words: "el ratio del celular mocked tiene que ser fixed, como
+     la izquierda". 440px is ChatDemo.astro's own literal (its `measure()` comment: "el alto de la
+     caja es FIJO, igual para todos los rubros, no se achica") — same default, so a consumer who
+     sets nothing gets production's exact proportions. Applied to `.cf-frame` below, NOT to this
+     root element, so an optional `.cf-tag` (T-031 D) sits above the frame instead of eating into
+     this fixed budget. Overridable per-instance via the `height` attribute
+     (chat-sim-element.ts's connectedCallback) — never hardcoded past this one token. */
+  --cf-cs-height: 440px;
+
+  --cf-cs-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --cf-cs-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --cf-cs-surface: #e9edef;
+  --cf-cs-card: #ffffff;
+  --cf-cs-ink: #111b21;
+  --cf-cs-ink-muted: #667781;
+  --cf-cs-hairline: rgba(0, 0, 0, 0.08);
+
+  --cf-cs-bubble-in: #ffffff;
+  --cf-cs-bubble-out: #d9fdd3;
+  --cf-cs-bubble-in-meta: #8696a0;
+  --cf-cs-bubble-out-meta: #5b8a55;
+  --cf-cs-bubble-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+
+  --cf-cs-accent: #25d366;
+  --cf-cs-accent-ink: #ffffff;
+  /* Darkened variants for TEXT rendered directly in the accent color — #25d366 as a foreground
+   * on the surfaces it actually sits on (white bubble, light bubble-out, avatar/badge fill)
+   * measures 1.79-1.98:1, well under WCAG AA's 4.5:1 for normal text (T-023 D). The bar/border
+   * and background USES of --cf-cs-accent are NOT part of this — those stay the literal brand
+   * green on purpose (T-023 D acceptance: "la barra y el fondo pueden quedar"). Two separate
+   * tokens because they resolve two different failures: `-text` recolors text that reads AS the
+   * accent (quote author, on a light surface); `-avatar-ink` recolors text that sits ON a
+   * fixed accent-colored fill (the avatar initial) — that fill also backs Telegram's blue avatar
+   * (`--channel-telegram`), so a single dark value had to clear AA against both (verified: 7.31:1
+   * on #25d366, 5.05:1 on #37a1de) rather than needing a per-channel variant. */
+  --cf-cs-accent-text: #0d7a3f;
+  --cf-cs-avatar-ink: #0a3018;
+  --cf-cs-reaction-bg: #ffffff;
+  --cf-cs-reaction-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+
+  /* iMessage's per-channel accent (its bubble blue) — architecture-v1.md §9 iteration 3 splits
+   * this cycle's iMessage work into "the token + the ChannelId" (this token; ChannelId landed in
+   * T-001) vs. the full adapter/bubble styling, which is out of scope. Unconditional per §12
+   * point 2 ("Incluye --channel-imessage de A-5") — carried by T-006 because styles.css is
+   * [skin]'s cell, not because it's audio-related; it just has nowhere else to land this cycle. */
+  --channel-imessage: #0a84ff;
+
+  display: flex;
+  flex-direction: column;
+  font-family: var(--cf-cs-sans);
+  color: var(--cf-cs-ink);
+}
+
+/* T-031 A/D — the actual "phone frame" (head + logs + composer): fixed height, the rounded card,
+   the overflow clip. Split out from `.cf-chat-sim` itself so `.cf-tag` (below) can sit as a
+   sibling ABOVE it — "encima del chat", not squeezed inside a fixed pixel budget it would
+   otherwise have to share. Every existing selector keyed off `.cf-chat-sim[data-*] .cf-log` /
+   `.cf-avatar` / etc. is a DESCENDANT combinator, so this extra nesting level changes nothing
+   about which rules match; CSS custom properties set on `.cf-chat-sim` still inherit straight
+   through it. */
+.cf-frame {
+  display: flex;
+  flex-direction: column;
+  height: var(--cf-cs-height);
+  background: var(--cf-cs-surface);
+  border-radius: var(--cf-cs-radius-lg);
+  overflow: hidden;
+}
+
+/* ── tag pill (T-031 D) — "encima del chat", cromo del consumidor ─────────
+   Same discipline as `reply-label`/`edited-label`: zero literals here, `element/`'s
+   `#applyTagForActiveSlide` only ever writes attribute-sourced text into `.cf-tag-icon`/
+   `.cf-tag-label`. `hidden` by default (no `tag-icon`/`tag-label` anywhere ⇒ never rendered). */
+.cf-tag {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: none;
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cf-cs-ink-muted);
+}
+.cf-tag[hidden] {
+  display: none;
+}
+.cf-tag-icon {
+  flex: none;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+.cf-tag-icon[hidden] {
+  display: none;
+}
+
+/* Doodle-textured wallpaper (adapter.wallpaper === 'pattern' — WhatsApp AND Telegram; 'none' for
+   iMessage leaves the log a plain --cf-cs-surface). Hand-authored inline SVG, no external asset:
+   a loose scatter of a few tiny line-glyphs (leaf / chat-tail / dot), tiled — closer to WhatsApp's
+   actual wallpaper texture than a bare dot grid (flagged in review as reading "placeholder"). */
+.cf-chat-sim[data-wallpaper='pattern'] .cf-log {
+  background-color: var(--cf-cs-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cg fill='none' stroke='%23000' stroke-opacity='0.045' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M12 8c4 0 6 3 6 7s-3 6-6 6'/%3E%3Ccircle cx='58' cy='14' r='3'/%3E%3Cpath d='M44 46c3-3 8-3 10 0s0 7-3 9-8 1-9-2 0-5 2-7z'/%3E%3Cpath d='M76 62c3 1 5 4 4 7s-4 4-7 3'/%3E%3Ccircle cx='16' cy='70' r='2.4'/%3E%3Cpath d='M30 20l4 4m-4 0l4-4'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 90px 90px;
+}
+.cf-chat-sim[data-wallpaper='none'] .cf-log {
+  background: var(--cf-cs-surface);
+}
+
+/* ── Telegram brand identity (T-013, telegram-fidelity-fix.md "3 señales") ─────────────────────
+   Priority order per the operator's real-vs-ours comparison: (1) pill, (2) wallpaper, (3) radius.
+   Everything here is scoped to `[data-channel='telegram']` — it never touches the shared
+   defaults WhatsApp/iMessage fall back to. Hex values and proportions are OBSERVED facts
+   (tdesktop is GPL — no code/asset copied, per the spec's guardrail); the doodle below is
+   hand-drawn, distinct in silhouette from the WhatsApp one above (outline-only vs filled). */
+
+.cf-chat-sim[data-channel='telegram'] {
+  --channel-telegram: #37a1de; /* Telegram's inbound accent — reply bar / link / avatar */
+  --channel-telegram-out: #5eb854; /* outbound reply-bar accent (adapter-interface-draft.md "Reply") */
+  /* T-025 — dedicated TEXT-ONLY tokens for `.cf-quote-author` (below): the plain accents above
+     fail WCAG AA as TEXT color in 3 of 4 real combinations (T-025's own measurement: 2.87:1 IN
+     light, 2.34:1 OUT light, 2.21:1 OUT dark — only IN dark clears it, at 5.41:1). Split into
+     dedicated tokens instead of darkening `--channel-telegram`/`-out` directly because those ALSO
+     paint the avatar fill, `.cf-composer-send`, and the reply-bar `border-left-color` — decorative
+     uses T-023 already ruled can stay the real brand hue ("pueden quedar"); only the AUTHOR TEXT
+     needs to change. Passthrough here (IN dark already clears AA at the undarkened accent — no
+     need to touch it); the two failing-in-light cases are overridden below, unconditionally. */
+  --channel-telegram-quote-text: var(--channel-telegram);
+  --channel-telegram-out-quote-text: var(--channel-telegram-out);
+}
+/* T-025 — light theme: darken toward black (same derivation as `--cf-cs-accent-text`, T-023 D)
+   just enough to clear 4.5:1 against the LIGHT bubbles this text sits on. Applies regardless of
+   `chrome` — unlike the dark-mode OUT case below, a same-hue darkening exists here, so there's no
+   fidelity-vs-accessibility tradeoff to gate. Scoped `:not([data-theme='dark'])` rather than
+   touching the base declaration above, so dark mode (which resolves its own values) is untouched. */
+.cf-chat-sim[data-channel='telegram']:not([data-theme='dark']) {
+  --channel-telegram-quote-text: #2979a7; /* measured: 4.80:1 vs light bubble-in #ffffff */
+  --channel-telegram-out-quote-text: #417f3a; /* measured: 4.58:1 vs Telegram's light out-bubble #effdde */
+}
+/* T-025 — dark theme, OUT only: the one case with NO same-hue fix. Telegram's dark-mode outbound
+   bubble (#3e6aa7, T-023 A's operator-corrected value) is BLUE, not a darkened green (T-013
+   inverts the hue between themes on purpose) — darkening `--channel-telegram-out` toward black
+   REDUCES contrast against it instead of raising it (the two converge in luminance before the
+   green gets dark enough; verified down to #2a5326, as dark as T-023 D's own darkening ever went,
+   still under 4.5:1). Team-lead's call (T-025 follow-up, 2026-09-07): `fidelity` reproduces
+   Telegram AS-IS, failing AA exactly like the real app does — we're PORTRAYING another app there,
+   nobody reads real messages in a simulator. `consistent`/`branded` IS Fovente's own app with real
+   people reading real content, so AA is not negotiable there: reuses `--cf-cs-bubble-out-meta`
+   (already `#e9edef` for this exact bubble — T-023 A's own fix for the hora/ticks meta text
+   sharing this same background) instead of inventing a new literal — 4.66:1, verified, and it's a
+   neutral ink tone, not a hue this component owns an opinion on anyway. */
+.cf-chat-sim[data-channel='telegram'][data-theme='dark']:is([data-chrome='consistent'], [data-chrome='branded']) {
+  --channel-telegram-out-quote-text: var(--cf-cs-bubble-out-meta);
+}
+.cf-chat-sim[data-channel='whatsapp'] {
+  --channel-whatsapp: #25d366; /* mirrors --channel-imessage's per-brand-accent pattern above */
+}
+.cf-chat-sim[data-channel='telegram'] .cf-avatar,
+.cf-chat-sim[data-channel='telegram'] .cf-composer-send {
+  background: var(--channel-telegram);
+}
+.cf-chat-sim[data-channel='whatsapp'] .cf-avatar,
+.cf-chat-sim[data-channel='whatsapp'] .cf-composer-send {
+  background: var(--channel-whatsapp);
+}
+/* Palette (F-3, telegram-fidelity-fix.md): Telegram's outgoing bubble is #effdde, not WhatsApp's
+   literal #d9fdd3 — both read as "mint green" so the light-mode divergence is minor on purpose;
+   the real divergence is the dark-mode block further down. */
+.cf-chat-sim[data-channel='telegram'] .cf-msg[data-dir='out'] .cf-bubble {
+  background: #effdde;
+}
+
+/* (1) Date pill — Telegram floats a TRANSLUCENT pill with WHITE text over the wallpaper; ours was
+   opaque-light/gray-text, i.e. WhatsApp's treatment, on every channel. Padding 12/4/3 per spec. */
+.cf-chat-sim[data-channel='telegram'] .cf-date-pill {
+  background: rgba(0, 0, 0, 0.28);
+  color: #ffffff;
+  padding: 0.1875rem 0.75rem 0.25rem 0.75rem;
+  box-shadow: none;
+}
+
+/* (2) Wallpaper — Telegram's is a cold gray-blue OUTLINE doodle, opposite silhouette of WhatsApp's
+   warm filled one above (T-021 regression fix, see decision-log #2026-09-06-telegram-wallpaper-
+   invisible): the previous stroke-opacity here was 0.03 (~2% contrast), sourced from
+   telegram-fidelity-fix.md's OWN "no lo pude verificar sin sesión" caveat on that number — the
+   operator's real Telegram screenshot shows a clearly visible wallpaper, which the unverified spec
+   value contradicted. Bumped to 0.12 (contrast ratio ~1.13, same order as the WhatsApp fix below,
+   ~1.10) — visible without reading as a solid layer. Dark theme used to drop the pattern entirely
+   (`background-image: none`, "sin patrón") on the same unverified assumption; it now keeps the
+   SAME silhouette re-inked light-on-dark, mirroring the WhatsApp dark-mode treatment (T-020). */
+.cf-chat-sim[data-channel='telegram'] .cf-log {
+  background-color: #dee3e7;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cg fill='none' stroke='%235a7a99' stroke-opacity='0.12' stroke-width='1.2' stroke-linecap='round'%3E%3Ccircle cx='14' cy='16' r='5'/%3E%3Cpath d='M40 10l4 4-4 4-4-4z'/%3E%3Cpath d='M70 20q4 -8 8 0t8 0'/%3E%3Ccircle cx='60' cy='55' r='3'/%3E%3Cpath d='M18 68l6 6m0-6l-6 6'/%3E%3Cpath d='M85 75q-3 6 -8 3t-2 -9'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 100px 100px;
+}
+.cf-chat-sim[data-channel='telegram'][data-theme='dark'] .cf-log {
+  background-color: #0e1621;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cg fill='none' stroke='%237a95b0' stroke-opacity='0.12' stroke-width='1.2' stroke-linecap='round'%3E%3Ccircle cx='14' cy='16' r='5'/%3E%3Cpath d='M40 10l4 4-4 4-4-4z'/%3E%3Cpath d='M70 20q4 -8 8 0t8 0'/%3E%3Ccircle cx='60' cy='55' r='3'/%3E%3Cpath d='M18 68l6 6m0-6l-6 6'/%3E%3Cpath d='M85 75q-3 6 -8 3t-2 -9'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 100px 100px;
+}
+
+/* (3) Corner radius — Telegram's bubbles run 16px on FREE corners, 6px on ones GLUED to the next
+   bubble in the same actor streak. Derived purely in CSS from element/render.ts's EXISTING
+   `data-grouped` attribute (T-002) — deliberately NOT a new DOM attribute: render.ts's output is
+   cross-checked byte-for-byte against react/'s independent implementation
+   (react/__tests__/snapshot-cross-check.test.tsx, out of this task's scope), so this stays a
+   pure styles.css concern. `:has(+ …)` reads "the next `.cf-msg` sibling continues my streak" —
+   i.e. MY bottom edge is glued to it. `:not([data-tail])` on the top rule defers to the existing
+   tail-corner-zero rule below, which still owns the streak's tail edge. */
+.cf-chat-sim[data-channel='telegram'] .cf-bubble {
+  border-radius: 16px;
+}
+.cf-chat-sim[data-channel='telegram'] .cf-msg[data-grouped]:not([data-tail]) .cf-bubble {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+.cf-chat-sim[data-channel='telegram'] .cf-msg:has(+ .cf-msg[data-grouped]) .cf-bubble {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+
+/* Reply-bar accent — direction-specific per spec ("acento #37a1de in / #5eb854 out"), overriding
+   the single shared --cf-cs-accent the generic `.cf-quote` rules use. */
+.cf-chat-sim[data-channel='telegram'] .cf-msg[data-dir='in'] .cf-quote[data-style='thin-bar'] {
+  border-left-color: var(--channel-telegram);
+}
+.cf-chat-sim[data-channel='telegram'] .cf-msg[data-dir='in'] .cf-quote-author {
+  color: var(--channel-telegram-quote-text); /* T-025 — text-only, AA-safe; border above stays the real accent */
+}
+.cf-chat-sim[data-channel='telegram'] .cf-msg[data-dir='out'] .cf-quote[data-style='thin-bar'] {
+  border-left-color: var(--channel-telegram-out);
+}
+.cf-chat-sim[data-channel='telegram'] .cf-msg[data-dir='out'] .cf-quote-author {
+  color: var(--channel-telegram-out-quote-text); /* T-025 — text-only, AA-safe; border above stays the real accent */
+}
+
+/* ── dark theme (T-013 acceptance #2) — consumer sets `data-theme="dark"` on <cf-chat-sim>
+   directly; pure attribute-selector, no JS involved. Base tokens are channel-neutral; the two
+   outgoing-bubble rules below are where Telegram and WhatsApp diverge on purpose — the spec's
+   whole point is that they DON'T converge in dark mode the way they nearly do in light mode. */
+.cf-chat-sim[data-theme='dark'] {
+  --cf-cs-surface: #0e1621;
+  --cf-cs-card: #17212b;
+  --cf-cs-ink: #e9edef;
+  --cf-cs-ink-muted: #8aa0b4;
+  --cf-cs-hairline: rgba(255, 255, 255, 0.08);
+  --cf-cs-bubble-in: #182533;
+  --cf-cs-bubble-in-meta: #7a95a8;
+  /* Dark theme already had good contrast on the brand accent itself (7.84:1 / 4.92:1 against
+     the dark in/out bubbles) — only the LIGHT-mode value needed darkening (T-023 D), so this
+     reverts the root token's darkened default back to the plain accent for dark theme. */
+  --cf-cs-accent-text: var(--cf-cs-accent);
+}
+.cf-chat-sim[data-channel='telegram'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {
+  /* Corregido por el operador 2026-09-06 contra su cliente real de Telegram. El #2b5278
+     anterior salio de night.tdesktop-theme (msgOutBg). La captura del operador manda. */
+  background: #3e6aa7;
+  filter: none; /* spec: Telegram draws no shadow on the outgoing bubble in dark mode */
+}
+.cf-chat-sim[data-channel='whatsapp'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {
+  /* Corregido por el operador 2026-09-06 contra su cliente real de WhatsApp. */
+  background: #154d38; /* keeps the default shadow */
+}
+/* T-023 A: the dark block above never redefined `--cf-cs-bubble-out-meta` (used by the stamp's
+   time/edited text AND, via fixtures.ts/adapters/*.ts, the receipt-tick color — "la hora y los
+   ticks"), so it stayed the light-mode `#5b8a55` — 1.36:1 on Telegram's corrected #3e6aa7 and
+   2.42:1 on WhatsApp's corrected #154d38, both effectively invisible. Scoped per-channel (not in
+   the generic dark block above) because the generic/no-adapter case keeps a LIGHT out-bubble
+   (`--cf-cs-bubble-out` isn't overridden there) — a global redefinition here would break contrast
+   for that case instead of fixing it. #e9edef matches `--cf-cs-ink`'s own dark value (kept as a
+   literal, not `var(--cf-cs-ink)`, so the static-scan contrast instrument below can read it
+   without resolving a second level of indirection). */
+.cf-chat-sim[data-channel='telegram'][data-theme='dark'] {
+  --cf-cs-bubble-out-meta: #e9edef;
+}
+.cf-chat-sim[data-channel='whatsapp'][data-theme='dark'] {
+  --cf-cs-bubble-out-meta: #e9edef;
+}
+/* WhatsApp dark-mode wallpaper (T-020 regression fix): the shared `[data-wallpaper='pattern']`
+   rule above draws the doodle with a fixed BLACK stroke — tenue on the light surface, but
+   black-on-near-black once `--cf-cs-surface` flips dark (T-013), i.e. invisible. WhatsApp's real
+   dark wallpaper keeps the texture, just re-inked light-on-dark (Telegram-dark now does the same,
+   see above — T-021 reversed the earlier "drops its pattern entirely" call once the operator's
+   own screenshot showed it was wrong). Same silhouette as the light-mode SVG, opacity raised
+   slightly (0.045 -> 0.06) since a light stroke reads fainter against a dark ground at equal
+   opacity. */
+.cf-chat-sim[data-channel='whatsapp'][data-theme='dark'] .cf-log {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.06' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M12 8c4 0 6 3 6 7s-3 6-6 6'/%3E%3Ccircle cx='58' cy='14' r='3'/%3E%3Cpath d='M44 46c3-3 8-3 10 0s0 7-3 9-8 1-9-2 0-5 2-7z'/%3E%3Cpath d='M76 62c3 1 5 4 4 7s-4 4-7 3'/%3E%3Ccircle cx='16' cy='70' r='2.4'/%3E%3Cpath d='M30 20l4 4m-4 0l4-4'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 90px 90px;
+}
+
+/* ── header (ChatDemo.astro precedent: .chat-head) ─────────────────────── */
+
+.cf-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: none;
+  padding: 0.65rem 0.9rem;
+  background: var(--cf-cs-card);
+  border-bottom: 1px solid var(--cf-cs-hairline);
+}
+.cf-avatar {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--cf-cs-accent);
+  /* T-023 D: was --cf-cs-accent-ink (#fff) — 1.98:1 on this fill, fails AA. `--cf-cs-accent-ink`
+     stays untouched (react/LiveComposer.tsx's send button also reads it, for a white icon that's
+     fine there). This is scoped to the avatar's own initial letter only. */
+  color: var(--cf-cs-avatar-ink);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+.cf-who {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.cf-who b {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.cf-who em {
+  font-style: normal;
+  font-size: 0.6875rem;
+  color: var(--cf-cs-ink-muted);
+}
+
+/* T-031 C — badge slot: opt-in (only exists when `badge-flag` is set, chat-sim-element.ts's
+   `#buildHead`), pinned to the header's trailing edge. `data-on` (not a class) is what
+   `#reconcile` writes, straight from `SimState.flags[badgeFlagKey]` — no per-brand color, no
+   literal text, both are the consumer's own attributes. */
+.cf-badge {
+  margin-left: auto;
+  flex: none;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--cf-cs-hairline);
+  color: var(--cf-cs-ink-muted);
+}
+.cf-badge[data-on='true'] {
+  background: var(--cf-cs-accent);
+  color: var(--cf-cs-accent-ink);
+}
+
+/* ── message list ───────────────────────────────────────────────────── */
+
+.cf-log {
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cf-cs-gap);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* T-031 B — one `<ol class="cf-log">` per rotation slide, all built up front and left in the DOM
+   for the component's whole lifetime (chat-sim-element.ts's `#slides`); only the active one is
+   ever unhidden. Same reasoning as `.cf-msg[hidden]`/`.cf-typing-row[hidden]` below: the class
+   rule above sets `display: flex` at equal specificity to the UA `[hidden]` default, and author
+   styles win that tie — without this override an "inactive" log would still take flex space. */
+.cf-log[hidden] {
+  display: none;
+}
+
+/* Stacks from the BOTTOM, like a real thread — ChatDemo.astro's documented reason
+   (global.css:358-361) for why this is `margin-top: auto` on the first VISIBLE item and NOT
+   `justify-content: flex-end`: combined with `overflow-y`, flex-end pushes overflowing content
+   OUT of the scrollable area (the top becomes unreachable). `margin-top:auto` has no such failure
+   mode — it only ever consumes free space that exists; once content fills/overflows the log,
+   there's none left to consume and the thread behaves like a normal top-to-bottom scroll.
+   element/chat-sim-element.ts's #applyBottomAnchor() moves this class to whichever <li> is
+   currently first-and-visible (hidden pre-rendered siblings before it don't count). */
+.cf-anchor-top {
+  margin-top: auto;
+}
+
+/* ── date separator ─────────────────────────────────────────────────── */
+
+.cf-date-sep {
+  display: flex;
+  justify-content: center;
+}
+.cf-date-sep[hidden] {
+  display: none;
+}
+.cf-date-pill {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--cf-cs-ink-muted);
+  background: var(--cf-cs-card);
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  box-shadow: var(--cf-cs-bubble-shadow);
+}
+
+/* ── service message (T-027 C) ──────────────────────────────────────────
+   Generalizes the SAME pill primitive `.cf-date-pill` already is (WhatsApp's e2e-encryption
+   notice, Telegram's unread divider, Fovente's `stop`/`done` are all "one centered service
+   message, three tones" — not per-brand vocabulary). `data-variant` is the only axis; per-channel
+   tone tinting (below) is the same declared exception `.cf-date-pill` above already takes
+   ([data-channel]-keyed brand chrome, file header), not a structural fact. */
+.cf-msg-service {
+  justify-content: center;
+}
+.cf-service-pill {
+  font-family: var(--cf-cs-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--cf-cs-ink-muted);
+  background: var(--cf-cs-card);
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  box-shadow: var(--cf-cs-bubble-shadow);
+}
+.cf-msg-service[data-variant='warn'] .cf-service-pill {
+  color: #92400e;
+  background: #fef3c7;
+}
+.cf-msg-service[data-variant='success'] .cf-service-pill {
+  color: #166534;
+  background: #dcfce7;
+}
+.cf-chat-sim[data-theme='dark'] .cf-msg-service[data-variant='warn'] .cf-service-pill {
+  color: #fde68a;
+  background: rgba(146, 64, 14, 0.35);
+}
+.cf-chat-sim[data-theme='dark'] .cf-msg-service[data-variant='success'] .cf-service-pill {
+  color: #bbf7d0;
+  background: rgba(22, 101, 52, 0.35);
+}
+
+/* card message (T-027 D) — REMOVED (team-lead, same task): the rationalization that WhatsApp's
+   contact/location cards made a free title+bullets container "the same family" was wrong — those
+   are FIXED structures, not a generic one. The real WhatsApp brief is markdown-styled plain text
+   (bold + bullets), which `.cf-text` (white-space: pre-line, below) already renders. */
+
+.cf-msg {
+  display: flex;
+  max-width: 100%;
+}
+.cf-msg[hidden] {
+  display: none;
+}
+/* The opposite-side reserve (not just max-width on the bubble) is what makes direction legible
+   regardless of content length: a max-width alone still lets a long message fill nearly the
+   whole row from EITHER side, so without this a long inbound and a long outbound bubble can end
+   up nearly indistinguishable (measured: 17px apart in a 380px log — team-lead review, wave 1). */
+.cf-msg[data-dir='in'] {
+  justify-content: flex-start;
+  padding-left: 7px;
+  padding-right: 15%;
+}
+.cf-msg[data-dir='out'] {
+  justify-content: flex-end;
+  padding-right: 7px;
+  padding-left: 15%;
+}
+
+/* consecutive same-actor messages sit tight; only the streak's edge (per adapter.tail) softens
+   the corner and grows the tail — see element/render.ts computeGroupFlags(). */
+.cf-msg[data-grouped] {
+  margin-top: -0.28rem;
+}
+
+/* ── bubble ─────────────────────────────────────────────────────────── */
+
+.cf-bubble {
+  position: relative;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--cf-cs-radius);
+  max-width: 100%; /* the opposite-side 15% reserve on .cf-msg does the real capping now */
+  white-space: pre-line;
+  filter: drop-shadow(var(--cf-cs-bubble-shadow));
+}
+.cf-msg[data-dir='in'] .cf-bubble {
+  background: var(--cf-cs-bubble-in);
+  color: var(--cf-cs-ink);
+}
+.cf-msg[data-dir='out'] .cf-bubble {
+  background: var(--cf-cs-bubble-out);
+  color: var(--cf-cs-ink);
+}
+
+/* the tail — only the message computeGroupFlags() marked [data-tail] grows one, per
+   adapter.tail ('first' of the racha for WhatsApp, 'last' for Telegram/iMessage). */
+.cf-msg[data-tail][data-dir='in'] .cf-bubble {
+  border-top-left-radius: 0;
+}
+.cf-msg[data-tail][data-dir='out'] .cf-bubble {
+  border-top-right-radius: 0;
+}
+.cf-msg[data-tail][data-dir='in'] .cf-bubble::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: calc(-1 * var(--cf-cs-tail-w));
+  width: var(--cf-cs-tail-w);
+  height: var(--cf-cs-tail-h);
+  background: var(--cf-cs-bubble-in);
+  clip-path: path('M1.34,2.17 L7,9.47 V0 H2.46 C0.91,0 0.42,0.98 1.34,2.17 Z');
+}
+.cf-msg[data-tail][data-dir='out'] .cf-bubble::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: calc(-1 * var(--cf-cs-tail-w));
+  width: var(--cf-cs-tail-w);
+  height: var(--cf-cs-tail-h);
+  background: var(--cf-cs-bubble-out);
+  clip-path: path('M4.54,0 H0 V9.47 L5.66,2.17 C6.59,0.98 6.09,0 4.54,0 Z');
+}
+
+.cf-text {
+  display: inline;
+}
+
+/* T-027 (found beyond A-E) — ChatDemo.astro's `.bubble.link` (a payment link): mono, underlined,
+   accent-colored — `media.link` (asLinkBubble, render.ts) flags PRESENTATION only; the text
+   itself is still authored `msg.text` (a URL, a "Pagar aquí" label), never generated here. */
+.cf-bubble-link .cf-text {
+  font-family: var(--cf-cs-mono);
+  font-size: 0.75rem;
+  color: var(--cf-cs-accent-text, var(--cf-cs-accent));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ── quote (adapter.quote: color-bar | thin-bar | stacked-bubble) ─────── */
+
+.cf-quote {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin-bottom: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+}
+.cf-quote[data-style='color-bar'] {
+  border-left: 3px solid var(--cf-cs-accent);
+}
+.cf-quote[data-style='thin-bar'] {
+  border-left: 1px solid var(--cf-cs-accent);
+}
+.cf-quote[data-style='stacked-bubble'] {
+  border-left: none;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: calc(var(--cf-cs-radius) - 4px);
+}
+.cf-quote-author {
+  /* T-023 D: was --cf-cs-accent (#25d366) — 1.98:1 on the light in-bubble, 1.79:1 on the light
+     out-bubble, fails AA. Telegram overrides this rule with its own (--channel-telegram /
+     -out) tokens below, so this only ever governs the default/WhatsApp case. */
+  color: var(--cf-cs-accent-text);
+  font-weight: 600;
+}
+.cf-quote-text {
+  color: var(--cf-cs-ink-muted);
+}
+
+/* ── stamp: time + edited label + views + receipt ──────────────────────
+   placement is adapter.timestamp-driven, not a fixed rule — element/render.ts decides WHICH of
+   the three DOM shapes below gets built; each shape below is legitimately different CSS. */
+
+.cf-stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.cf-msg[data-dir='in'] .cf-stamp {
+  color: var(--cf-cs-bubble-in-meta);
+}
+.cf-msg[data-dir='out'] .cf-stamp {
+  color: var(--cf-cs-bubble-out-meta);
+}
+
+/* inside-pad (WhatsApp): .cf-pad reserves the trailing inline gap the text wraps around; .cf-stamp
+   sits absolutely over it — the exact trick ChatDemo.astro/global.css already ships. */
+.cf-bubble > .cf-pad {
+  display: inline-block;
+  width: var(--cf-cs-pad);
+  height: 1px;
+}
+.cf-bubble > .cf-pad + .cf-stamp {
+  position: absolute;
+  right: 0.8rem;
+  bottom: 0.42rem;
+}
+
+/* inside-plain (Telegram): stamp is a normal trailing inline element, no space reservation. */
+.cf-bubble > .cf-stamp:not(.cf-pad + .cf-stamp) {
+  margin-left: 0.4rem;
+  opacity: 0.85;
+}
+
+/* gutter (iMessage): stamp is OUTSIDE the bubble entirely, its own line in the message column. */
+.cf-msg > .cf-stamp {
+  margin-top: 0.15rem;
+  padding: 0 0.2rem;
+}
+.cf-msg[data-dir='in'] > .cf-stamp {
+  align-self: flex-start;
+}
+.cf-msg[data-dir='out'] > .cf-stamp {
+  align-self: flex-end;
+}
+
+.cf-edited {
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.5625rem;
+  opacity: 0.85;
+}
+
+/* T-027 (found beyond A-E) — ChatDemo.astro's `reply-in` ("respondió en 4 s"): "mismo sitio que
+   el «Editado» de WhatsApp, en su mismo tono" (production's own comment) — same properties as
+   `.cf-edited` above, `mono` instead of the base sans (it reads as a system-generated label, not
+   authored text) and a small trailing margin since it sits BEFORE the time, not after. */
+.cf-reply-in {
+  font-family: var(--cf-cs-mono);
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.5625rem;
+  opacity: 0.9;
+  margin-right: 0.1rem;
+}
+
+/* Color is set inline by element/render.ts, straight from ReceiptModel.states[state].color
+   (T-011) — there's no per-state value to key a CSS rule off here any more. */
+.cf-receipt {
+  flex: none;
+}
+.cf-receipt-label {
+  font-family: var(--cf-cs-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.5625rem;
+}
+
+/* below-bubble (ReceiptModel.placement, T-011 — no adapter this cycle uses it; iMessage-shaped,
+   same "own line under the bubble" idea as the gutter timestamp above). */
+.cf-receipt-below {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.6875rem;
+}
+.cf-msg[data-dir='in'] .cf-receipt-below {
+  text-align: left;
+}
+.cf-msg[data-dir='out'] .cf-receipt-below {
+  text-align: right;
+}
+/* icon is a drawn SVG (element/render.ts, element/icons.ts's eyeIcon) — was CSS
+   `content: '👁 '`, a font-rendered emoji pseudo-element with the same cross-machine pixel
+   problem T-016/T-017 fixed everywhere else (file header, "cero emoji en el DOM renderizado"). */
+.cf-views {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-variant-numeric: tabular-nums;
+}
+.cf-views svg {
+  flex: none;
+}
+
+/* ── reactions (adapter.reactions: overlay-below | own-row | overlay-edge) ─ */
+
+.cf-reactions {
+  display: flex;
+  gap: 0.15rem;
+}
+.cf-bubble > .cf-reactions[data-style='overlay-below'] {
+  position: absolute;
+  bottom: -0.55rem;
+  right: 0.4rem;
+  background: var(--cf-cs-reaction-bg);
+  border-radius: 999px;
+  padding: 0.1rem 0.3rem;
+  box-shadow: var(--cf-cs-reaction-shadow);
+}
+.cf-bubble > .cf-reactions[data-style='overlay-edge'] {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.3rem;
+  background: var(--cf-cs-reaction-bg);
+  border-radius: 999px;
+  padding: 0.05rem 0.25rem;
+  box-shadow: var(--cf-cs-reaction-shadow);
+  font-size: 0.75rem;
+}
+.cf-msg > .cf-reactions[data-style='own-row'] {
+  margin-top: 0.2rem;
+  padding: 0.1rem 0.2rem;
+}
+.cf-reaction {
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+/* ── typing / draft indicator ───────────────────────────────────────────
+   A typing <li> is built ONCE per draft window (element/chat-sim-element.ts's
+   `draftIntervals()`), at its real position in the flow — never recreated or moved during
+   playback. This block only ever gets `hidden` toggled on it, which is what lets the
+   infinite dot animation actually loop instead of restarting on every reconcile (the bug the
+   old floating/`appendChild`-per-frame version had). It's a real bubble in the flow — same
+   left/right rule as .cf-msg, same shape — not a floating pill. Numbers (5px dots, 3px gap,
+   1.2s cycle, .18s stagger) match products/fovente-landingpage's global.css:444-451 exactly;
+   those are what read as WhatsApp instead of a generic spinner. */
+
+.cf-typing-row {
+  display: flex;
+  max-width: 100%;
+}
+.cf-typing-row[hidden] {
+  display: none;
+}
+.cf-typing-row[data-dir='in'] {
+  justify-content: flex-start;
+  padding-left: 7px;
+}
+.cf-typing-row[data-dir='out'] {
+  justify-content: flex-end;
+  padding-right: 7px;
+}
+.cf-typing {
+  display: flex;
+  gap: 3px;
+  padding: 0.6rem 0.7rem;
+  border-radius: var(--cf-cs-radius);
+}
+.cf-typing-row[data-dir='in'] .cf-typing {
+  background: var(--cf-cs-bubble-in);
+}
+.cf-typing-row[data-dir='out'] .cf-typing {
+  background: var(--cf-cs-bubble-out);
+}
+.cf-typing i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--cf-cs-bubble-in-meta);
+  animation: cf-cs-dot 1.2s ease-in-out infinite;
+}
+.cf-typing i:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.cf-typing i:nth-child(3) {
+  animation-delay: 0.36s;
+}
+@keyframes cf-cs-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cf-typing i {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* ── composer (visual-only — a real, operable one is react/'s T-007) ───── */
+
+.cf-composer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: none;
+  padding: 0.5rem 0.7rem;
+  background: var(--cf-cs-card);
+  border-top: 1px solid var(--cf-cs-hairline);
+}
+.cf-composer-icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  font-size: 0.9375rem;
+  color: var(--cf-cs-ink-muted);
+}
+.cf-composer-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  background: var(--cf-cs-surface);
+  color: var(--cf-cs-ink-muted);
+  font-size: 0.8125rem;
+}
+.cf-composer-send {
+  background: var(--cf-cs-accent);
+  color: var(--cf-cs-accent-ink);
+  border-radius: 50%;
+}
+
+/* ── focus-visible (T-023 C) ─────────────────────────────────────────────
+   `grep -rn "focus-visible\|:focus" src/components/chat-sim/` returned ZERO hits before this —
+   nothing in the family drew a visible focus indicator. element/'s own composer icons are
+   `aria-hidden` spans (not focusable) so this rule has no live target YET on that side, but it's
+   the CSS floor for anything focusable the family renders now or later — including react/'s
+   real controls, which share `.cf-chat-sim`'s scope. `var(--cf-cs-ink)` (not `--cf-cs-accent`:
+   measured 1.98:1 / 1.68:1 against the light card/surface, fails the 3:1 non-text minimum) is
+   already the theme's own foreground color, so it's guaranteed high-contrast against that
+   theme's surfaces without a dedicated token (13.8-17.5:1 measured, both themes).
+   react/LiveComposer.tsx sets `outline: none` inline on its textarea (T-007) — that's `app`'s
+   file, out of this task's scope.write, and an inline style wins specificity over this rule
+   regardless; flagged separately, not fixed here. */
+.cf-chat-sim :is(button, [href], input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--cf-cs-ink);
+  outline-offset: 2px;
+}
+
+/* fade-in on reveal — pure opacity, no translate: a scrub/seek must be able to land on any step
+   without a stale mid-animation transform (architecture-v1.md §1, class 8: "hidratar-sin-animar
+   tras un seek"). `cf-static` (capture/settle-gate, T-004) disables this entirely. */
+.cf-msg:not([hidden]) {
+  animation: cf-cs-in 0.22s ease both;
+}
+.cf-chat-sim.cf-static .cf-msg {
+  animation: none !important;
+}
+@keyframes cf-cs-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cf-msg:not([hidden]) {
+    animation: none;
+  }
+}
+
+/* ── branded chrome axis (T-027 E) ────────────────────────────────────────
+   'branded' (element/chat-sim-element.ts's `ChromeMode` — core's own `Chrome` type stays exactly
+   'fidelity' | 'consistent', untouched) is Fovente's real production case: the outbound palette
+   is the CONSUMER's brand color, not the channel's real green/mint — it's the consumer wearing
+   chat clothes, not a channel simulation. Structure (tail position, tick glyph/count, grouping,
+   corner radius) stays exactly what the channel/adapter say — the gemelo test
+   (chat-sim-element.test.ts) asserts WhatsApp and Telegram keep differing structurally under
+   'branded', same as they do under 'fidelity'/'consistent'. Only the palette narrows to ONE
+   shared color, via `--cf-cs-consumer-*` custom properties a consumer sets inline
+   (`<cf-chat-sim chrome="branded" style="--cf-cs-consumer-out: #b5322b">`) — undeclared falls
+   back to the existing brand accent, so `chrome="branded"` with no consumer token is a harmless
+   no-op, never a blank bubble.
+
+   Placed last in the file on purpose: WhatsApp/Telegram both hardcode their outbound bubble
+   background directly (not via `--cf-cs-bubble-out`, see F-3/telegram-fidelity-fix.md above) at
+   equal-or-higher selector specificity, so only SOURCE ORDER lets this win the cascade.
+
+   WhatsApp's receipt tick at delivery-state 'read' USED to be a literal `#53bdeb` baked into
+   adapters/whatsapp.ts's ReceiptModel — unreachable from here (an inline `style.color`, not a CSS
+   var). [channel] retired that literal in favor of `--channel-whatsapp-read` (their own commit,
+   the [channel] cell); the redefinition below is this cell's other half — same
+   `var(fallback, ...)` pattern as every other token above, so an unbranded render is untouched. */
+.cf-chat-sim[data-chrome='branded'] {
+  --cf-cs-bubble-out: var(--cf-cs-consumer-out, var(--cf-cs-accent));
+  --cf-cs-bubble-out-meta: var(--cf-cs-consumer-out-meta, var(--cf-cs-bubble-out-meta));
+  --channel-whatsapp-read: var(--cf-cs-consumer-out-meta, #53bdeb);
+}
+.cf-chat-sim[data-chrome='branded'][data-channel='telegram'] .cf-msg[data-dir='out'] .cf-bubble {
+  background: var(--cf-cs-consumer-out, var(--cf-cs-accent));
+}
+.cf-chat-sim[data-chrome='branded'][data-channel='telegram'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble,
+.cf-chat-sim[data-chrome='branded'][data-channel='whatsapp'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {
+  background: var(--cf-cs-consumer-out, var(--cf-cs-accent));
+}
+.cf-chat-sim[data-chrome='branded'] .cf-avatar,
+.cf-chat-sim[data-chrome='branded'] .cf-composer-send {
+  background: var(--cf-cs-consumer-accent, var(--cf-cs-accent));
+}

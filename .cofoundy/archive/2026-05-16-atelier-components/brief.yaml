@@ -1,0 +1,170 @@
+schema_version: 1.0
+created_at: 2026-05-16T11:18:00-05:00
+created_by: cto-loop (Andre Pacheco, Atelier-components session)
+domain: software
+name: atelier-components-xgodel-dogfood
+title: "Atelier components — XGodel v1 dogfood (riding V2.6)"
+
+owner:
+  name: André Pacheco
+  tier: Partner
+  role: CEO + CTO of this cycle
+
+parallel_cto:
+  scope: V2.6 Chrome System Phase 1
+  repo: ~/cofoundy/products/cofoundy-platform/docs-ai/
+  branch: feat/v2.6-chrome-system
+  contract: file-ownership-matrix + serialized merge order (chrome PR first, atelier PR second)
+  session_kind: paralelo (otra sesión Claude fresh, mismo Andre)
+  handoff_file: /tmp/handoff-v2.6-chrome-cto-handoff-20260516-111230.md
+  coordination_collision_points:
+    - docs-ai/mdx-components.tsx (serializado: their PR first, mine additive single-line later)
+    - docs-ai/content/client/xgodel/*.mdx (naming-disjoint: they own propuesta.mdx stub,
+      I own personas/sitemap/moodboard/cotizacion/cronograma)
+
+scope:
+  done_definition: |
+    XGodel client portal renderea /client/xgodel/{propuesta, cotizacion, cronograma,
+    personas, brand-moodboard} con Deliverable chrome (CTO #2 provee) + componentes
+    Atelier desde @cofoundy/ui/docs/. Cada componente exportado con Zod prop schema +
+    Storybook story + entry en ATELIER_COMPONENTS registry. AGENTS.md auto-generado
+    desde registry build script. PR mergea a packages/ui main; follow-up PR a docs-ai
+    main agrega single import + spread en mdx-components.tsx.
+
+  out_of_scope:
+    - ContractTimeline (XGodel sin contrato firmado, excluded per Andre 2026-05-16)
+    - UserFlow, MockupShowcase, DeployRecord, PersonaGrid, TimelineGantt,
+      FaqAccordion, HandoffChecklist, BeforeAfterSlider (defer al segundo cliente)
+    - 10 hard-floor gates production (parten con artifact-render skill, Atelier M1)
+    - artifact-render skill itself (XGodel v1 = MDX manual authoring)
+    - Promotion a otros design-system targets (focus en @cofoundy/ui/docs/)
+
+  mvp_scope:
+    components_new:
+      - { name: Sitemap, source: ~/cofoundy/projects/xgodel-landing/research/07-information-architecture.md, atelier_spec: "Tree/graph de páginas con depth, intent, nav grouping" }
+      - { name: QuoteCard, source: ~/cofoundy/deals/clients/XGodel/propuesta.html, atelier_spec: "Cotización pretty-render con hitos table, totals, payment terms" }
+    components_audit_and_patch:
+      - { name: PersonaCard, source: ~/cofoundy/deals/clients/XGodel/ux-research/02-user-personas.md, gap: "props existentes no incluyen jtbd/objections/journey_stage del spec Atelier §6.2" }
+      - { name: MoodBoard, source: ~/cofoundy/deals/clients/XGodel/visual-design/concept-*, gap: "verificar fit con concepts A/B/C/D + final" }
+      - { name: BuildProgress, source: ~/cofoundy/deals/clients/XGodel/cronograma.tex + Vikunja delivery_project_id=22, gap: "verificar phase model L0-L9 vs phase actual de XGodel" }
+      - { name: ComparisonMatrix, source: ~/cofoundy/deals/clients/XGodel/ux-research/competitive-research, gap: "audit shape" }
+      - { name: KPIBoard, source: ~/cofoundy/projects/xgodel-landing/research/16-cro-plan.md, gap: "audit shape" }
+      - { name: DesignSystemPanel, source: ~/cofoundy/deals/clients/XGodel/work/brand-paletas-v2/, gap: "audit token-display shape" }
+      - { name: TestimonialCard, source: deferred (XGodel sin testimonials públicos todavía), gap: "audit y skip render para XGodel v1" }
+    infra:
+      - lib/atelier-registry.ts (TypeScript Record<string, Component>)
+      - scripts/gen-atelier-agents-md.ts (build script → AGENTS.md auto-export del registry)
+      - Zod schemas por componente (props validation runtime + DX)
+      - Storybook stories nuevas (Sitemap, QuoteCard) + audit-update de las 7 existentes
+
+discovery:
+  components_existing_in_repo:
+    location: packages/ui/src/components/docs/
+    list:
+      - AuthorNote, BuildProgress, ComparisonMatrix, DesignSystemPanel,
+        InfoBox, KPIBoard, MetadataCard, MoodBoard, NextStepCallout,
+        PersonaCard, ScopeList, TestimonialCard
+    finding: |
+      7 de 12 components Atelier §6.2 YA EXISTEN. AuthorNote/InfoBox/
+      MetadataCard/NextStepCallout/ScopeList son del mail/email skill,
+      útiles tangencialmente (recipient-block alternativo).
+
+  external_research_referenced:
+    - ~/cofoundy/products/atelier/research/track-a/R-A7-portal-documentation-ux-2026.md
+    - ~/cofoundy/products/atelier/research/track-a/R-A8-md-component-compiler-patterns.md
+    - ~/cofoundy/products/atelier/PRD.md §6.2 + §7 (artifact-render)
+    - ~/cofoundy/products/cofoundy-platform/docs-ai/PRD.md §V2.1 ("Atelier IS DocsAI" decision)
+
+architecture_decisions_locked:
+  d1_location: |
+    packages/ui/src/components/docs/ (NO docs-ai/components/atelier/).
+    DocsAI PRD V2.1 decisión 2026-05-13 "Atelier IS DocsAI" override al
+    Atelier PRD §6.2 "first pass docs-ai, promote later". Ventajas:
+    cero substrate collision con CTO #2, Storybook auto, reusable en
+    landing-pages futuros.
+
+  d2_no_gates_in_this_cycle: |
+    10 hard-floor gates DIFERIDOS a artifact-render skill (Atelier M1).
+    Razón: gates protegen agent-emitted content. Sin artifact-render,
+    autoría MDX manual por humano = revisión humana ES el gate. Zod
+    prop schemas SÍ se incluyen (cheap, valor inmediato).
+
+  d3_no_atelier_subfolder: |
+    NO crear packages/ui/src/components/atelier/. Los Atelier-domain
+    components viven en docs/ junto a los existentes (consistencia con
+    estado actual + AuthorNote/MetadataCard etc. son tangencialmente
+    Atelier-style).
+
+  d4_audit_before_patch: |
+    Antes de tocar los 7 existentes, audit cada uno contra Atelier §6.2
+    spec. Output: matriz por componente {props_actuales, props_spec,
+    delta, plan}. Solo después patch.
+
+interrogation:
+  q1_done_in_90d: |
+    XGodel portal renderiza /client/xgodel/{5 docs} con Deliverable chrome
+    + componentes Atelier funcionando. Andre comparte URL con John
+    Medina, John responde con engagement (no solo "ok").
+
+  q2_real_user: |
+    Cliente final visible: John Medina (XGodel cofundador). Operador
+    inmediato: Andre dogfoodea, Percy review visual. Consumidor de mi
+    registry: CTO #2 (chrome) + futuro artifact-render skill.
+
+  q3_painful_workflow: |
+    XGodel tiene 13 ux-research docs + 17 research files + brand v2 +
+    cotización + cronograma — todo invisible al cliente. Hoy ve solo PDF
+    propuesta + WhatsApp + URL landing. Cero portal. Resto del trabajo
+    de profundidad estratégica = invisible.
+
+  q4_already_tried: |
+    docs-ai V2.1 shipped 32 componentes genéricos (StatCard, BarChart,
+    etc.). Sirven para reports internos, NO específicos para portal de
+    cliente con personas/IA/moodboard. 7 ya existen en packages/ui pero
+    sin Zod schemas + sin registry + sin uso en docs-ai todavía.
+
+  q5_failure_risk: |
+    Drift entre Atelier PRD §6.2 spec y componentes existentes (props no
+    calzan con shape real de ux-research artifacts) → component existe
+    pero unusable. Mitigación: D4 (audit antes de patch).
+
+  q6_reframe_check: |
+    Reframe alternativa: "saltarse Atelier components y usar solo V2.1
+    generic primitives (Callout + MetadataCard + table) para XGodel".
+    Rechazado: undersella portal, no diferencia vs Mintlify, no resuelve
+    central commercial gap del Atelier PRD §1.
+
+constraints:
+  timeline: "5-7 días wall-clock (audit + 2 new + registry + AGENTS.md + storybook)"
+  iron_rule: |
+    Andre es CTO, no IC. Dispatch via Agent tool / TeamCreate.
+    IC exceptions únicas: Phase 1 substrate (este file), Phase 10 docs/bitácora.
+  serialization_with_cto2: |
+    Mi PR a docs-ai/mdx-components.tsx (single import+spread line) merge
+    DESPUÉS del PR de CTO #2 (chrome). Mi PR a packages/ui main puede
+    merge cualquier momento (sin dependencias).
+
+success_signals:
+  - 9 components exportados desde @cofoundy/ui/docs/ con Zod schemas (2 new + 7 audited)
+  - lib/atelier-registry.ts existe como SSOT registry
+  - AGENTS.md auto-generado desde build script (verificable: rm AGENTS.md + run script + git diff vacío)
+  - 2 Storybook stories nuevas + 7 audit-updated
+  - **Coverage ≥80%** sobre src/components/docs/ + src/lib/atelier-registry.ts (Vitest --coverage report)
+  - **QA visual:** Chrome MCP screenshot diff por componente storybook ≤2% pixel delta vs baseline
+  - XGodel MDX v1 (5 docs) renderea sin warnings/errors en dev + prod
+  - **Deploy:** packages/ui PR mergea a main + docs-ai PR mergea a main + Cloudflare Worker auto-deploya + /canary-monitor verde por ventana de 30 min post-deploy
+  - **Post-deploy validation:** Lighthouse ≥90 sobre /client/xgodel/* (5 docs), axe-core a11y clean, smoke test E2E para los 5 URLs
+  - Andre share URL con John Medina dentro 48h post-merge + John responde engagement
+  - cycle_completed_at <ISO> registered en cto-loop.yaml
+
+user_authorization_2026-05-16:
+  source: "/goal directive from Andre, 11:50 Lima"
+  text: "do all including deployment with proper validation (software, ceo, qa visual, etc, validate on deployment too); >80 coverage"
+  implications:
+    - Phase 4-12 ALL autonomous; no per-phase check-ins required
+    - Phase 11 main-branch deploy auto-approved (override default escalation_threshold)
+    - Phase 9 QA gate uses qa-driven-iteration + Chrome MCP visual diff
+    - Coverage ≥80% is HARD constraint (task acceptance fails if below)
+    - ceo-agent gates Phase 5 (task graph) + Phase 11 (deploy) still resolve autonomously
+
+bant: n/a (cycle interno)

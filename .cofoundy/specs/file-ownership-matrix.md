@@ -1,80 +1,85 @@
-# File Ownership Matrix — atelier-components-xgodel-dogfood
+# file-ownership-matrix.md — chat-sim
 
-**Phase:** 3 (Contract + ownership matrix)
-**Authored:** 2026-05-16 by /cto (Phase 1 IC continuation)
-**Source:** extracted + canonicalized from `architecture-v1.md` §5
+`W` = escribe · `R` = lee · `A` = pide al dueño (nunca escribe)
+**Regla dura: ninguna celda con 2+ `W`.** Verificado abajo.
 
-**Legend:**
-- **W** = Write (create/edit, owner)
-- **R** = Read-only (consumer)
-- **A** = Append-only (single-line additive, serialized)
-- **—** = out of scope for that role
+| Path / glob | core | channel | skin | capture | app | qa |
+|---|---|---|---|---|---|---|
+| `src/components/chat-sim/core/**` | **W** | R | R | R | R | R |
+| `src/components/chat-sim/adapters/**` | R | **W** | R | R | R | R |
+| `src/components/chat-sim/element/**` | R | R | **W** | R | R | R |
+| `demo/**` (página demo de la ola 1) | – | – | **W** | R | – | R |
+| `src/components/chat-sim/styles.css` | – | A | **W** | A | A | – |
+| `src/components/chat-sim/react/**` | R | R | R | – | **W** | R |
+| `src/components/chat-sim/capture/**` | R | – | R | **W** | – | R |
+| `scripts/capture-chat.mjs` | – | – | – | **W** | – | R |
+| `src/components/chat-sim/index.ts` | **W** | A | A | A | A | R |
+| `package.json` (solo campo `exports`) | **W** | – | – | A | – | – |
+| `src/stories/chat-sim/**` | – | – | – | – | – | **W** |
+| `src/__tests__/chat-sim/**` | – | – | – | – | – | **W** → `team-lead` ⁽¹⁾ |
+| `COMPONENTS.md` | – | – | – | – | – | **W** |
+| `eslint` rules del ciclo (invariantes 4 y 5) | **W** | – | A | – | – | R |
+| build config de `chat-sim` (`vite.config.chat-sim.ts`) | **W** | – | A | A | A | R |
+| `src/index.ts` (barrel principal) | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ |
+| `src/styles/index.css` (sheet global) | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ |
+| `src/types/**` | ⛔ | ⛔ | ⛔ | ⛔ | ⛔ | A |
 
-**Roles:**
-- `atelier-cto` = this cycle (Andre, packages/ui-driven)
-- `chrome-cto` = parallel CTO #2 (V2.6 chrome system, docs-ai-driven)
+⛔ = **prohibido a todas las lanes.** Los dos primeros por §12 (el aislamiento del ciclo depende de
+no tocarlos). `src/types/**` porque la deuda de los dos `Message` se **aísla, no se repara** (A-3);
+`qa` puede pedir la anotación de deuda, que la aplica el CTO.
 
----
+## Verificación de colisión
 
-## packages/ui scope (mine, no collisions)
+Ninguna fila tiene dos `W`. Las cuatro superficies que tentaban a colisionar, resueltas:
 
-| Path-glob | atelier-cto | chrome-cto | Notes |
-|---|---|---|---|
-| `packages/ui/src/components/docs/PersonaCard.tsx` | W | — | PATCH (+5 props) |
-| `packages/ui/src/components/docs/MoodBoard.tsx` | W | — | PATCH (+2 props) |
-| `packages/ui/src/components/docs/BuildProgress.tsx` | W | — | PATCH (+phase/owner/dates) |
-| `packages/ui/src/components/docs/ComparisonMatrix.tsx` | W | — | PATCH (+traffic_light, +row.source) |
-| `packages/ui/src/components/docs/KPIBoard.tsx` | W | — | PATCH (+baseline, +source) |
-| `packages/ui/src/components/docs/DesignSystemPanel.tsx` | W | — | PATCH (+direction, +usage_note) |
-| `packages/ui/src/components/docs/TestimonialCard.tsx` | R | — | KEEP (schema-only ship; no XGodel render) |
-| `packages/ui/src/components/docs/Sitemap.tsx` | W | — | NEW |
-| `packages/ui/src/components/docs/QuoteCard.tsx` | W | — | NEW |
-| `packages/ui/src/components/docs/*.schema.ts` | W | — | 9 NEW per-component Zod schemas |
-| `packages/ui/src/components/docs/*.test.ts` | W | — | 9 NEW (parse + canonical example + type-match) |
-| `packages/ui/src/components/docs/index.ts` | W | — | extend (add Sitemap, QuoteCard exports) |
-| `packages/ui/src/lib/atelier-registry.ts` | W | — | NEW SSOT registry |
-| `packages/ui/src/lib/atelier-schemas.ts` | W | — | NEW barrel re-export |
-| `packages/ui/src/stories/docs/PersonaCard.stories.tsx` | W | — | refresh (audit + new props) |
-| `packages/ui/src/stories/docs/MoodBoard.stories.tsx` | W | — | refresh |
-| `packages/ui/src/stories/docs/BuildProgress.stories.tsx` | W | — | refresh |
-| `packages/ui/src/stories/docs/ComparisonMatrix.stories.tsx` | W | — | refresh |
-| `packages/ui/src/stories/docs/KPIBoard.stories.tsx` | W | — | refresh |
-| `packages/ui/src/stories/docs/DesignSystemPanel.stories.tsx` | W | — | refresh |
-| `packages/ui/src/stories/docs/TestimonialCard.stories.tsx` | W | — | refresh (Zod parse-validation test added) |
-| `packages/ui/src/stories/docs/Sitemap.stories.tsx` | W | — | NEW |
-| `packages/ui/src/stories/docs/QuoteCard.stories.tsx` | W | — | NEW |
-| `packages/ui/src/index.ts` | A | — | 2-line append (registry export + type export) |
-| `packages/ui/scripts/gen-atelier-agents-md.ts` | W | — | NEW build script |
-| `packages/ui/AGENTS.md` | W | — | auto-gen output, committed |
-| `packages/ui/package.json` | W | — | + zod (deps), + zod-to-json-schema (devDeps), + gen:agents script |
-| `packages/ui/.github/workflows/verify-agents-md.yml` | W | — | NEW CI gate (auto-gen drift check) |
+| Superficie | Riesgo | Resolución |
+|---|---|---|
+| `styles.css` | 4 lanes quieren tokens | **`skin` es dueño único**; las demás piden por `A`. Un token nuevo es un pedido, no un append paralelo |
+| `index.ts` (barrel del subpath) | todas exportan algo | **`core` es dueño único**; el resto pide. Evita el conflicto de merge clásico del índice compartido |
+| `package.json` | dos lanes tocarían `exports` | solo `core`, y **solo el campo `exports`**, en la iteración 1 |
+| Reportes | append paralelo al log del ciclo | cada lane escribe `.cofoundy/state/reports/{lane}.md` (nombre único, cero colisión); el CTO es el ÚNICO que escribe el índice |
 
-## docs-ai scope (their primary, my single-line touches at end)
+## Telemetría de presupuesto (B-7)
 
-| Path-glob | atelier-cto | chrome-cto | Notes |
-|---|---|---|---|
-| `docs-ai/components/{DeliverableLayout,VaultLayout,Reader*}.tsx` | R | W | their chrome PR |
-| `docs-ai/components/{CreatorRibbon,RecipientStrip,ApprovalBlock,ReaderToggle,ComingSoonModal}.tsx` | R | W | their chrome PR |
-| `docs-ai/lib/chrome.ts` | R | W | their selector |
-| `docs-ai/lib/frontmatter-zod.ts` (chrome/kind/recipient/expires_at) | R | W | their extension |
-| `docs-ai/app/[project]/[...slug]/page.tsx` | R | W | their dispatch |
-| `docs-ai/app/globals.css` (chrome layouts + Reader mode) | R | W | their styles |
-| `docs-ai/mdx-components.tsx` | **A** (1-line, serialized) | W | **SERIALIZED:** my PR ships single `import { ATELIER_COMPONENTS } from '@cofoundy/ui'` + spread, AFTER chrome PR merges |
-| `docs-ai/content/client/xgodel/propuesta.mdx` | R | W | their stub |
-| `docs-ai/content/client/xgodel/personas.mdx` | W | R | mine (3× PersonaCard) |
-| `docs-ai/content/client/xgodel/sitemap.mdx` | W | R | mine (Sitemap) |
-| `docs-ai/content/client/xgodel/brand-moodboard.mdx` | W | R | mine (MoodBoard + DesignSystemPanel + ComparisonMatrix) |
-| `docs-ai/content/client/xgodel/cotizacion.mdx` | W | R | mine (QuoteCard) |
-| `docs-ai/content/client/xgodel/cronograma.mdx` | W | R | mine (BuildProgress + KPIBoard) |
-| `docs-ai/content/client/xgodel/vault.yaml` | **A** (toc entries, serialized) | W | **SERIALIZED:** I append my 5 doc toc entries after their initial commit |
+Cada `.cofoundy/state/reports/{lane}.md` **debe** abrir con `wall_clock_minutes: <n>`. No es
+opcional: sin el dato, `budget_overrun` es infireable y el threshold queda decorativo.
 
----
+| Umbral | Acción |
+|---|---|
+| **16 h acumuladas al cierre de la ola 3** | aviso temprano — el CTO **reproyecta** con 6 datos reales (24 − 8 de margen). **Si la reproyección fundada supera 24 h, escala AHÍ**, sin esperar a cruzarlas: a esa altura la proyección está fundada, no adivinada |
+| **24 h acumuladas** | **disparo duro ⇒ escala** |
+| **> USD 50** | escala (hoy ≈0: ninguna tarea usa servicios de terceros) |
 
-## Collision summary
+## `blockedBy` gatea el MERGE, no el arranque
 
-- **2W cells:** 0 (zero direct write collisions)
-- **2A serialization points:** 2 (`docs-ai/mdx-components.tsx`, `docs-ai/content/client/xgodel/vault.yaml`) — both single-line append, both gated on chrome PR merge first
+Sin esta definición las 5 olas son 8 tareas secuenciales y "tope de concurrencia 2-3" no describe
+nada: en cada ola la segunda lane está bloqueada por la primera.
 
-## Validation
+**Semántica: `blockedBy` gatea el MERGE.** Una lane arranca cuando su ola arranca y construye
+**contra la spec**, no contra la implementación de su predecesora — que es exactamente por qué la
+capa de tipos del contrato es entregable de T-001 en la ola 1 (D-1) y por qué los 16 campos del
+adapter están tabulados antes de implementarse. Lo que espera es el merge.
 
-Per /cto Phase 3 spec: *"every cell with 2+ W = halt and serialize (carve up the paths or sequence the roles)."* ✅ ZERO 2W cells. No halt required. Two 2A cells already serialized by `serialization_with_cto2` contract in brief.yaml.
+## Olas (respetan el tope de concurrencia 2-3)
+
+| Ola | Lanes | Desbloquea |
+|---|---|---|
+| 1 | `core` + `skin` | it. 1: demo abrible (core mínimo + element + WA layout) |
+| 2 | `core` + `capture` | it. 2: fold completo + seek + PNG byte-idéntico |
+| 3 | `channel` + `skin` | it. 3: Telegram + máquina de entrega + token iMessage |
+| 4 | `app` + `qa` | it. 4-5: react, mobile, stories, tests |
+| 5 | `qa` | it. 6: `MobileBaseline`, `COMPONENTS.md` |
+
+`channel` arranca en la ola 3 a propósito: la interfaz de 16 campos ya está especificada en
+`adapter-interface-draft.md`, así que `skin` puede construir el layout de WhatsApp contra ella sin
+esperar la implementación.
+
+⁽¹⁾ **Reasignación de celda huérfana (2026-09-07, team-lead).** `qa` terminó su ciclo con
+`telegram-quote-contrast.test.ts` pineando el cableado que T-025 justamente cambió — dos
+tests-hallazgo que había que invertir a tests-regresión, con la celda sin dueño vivo. La reasigna el
+orquestador; no es un permiso que una lane le preste a otra (una lane no puede autorizar a otra, y
+menos a escribir en una celda que a ella misma le está vedada). Se intentó primero delegarla a
+`skin8` — dos mensajes no llegaron a su contexto antes de que cerrara, así que la resolvió el
+orquestador por la vía `orchestrator-resolves-and-discloses` (`/cto` Fase 7): acotada a los dos
+asserts que el propio archivo anticipaba en su comentario, sin tocar la lógica de medición. Si `qa`
+revive, la celda vuelve a `qa`.

@@ -1,184 +1,106 @@
-# API Contract — atelier-components-xgodel-dogfood
+# api-contract.md — chat-sim
 
-**Phase:** 3 (Contract)
-**Authored:** 2026-05-16 by /cto (Phase 1 IC continuation)
-**Domain note:** este cycle es `software (frontend-only)` — sin REST endpoints. El "API contract" equivalente para una component-library es **public exports + per-component prop schemas + registry shape + AGENTS.md output format**. Todos son contract surfaces que downstream consumers (docs-ai, artifact-render M1, future landing-pages) acoplan.
+Contrato de módulos y tipos. Toda lane programa CONTRA esto; cambiarlo requiere pasar por el CTO.
 
----
+## Árbol y dueños
 
-## 1. Public exports from `@cofoundy/ui`
+```
+src/components/chat-sim/
+├── core/          compile · fold · seek · playhead · prng     [core]
+├── adapters/      caps · registry · whatsapp · telegram       [channel]
+├── element/       custom element (pre-render + data-step)     [skin]
+├── react/         renderer React                              [app]
+├── capture/       API de captura                              [capture]
+├── styles.css     stylesheet self-contained, scope .cf-chat-sim [skin]
+└── index.ts       barrel del subpath                          [core]
+scripts/capture-chat.mjs                                       [capture]
+src/stories/chat-sim/**  ·  src/__tests__/chat-sim/**          [qa]
+```
 
-**Additive only this cycle.** No breaking changes to existing exports.
+**`src/index.ts` (barrel principal) NO se toca.** §12: el ciclo exporta solo por subpath
+`@cofoundy/ui/chat-sim`. Escribir ahí es violación de scope, no una optimización.
 
-### NEW exports
+## Tipos núcleo — `core/types.ts` [core] · **entregable de T-001, ola 1**
+
+**Regla de partición (D-1, tras el REFUTE del task graph):** los **TIPOS** del contrato viven en
+`core/types.ts` y los entrega T-001 en la ola 1. Los **VALORES** que los pueblan (`caps.ts`,
+`registry.ts`, `whatsapp.ts`, `telegram.ts`, `validateScript`) son de `channel` y llegan en T-005.
+
+Por qué: la matriz ya da `R` sobre `core/**` a las seis lanes, así que T-002 satisface su fixture
+de capabilities **leyendo**, sin forkear. La dirección de imports queda acíclica
+(`adapters → core`, nunca al revés).
+
+Arruga honesta: `caps.ts` deja de "no importar nada" — importa un tipo. Es `import type`, se borra
+en compilación y no puede crear ciclo en runtime. La propiedad de hoja del arch es **sobre valores**.
 
 ```ts
-// From packages/ui/src/index.ts (additive, end-of-file section)
-export { ATELIER_COMPONENTS } from './lib/atelier-registry';
-export type { AtelierEntry, AtelierComponentName } from './lib/atelier-registry';
-export { Sitemap, type SitemapProps } from './components/docs/Sitemap';
-export { QuoteCard, type QuoteCardProps } from './components/docs/QuoteCard';
+type Tick = number;            // ms virtuales enteros desde t0
+type MsgId = string;           // estable, asignado en compile
+type ChannelId = 'whatsapp' | 'telegram' | 'imessage';
+
+// Los 3 tipos que la ola 1 necesita y que ANTES estaban en disputa entre core y channel:
+interface ChannelAdapter { /* los 16 campos de adapter-interface-draft.md, cero opcionales */ }
+interface Diagnostic { code: string; msg: string; stepIdx?: number }
+
+type Ev =
+  | { k:'post';    id:MsgId; step:SimStep }
+  | { k:'edit';    id:MsgId; v:number }
+  | { k:'delete';  id:MsgId; scope:'me'|'all' }
+  | { k:'react';   id:MsgId; emoji:string; by:ActorId; remove?:boolean }
+  | { k:'pin'|'unpin'; id:MsgId }
+  | { k:'receipt'; id:MsgId; to:DeliveryState }
+  | { k:'read';    upTo:MsgId }
+  | { k:'views';   id:MsgId; n:number }
+  | { k:'draft';   by:ActorId; chars:number }   // ENMIENDA 2026-09-04: era idx:number
+  | { k:'flag';    key:string; value:Json }
+  | { k:'overlay'; id:string; phase:string }
+  | { k:'cue';     sound:SoundId };
+
+interface Frame { t: Tick; ev: Ev }
+interface SimState { msgs:ReadonlyMap<MsgId,MsgState>; order:readonly MsgId[];
+                     pinned:MsgId|null; draft:Draft|null; flags:Record<string,Json>;
+                     overlays:Overlay[]; scrollId:MsgId|null }
+interface Timeline { t0:Tick; frames:readonly Frame[]; keys:Int32Array;
+                     checkpoints:readonly SimState[]; duration:Tick; digest:string }
 ```
 
-### PATCH'd exports (additive prop types only — non-breaking)
+## Firmas públicas
 
-```ts
-// Existing exports unchanged; TS interfaces accept new optional fields:
-PersonaCard           // + jtbd, objections, journeyStage, age, incomeRange, source
-MoodBoard             // + items[].source_url, items[].concept_tag
-BuildProgress         // + steps[].phase, owner, started_at, completed_at, vikunja_project_id
-ComparisonMatrix      // + cells[].traffic_light, rows[].source
-KPIBoard              // + kpis[].baseline, kpis[].source
-DesignSystemPanel     // + direction, colors[].usage_note
-```
-
-### KEEP (no signature change)
-
-```ts
-TestimonialCard       // ships schema-only this cycle; story refresh + Zod parse-validation test
-```
-
-### Internal (NOT public per ceo-agent Q1=B decision)
-
-- Per-component Zod schemas (`personaCardSchema`, etc.) — accessible ONLY via `ATELIER_COMPONENTS[name].schema`. Not named-exported from package root.
-- Schema barrel `lib/atelier-schemas.ts` — package-internal import surface for registry consumption.
-
-**Versioning:** this cycle ships as a `packages/ui` minor bump (additive). No breaking changes. Semver patch if any audit reveals an unintended prop rename.
-
----
-
-## 2. Registry contract
-
-**Shape:** see `architecture-v1.md` §2 (canonical).
-
-**Contract guarantees:**
-- `ATELIER_COMPONENTS` is a TypeScript `Record` with `satisfies` constraint — type-checked at compile time.
-- Each entry has shape `{ component, schema, description, example }`. Adding a field requires bumping `AtelierEntry` interface + updating all entries (compile error catches drift).
-- Order of entries is NOT semantically meaningful, but kept alphabetical by convention for diff stability.
-
-**Consumer integration (docs-ai `mdx-components.tsx`, single-line append):**
-
-```ts
-// Future-state (post both PRs merged):
-import { ATELIER_COMPONENTS } from '@cofoundy/ui';
-
-const atelierForMdx = Object.fromEntries(
-  Object.entries(ATELIER_COMPONENTS).map(([name, entry]) => [name, entry.component])
-);
-
-export function useMDXComponents(components: MDXComponents): MDXComponents {
-  return {
-    ...components,
-    ...atelierForMdx,  // <-- mi single-line spread
-    // ... chrome-cto's existing components stay
-  };
-}
-```
-
----
-
-## 3. AGENTS.md output format contract
-
-**File:** `packages/ui/AGENTS.md` at repo root of packages/ui.
-**Generator:** `packages/ui/scripts/gen-atelier-agents-md.ts`.
-**Drift gate:** `.github/workflows/verify-agents-md.yml` runs `pnpm gen:agents && git diff --exit-code AGENTS.md`.
-
-**Output structure (deterministic, alphabetical by component name):**
-
-```md
-# Atelier Components — Agent Allowlist
-<!-- AUTO-GENERATED by scripts/gen-atelier-agents-md.ts — DO NOT EDIT -->
-<!-- Source: src/lib/atelier-registry.ts -->
-<!-- Last generated: <ISO> -->
-
-## Available components
-- `<name>` — <description>
-... (9 entries, alphabetical)
-
-## <ComponentName>
-
-**Description:** <description>
-
-**Props (from Zod):**
-
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| ...
-
-**Example MDX:**
-
-\`\`\`mdx
-<ComponentName ...example />
-\`\`\`
-
----
-```
-
-**Hash-stability:** generator must produce byte-identical output for unchanged registry input (no timestamps in body content; ISO timestamp only in top comment). The drift gate depends on this — fluctuating output would fail CI on unrelated PRs.
-
----
-
-## 4. Per-component Zod schema contract
-
-**File location:** `packages/ui/src/components/docs/<Name>.schema.ts` (peer file to `<Name>.tsx`).
-
-**Export shape:**
-
-```ts
-import { z } from 'zod';
-
-export const <name>Schema = z.object({ ... });
-export type <Name>Input = z.infer<typeof <name>Schema>;
-```
-
-**Constraints:**
-- All schema fields use Zod primitives + `.optional()` / `.max()` / `.min()` / `.enum()`. No custom refinements unless documented per-component.
-- TS `interface <Name>Props` (in `.tsx`) and `<Name>Input` (in `.schema.ts`) MUST be type-compatible. Enforced by Vitest test:
-
-```ts
-import { expectTypeOf } from 'vitest';
-import type { <Name>Props } from './<Name>';
-import type { <Name>Input } from './<Name>.schema';
-
-it('Zod schema matches TS interface', () => {
-  expectTypeOf<<Name>Props>().toMatchTypeOf<<Name>Input>();
-});
-```
-
-**Canonical example:** every schema test imports the `example` field from `ATELIER_COMPONENTS[name].example` and asserts `schema.parse(example)` succeeds. Drift between registry example and schema = test failure.
-
----
-
-## 5. XGodel MDX dogfood contract
-
-**Path:** `~/cofoundy/products/cofoundy-platform/docs-ai/content/client/xgodel/`
-
-**Files I author (5):** `personas.mdx`, `sitemap.mdx`, `brand-moodboard.mdx`, `cotizacion.mdx`, `cronograma.mdx`.
-
-**Frontmatter contract per doc:**
-- `role: client` (gated by docs-ai middleware)
-- `chrome: deliverable` (set by chrome-cto's selector or explicit override)
-- `kind: report | proposal | reference | quote | timeline` (per doc)
-- `recipient: { name, company, email? }` (only on cotizacion.mdx)
-- `expires_at: YYYY-MM-DD` (only on cotizacion.mdx)
-- `source_freshness: manual-snapshot-YYYY-MM-DD` (cronograma.mdx convention — encodes Vikunja-manual decision)
-
-**Render verification:** dev-server (`pnpm dev` in docs-ai) + prod Cloudflare — both render without warnings/errors. Snapshot the 5 URLs into `.cofoundy/state/dogfood-snapshots/` Phase 9.
-
----
-
-## 6. Out-of-contract (not shipped this cycle)
-
-| Surface | Status | Where it ships |
+| Módulo | Firma | Dueño |
 |---|---|---|
-| `ContractTimeline` component | excluded | future cycle (post contract signed) |
-| `UserFlow`, `MockupShowcase`, `DeployRecord`, `PersonaGrid`, `TimelineGantt`, `FaqAccordion`, `HandoffChecklist`, `BeforeAfterSlider` | deferred | second client cycle |
-| 10 hard-floor production gates (Atelier PRD §3 P6) | deferred | `artifact-render` skill (Atelier M1) |
-| `artifact-render` skill (md → MDX agent) | deferred | Atelier M1 — XGodel v1 = MDX manual authoring |
-| Direct named Zod schema exports | deferred | promote on real consumer ask (per Q1=B) |
-| Tailwind migration of 7 existing components | deferred | tagged `atelier-tech-debt`, separate cycle (per Q2=SKIP) |
-| Build-time Vikunja fetch in BuildProgress | deferred | M1+ (per Q3=MANUAL) |
+| core | `compile(script: SimScript, o:{seed:number; channel:ChannelId; locale:string; tz:string; t0:Tick}): Timeline` | core |
+| core | `seek(tl: Timeline, t: Tick): SimState` — puro, O(log n + 64) | core |
+| core | `createPlayhead(tl: Timeline): { play(); pause(); rate(n); onFrame(cb) }` | core |
+| adapters | `getAdapter(c: ChannelId): ChannelAdapter` (desde `registry.ts`) | channel |
+| adapters | `ChannelAdapter` = los **16 campos** de `adapter-interface-draft.md`, **cero opcionales** | channel |
+| adapters | `validateScript(s: SimScript, c: ChannelId): Diagnostic[]` — vacío = compila | channel |
+| element | `<cf-chat-sim script="…" channel="…" seed="…">` · atributo `data-step` en la raíz | skin |
+| react | `<ChatSim script channel seed mode="demo"\|"live" />` | app |
+| capture | `captureFrame(tl, t, o:{width;dpr;out}): Promise<string>` — tras el settle gate | capture |
+
+**`tz` es obligatorio en `compile`.** Sin él el test pasa en una máquina y la propiedad de
+determinismo es falsa cross-machine (§13).
+
+## Invariantes verificables
+
+| # | Invariante | Cómo falla |
+|---|---|---|
+| 1 | `seek(tl,t)` es puro | test: dos llamadas con el mismo `t` dan estado igual por deep-equal |
+| 2 | Dos corridas del mismo `(script,seed,channel,locale,tz)` dan **PNG byte-idéntico** | gemelo positivo: cambiar `seed` DEBE romper el byte-compare |
+| 3 | Un guion inválido para el canal **no compila** | `receipt:'delivered'` en Telegram ⇒ `Diagnostic`; el mismo en WhatsApp ⇒ vacío |
+| 4 | `core/` es puro | lint `no-restricted-globals`: `Math.random`, `Date`, `fetch`, `window`, `document` |
+| 5 | Cero utilidades Tailwind en `chat-sim/**` | lint: una clase de utilidad en un `.tsx` de la familia falla CI |
+| 6 | `src/index.ts` sin cambios | CI: `git diff --exit-code src/index.ts` contra el merge-base |
 
 ---
 
-**Contract version:** v1.0 (this cycle ships first stable). Future cycles bump per semver against this document.
+## Enmiendas al contrato durante la ejecución
+
+| Fecha | Cambio | Quién lo pidió | Por qué |
+|---|---|---|---|
+| 2026-09-04 | `Ev.draft` pasa de `{idx:number, chars}` a `{by:ActorId, chars}` | `core` (T-001, reactivación) | El `idx` numérico obligaba a un registro de actores con indirección. `element/` ya trataba `ActorId` como group key verbatim (`in` / `out:ai` / `out:human:{id}`), que es el mismo criterio de `inbox-ai/lib/messageGrouping.ts:25`. La indirección era invención nuestra, no del dominio. |
+
+**Verificado por el CTO con test de mutación, no por reporte:** quitar `draft: null` del caso `post`
+en `fold.ts:39` rompe **2 tests, uno en cada lane** (`core/__tests__/fold.test.ts` y
+`element/chat-sim-element.test.ts`). Restaurado ⇒ 44/44 verdes. El fix está cubierto de los dos lados
+del contrato, no solo del que lo escribió.

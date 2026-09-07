@@ -34,3 +34,14 @@ coverage/
 # Package manager (keep package-lock.json for reproducible builds)
 yarn.lock
 pnpm-lock.yaml
+
+# Estado de runtime del orquestador — por-worktree, nunca trackeado (F7/F15/F26, orch#86).
+# Un history.jsonl trackeado hace que un worktree nuevo se lea como "lane terminada".
+.cofoundy/state/history.jsonl
+.cofoundy/state/cto-loop.yaml
+.cofoundy/state/worker-id
+.cofoundy/state/active-agent.yaml
+.cofoundy/state/active-task.yaml
+.cofoundy/state/escalation-queue.jsonl
+.cofoundy/state/escalation-effective.yaml
+.cofoundy/state/fix-attempts.yaml

@@ -1,280 +1,353 @@
-# architecture-v1.md — atelier-components-xgodel-dogfood
+# architecture-v1.md — chat-sim-rewrite
 
-**Cycle:** atelier-components-xgodel-dogfood
-**Phase:** 2b → 2c (architecture draft, pending ceo-agent gate)
-**Author:** Plan-agent (subagent, READ-ONLY) + /cto synthesis
-**Date:** 2026-05-16
-**Locked decisions inherited from brief.yaml:** D1 (location `packages/ui/src/components/docs/`), D2 (no hard-floor gates this cycle), D3 (no `atelier/` subfolder), D4 (audit-before-patch)
-**Authoritative research:** R-A7 (portal UX 2026), R-A8 (registry pattern 2026)
+**Ciclo** `chat-sim-rewrite` · `packages/ui` · rama `cto/chat-sim-rewrite` · 2026-09-04
+**Estado:** completa · pendiente gate Fase 2 (`ceo-agent`)
 
----
-
-## 1. Component audit matrix
-
-| # | Component | Exists? | Props actuales | Props spec Atelier §6.2 / data shape XGodel | Delta | Verdict |
-|---|---|---|---|---|---|---|
-| 1 | **Sitemap** | NO | — | `nodes[]: { path, label, depth, intent?, nav_group?, children? }`; tree rendering (R-A7 §navigation: collapsible tree, current-path highlight); source: `07-information-architecture.md` | NEW — clean-slate | **NEW** |
-| 2 | **QuoteCard** | NO | — | `client_name`, `prepared_for`, `valid_until`, `milestones[]: { label, deliverable, amount, due }`, `total`, `payment_terms`, `notes?`; source: `propuesta.html` | NEW — clean-slate | **NEW** |
-| 3 | **PersonaCard** | YES (101 LOC) | `name`, `role`, `avatar?`, `demographics[]`, `painPoints[]`, `goals[]`, `quote?` | spec adds: `jtbd: string`, `objections[]`, `journey_stage: 'awareness'\|'research'\|'decision'\|'retention'`, `age?`, `income_range?`, `source?` (provenance — future gate `unverified_persona`) | Missing 5 fields, no breaking (all additive optional) | **PATCH** |
-| 4 | **MoodBoard** | YES (58 LOC) | `items[]: { src, alt, caption? }`, `columns?` | spec adds: `items[].source_url?` (R-A7 §provenance), `items[].concept_tag?` (XGodel has 4 concepts A/B/C/D + final → grouping) | Fit OK for v1; add 2 optional fields | **PATCH** |
-| 5 | **BuildProgress** | YES (104 LOC) | `steps[]: { label, status?, body? }` where status = `done\|current\|pending` | spec adds: `steps[].phase?: 'L0'..'L9'`, `steps[].owner?`, `steps[].started_at?`, `steps[].completed_at?`, `steps[].vikunja_project_id?` | Phase model L0-L9 not encoded; dates/owner missing | **PATCH** |
-| 6 | **ComparisonMatrix** | YES (107 LOC) | `columns[]`, `rows[]: { feature, options[]: { name, value, highlight? } }` | spec needs: `traffic_light?: 'green'\|'yellow'\|'red'` per cell (R-A7 §comparison convergent pattern), `source?` per row | Shape solid; add traffic-light enum + per-row source | **PATCH** |
-| 7 | **KPIBoard** | YES (96 LOC) | `kpis[]: { label, value, trend?, target?, status? }`, `columns?` | spec needs: `kpis[].baseline?`, `kpis[].source?: string` (16-cro-plan.md cites benchmarks — provenance required) | Almost ideal; add baseline + source | **PATCH** |
-| 8 | **DesignSystemPanel** | YES (109 LOC) | `colors?`, `typography?`, `spacing?`, `radius?` (token arrays) | XGodel has 3 brand directions (emerald-academic, bordeaux-historic, editorial-premium); add `direction?: string` label + `usage_note?` per color | Render shape good; add direction grouping for A/B compare | **PATCH** |
-| 9 | **TestimonialCard** | YES (80 LOC) | `quote`, `author`, `role?`, `avatar?`, `source?`, `sourceUrl?` | Spec match — XGodel sin testimonials públicos todavía → no rendered en v1, schema + story refresh still in scope | None | **KEEP** (schema only) |
-
-**Out-of-scope (per brief.yaml D2 / scope):**
-- `ContractTimeline` — excluded (XGodel sin contrato firmado, future gate `unsigned_contract` would block anyway)
-- `UserFlow`, `MockupShowcase`, `DeployRecord`, `PersonaGrid`, `TimelineGantt`, `FaqAccordion`, `HandoffChecklist`, `BeforeAfterSlider` — deferred al segundo cliente
-- Tangential email-derived (`AuthorNote`, `InfoBox`, `MetadataCard`, `NextStepCallout`, `ScopeList`) — shipped, NOT en registry (son docs-ai V2.1 generic, no Atelier-domain; leave exports untouched)
-
-**Workload:** 2 NEW + 7 PATCH (6 light-additive + 1 schema-only) = 9 components en registry.
+**Premisa:** no inventamos un componente — consolidamos uno escrito tres veces
+(`ChatDemo.astro` 190 líneas · `inbox-ai/MessageBubble.tsx` 68 KB · primitivas de `@cofoundy/ui`).
+El lenguaje visual ya está validado en producción, y en agrupación / colita / estados de entrega es
+objetivamente mejor que el prior art. Lo que falta es el lugar donde viva y un modelo temporal que
+no mienta.
 
 ---
 
-## 2. Registry shape
+## 1. Modelo temporal — la timeline es un FOLD
 
-**Location:** `packages/ui/src/lib/atelier-registry.ts` (NEW dir `src/lib/`).
-
-Rationale:
-- No en `components/docs/` — no es componente, es manifest
-- No en root `src/atelier-registry.ts` — pollutes package root; `services/`, `hooks/`, `stores/` siguen convención de subdir; `lib/` la sigue
-- No en `docs-ai/lib/atelier-registry.ts` (donde Atelier PRD §7.2c originalmente lo puso) — D1 puso component SSOT en packages/ui, registry sigue components; CTO #2 `docs-ai/lib/chrome.ts` es para chrome routing, separado
-
-**Shape (per R-A8 §registry-pattern recommendation — static `satisfies Record`):**
+**Decisión: `estado(t) = fold(eventos ≤ t)` sobre una tabla de mensajes con ids estables.**
+No un array append-only: Telegram muta mensajes ya posteados (edit / pin / delete-for-all /
+reacciones) y un `concat` no lo absorbe sin caso especial.
 
 ```ts
-// packages/ui/src/lib/atelier-registry.ts
-import type { ComponentType } from 'react';
-import {
-  PersonaCard, MoodBoard, BuildProgress, ComparisonMatrix,
-  KPIBoard, DesignSystemPanel, TestimonialCard
-} from '../components/docs';
-import { Sitemap } from '../components/docs/Sitemap';
-import { QuoteCard } from '../components/docs/QuoteCard';
-import {
-  personaCardSchema, moodBoardSchema, buildProgressSchema,
-  comparisonMatrixSchema, kpiBoardSchema, designSystemPanelSchema,
-  testimonialCardSchema, sitemapSchema, quoteCardSchema,
-} from './atelier-schemas';
-import type { ZodTypeAny } from 'zod';
+type Tick  = number;   // ms virtuales enteros desde t0
+type MsgId = string;   // ESTABLE — asignado en compile; es lo que la mutación apunta
 
-export interface AtelierEntry {
-  component: ComponentType<any>;
-  schema: ZodTypeAny;       // Zod for prop validation (DX + future gate path)
-  description: string;      // surfaces in AGENTS.md
-  example: Record<string, unknown>;  // canonical MDX example for AGENTS.md
+type Ev =
+  | { k:'post';    id:MsgId; step:SimStep }
+  | { k:'edit';    id:MsgId; v:number }
+  | { k:'delete';  id:MsgId; scope:'me'|'all' }
+  | { k:'react';   id:MsgId; emoji:string; by:ActorId; remove?:boolean }
+  | { k:'pin'|'unpin'; id:MsgId }
+  | { k:'receipt'; id:MsgId; to:DeliveryState }   // validado contra el canal (§2)
+  | { k:'read';    upTo:MsgId }
+  | { k:'views';   id:MsgId; n:number }           // canales de Telegram
+  | { k:'draft';   by:ActorId; chars:number }   // ENMIENDA 2026-09-04: era idx:number     // tecleo / borrado en el composer
+  | { k:'flag';    key:string; value:Json }       // badge aiOn/aiOff, wallpaper, keyframe de tilt
+  | { k:'overlay'; id:string; phase:string }      // llamada, push, contact-picker
+  | { k:'cue';     sound:SoundId };               // EMITIDO, no aplicado por el reducer
+
+interface Frame { t: Tick; ev: Ev }
+
+interface SimState {                              // el acumulador del fold
+  msgs:    ReadonlyMap<MsgId, MsgState>;          // copy-on-write shallow
+  order:   readonly MsgId[];
+  pinned:  MsgId | null;
+  draft:   Draft | null;
+  flags:   Record<string, Json>;
+  overlays: Overlay[];
+  scrollId: MsgId | null;
 }
 
-export const ATELIER_COMPONENTS = {
-  PersonaCard:        { component: PersonaCard,        schema: personaCardSchema,        description: '...', example: {...} },
-  MoodBoard:          { component: MoodBoard,          schema: moodBoardSchema,          description: '...', example: {...} },
-  BuildProgress:      { component: BuildProgress,      schema: buildProgressSchema,      description: '...', example: {...} },
-  ComparisonMatrix:   { component: ComparisonMatrix,   schema: comparisonMatrixSchema,   description: '...', example: {...} },
-  KPIBoard:           { component: KPIBoard,           schema: kpiBoardSchema,           description: '...', example: {...} },
-  DesignSystemPanel:  { component: DesignSystemPanel,  schema: designSystemPanelSchema,  description: '...', example: {...} },
-  TestimonialCard:    { component: TestimonialCard,    schema: testimonialCardSchema,    description: '...', example: {...} },
-  Sitemap:            { component: Sitemap,            schema: sitemapSchema,            description: '...', example: {...} },
-  QuoteCard:          { component: QuoteCard,          schema: quoteCardSchema,          description: '...', example: {...} },
-} satisfies Record<string, AtelierEntry>;
-
-export type AtelierComponentName = keyof typeof ATELIER_COMPONENTS;
+interface Timeline {
+  readonly t0:          Tick;                     // epoch virtual — dato del GUION, no del reloj
+  readonly frames:      readonly Frame[];
+  readonly keys:        Int32Array;               // frames.map(f => f.t) — binary search
+  readonly checkpoints: readonly SimState[];      // snapshot cada K=64 frames
+  readonly duration:    Tick;                     // = frames.at(-1).t — se MIDE, no se estima
+  readonly digest:      string;                   // hash(script, seed, channel, version)
+}
 ```
 
-**Exports add to `packages/ui/src/index.ts`** (additive, follows existing pattern):
+### Compilador
 
-```ts
-export { ATELIER_COMPONENTS } from './lib/atelier-registry';
-export type { AtelierEntry, AtelierComponentName } from './lib/atelier-registry';
+`compile(script: SimScript, opts: { seed:number; channel:ChannelId; locale:string; t0:Tick }): Timeline`
+
+**Puro por lint, no por convención.** `core/` prohíbe `Math.random`, `Date`, `fetch`, `window` y
+`document` vía `no-restricted-globals` sobre la carpeta. La pureza es CI, no disciplina — que es la
+única forma en que sobrevive a seis meses de mantenimiento.
+
+**PRNG posicional:** `rand(seed, stepIdx, slot)` = `sfc32(hash(seed, stepIdx, slot))`.
+El sorteo del paso N **no depende de cuántos draws hizo N−1**. Consecuencias: la compilación es
+reordenable y paralelizable, y editar el paso 3 **no desplaza el jitter del paso 40** — o sea que
+el diff de un guion es legible y una regresión visual es atribuible.
+
+### `seek(t)` en O(log n + K)
+
+```
+i     = upperBound(keys, t)                        // O(log n) sobre Int32Array
+c     = checkpoints[i >> 6]                        // O(1)
+state = frames.slice(c.i, i).reduce(apply, c.state) // ≤ 64 ops — K constante
 ```
 
-**CTO #2 consumes via:** `import { ATELIER_COMPONENTS } from '@cofoundy/ui'` en su nuevo `docs-ai/mdx-components.tsx` spread; o artifact-render (M1) para tag-config generation. Mi PR ships ÚNICAMENTE la line addition a `mdx-components.tsx` después de su chrome PR merges (per brief.yaml `serialization_with_cto2`).
+`apply` es puro y hace copy-on-write shallow del `Map`. Un guion realista (≤500 pasos) da ~8
+snapshots de ≤500 entradas: costo despreciable. **Scrub hacia atrás cuesta lo mismo que hacia
+adelante** — no hay re-instanciación, que es el defecto de fondo del prior art.
+
+### Playhead
+
+`play` = rAF acumulando `dt · rate`. `pause` detiene la acumulación. `rate` se lee en cada tick
+(reactivo, no congelado al montar). **Sin `sleep`, sin promesas ⇒ no hay nada que cancelar.**
+
+Toda la clase de bugs del prior art desaparece por construcción, no por parche: el drift entre el
+ticker y el guion, `stop()` dejando overlays huérfanos, las corrutinas suspendidas para siempre, y
+`calculateScriptDuration` como modelo paralelo que miente.
+
+### Disposición de las 10 clases impuras
+
+| # | Clase | Dentro / Fuera | Política |
+|---|---|---|---|
+| 1 | Reloj de pared | **Dentro** | `t0` es dato del guion; la hora es `fmt(t0 + f.t, locale, TZ)` |
+| 2 | Sorteos perezosos | **Dentro** | A compile-time con PRNG posicional (~2k draws/min: trivial) |
+| 3 | Medición de DOM (knob) | **Dentro** | Distancia en **%**, nunca px. El renderer jamás reporta medidas al core |
+| 4 | Integradores físicos (springs) | **Fuera** | Tienen memoria ⇒ no seekeables. `seek` y `capture` los desactivan (`cf-static`). El tilt por **keyframes** sí entra: es tween, va como `flag` |
+| 5 | Audio | **Fuera** | `cue` se emite; el `AudioSink` es suscriptor con **schedule-and-cancel** (guarda los nodos agendados y los frena en cualquier seek). Scrub ⇒ mute |
+| 6 | Red (link previews) | **Fuera** | Resuelto en compile-time o precargado en el guion. **Cero llamadas a terceros en runtime** |
+| 7 | Derivado de layout | **Fuera** | Settle gate antes de capturar (fuentes + medición de `--pad`) |
+| 8 | Animaciones de entrada | **Fuera** | Modo *hidratar-sin-animar* tras un seek — el reveal-por-clase de `ChatDemo.astro` ya lo resuelve |
+| 9 | Scroll animado | **Fuera** | `scroll = f(scrollId)`, instantáneo al seekear |
+| 10 | Playback de nota de voz | **Fuera** | Dominio temporal del espectador, no de la timeline |
+
+**Invariante:** un solo dominio temporal dentro de la timeline. Todo lo que tenga reloj propio vive
+fuera y declara su política de scrub (cancelar / mutear / resetear).
 
 ---
 
-## 3. AGENTS.md auto-gen
+## 2. Entrega como máquina de estados POR CANAL
 
-**Script:** `packages/ui/scripts/gen-atelier-agents-md.ts`.
+No es un booleano ni un enum global. Cada adapter declara su máquina; el evento `receipt` se
+**valida contra ella** en compile-time y un guion que pida un estado inexistente falla a compilar.
 
-**Why (R-A8 §recommendation):** single static registry must drive LLM allowlist. Hand-edited markdown drifts on first PR; auto-gen makes drift impossible (CI gate verifies `git diff --exit-code AGENTS.md` post-script-run).
-
-**Inputs (read-only):**
-- `src/lib/atelier-registry.ts` (component list + descriptions + examples)
-- Per-component Zod schemas (introspected via `zod-to-json-schema` to render prop tables)
-
-**Outputs (single file):** `packages/ui/AGENTS.md`. Structure:
-
-```md
-# Atelier Components — Agent Allowlist
-<!-- AUTO-GENERATED by scripts/gen-atelier-agents-md.ts — DO NOT EDIT -->
-<!-- Source: src/lib/atelier-registry.ts -->
-
-## Available components
-- `PersonaCard` — Target persona for UX research deliverables
-- `Sitemap` — Hierarchical site map for landing-build clients
-... (9 entries)
-
-## PersonaCard
-**Description:** ...
-**Props (from Zod):**
-| Name | Type | Required | Default | Description |
-| name | string | yes | — | Persona display name |
-...
-**Example MDX:**
-\`\`\`mdx
-<PersonaCard name="John Medina" role="Cofounder, XGodel" jtbd="..." ... />
-\`\`\`
-```
-
-**Invocation:**
-- Local dev: `pnpm gen:agents` (npm script alias)
-- CI gate: workflow `verify-agents-md.yml` runs `pnpm gen:agents && git diff --exit-code AGENTS.md` on every PR → fails si registry edits olvidaron regenerate
-- NOT pre-commit hook (R-A8 §dx anti-pattern: pre-commit hooks fight the dev; CI gate is cheap + visible)
-
-**Tech:** plain TS script, `tsx` runner. Deps: `zod`, `zod-to-json-schema` (R-A8 hybrid recommendation; both small).
-
----
-
-## 4. Zod schema strategy
-
-**Decision: per-component `.schema.ts` peer file, NOT collocated en `.tsx`, NOT centralized.**
-
-| Option | Pros | Cons |
+| Canal | Estados | Nota |
 |---|---|---|
-| A. Inline en `.tsx` | Locality, single file | Bundle pollution (zod pulled en every consumer chunk); test isolation harder |
-| B. Single `lib/atelier-schemas.ts` | One file scans whole shape | God-file; merge conflicts on simultaneous edits; harder to delete |
-| **C. Per-component `<Name>.schema.ts` peer** | Tree-shakeable; per-file ownership matches per-file PR review; registry imports explicit | Slightly more files |
+| WhatsApp | `queued → sent → delivered → read` (+`failed`) | doble check azul en `read` |
+| Telegram | `queued → sent → read` **(sin `delivered`)** + `views:n` | contador de vistas en canales |
+| iMessage | `queued → sent → delivered` | `delivered` como *trailing-label*, no como tick |
 
-**Chosen: C.** Pattern:
-
-```
-src/components/docs/
-├── PersonaCard.tsx          # JSX + TS interface (unchanged exports)
-├── PersonaCard.schema.ts    # NEW: exports `personaCardSchema`
-├── PersonaCard.test.ts      # NEW: parse + validate canonical examples
-├── MoodBoard.tsx
-├── MoodBoard.schema.ts
-... (9 components × 2 new files = 18 schema/test files)
-```
-
-**Convention (mirrors `render-email.ts` pattern):**
-
-```ts
-// PersonaCard.schema.ts
-import { z } from 'zod';
-
-export const personaCardSchema = z.object({
-  name: z.string().min(1),
-  role: z.string().min(1),
-  avatar: z.string().url().optional(),
-  demographics: z.array(z.string()).max(8).optional(),
-  painPoints: z.array(z.string()).max(8).optional(),
-  goals: z.array(z.string()).max(8).optional(),
-  quote: z.string().max(500).optional(),
-  // PATCH additions (Atelier §6.2):
-  jtbd: z.string().max(280).optional(),
-  objections: z.array(z.string()).max(6).optional(),
-  journeyStage: z.enum(['awareness', 'research', 'decision', 'retention']).optional(),
-  age: z.string().optional(),
-  incomeRange: z.string().optional(),
-  source: z.string().optional(),  // provenance — future gate `unverified_persona`
-});
-
-export type PersonaCardInput = z.infer<typeof personaCardSchema>;
-```
-
-**Important:** TS `interface PersonaCardProps` (component-facing) stays en `.tsx`. Zod schema is separate runtime contract used by (a) registry (b) AGENTS.md generator (c) future artifact-render gates (M1). Both stay in sync via Vitest test per component: `expectTypeOf<PersonaCardProps>().toMatchTypeOf<PersonaCardInput>()`.
-
-**Dependency add:** `zod` a `dependencies` (ships en package consumed by docs-ai). `zod-to-json-schema` a devDependencies (build script only).
+**Por qué importa:** el prior art pinta doble check azul siempre, para todo mensaje del usuario
+(`MessageBubble.tsx:333`). Con máquina por canal, "entregado" en Telegram es **imposible de
+expresar**, que es la propiedad que queremos.
 
 ---
 
-## 5. File ownership matrix
+## 3. Channel adapter — la interfaz, probada en papel contra 3 canales
 
-W = Write, R = Read-only, A = Append-only (single-line additive)
+Espeja la separación de `capabilities.py` de inbox-ai: **módulo hoja que no importa nada**
+(`capabilities ← adapter-base ← adapters ← registry`), con el registro `channel → adapter` en
+`registry.ts` aparte para no cerrar el ciclo de imports.
 
-| Path-glob | Mi cycle (atelier-components) | CTO #2 (V2.6 chrome) | Collision risk |
+| Propiedad | WhatsApp | Telegram | iMessage |
 |---|---|---|---|
-| `packages/ui/src/components/docs/*.tsx` | **W** (patch 6, keep 1, add 2) | — | none |
-| `packages/ui/src/components/docs/*.schema.ts` | **W** (9 NEW) | — | none |
-| `packages/ui/src/components/docs/*.test.ts` | **W** (9 NEW) | — | none |
-| `packages/ui/src/components/docs/index.ts` | **W** (add Sitemap, QuoteCard exports) | — | none |
-| `packages/ui/src/lib/atelier-registry.ts` | **W** (NEW) | — | none |
-| `packages/ui/src/lib/atelier-schemas.ts` | **W** (NEW barrel re-export) | — | none |
-| `packages/ui/src/stories/docs/*.stories.tsx` | **W** (2 NEW + 7 audit-refresh) | — | none |
-| `packages/ui/src/index.ts` | **A** (2 export lines) | — | none |
-| `packages/ui/scripts/gen-atelier-agents-md.ts` | **W** (NEW) | — | none |
-| `packages/ui/AGENTS.md` | **W** (auto-gen output, committed) | — | none |
-| `packages/ui/package.json` | **W** (add zod, zod-to-json-schema, gen:agents) | — | none |
-| `packages/ui/.github/workflows/verify-agents-md.yml` | **W** (NEW CI gate) | — | none |
-| `docs-ai/components/{Deliverable,Vault,Reader,CreatorRibbon,RecipientStrip,ApprovalBlock,...}.tsx` | **R** | **W** | none — they own |
-| `docs-ai/lib/chrome.ts` | **R** | **W** | none — they own |
-| `docs-ai/lib/frontmatter-zod.ts` (chrome/kind/recipient/expires_at) | **R** | **W** | none — they own |
-| `docs-ai/mdx-components.tsx` | **A** (single import + spread line, follow-up PR) | **W** (chrome PR) | **SERIALIZED** — mi PR después de su |
-| `docs-ai/content/client/xgodel/propuesta.mdx` | **R** | **W** (stub) | none — naming-disjoint |
-| `docs-ai/content/client/xgodel/{personas,sitemap,brand-moodboard,cotizacion,cronograma}.mdx` | **W** (5 docs) | **R** | none — naming-disjoint |
-| `docs-ai/content/client/xgodel/vault.yaml` | **A** (toc entries for mis 5 docs) | **W** (initial) | **SERIALIZED** — append después de su initial commit |
+| `tail` | `first` de la racha | `last` | `last` |
+| `wallpaper` | `pattern` | `pattern` | `none` |
+| `reactions` | `overlay-below` · cualquier emoji · ≤30 d | `own-row` · allowlist 73 · sin límite | `overlay-edge` · 6 tapbacks |
+| `timestamp` | `inside-pad` | `inside-plain` | `gutter` |
+| `quote` | `color-bar` | `thin-bar` | `stacked-bubble` |
+| `receipts.states` | ver §2 | ver §2 | ver §2 |
+| `bubbleTransport` | `per-conversation` | `per-conversation` | **`per-message`** |
+| `senderKinds` | human · ai | human · ai · **bot · forwarded · channel** | human |
+| `keyboard` | `os-qwerty` | `inline-in-message` | `os-qwerty` |
+| `e2eNotice` | `true` | `false` (salvo Secret Chats) | `true` |
 
-**Zero 2W collisions confirmed.** Dos **2A serialization points** (`mdx-components.tsx`, `vault.yaml`) — ambos single-line append, ambos wait on CTO #2 PR merge primero.
+**Resultado de la prueba en papel:** con solo `tail`/`wallpaper`/`reactions` el renderer terminaba
+con tres `if (channel === …)`. Los tres campos que los eliminan son:
 
----
+1. **`receipts.states`** — el tick de "entregado" que Telegram no tiene.
+2. **`bubbleTransport`** — iMessage mezcla **verde (SMS) y azul en el mismo hilo**; cualquier
+   modelo per-conversación se rompe. Este es el hallazgo que justifica la prueba en papel.
+3. **`senderKinds`** — un `sender` binario no distingue bot ni reenviado, y eso decide la colita.
 
-## 6. XGodel dogfood plan
+**Sin campos opcionales.** `wallpaper:'none'` es un slot que no se llena, no un campo nullable —
+un `?` es un `if` diferido.
 
-5 MDX docs bajo `~/cofoundy/products/cofoundy-platform/docs-ai/content/client/xgodel/`. CTO #2 owns `propuesta.mdx`.
-
-| MDX doc | Components consumed | Source artifact (paths absolutas) | Notes |
-|---|---|---|---|
-| **`personas.mdx`** | `<PersonaCard>` ×3 | `~/cofoundy/deals/clients/XGodel/ux-research/02-user-personas.md` + `03-empathy-map.md` (JTBD/objections enrichment) | Hand-author MDX `chrome: deliverable`, `kind: report`. Cada persona = 1 PersonaCard con los 12 patched props. `source` field → research doc path |
-| **`sitemap.mdx`** | `<Sitemap>` ×1 | `~/cofoundy/projects/xgodel-landing/research/07-information-architecture.md` + `06-userflow.md` (intent labels) | Tree built from IA section structure. `nav_group` → landing primary nav buckets |
-| **`brand-moodboard.mdx`** | `<MoodBoard>` (4 XGodel concepts) + `<DesignSystemPanel>` ×3 (one per direction) + `<ComparisonMatrix>` ×1 (trade-off) | `~/cofoundy/deals/clients/XGodel/visual-design/concept-{A,B,C,D}/`, `final/` (PNG refs); `~/cofoundy/deals/clients/XGodel/work/brand-paletas-v2/{direccion-A-emerald-academic, direccion-B-bordeaux-historic, direccion-C-editorial-premium}/`; `visual-design/DECISIONS.md` | Heaviest doc — exercises 3 de 9 components. ComparisonMatrix rows = trade-off axes (academic-feel, mobile-perf, dev-cost); columns = 3 direcciones; cells nuevo `traffic_light` enum |
-| **`cotizacion.mdx`** | `<QuoteCard>` ×1 | `~/cofoundy/deals/clients/XGodel/propuesta.html` (table extraction) + `addendum-pago-comprobante.md` (payment terms) | Frontmatter `recipient: { name: "John Medina", company: "XGodel" }`, `expires_at: 2026-06-30`. Primera production exercise QuoteCard |
-| **`cronograma.mdx`** | `<BuildProgress>` ×1 + `<KPIBoard>` ×1 (delivery KPIs) | `~/cofoundy/deals/clients/XGodel/cronograma.tex` (parse phases L0-L9); Vikunja `delivery_project_id=22` (manual snapshot v1); `roadmap-hitos.md` | BuildProgress uses patched phase + owner + dates. KPIBoard: % phases done, days-elapsed-vs-planned, deliverables-shipped count |
-
-**Components touched en dogfood:** 8 de 9 en registry (todos excepto TestimonialCard — sin testimonials XGodel; ships schema+story, exercised por segundo cliente).
-
-**Render verification:** dev-server + prod Cloudflare — ambos sin warnings/errors. Andre shares URL con John Medina post-merge (success-signal en brief.yaml).
+**Reacciones — el detalle que nadie adivina:** la allowlist de Telegram escribe los emoji **sin**
+el variation selector U+FE0F mientras todo picker lo emite. `normalizeReactionEmoji()` existe una
+sola vez y la llaman allowlist, validador y renderer. Copiado tal cual del razonamiento de prod.
 
 ---
 
-## 7. Open architectural questions — RESOLVED 2026-05-16 by ceo-agent (Phase 2c)
+## 4. Dos renderers, un core
 
-**Resolutions (locked):**
-- **Q1 → Option B** (registry-only access, no public schema named-exports). Promote on demand.
-- **Q2 → SKIP** Tailwind migration this cycle. NEW components follow CVA + Tailwind; 7 existing stay inline-style. File tag `atelier-tech-debt`.
-- **Q3 → MANUAL snapshot** for BuildProgress / Vikunja. Add frontmatter convention `source_freshness: manual-snapshot-YYYY-MM-DD` en `cronograma.mdx` para encoded upgrade path.
+```
+core/       compile · fold · seek · playhead      TS puro, cero framework, puro por lint
+adapters/   capabilities · registry · 2 canales   TS puro
+element/    custom element — pre-render + reveal  → landings Astro · preview · captura
+react/      componentes                            → inbox-ai / app de Fovente
+capture/    CLI headless                           → PNG/WebP deterministas
+```
 
-Full decision rationale: `.cofoundy/context/decisions/2026-05-16-phase-2-architecture-gate.md`.
-
----
-
-### Original questions (for historical reference)
-
-
-**Q1. Zod schema export surface — public o internal?**
-Should `personaCardSchema` (y los 8 otros) be exportados desde `@cofoundy/ui` para downstream consumers (docs-ai, artifact-render M1, future landing-pages), o kept package-internal y solo surfaced via `ATELIER_COMPONENTS[name].schema`?
-- **Option A (export each schema):** more flexible; pollutes public API surface con 9 new named exports
-- **Option B (registry-only access):** cleaner public API; consumers go through `ATELIER_COMPONENTS.PersonaCard.schema`; couples consumers tightly to registry shape
-- **Plan-agent lean:** B (smaller blast radius); promote individual exports si real consumer asks
-
-**Q2. JSX `style={{}}` legacy vs Tailwind migration scope?**
-Los 7 existing `components/docs/*.tsx` usan inline `style={{}}` objects (verificado en PersonaCard, MoodBoard, etc.). Resto de `packages/ui` sigue CVA + Tailwind per CLAUDE.md "Component Patterns" §1-4. ¿Migrar los 7 a CVA + Tailwind while patching props, o leave inline-style as-is y solo follow CVA for los 2 NEW?
-- **Cost migration:** ~2 días extra; visual regression risk on already-shipped
-- **Cost skip:** registry components inconsistent con resto de `@cofoundy/ui`; future Atelier debe decidir cuál pattern
-- **Plan-agent lean:** SKIP migration this cycle (scope creep — brief timeline 5-7 días). Nuevos (Sitemap, QuoteCard) follow CVA. File follow-up issue
-
-**Q3. `BuildProgress` Vikunja integration — manual snapshot vs read-time fetch?**
-`cronograma.mdx` needs current phase status. Two paths:
-- **Manual snapshot:** human edita MDX cuando cambia (simple, stale; aligned con brief "MDX manual authoring")
-- **Build-time fetch:** Next.js RSC fetches Vikunja API at build time, injects into BuildProgress (fresher; needs Vikunja token en docs-ai env; scope creep)
-- **Plan-agent lean:** manual snapshot v1 (consistent con no-artifact-render); document upgrade path
+Los renderers **no comparten componentes**: comparten el `SimState` que emite el core. `element/`
+pre-renderiza todo el hilo y revela con clases (el enfoque de `ChatDemo.astro`, superior al del
+prior art para el target Astro: contenido visible para SEO, cero hidratación, y **un frame en el
+paso N es exactamente N clases aplicadas**).
 
 ---
 
-### Critical Files for Implementation
+## 5. Modelo de mensaje
 
-- `/Users/styreep/cofoundy/packages/ui/src/lib/atelier-registry.ts` (NEW — SSOT)
-- `/Users/styreep/cofoundy/packages/ui/scripts/gen-atelier-agents-md.ts` (NEW — build script)
-- `/Users/styreep/cofoundy/packages/ui/src/components/docs/PersonaCard.tsx` (PATCH — reference shape for los otros 5)
-- `/Users/styreep/cofoundy/packages/ui/src/components/docs/index.ts` (extend — add Sitemap + QuoteCard exports)
-- `/Users/styreep/cofoundy/products/cofoundy-platform/docs-ai/mdx-components.tsx` (single-line append AFTER CTO #2 chrome PR merges)
+**Canónico: `UniversalMessage`** (`src/types/message.ts:62`) — ya es direction-based y ya conoce
+`channel`, `deliveryStatus`, `sender` y `media`.
+
+El segundo modelo (`Message`, `src/types/index.ts:28`, role-based, usado por transports y stores)
+**queda fuera de alcance**: el ciclo no escribe el conversor que falta. Se declara la deuda **en los propios archivos de tipos** (`src/types/message.ts:62` y
+`src/types/index.ts:28` — los modelos NO son intercambiables y no existe conversor), además de
+`COMPONENTS.md` + issue. El desarrollador se tropieza en los tipos, no en el índice de componentes. Escribirlo tocaría el chat-widget de TimelyAI, que ningún criterio
+de éxito de este ciclo cubre.
+
+---
+
+## 6. Namespacing
+
+Prefijo de familia `ChatSim*`. `Message` y `QuickAction` **ya están definidos dos veces cada uno**
+en el paquete — la deuda es previa. El ciclo **la aísla, no la repara**: nada nuevo colisiona, y el
+issue queda abierto contra el paquete.
+
+---
+
+## 7. Sound packs — por canal, declarativos
+
+```
+{ id, layers:[{ freq | [from,to], startMs, durMs, jitterHz?, wave, attackMs }], gain, repeat? }
+```
+
+Contra lo soldado del prior art: taxonomía **por canal** (no un union global), `wave` incluye
+**noise** (Telegram suena distinto por textura, no por frecuencia), envolvente y *attack* **por
+capa**, y ciclo de vida cancelable con master gain.
+
+**Nada de samples reales de WhatsApp/Telegram** — esos assets sí son copyright, a diferencia del
+código MIT.
+
+---
+
+## 8. Mobile-first — criterio falsable
+
+`inbox-ai` maneja el teclado por layout nativo: **cero** `visualViewport`, `dvh` e
+`interactive-widget` en todo su frontend, y por eso `MobileComposer.tsx` son 13 KB de fork.
+
+**Acceptance:** `visualViewport` + `100dvh` + `interactive-widget=resizes-content`, safe-area
+insets, tap targets ≥44 px, `font-size ≥16 px` en el input. **Medible: el fork de `MobileComposer`
+queda sin razón de ser.** `MobileBaseline` obligatoria en todo lo nuevo.
+
+---
+
+## 9. Orden de construcción — `element/` en la iteración 1
+
+Deriva de R-1: cada iteración produce algo abrible.
+
+| It. | Entrega | Abrible |
+|---|---|---|
+| 1 | `core/` + `element/` + adapter WhatsApp | ✅ página demo estática |
+| 2 | `capture/` PNG/WebP + gate de settle | ✅ PNG byte-idéntico |
+| 3 | Adapter Telegram + **token `--channel-imessage` y `ChannelId` de iMessage** (el token y el tipo, NO el adapter) | ✅ mismo guion, dos canales |
+| 4 | `react/` + mobile + `MobileBaseline` | ✅ Storybook |
+| 5 | Stories, tests, `COMPONENTS.md`. **La story de reemplazo se alimenta de la forma de mensaje REAL de inbox-ai** (o lleva adaptador documentado inline) — sin eso el criterio de éxito #4 se afirma en vez de medirse | ✅ Storybook completo |
+
+---
+
+## 10. Alcance recortado (decisión del CTO, con estimación)
+
+| Recorte | Razón | Ahorro |
+|---|---|---|
+| `capture/` **solo PNG/WebP**, sin mp4 | el encoder es superficie de determinismo aparte; el operador pidió **fotos**, el video lo agregué yo | −2 d |
+| `audio/` = schema + **cue packs por canal como DATOS** (WhatsApp + Telegram) + `AudioSink` a la política clase-5 de §1, muteado por default, + 1 story de audición | el trabajo duro ya está hecho: el DSP es ~90% parametrizable (finding 03 §4) y lo soldado ya se diseña afuera en §7. Falta **autoría de datos, no diseño** | −0,75 d **con tope: si excede ~0,5 d revierte al stub** |
+| `pin` / `delete-for-all` = eventos + tests, **sin chrome** | el fold los absorbe gratis; dibujar barra de fijado y tombstone es UI nueva por canal | −1 d |
+| Adapter iMessage completo | la prueba en papel ya rindió (`bubbleTransport`); implementarlo no agrega información | — |
+| Migración de `inbox-ai` | el ciclo entrega el skin + story de reemplazo, no un PR contra ese repo | — |
+| **Copia literal de `whatsimule`** | es referencia de **comportamiento**, no fuente | **prohibida** |
+
+**Con los recortes: 12-14 días. Sin ellos: 17-19.**
+
+✅ El audio **responde parcialmente** la queja explícita del operador sobre los sonidos: los cue packs
+de WhatsApp y Telegram entran como datos, con story de audición. Lo que queda afuera es ampliar la
+biblioteca de cues, no el diseño ni la textura.
+
+---
+
+### Restricción dura — el prior art es referencia de comportamiento, no fuente
+
+`whatsimule` (MIT) se leyó para extraer **qué debe hacer** un simulador. **Cero copia literal** de
+código, constantes o assets. Nombrados explícitamente porque son los que tientan:
+
+- la coreografía de 9 pasos del contact-picker
+- el anillo de progreso `10→30→60→85→100`
+- la tabla de cadencias y los 5 contactos ficticios con fotos de Unsplash
+
+**Tripwire:** una lane que crea necesitar un lift literal **PARA y escala**. No lo decide sola.
+
+Esto es además lo que sostiene que D-1 no bloquee el build: sin copia sustancial, MIT no impone
+atribución en build-time, y el release público ya está fuera del alcance del ciclo.
+
+---
+
+## 11. Riesgos
+
+| # | Riesgo | Mitigación |
+|---|---|---|
+| 1 | `inbox-ai` consume `github:cofoundy/ui#main` **sin pin**: todo merge a `main` entra a su prod | No mergear sin verde verificado; el gate de Fase 11 evalúa blast radius sobre Fovente, no sobre Storybook. Proponer el pin (repo ajeno ⇒ no lo ejecutamos) |
+| 2 | Romper la continuidad visual landing↔app, que es deliberada | La divergencia de `ui-architect` se acota a **elevar**, no redefinir. Baseline visual contra `ChatDemo.astro` antes de tocar |
+| 3 | El adapter no aguanta el canal 4 | Ya se probó en papel contra 3 y rindió 3 campos nuevos. Regla: **cero opcionales** — un `?` es un `if` diferido |
+| 4 | Determinismo falso: PNG que difieren por fuentes o layout | Gate de settle (fuentes + `--pad`) antes de capturar. Test que compara dos corridas byte a byte — **la sonda tiene gemelo positivo**: un cambio conocido debe romperla |
+| 5 | Release OSS sin decisión de atribución (D-1) | Gate humano antes del push público. No bloquea el build |
+
+
+---
+
+## 12. Contrato de estilado — `chat-sim` es self-contained y scoped
+
+**Añadido tras el REFUTE `esc-c1b8c98e0ecfa2` (honrado). El remedio está FORZADO, no elegido.**
+
+### Por qué la mitigación anterior era falsa
+
+| Hecho | Verificado en |
+|---|---|
+| El `content` glob de inbox-ai escanea `node_modules/@cofoundy/ui/src/**` **por path, no por import** | `inbox-ai/frontend/tailwind.config.ts:9` |
+| El CSS del paquete es **un solo sheet global, cero `@layer`** | `packages/ui/src/styles/index.css` (1128 líneas) |
+| Se importa en la raíz del App Router **antes** de `globals.css`, que lo sombrea | `inbox-ai/frontend/src/app/layout.tsx:4` |
+
+⇒ El mapa de `exports` no tiene autoridad sobre ninguna de las tres. Un subpath gatea resolución de
+módulos, no escaneo de archivos ni cascada de CSS.
+
+### Las cuatro superficies no comparten Tailwind
+
+| Consumidor | Tailwind |
+|---|---|
+| `fovente-landingpage` (fovente.cofoundy.ai) | **ninguno** |
+| `landing-page-v3` (cofoundy.dev) | v4.1 |
+| `inbox-ai` (app.fovente) | **v3.4** + puente manual + safelist |
+| `packages/ui` (productor) | v4.1.18, **sin `tailwind.config`** |
+
+Reconciliar v3/v4 **no resuelve**: una de las dos landings objetivo no tiene Tailwind en absoluto.
+Un componente que dependa del Tailwind del host no puede shipear ahí. La opción se colapsa a una.
+
+### El contrato
+
+1. **`chat-sim` ships su propio stylesheet self-contained**, en `chat-sim/styles.css`, importado por
+   subpath. No toca `src/styles/index.css`.
+2. **Todos los tokens bajo `.cf-chat-sim`**, no en `:root`. Incluye `--channel-imessage` de A-5 —
+   que era justamente el token que iba a aterrizar en la superficie compartida.
+3. **Cero utilidades Tailwind en el source de la familia.** Regla fundacional de autoría: si un
+   `.tsx` de `chat-sim/` contiene una clase de utilidad, falla el lint. Es lo que hace que el glob
+   de inbox-ai escanee nuestros archivos y no encuentre nada que compilar.
+4. **Precedente propio, no invención:** `ChatDemo.astro` ya renderiza este lenguaje visual con
+   clases semánticas sobre CSS plano y custom properties, en un repo sin Tailwind, en producción.
+
+### Lo que esto compra
+
+El mismo artefacto renderiza idéntico en Storybook (v4), en `capture/` headless, en dos landings
+Astro y en Fovente (v3) — **sin depender del compilador de CSS del consumidor**. Es la única forma
+de que los golden PNG byte-comparados de las iteraciones 2-3 signifiquen algo, y de que el criterio
+de éxito #4 ("sin regresión visual") sea medible en vez de afirmado.
+
+**Costo de tomarla ahora:** este párrafo. **Costo en la iteración 4:** reestilar `element/` +
+`react/` e invalidar todos los golden byte-comparados.
+
+---
+
+## 13. Correcciones menores del refute-pass (SUSTAIN, se arreglan durante)
+
+| # | Hueco | Arreglo |
+|---|---|---|
+| 1 | `compile(script, {seed, channel, locale, t0})` **no recibe timezone**, pero §1 formatea con `fmt(t0+f.t, locale, TZ)`. Dos corridas en la misma máquina pasan el test y la propiedad igual es falsa cross-machine | `tz` entra a la firma de `compile` y al `digest`. Un campo |
+| 2 | `element/` revela con **clases acumuladas** (monótono), pero el fold existe por mutaciones **no monótonas** (`edit`/`delete`/`react`/`pin`) | `data-step` en la raíz en vez de clases acumuladas. `capture/` ya ejercita `seek` desde la iteración 2 |
+
+El #1 es notable: es un test que pasa y una propiedad que es falsa — exactamente un instrumento
+que no puede fallar. `Int32Array` y el orden de `Map` sí se sostienen (los ticks son relativos a
+`t0`, y `order` es explícito).

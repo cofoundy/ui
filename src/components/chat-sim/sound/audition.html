@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es-PE">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>chat-sim sound — audición (T-006)</title>
+    <!--
+      T-006's "story de audición" — Storybook proper (src/stories/chat-sim/**) is QA's exclusive
+      write cell (file-ownership-matrix.md); a real .stories.tsx there is T-008's job. This is the
+      listening page for THIS task, same "no build step to open" contract as demo/index.html:
+      audition.bundle.js is a checked-in artifact. Rebuild with:
+
+        npx esbuild src/components/chat-sim/sound/audition-entry.ts --bundle --format=iife \
+          --global-name=CfChatSimSound --outfile=src/components/chat-sim/sound/audition.bundle.js --target=es2020
+    -->
+    <style>
+      body {
+        margin: 0;
+        padding: 2rem;
+        font-family: system-ui, sans-serif;
+        background: #111b21;
+        color: #e9edef;
+      }
+      h1 {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #8696a0;
+      }
+      section {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        background: #1f2c33;
+        border-radius: 12px;
+      }
+      h2 {
+        margin-top: 0;
+        text-transform: capitalize;
+      }
+      button {
+        font: inherit;
+        margin: 0.25rem;
+        padding: 0.5rem 0.9rem;
+        border-radius: 999px;
+        border: 1px solid #384147;
+        background: #2a3942;
+        color: inherit;
+        cursor: pointer;
+      }
+      p {
+        font-family: ui-monospace, monospace;
+        font-size: 0.75rem;
+        color: #8696a0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>cf-chat-sim — sound audition (T-006)</h1>
+    <div id="root"></div>
+    <script src="./audition.bundle.js"></script>
+  </body>
+</html>
