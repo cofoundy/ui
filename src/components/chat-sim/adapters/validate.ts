@@ -5,8 +5,7 @@
 // never appears in a branch here, so this can't grow the `channel === ` hardcode T-005
 // acceptance #4 warns about; the per-channel truth lives in `whatsapp.ts`/`telegram.ts`/`caps.ts`.
 
-import type { ChannelId, Diagnostic, Json, SimScript } from '../core/types';
-import type { Capability } from './caps';
+import type { Capability, ChannelId, Diagnostic, Json, SimScript } from '../core/types';
 import { hasCapability, isAllowedReactionEmoji, normalizeReactionEmoji } from './caps';
 import { getAdapter } from './registry';
 

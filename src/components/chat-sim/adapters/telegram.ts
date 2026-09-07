@@ -5,10 +5,10 @@
 // 👁 N slot in 1:1 is occupied by the ticks, not stacked alongside them). Reaction allowlist size
 // is DERIVED from `caps.ts`'s real set, never a bare literal `73` — the two can't drift apart.
 
-import type { ChannelAdapterWithCapabilities } from './caps';
+import type { ChannelAdapter } from '../core/types';
 import { TELEGRAM_REACTIONS } from './caps';
 
-export const telegram: ChannelAdapterWithCapabilities = {
+export const telegram: ChannelAdapter = {
   tail: 'last',
   wallpaper: 'pattern',
   reactions: 'own-row',

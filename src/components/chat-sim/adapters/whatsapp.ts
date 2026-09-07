@@ -4,9 +4,9 @@
 // fixture is a wave-1 literal reading of the same table, kept only so `skin` could build against
 // it before this file existed; this is the real one `registry.ts` serves.
 
-import type { ChannelAdapterWithCapabilities } from './caps';
+import type { ChannelAdapter } from '../core/types';
 
-export const whatsapp: ChannelAdapterWithCapabilities = {
+export const whatsapp: ChannelAdapter = {
   tail: 'first',
   wallpaper: 'pattern',
   reactions: 'overlay-below',
