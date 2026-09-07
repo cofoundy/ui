@@ -347,6 +347,97 @@ describe('Quote-author + avatar-initial text contrast (T-023 acceptance D)', () 
 // T-023 acceptance C: `grep -rn "focus-visible\|:focus" src/components/chat-sim/` returned ZERO
 // hits before this task. This is the static-scan equivalent of that grep, plus a check that the
 // ring it adds is actually readable (a focus indicator nobody can see doesn't satisfy the intent).
+// T-025 — Telegram's `.cf-quote-author` reuses the SAME brand accents (`--channel-telegram` /
+// `-out`) the T-023 D block above just fixed for WhatsApp, but Telegram's own values were never
+// checked: they fail AA in 3 of 4 real combinations (measured while building this instrument —
+// see T-025.md). A sibling describe block, not an extension of T-023 D's (that one asserts the
+// DEFAULT/WhatsApp rule specifically, `QUOTE_AUTHOR_RULE` pinned to the top-level selector) — this
+// probes the Telegram-scoped rules and their dedicated `-quote-text` tokens instead.
+describe('Telegram quote-author text contrast (T-025 + follow-up chrome decision)', () => {
+  const TELEGRAM_ROOT_RULE = "[data-channel='telegram'] {";
+  const TELEGRAM_LIGHT_OVERRIDE_RULE = "[data-channel='telegram']:not([data-theme='dark']) {";
+  const TELEGRAM_DARK_ROOT_RULE = "[data-channel='telegram'][data-theme='dark'] {";
+  const TELEGRAM_DARK_CONSISTENT_OVERRIDE_RULE =
+    "[data-channel='telegram'][data-theme='dark']:is([data-chrome='consistent'], [data-chrome='branded']) {";
+  const TELEGRAM_LIGHT_OUT_BUBBLE_RULE = "[data-channel='telegram'] .cf-msg[data-dir='out'] .cf-bubble {";
+  const TELEGRAM_DARK_OUT_BUBBLE_RULE = "[data-channel='telegram'][data-theme='dark'] .cf-msg[data-dir='out'] .cf-bubble {";
+
+  const telegramRootTokens = buildTokenMap(extractRuleBlock(css, TELEGRAM_ROOT_RULE));
+  const telegramLightTokens = { ...telegramRootTokens, ...buildTokenMap(extractRuleBlock(css, TELEGRAM_LIGHT_OVERRIDE_RULE)) };
+  const telegramDarkTokens = { ...telegramRootTokens, ...buildTokenMap(extractRuleBlock(css, TELEGRAM_DARK_ROOT_RULE)) };
+  const telegramDarkConsistentTokens = {
+    ...telegramDarkTokens,
+    ...buildTokenMap(extractRuleBlock(css, TELEGRAM_DARK_CONSISTENT_OVERRIDE_RULE)),
+  };
+
+  const TELEGRAM_LIGHT_OUT_BUBBLE = extractCustomProperty(extractRuleBlock(css, TELEGRAM_LIGHT_OUT_BUBBLE_RULE), 'background');
+  const TELEGRAM_DARK_OUT_BUBBLE = extractCustomProperty(extractRuleBlock(css, TELEGRAM_DARK_OUT_BUBBLE_RULE), 'background');
+  // `.cf-quote-author` (IN) sits inside an inbound `.cf-bubble` — `--cf-cs-bubble-in` (#ffffff),
+  // NOT the wallpaper (`--cf-cs-surface`, #e9edef) behind the whole log. Same background T-025's
+  // own table and qa's independent probe (telegram-quote-contrast.test.ts) both measured against.
+  const LIGHT_BUBBLE_IN = extractCustomProperty(rootBlock, '--cf-cs-bubble-in');
+
+  it('IN, light bubble (#ffffff): clears AA — the fix, unconditional (no chrome gate needed)', () => {
+    const color = resolveColor(telegramLightTokens['--channel-telegram-quote-text'], telegramLightTokens);
+    expect(contrastRatio(color, LIGHT_BUBBLE_IN)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
+  });
+
+  it('IN, dark bubble (#182533): stays at the plain (undarkened) accent — already clears AA, must not regress', () => {
+    const color = resolveColor(telegramDarkTokens['--channel-telegram-quote-text'], telegramDarkTokens);
+    expect(contrastRatio(color, DARK_SURFACE)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
+  });
+
+  it('OUT, light bubble (#effdde): clears AA — the fix, unconditional', () => {
+    const color = resolveColor(telegramLightTokens['--channel-telegram-out-quote-text'], telegramLightTokens);
+    expect(contrastRatio(color, TELEGRAM_LIGHT_OUT_BUBBLE)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
+  });
+
+  it("OUT, dark bubble (#3e6aa7), chrome='fidelity' (default): intentionally still fails AA — portraying Telegram as it really is", () => {
+    const color = resolveColor(telegramDarkTokens['--channel-telegram-out-quote-text'], telegramDarkTokens);
+    expect(contrastRatio(color, TELEGRAM_DARK_OUT_BUBBLE)).toBeLessThan(TEXT_AA_THRESHOLD);
+  });
+
+  it("OUT, dark bubble (#3e6aa7), chrome='consistent': AA is not negotiable in Fovente's own app — clears it", () => {
+    const color = resolveColor(telegramDarkConsistentTokens['--channel-telegram-out-quote-text'], telegramDarkConsistentTokens);
+    expect(contrastRatio(color, TELEGRAM_DARK_OUT_BUBBLE)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
+  });
+
+  it("OUT, dark bubble (#3e6aa7), chrome='branded': same AA floor as 'consistent'", () => {
+    const brandedTokens = {
+      ...telegramDarkTokens,
+      ...buildTokenMap(extractRuleBlock(css, TELEGRAM_DARK_CONSISTENT_OVERRIDE_RULE)),
+    };
+    const color = resolveColor(brandedTokens['--channel-telegram-out-quote-text'], brandedTokens);
+    expect(contrastRatio(color, TELEGRAM_DARK_OUT_BUBBLE)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
+  });
+
+  it('gemelo: the pre-fix shipped values (plain accents, unresolved) fail all 3 open cases', () => {
+    const shippedIn = resolveColor('var(--channel-telegram)', telegramRootTokens);
+    const shippedOut = resolveColor('var(--channel-telegram-out)', telegramRootTokens);
+    expect(contrastRatio(shippedIn, LIGHT_BUBBLE_IN)).toBeLessThan(TEXT_AA_THRESHOLD);
+    expect(contrastRatio(shippedOut, TELEGRAM_LIGHT_OUT_BUBBLE)).toBeLessThan(TEXT_AA_THRESHOLD);
+    expect(contrastRatio(shippedOut, TELEGRAM_DARK_OUT_BUBBLE)).toBeLessThan(TEXT_AA_THRESHOLD);
+  });
+
+  it('the reply-bar border and avatar/composer-send fill are UNTOUCHED — still the real brand accent, decorative uses stay fidelity', () => {
+    const inBorderRaw = extractPropertyRaw(
+      extractRuleBlock(css, "[data-channel='telegram'] .cf-msg[data-dir='in'] .cf-quote[data-style='thin-bar'] {"),
+      'border-left-color',
+    );
+    const outBorderRaw = extractPropertyRaw(
+      extractRuleBlock(css, "[data-channel='telegram'] .cf-msg[data-dir='out'] .cf-quote[data-style='thin-bar'] {"),
+      'border-left-color',
+    );
+    const avatarBgRaw = extractPropertyRaw(
+      extractRuleBlock(css, "[data-channel='telegram'] .cf-avatar,"),
+      'background',
+    );
+    expect(inBorderRaw).toBe('var(--channel-telegram)');
+    expect(outBorderRaw).toBe('var(--channel-telegram-out)');
+    expect(avatarBgRaw).toBe('var(--channel-telegram)');
+  });
+});
+
 describe('Focus-visible ring exists and is readable (T-023 acceptance C)', () => {
   const FOCUS_VISIBLE_RULE = ':focus-visible {';
 

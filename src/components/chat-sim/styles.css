@@ -149,6 +149,40 @@
 .cf-chat-sim[data-channel='telegram'] {
   --channel-telegram: #37a1de; /* Telegram's inbound accent — reply bar / link / avatar */
   --channel-telegram-out: #5eb854; /* outbound reply-bar accent (adapter-interface-draft.md "Reply") */
+  /* T-025 — dedicated TEXT-ONLY tokens for `.cf-quote-author` (below): the plain accents above
+     fail WCAG AA as TEXT color in 3 of 4 real combinations (T-025's own measurement: 2.87:1 IN
+     light, 2.34:1 OUT light, 2.21:1 OUT dark — only IN dark clears it, at 5.41:1). Split into
+     dedicated tokens instead of darkening `--channel-telegram`/`-out` directly because those ALSO
+     paint the avatar fill, `.cf-composer-send`, and the reply-bar `border-left-color` — decorative
+     uses T-023 already ruled can stay the real brand hue ("pueden quedar"); only the AUTHOR TEXT
+     needs to change. Passthrough here (IN dark already clears AA at the undarkened accent — no
+     need to touch it); the two failing-in-light cases are overridden below, unconditionally. */
+  --channel-telegram-quote-text: var(--channel-telegram);
+  --channel-telegram-out-quote-text: var(--channel-telegram-out);
+}
+/* T-025 — light theme: darken toward black (same derivation as `--cf-cs-accent-text`, T-023 D)
+   just enough to clear 4.5:1 against the LIGHT bubbles this text sits on. Applies regardless of
+   `chrome` — unlike the dark-mode OUT case below, a same-hue darkening exists here, so there's no
+   fidelity-vs-accessibility tradeoff to gate. Scoped `:not([data-theme='dark'])` rather than
+   touching the base declaration above, so dark mode (which resolves its own values) is untouched. */
+.cf-chat-sim[data-channel='telegram']:not([data-theme='dark']) {
+  --channel-telegram-quote-text: #2979a7; /* measured: 4.80:1 vs light bubble-in #ffffff */
+  --channel-telegram-out-quote-text: #417f3a; /* measured: 4.58:1 vs Telegram's light out-bubble #effdde */
+}
+/* T-025 — dark theme, OUT only: the one case with NO same-hue fix. Telegram's dark-mode outbound
+   bubble (#3e6aa7, T-023 A's operator-corrected value) is BLUE, not a darkened green (T-013
+   inverts the hue between themes on purpose) — darkening `--channel-telegram-out` toward black
+   REDUCES contrast against it instead of raising it (the two converge in luminance before the
+   green gets dark enough; verified down to #2a5326, as dark as T-023 D's own darkening ever went,
+   still under 4.5:1). Team-lead's call (T-025 follow-up, 2026-09-07): `fidelity` reproduces
+   Telegram AS-IS, failing AA exactly like the real app does — we're PORTRAYING another app there,
+   nobody reads real messages in a simulator. `consistent`/`branded` IS Fovente's own app with real
+   people reading real content, so AA is not negotiable there: reuses `--cf-cs-bubble-out-meta`
+   (already `#e9edef` for this exact bubble — T-023 A's own fix for the hora/ticks meta text
+   sharing this same background) instead of inventing a new literal — 4.66:1, verified, and it's a
+   neutral ink tone, not a hue this component owns an opinion on anyway. */
+.cf-chat-sim[data-channel='telegram'][data-theme='dark']:is([data-chrome='consistent'], [data-chrome='branded']) {
+  --channel-telegram-out-quote-text: var(--cf-cs-bubble-out-meta);
 }
 .cf-chat-sim[data-channel='whatsapp'] {
   --channel-whatsapp: #25d366; /* mirrors --channel-imessage's per-brand-accent pattern above */
@@ -223,13 +257,13 @@
   border-left-color: var(--channel-telegram);
 }
 .cf-chat-sim[data-channel='telegram'] .cf-msg[data-dir='in'] .cf-quote-author {
-  color: var(--channel-telegram);
+  color: var(--channel-telegram-quote-text); /* T-025 — text-only, AA-safe; border above stays the real accent */
 }
 .cf-chat-sim[data-channel='telegram'] .cf-msg[data-dir='out'] .cf-quote[data-style='thin-bar'] {
   border-left-color: var(--channel-telegram-out);
 }
 .cf-chat-sim[data-channel='telegram'] .cf-msg[data-dir='out'] .cf-quote-author {
-  color: var(--channel-telegram-out);
+  color: var(--channel-telegram-out-quote-text); /* T-025 — text-only, AA-safe; border above stays the real accent */
 }
 
 /* ── dark theme (T-013 acceptance #2) — consumer sets `data-theme="dark"` on <cf-chat-sim>
