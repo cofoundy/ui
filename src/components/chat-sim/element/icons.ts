@@ -53,6 +53,7 @@ function addRing(el: SVGSVGElement, cx: number, cy: number, r: number): void {
 export function tickIcon(ticks: 1 | 2, color: string): SVGSVGElement {
   const el = svg('0 0 18 12', 15, 10, '1.7');
   el.classList.add('cf-receipt');
+  el.setAttribute('aria-hidden', 'true');
   el.style.color = color;
   addPath(el, ticks === 2 ? 'M1 6.7 4.1 9.8 10.2 2.4' : 'M4.5 6.7 7.6 9.8 13.7 2.4');
   if (ticks === 2) addPath(el, 'M7.6 6.7 10.7 9.8 16.8 2.4');
@@ -63,6 +64,7 @@ export function tickIcon(ticks: 1 | 2, color: string): SVGSVGElement {
 export function clockIcon(color: string): SVGSVGElement {
   const el = svg('0 0 14 14', 12, 12, '1.3');
   el.classList.add('cf-receipt');
+  el.setAttribute('aria-hidden', 'true');
   el.style.color = color;
   addRing(el, 7, 7, 5.8);
   addPath(el, 'M7 3.8V7l2.6 1.5');
@@ -73,6 +75,7 @@ export function clockIcon(color: string): SVGSVGElement {
 export function alertIcon(color: string): SVGSVGElement {
   const el = svg('0 0 14 14', 12, 12, '1.3');
   el.classList.add('cf-receipt');
+  el.setAttribute('aria-hidden', 'true');
   el.style.color = color;
   addRing(el, 7, 7, 5.8);
   addPath(el, 'M7 4.2V8');

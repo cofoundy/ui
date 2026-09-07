@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 import { AudioSink } from '../audio-sink';
 import { DEFAULT_CUE_PACK } from '../packs';
+import type { Cue } from '../types';
 import { FakeAudioContext } from './fake-audio-context';
 
 const SOME_CUE = DEFAULT_CUE_PACK.whatsapp![0];
@@ -53,15 +54,23 @@ describe('AudioSink — schedule-and-cancel (T-006 #1)', () => {
 });
 
 describe('AudioSink — degenerate case (T-006 #4)', () => {
-  it('an empty pack ({}) never throws when probed for a channel, and yields nothing to schedule', () => {
-    const emptyPack: Record<string, readonly unknown[]> = {};
+  it('an empty pack ({}) never throws when probed for a channel, and the real sink degrades to nothing scheduled', () => {
+    const emptyPack: Record<string, readonly Cue[]> = {};
     expect(() => emptyPack.whatsapp).not.toThrow();
     expect(emptyPack.whatsapp).toBeUndefined();
     // the "story degrades to sin cues" behavior: a consumer that maps over `pack.whatsapp ?? []`
     // produces zero schedule() calls, never a thrown error — reached by SUBTRACTION (removing
-    // cues), not a special stub artifact (T-006 Alcance's explicit requirement).
+    // cues), not a special stub artifact (T-006 Alcance's explicit requirement). Exercised against
+    // the REAL sink (not just the plain object above) so a defect in `cancelAll`/`schedule`
+    // actually bites this test instead of it passing on object-literal access alone.
     const cues = emptyPack.whatsapp ?? [];
     expect(cues).toHaveLength(0);
+
+    const sink = new AudioSink(new FakeAudioContext());
+    for (const cue of cues) sink.schedule(cue); // zero iterations — the degrade path, for real
+    expect(sink.liveNodeCount).toBe(0);
+    expect(() => sink.cancelAll()).not.toThrow();
+    expect(sink.liveNodeCount).toBe(0);
   });
 
   it('the sink itself never throws when constructed and immediately cancelled with nothing scheduled', () => {

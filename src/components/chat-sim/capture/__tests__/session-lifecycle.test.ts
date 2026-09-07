@@ -36,11 +36,38 @@ const RECIPE = {
   t0: 1767261600000,
 };
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function sameSessions(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
+  if (a.size !== b.size) return false;
+  for (const id of a) if (!b.has(id)) return false;
+  return true;
+}
+
+// Audit finding: this instrument COUNTED sessions, so a filtered-out one and a leaked one net to
+// the same length as "nothing changed" — the length alone can't tell lag (the async close hasn't
+// landed yet) from a real leak, so a red here is meaningless either way. Comparing the SET of ids
+// is the discriminating check; the backoff is only for the close's own async settle time, never to
+// paper over a genuinely different set.
+async function waitForSameSessions(
+  before: ReadonlySet<string>,
+  { retries = 5, delayMs = 500 } = {},
+): Promise<ReadonlySet<string>> {
+  let current = new Set(listSessions());
+  for (let attempt = 0; attempt < retries && !sameSessions(current, before); attempt++) {
+    await sleep(delayMs * (attempt + 1));
+    current = new Set(listSessions());
+  }
+  return current;
+}
+
 describe('capture session lifecycle (no leaks)', () => {
   it(
     'N ephemeral captures leave the session count exactly where it started',
     async () => {
-      const before = listSessions().length;
+      const before = new Set(listSessions());
       const outDir = mkdtempSync(join(tmpdir(), 'chat-sim-capture-lifecycle-'));
       try {
         const tl = compile(FIXTURE_SCRIPT, RECIPE);
@@ -56,7 +83,8 @@ describe('capture session lifecycle (no leaks)', () => {
       } finally {
         rmSync(outDir, { recursive: true, force: true });
       }
-      expect(listSessions().length).toBe(before);
+      const after = await waitForSameSessions(before);
+      expect([...after].sort()).toEqual([...before].sort());
     },
     // Generous on purpose: each iteration spins a BRAND NEW Chrome session against a daemon
     // shared with every other lane in this cycle — agentBrowser.ts's own retry/backoff can
@@ -67,7 +95,7 @@ describe('capture session lifecycle (no leaks)', () => {
   it(
     'a FAILED capture still closes its own session (finally runs, close does not silently no-op)',
     async () => {
-      const before = listSessions().length;
+      const before = new Set(listSessions());
       const outDir = mkdtempSync(join(tmpdir(), 'chat-sim-capture-lifecycle-fail-'));
       const unwritableSubdir = join(outDir, 'locked');
       // Pre-create the dir ourselves and lock it down BEFORE captureFrame's own mkdirSync runs
@@ -90,7 +118,8 @@ describe('capture session lifecycle (no leaks)', () => {
         rmSync(outDir, { recursive: true, force: true });
       }
 
-      expect(listSessions().length).toBe(before);
+      const after = await waitForSameSessions(before);
+      expect([...after].sort()).toEqual([...before].sort());
     },
     120_000,
   );

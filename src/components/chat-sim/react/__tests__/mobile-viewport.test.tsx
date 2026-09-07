@@ -93,31 +93,21 @@ describe('T-007 acceptance #2 — mobile keyboard inset (mechanical)', () => {
     expect(log.scrollTop).toBe(log.scrollHeight); // === 1000, the stubbed value
   });
 
-  it('twin — without the fix, the same simulated keyboard event proves nothing', () => {
-    // The naive shape MobileComposer.tsx itself has: a composer with no visualViewport listener
-    // at all. Same DOM harness, same event, no `useKeyboardInset` call.
-    function NaiveComposer() {
-      const logRef = useRef<HTMLOListElement>(null);
-      return (
-        <>
-          <ol ref={logRef} className="cf-log">
-            <li>último mensaje</li>
-          </ol>
-          <div className="cf-live-composer" data-kb-inset={0}>
-            <textarea className="cf-live-input" />
-          </div>
-        </>
-      );
-    }
-    const { container } = render(<NaiveComposer />);
-    const log = container.querySelector('.cf-log') as HTMLOListElement;
-    Object.defineProperty(log, 'scrollHeight', { configurable: true, value: 1000 });
-    log.scrollTop = 0;
+  it('twin — without Visual Viewport support (useKeyboardInset.ts\'s own documented fallback, "if (!vv) return"), the SAME real LiveComposer proves nothing moves', () => {
+    // Was: a hand-rolled `NaiveComposer` rendered locally, with zero visualViewport listener of
+    // its own — disconnected from production code, so a regression in `useKeyboardInset.ts`
+    // (e.g. deleting its `addEventListener` calls) could never turn this test red (verified by
+    // mutation). Rewritten to exercise the REAL `LiveComposer` + real `useKeyboardInset`, reaching
+    // "the fix does nothing" through the hook's own documented unsupported-engine branch instead
+    // of a fake sibling that merely mimics the shape.
+    // @ts-expect-error — test-only: simulate an engine with no Visual Viewport API at all.
+    delete window.visualViewport;
+    const { container, log } = mountLiveComposer();
 
-    openKeyboard();
+    openKeyboard(); // dispatched on the (now orphaned) `vv` object — the hook bailed at mount, nothing was ever subscribed
 
     const composer = container.querySelector('.cf-live-composer')!;
-    expect(composer.getAttribute('data-kb-inset')).toBe('0'); // never updates — no listener
+    expect(composer.getAttribute('data-kb-inset')).toBe('0'); // never updates — hook bailed at !vv
     expect(log.scrollTop).toBe(0); // never scrolls — nothing keeps the last message visible
   });
 });

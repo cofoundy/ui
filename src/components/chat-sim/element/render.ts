@@ -209,6 +209,8 @@ export function populateMessageElement(
 
   const dir = actorDir(msg.by);
   li.className = 'cf-msg';
+  // T-024 §E: the sender today only lives in `data-dir` — invisible to screen readers.
+  li.setAttribute('aria-label', dir === 'out' ? 'Mensaje enviado' : 'Mensaje recibido');
   li.dataset.dir = dir;
   li.dataset.by = msg.by;
   if (flags.tailHere) li.dataset.tail = '';

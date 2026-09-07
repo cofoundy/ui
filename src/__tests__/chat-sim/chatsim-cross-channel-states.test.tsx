@@ -54,15 +54,26 @@ describe('<ChatSim> — imported via the public barrel', () => {
     expect(screen.queryByText('oops no debía salir')).not.toBeInTheDocument();
   });
 
-  it('Telegram: views counter renders (whatsapp.ts has counter:"none", telegram.ts has "views")', () => {
-    const script: SimScript = [
+  // Was: expected `counter:'views'` on Telegram's 1:1/group adapter. Retired by T-012
+  // (adapters/telegram.ts:43 — 👁 N is broadcast-only, and this cycle's Telegram adapter models
+  // 1:1/group, so `counter` is 'none' there too, same as WhatsApp). Rewritten against the live
+  // contract: the ticks' GLYPH flips at read (color doesn't, telegram-fidelity-fix.md §F-2), and
+  // the `.cf-views` slot never renders through this adapter.
+  it('Telegram: tick glyph flips at read (color fixed) — no .cf-views, the slot is broadcast-only (T-012)', () => {
+    const sentScript: SimScript = [
       { k: 'post', by: 'out:human:agent_1', text: 'promo del finde' },
-      { k: 'views', id: 'm0', n: 42 },
+      { k: 'receipt', id: 'm0', to: 'sent' },
     ];
-    const { container } = render(<ChatSim script={script} channel="telegram" seed={1} mode="live" />);
-    const views = container.querySelector('.cf-views');
-    expect(views).not.toBeNull();
-    expect(views?.textContent).toBe('42');
+    const readScript: SimScript = [...sentScript, { k: 'receipt', id: 'm0', to: 'read' }];
+    const { container: sentContainer } = render(<ChatSim script={sentScript} channel="telegram" seed={1} mode="live" />);
+    const { container: readContainer } = render(<ChatSim script={readScript} channel="telegram" seed={1} mode="live" />);
+    const sentTick = sentContainer.querySelector<SVGSVGElement>('svg.cf-receipt')!;
+    const readTick = readContainer.querySelector<SVGSVGElement>('svg.cf-receipt')!;
+    expect(sentTick.querySelectorAll('path')).toHaveLength(1); // single tick
+    expect(readTick.querySelectorAll('path')).toHaveLength(2); // double tick — glyph flipped
+    expect(sentTick.style.color).toBe(readTick.style.color); // color fixed on Telegram
+    expect(sentContainer.querySelector('.cf-views')).toBeNull();
+    expect(readContainer.querySelector('.cf-views')).toBeNull();
   });
 
   // Same root cause as the WhatsApp case above (T-010, fixed in `7f88aae`) — the `own-row`
@@ -76,13 +87,25 @@ describe('<ChatSim> — imported via the public barrel', () => {
     expect(container.querySelector('.cf-reactions')?.getAttribute('data-style')).toBe('own-row');
   });
 
-  it('read receipt renders the blue tick (data-read="true") on WhatsApp\'s double-tick glyph', () => {
-    const script: SimScript = [
+  // Was: expected a `[data-read]` attribute. Retired in the migration to `ReceiptModel`
+  // (adapters/whatsapp.ts:25 documents it) — color is now adapter data (`style.color`), not a DOM
+  // attribute. Rewritten against the live contract: WhatsApp keeps the glyph fixed (double-check)
+  // and flips COLOR to `#53bdeb` at read (telegram-fidelity-fix.md §F-2).
+  it('WhatsApp: tick color flips to blue at read (glyph fixed at double-check) — the tick is ReceiptModel data', () => {
+    const deliveredScript: SimScript = [
       { k: 'post', by: 'out:ai', text: 'listo' },
-      { k: 'receipt', id: 'm0', to: 'read' },
+      { k: 'receipt', id: 'm0', to: 'delivered' },
     ];
-    const { container } = render(<ChatSim script={script} channel="whatsapp" seed={1} mode="live" />);
-    const tick = container.querySelector('.cf-receipt');
-    expect(tick?.getAttribute('data-read')).toBe('true');
+    const readScript: SimScript = [...deliveredScript, { k: 'receipt', id: 'm0', to: 'read' }];
+    const { container: deliveredContainer } = render(
+      <ChatSim script={deliveredScript} channel="whatsapp" seed={1} mode="live" />,
+    );
+    const { container: readContainer } = render(<ChatSim script={readScript} channel="whatsapp" seed={1} mode="live" />);
+    const deliveredTick = deliveredContainer.querySelector<SVGSVGElement>('svg.cf-receipt')!;
+    const readTick = readContainer.querySelector<SVGSVGElement>('svg.cf-receipt')!;
+    expect(deliveredTick.querySelectorAll('path')).toHaveLength(2);
+    expect(readTick.querySelectorAll('path')).toHaveLength(2); // glyph fixed
+    expect(deliveredTick.style.color).not.toBe(readTick.style.color); // color flipped
+    expect(readTick.style.color).toBe('rgb(83, 189, 235)'); // adapters/whatsapp.ts's read state (#53bdeb)
   });
 });

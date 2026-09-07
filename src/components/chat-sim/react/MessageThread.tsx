@@ -79,6 +79,7 @@ function TickSvg({ ticks, color }: { ticks: 1 | 2; color: string }) {
       strokeLinejoin="round"
       className="cf-receipt"
       style={{ color }}
+      aria-hidden="true"
     >
       <path d={ticks === 2 ? 'M1 6.7 4.1 9.8 10.2 2.4' : 'M4.5 6.7 7.6 9.8 13.7 2.4'} />
       {ticks === 2 && <path d="M7.6 6.7 10.7 9.8 16.8 2.4" />}
@@ -100,6 +101,7 @@ function ClockIcon({ color }: { color: string }) {
       strokeLinejoin="round"
       className="cf-receipt"
       style={{ color }}
+      aria-hidden="true"
     >
       <circle cx={7} cy={7} r={5.8} />
       <path d="M7 3.8V7l2.6 1.5" />
@@ -121,6 +123,7 @@ function AlertIcon({ color }: { color: string }) {
       strokeLinejoin="round"
       className="cf-receipt"
       style={{ color }}
+      aria-hidden="true"
     >
       <circle cx={7} cy={7} r={5.8} />
       <path d="M7 4.2V8" />
@@ -239,6 +242,9 @@ function MessageBubble({
   });
 
   const classNames = ['cf-msg', anchorTop ? 'cf-anchor-top' : ''].filter(Boolean).join(' ');
+  // T-024 §E: the sender today only lives in `data-dir` — invisible to screen readers, which have
+  // no visual left/right convention to read.
+  const senderLabel = dir === 'out' ? 'Mensaje enviado' : 'Mensaje recibido';
   const dataAttrs: Record<string, string> = { 'data-dir': dir, 'data-by': msg.by };
   if (flags.tailHere) dataAttrs['data-tail'] = '';
   if (flags.grouped) dataAttrs['data-grouped'] = '';
@@ -262,7 +268,7 @@ function MessageBubble({
   const reactionsOwnRow = reactionsEl && adapter.reactions === 'own-row' ? reactionsEl : null;
 
   return (
-    <li className={classNames} {...dataAttrs}>
+    <li className={classNames} aria-label={senderLabel} {...dataAttrs}>
       <span className="cf-bubble" ref={bubbleRef}>
         {msg.quote && <Quote quote={msg.quote} style={adapter.quote} />}
         <span className="cf-text">{msg.text}</span>

@@ -149,7 +149,11 @@ export class CfChatSimElement extends HTMLElement {
 
   connectedCallback(): void {
     this.classList.add('cf-chat-sim');
-    if (!this.hasAttribute('role')) this.setAttribute('role', 'log');
+    // T-024 §E: `<cf-chat-sim>` has no `mode="live"` — every message is pre-rendered timeline
+    // playback (`data-step` scrubbing), never a human-typed send (the composer is a static,
+    // `aria-hidden` placeholder — see #buildComposer). No human action ever causes a message
+    // here, so `role="group"` (not `log`/`aria-live`, which would narrate decorative content).
+    if (!this.hasAttribute('role')) this.setAttribute('role', 'group');
 
     const script = this.#readScript();
     const channel = (this.getAttribute('channel') as ChannelId) || 'whatsapp';

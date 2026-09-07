@@ -589,6 +589,7 @@ var CfChatSimCapture = (() => {
   function tickIcon(ticks, color) {
     const el = svg("0 0 18 12", 15, 10, "1.7");
     el.classList.add("cf-receipt");
+    el.setAttribute("aria-hidden", "true");
     el.style.color = color;
     addPath(el, ticks === 2 ? "M1 6.7 4.1 9.8 10.2 2.4" : "M4.5 6.7 7.6 9.8 13.7 2.4");
     if (ticks === 2) addPath(el, "M7.6 6.7 10.7 9.8 16.8 2.4");
@@ -597,6 +598,7 @@ var CfChatSimCapture = (() => {
   function clockIcon(color) {
     const el = svg("0 0 14 14", 12, 12, "1.3");
     el.classList.add("cf-receipt");
+    el.setAttribute("aria-hidden", "true");
     el.style.color = color;
     addRing(el, 7, 7, 5.8);
     addPath(el, "M7 3.8V7l2.6 1.5");
@@ -605,6 +607,7 @@ var CfChatSimCapture = (() => {
   function alertIcon(color) {
     const el = svg("0 0 14 14", 12, 12, "1.3");
     el.classList.add("cf-receipt");
+    el.setAttribute("aria-hidden", "true");
     el.style.color = color;
     addRing(el, 7, 7, 5.8);
     addPath(el, "M7 4.2V8");
@@ -748,6 +751,7 @@ var CfChatSimCapture = (() => {
     li.replaceChildren();
     const dir = actorDir(msg.by);
     li.className = "cf-msg";
+    li.setAttribute("aria-label", dir === "out" ? "Mensaje enviado" : "Mensaje recibido");
     li.dataset.dir = dir;
     li.dataset.by = msg.by;
     if (flags.tailHere) li.dataset.tail = "";
@@ -876,7 +880,7 @@ var CfChatSimCapture = (() => {
     }
     connectedCallback() {
       this.classList.add("cf-chat-sim");
-      if (!this.hasAttribute("role")) this.setAttribute("role", "log");
+      if (!this.hasAttribute("role")) this.setAttribute("role", "group");
       const script = __privateMethod(this, _CfChatSimElement_instances, readScript_fn).call(this);
       const channel = this.getAttribute("channel") || "whatsapp";
       const chrome = this.getAttribute("chrome") === "consistent" ? "consistent" : "fidelity";

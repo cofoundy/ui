@@ -117,7 +117,11 @@ export function ChatSim(props: ChatSimProps) {
     <div
       className={rootClass}
       data-wallpaper={adapter.wallpaper}
-      role="log"
+      // T-024 §E: the discriminator is "did a human action cause this message?", not "is the
+      // data real". In `live` the visitor typed and sent — `log`/`aria-live` is correct, and the
+      // pre-rendered history at mount doesn't need announcing on its own. In `demo` messages
+      // arrive on their own, decorative — `aria-live` would narrate them as if they mattered.
+      role={mode === 'live' ? 'log' : 'group'}
       data-mode={mode}
       style={mode === 'live' ? LIVE_ROOT_STYLE : undefined}
     >
