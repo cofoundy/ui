@@ -94,23 +94,30 @@ const TELEGRAM_DARK_OUT_BUBBLE = extractCustomProperty(
 );
 
 describe('Telegram .cf-quote-author text contrast — current, live styles.css (T-025 finding, extended per T-032)', () => {
-  // Confirms the rules actually route through the two brand tokens above, not a hardcoded
-  // literal — if skin ever inlines the hex directly, this (not the ratio checks) is what would
-  // catch the drift first.
-  it('.cf-quote-author (dir=in) resolves through --channel-telegram', () => {
+  // Confirms the rules actually route through a token, not a hardcoded literal — if skin ever
+  // inlines the hex directly, this (not the ratio checks) is what would catch the drift first.
+  //
+  // T-025 landed and moved the target: `.cf-quote-author` now routes through DEDICATED text-only
+  // tokens instead of the plain brand accents. That split is the fix, not drift — the accents also
+  // paint the avatar, `.cf-composer-send` and the reply-bar border, which T-023 ruled can keep the
+  // real brand hue; only the author TEXT had to clear AA. So these two flip from finding-tests
+  // (proving the failure existed) to regression-tests (pinning the fix's wiring). The anti-literal
+  // intent above is unchanged — only the token name they expect moved.
+  // Cell reassigned team-lead → (qa terminated); see file-ownership-matrix.md.
+  it('.cf-quote-author (dir=in) resolves through --channel-telegram-quote-text', () => {
     const raw = extractPropertyRaw(
       extractRuleBlock(css, "[data-channel='telegram'] .cf-msg[data-dir='in'] .cf-quote-author {"),
       'color',
     );
-    expect(raw).toBe('var(--channel-telegram)');
+    expect(raw).toBe('var(--channel-telegram-quote-text)');
   });
 
-  it('.cf-quote-author (dir=out) resolves through --channel-telegram-out', () => {
+  it('.cf-quote-author (dir=out) resolves through --channel-telegram-out-quote-text', () => {
     const raw = extractPropertyRaw(
       extractRuleBlock(css, "[data-channel='telegram'] .cf-msg[data-dir='out'] .cf-quote-author {"),
       'color',
     );
-    expect(raw).toBe('var(--channel-telegram-out)');
+    expect(raw).toBe('var(--channel-telegram-out-quote-text)');
   });
 
   // The one combination that already passes — regression guard so a future change can't quietly

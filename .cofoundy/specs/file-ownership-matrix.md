@@ -16,7 +16,7 @@
 | `src/components/chat-sim/index.ts` | **W** | A | A | A | A | R |
 | `package.json` (solo campo `exports`) | **W** | – | – | A | – | – |
 | `src/stories/chat-sim/**` | – | – | – | – | – | **W** |
-| `src/__tests__/chat-sim/**` | – | – | – | – | – | **W** |
+| `src/__tests__/chat-sim/**` | – | – | – | – | – | **W** → `team-lead` ⁽¹⁾ |
 | `COMPONENTS.md` | – | – | – | – | – | **W** |
 | `eslint` rules del ciclo (invariantes 4 y 5) | **W** | – | A | – | – | R |
 | build config de `chat-sim` (`vite.config.chat-sim.ts`) | **W** | – | A | A | A | R |
@@ -73,3 +73,13 @@ adapter están tabulados antes de implementarse. Lo que espera es el merge.
 `channel` arranca en la ola 3 a propósito: la interfaz de 16 campos ya está especificada en
 `adapter-interface-draft.md`, así que `skin` puede construir el layout de WhatsApp contra ella sin
 esperar la implementación.
+
+⁽¹⁾ **Reasignación de celda huérfana (2026-09-07, team-lead).** `qa` terminó su ciclo con
+`telegram-quote-contrast.test.ts` pineando el cableado que T-025 justamente cambió — dos
+tests-hallazgo que había que invertir a tests-regresión, con la celda sin dueño vivo. La reasigna el
+orquestador; no es un permiso que una lane le preste a otra (una lane no puede autorizar a otra, y
+menos a escribir en una celda que a ella misma le está vedada). Se intentó primero delegarla a
+`skin8` — dos mensajes no llegaron a su contexto antes de que cerrara, así que la resolvió el
+orquestador por la vía `orchestrator-resolves-and-discloses` (`/cto` Fase 7): acotada a los dos
+asserts que el propio archivo anticipaba en su comentario, sin tocar la lógica de medición. Si `qa`
+revive, la celda vuelve a `qa`.
