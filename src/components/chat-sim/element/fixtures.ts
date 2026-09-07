@@ -61,6 +61,14 @@ export const WHATSAPP_REFERENCE_ADAPTER: ChannelAdapter = {
   album: 'grid-in-one-bubble',
   e2eNotice: true,
   avatarSide: 'inbound',
+  // T-029: core grew ChannelAdapter to 17 fields (capabilities describes what a channel can DO,
+  // same category as the other 16) — mirrors adapters/whatsapp.ts's real value (both buttons and
+  // list supported, nothing to constrain yet), since this fixture's whole point is staying a
+  // plausible reading of the real WhatsApp column, not "WhatsApp minus whatever's newest".
+  capabilities: {
+    buttons: null,
+    list: null,
+  },
 };
 
 /**

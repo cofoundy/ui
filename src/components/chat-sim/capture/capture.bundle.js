@@ -488,7 +488,16 @@ var CfChatSimCapture = (() => {
     keyboard: "inline-in-message",
     album: "grid-in-one-bubble",
     e2eNotice: false,
-    avatarSide: "inbound"
+    avatarSide: "inbound",
+    // T-028: Telegram bots attach an inline keyboard TO the message (`keyboard:
+    // 'inline-in-message'` above) — the same interactive-buttons capability as WhatsApp, just its
+    // own chrome; render.ts reads `adapter.keyboard` for that, never a channel branch. `list` is
+    // deliberately ABSENT: the Bot API has no separate "list message" primitive the way WhatsApp
+    // does — a list is just more inline-keyboard rows, i.e. still `buttons`. Declaring it here
+    // would be the exact invented-primitive mistake T-028 exists to undo, one file over.
+    capabilities: {
+      buttons: null
+    }
   };
 
   // src/components/chat-sim/adapters/whatsapp.ts
@@ -508,15 +517,22 @@ var CfChatSimCapture = (() => {
     deliveryStates: ["queued", "sent", "delivered", "read", "failed"],
     // Real WhatsApp: glyph is constant across queued->sent->delivered->read (clock, then 1 tick,
     // then 2 ticks that STAY 2 ticks) — only the COLOR flips at `read` (telegram-fidelity-fix.md
-    // §F-2). `#53bdeb` is the same literal styles.css already hardcodes at `.cf-receipt[data-read]`
-    // (T-011 escalation E-002) — sourcing it from here retires that selector, doesn't reinvent it.
+    // §F-2). `#53bdeb` was the same literal styles.css hardcoded at `.cf-receipt[data-read]`
+    // (T-011 escalation E-002); both now resolve through `--channel-whatsapp-read` instead (T-028
+    // follow-up, team-lead/skin) so a `branded` chrome consumer can retint the read-tick color —
+    // the fallback keeps stock WhatsApp fidelity when nobody overrides the var.
     receipt: {
       kind: "ticks",
       states: {
         queued: { glyph: "clock", color: "var(--cf-cs-bubble-out-meta)" },
         sent: { glyph: "check", color: "var(--cf-cs-bubble-out-meta)" },
         delivered: { glyph: "double-check", color: "var(--cf-cs-bubble-out-meta)" },
-        read: { glyph: "double-check", color: "#53bdeb" },
+        // `read` is the only one of the four that needs a brand override slot: the other three
+        // already resolve `var(--cf-cs-bubble-out-meta)` through real CSSOM (icons.ts sets
+        // `el.style.color = color`, not an inert SVG attribute), so a `branded` chrome consumer
+        // can already retint them; `read`'s literal couldn't. `skin` owns the
+        // `[data-chrome='branded']` override for this var.
+        read: { glyph: "double-check", color: "var(--channel-whatsapp-read, #53bdeb)" },
         // color flips, glyph doesn't
         // Not in telegram-fidelity-fix.md (out of scope for the F-2 fix) — standard failed-send
         // red, unconfirmed byte-exact against a real WhatsApp capture.
@@ -533,7 +549,14 @@ var CfChatSimCapture = (() => {
     keyboard: "os-qwerty",
     album: "grid-in-one-bubble",
     e2eNotice: true,
-    avatarSide: "inbound"
+    avatarSide: "inbound",
+    // T-028: WhatsApp Business's `interactive.type: "buttons"|"list"` — each its own native
+    // message type with its own chrome (reply-buttons, and a scrollable list opened via a button).
+    // Both supported, nothing to constrain yet (inbox-ai capabilities.py/registry.py's model).
+    capabilities: {
+      buttons: null,
+      list: null
+    }
   };
 
   // src/components/chat-sim/adapters/registry.ts
@@ -655,12 +678,6 @@ var CfChatSimCapture = (() => {
     const variant = v === "warn" || v === "success" ? v : "neutral";
     return { kind: "service", variant };
   }
-  function asCardMedia(media) {
-    if (!isJsonRecord(media) || media.kind !== "card") return null;
-    const bullets = Array.isArray(media.bullets) ? media.bullets.filter((b) => typeof b === "string") : [];
-    const action = typeof media.action === "string" ? media.action : void 0;
-    return { kind: "card", bullets, action };
-  }
   function asReplyFast(media) {
     return isJsonRecord(media) && media.replyFast === true;
   }
@@ -679,34 +696,6 @@ var CfChatSimCapture = (() => {
     pill.className = "cf-service-pill";
     pill.textContent = msg.text;
     li.appendChild(pill);
-  }
-  function populateCardElement(li, msg, adapter, card) {
-    li.className = "cf-msg cf-msg-card";
-    delete li.dataset.dir;
-    delete li.dataset.by;
-    delete li.dataset.tail;
-    delete li.dataset.grouped;
-    li.dataset.quoteStyle = adapter.quote;
-    li.setAttribute("aria-label", "Tarjeta");
-    const cardEl = document.createElement("span");
-    cardEl.className = "cf-card";
-    const title = document.createElement("b");
-    title.className = "cf-card-title";
-    title.textContent = msg.text;
-    cardEl.appendChild(title);
-    card.bullets.forEach((b) => {
-      const bl = document.createElement("span");
-      bl.className = "cf-card-bullet";
-      bl.textContent = b;
-      cardEl.appendChild(bl);
-    });
-    if (card.action) {
-      const act = document.createElement("span");
-      act.className = "cf-card-action";
-      act.textContent = card.action;
-      cardEl.appendChild(act);
-    }
-    li.appendChild(cardEl);
   }
   function actorDir(by) {
     return by === "in" ? "in" : "out";
@@ -820,11 +809,6 @@ var CfChatSimCapture = (() => {
     const service = asServiceMedia(msg.media);
     if (service) {
       populateServiceElement(li, msg, service);
-      return;
-    }
-    const card = asCardMedia(msg.media);
-    if (card) {
-      populateCardElement(li, msg, adapter, card);
       return;
     }
     const dir = actorDir(msg.by);
@@ -1329,7 +1313,15 @@ var CfChatSimCapture = (() => {
     keyboard: "os-qwerty",
     album: "grid-in-one-bubble",
     e2eNotice: true,
-    avatarSide: "inbound"
+    avatarSide: "inbound",
+    // T-029: core grew ChannelAdapter to 17 fields (capabilities describes what a channel can DO,
+    // same category as the other 16) — mirrors adapters/whatsapp.ts's real value (both buttons and
+    // list supported, nothing to constrain yet), since this fixture's whole point is staying a
+    // plausible reading of the real WhatsApp column, not "WhatsApp minus whatever's newest".
+    capabilities: {
+      buttons: null,
+      list: null
+    }
   };
   var SINGLE_TICK_RECEIPT = {
     ...DOUBLE_TICK_RECEIPT,

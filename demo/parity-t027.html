@@ -3,17 +3,29 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>chat-sim — T-027 paridad (scroll, loop, service, card, branded)</title>
+    <title>chat-sim — T-027 paridad (scroll, loop, service, receipts, branded)</title>
     <!--
       T-027 acceptance evidence page — same no-build-step contract as index.html/chrome-axis.html
       (file:// only, checked-in bundle, no type="module").
 
       Left: WhatsApp, chrome="branded" with a Fovente-red consumer token + `loop` — this is
       exactly ChatDemo.astro's production case (auto-scroll via scrollId, loop, `service`
-      encryption-notice/stop/done, `card` brief), reproduced through the real engine.
-      Right: Telegram, chrome="fidelity", same script — the gemelo (acceptance #3/#4): `service`
-      and `card` render in both channels; `card`'s accent structurally differs (adapter.quote);
-      `branded`'s palette does NOT leak into Telegram's own fidelity render.
+      encryption-notice/stop/done), reproduced through the real engine.
+      Right: Telegram, chrome="fidelity", same script — the gemelo: `service` renders in both
+      channels; `branded`'s palette does NOT leak into Telegram's own fidelity render.
+
+      Operator-reported gap (team-lead): neither this page nor the landing preview ever fired a
+      `receipt` step, so every message sat at `queued` (clock) forever — the receipt state
+      machine (core's "núcleo del engine") was invisible. Both scripts below now carry a real
+      `sent -> delivered -> read` progression on WhatsApp (color flips at `read`, glyph stays
+      double-check) and `sent -> read` on Telegram (no `delivered` in its deliveryStates — the
+      GLYPH flips instead, color stays put) — the channel difference is visible on its own,
+      nothing hardcoded to show it.
+
+      `card` (title+bullets+action) shipped in this task and was REMOVED (team-lead): the
+      rationalization that WhatsApp's contact/location cards made a free container "the same
+      family" was wrong. WhatsApp's real brief is markdown-styled plain text (bold + bullets) —
+      `msg.text` already renders it (`white-space: pre-line`), no component needed.
     -->
     <link rel="stylesheet" href="../src/components/chat-sim/styles.css" />
     <style>
@@ -62,7 +74,7 @@
     </style>
   </head>
   <body>
-    <h1>T-027 — scroll(scrollId) + loop + service + card + chrome="branded" + reply-in + link</h1>
+    <h1>T-027 — scroll(scrollId) + loop + service + receipts + chrome="branded" + reply-in + link</h1>
     <div class="row">
       <figure>
         <figcaption>WhatsApp · chrome="branded" (Fovente red) · loop</figcaption>
@@ -87,9 +99,14 @@
               { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 600 },
               { "k": "draft", "by": "out:ai", "chars": 18, "delayMs": 450 },
               { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad", "media": { "replyFast": true }, "delayMs": 850 },
-              { "k": "post", "by": "system", "text": "Resumen de la reserva", "media": { "kind": "card", "bullets": ["Sábado 8:00pm", "4 personas", "Mesa junto a la ventana"], "action": "Confirmar reserva" }, "delayMs": 700 },
+              { "k": "receipt", "id": "m2", "to": "sent", "delayMs": 400 },
+              { "k": "receipt", "id": "m2", "to": "delivered", "delayMs": 500 },
+              { "k": "post", "by": "out:ai", "text": "*Resumen de la reserva*\n• Sábado 8:00pm\n• 4 personas\n• Mesa junto a la ventana", "delayMs": 400 },
               { "k": "post", "by": "in", "text": "Perfecto, confirmo", "delayMs": 1400 },
+              { "k": "receipt", "id": "m2", "to": "read", "delayMs": 0 },
               { "k": "post", "by": "out:ai", "text": "Paga aquí: pagos.fovente.pe/r/8x2", "media": { "link": true }, "delayMs": 700 },
+              { "k": "receipt", "id": "m5", "to": "sent", "delayMs": 400 },
+              { "k": "receipt", "id": "m5", "to": "delivered", "delayMs": 500 },
               { "k": "post", "by": "system", "text": "FOVENTE SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 },
               { "k": "post", "by": "system", "text": "RESERVA CONFIRMADA", "media": { "kind": "service", "variant": "success" }, "delayMs": 900 }
             ]
@@ -116,9 +133,13 @@
               { "k": "post", "by": "in", "text": "Hola! ¿Tienen mesa para el sábado a las 8pm?", "delayMs": 600 },
               { "k": "draft", "by": "out:ai", "chars": 18, "delayMs": 450 },
               { "k": "post", "by": "out:ai", "text": "¡Hola! Sí, tenemos disponibilidad", "media": { "replyFast": true }, "delayMs": 850 },
-              { "k": "post", "by": "system", "text": "Resumen de la reserva", "media": { "kind": "card", "bullets": ["Sábado 8:00pm", "4 personas", "Mesa junto a la ventana"], "action": "Confirmar reserva" }, "delayMs": 700 },
+              { "k": "receipt", "id": "m2", "to": "sent", "delayMs": 400 },
+              { "k": "post", "by": "out:ai", "text": "*Resumen de la reserva*\n• Sábado 8:00pm\n• 4 personas\n• Mesa junto a la ventana", "delayMs": 900 },
               { "k": "post", "by": "in", "text": "Perfecto, confirmo", "delayMs": 1400 },
+              { "k": "receipt", "id": "m2", "to": "read", "delayMs": 0 },
               { "k": "post", "by": "out:ai", "text": "Paga aquí: pagos.fovente.pe/r/8x2", "media": { "link": true }, "delayMs": 700 },
+              { "k": "receipt", "id": "m5", "to": "sent", "delayMs": 400 },
+              { "k": "receipt", "id": "m5", "to": "read", "delayMs": 500 },
               { "k": "post", "by": "system", "text": "FOVENTE SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 },
               { "k": "post", "by": "system", "text": "RESERVA CONFIRMADA", "media": { "kind": "service", "variant": "success" }, "delayMs": 900 }
             ]

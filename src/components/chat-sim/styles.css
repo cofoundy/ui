@@ -367,57 +367,10 @@
   background: rgba(22, 101, 52, 0.35);
 }
 
-/* ── card message (T-027 D) ─────────────────────────────────────────────
-   Full-width structured card (WhatsApp's contact/location cards, an AI-authored brief). The
-   accent bar reuses `adapter.quote` (color-bar | thin-bar | stacked-bubble) via `data-quote-style`
-   — the SAME field `.cf-quote` below already varies on — so WhatsApp and Telegram render this
-   with genuinely different structure, driven by the adapter, never a `channel ===` branch. */
-.cf-msg-card {
-  justify-content: stretch;
-}
-.cf-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  width: 100%;
-  background: var(--cf-cs-bubble-in);
-  color: var(--cf-cs-ink);
-  border-left: 3px solid var(--cf-cs-accent);
-  border-radius: 0 var(--cf-cs-radius-lg) var(--cf-cs-radius-lg) 0;
-  padding: 0.7rem 0.8rem;
-  filter: drop-shadow(var(--cf-cs-bubble-shadow));
-}
-.cf-msg-card[data-quote-style='thin-bar'] .cf-card {
-  border-left-width: 2px;
-}
-.cf-msg-card[data-quote-style='stacked-bubble'] .cf-card {
-  border-left: none;
-  border-radius: var(--cf-cs-radius-lg);
-}
-.cf-card-title {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  line-height: 1.35;
-}
-.cf-card-bullet {
-  font-size: 0.75rem;
-  color: var(--cf-cs-ink-muted);
-  padding-left: 0.7rem;
-  position: relative;
-}
-.cf-card-bullet::before {
-  content: '·';
-  position: absolute;
-  left: 0;
-  color: var(--cf-cs-accent);
-  font-weight: 700;
-}
-.cf-card-action {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--cf-cs-accent-text, var(--cf-cs-accent));
-  margin-top: 0.15rem;
-}
+/* card message (T-027 D) — REMOVED (team-lead, same task): the rationalization that WhatsApp's
+   contact/location cards made a free title+bullets container "the same family" was wrong — those
+   are FIXED structures, not a generic one. The real WhatsApp brief is markdown-styled plain text
+   (bold + bullets), which `.cf-text` (white-space: pre-line, below) already renders. */
 
 .cf-msg {
   display: flex;
@@ -848,14 +801,15 @@
    background directly (not via `--cf-cs-bubble-out`, see F-3/telegram-fidelity-fix.md above) at
    equal-or-higher selector specificity, so only SOURCE ORDER lets this win the cascade.
 
-   Known residual gap (documented, not fixed here — outside element/**'s scope.write): WhatsApp's
-   receipt tick at delivery-state 'read' is a literal `#53bdeb` baked into adapters/whatsapp.ts's
-   ReceiptModel as an inline `style.color` (element/render.ts's buildReceiptGlyph), not a CSS var
-   — branded mode can't reach it from here. A core/[channel] task would need to make that one
-   state consumer-overridable too. */
+   WhatsApp's receipt tick at delivery-state 'read' USED to be a literal `#53bdeb` baked into
+   adapters/whatsapp.ts's ReceiptModel — unreachable from here (an inline `style.color`, not a CSS
+   var). [channel] retired that literal in favor of `--channel-whatsapp-read` (their own commit,
+   the [channel] cell); the redefinition below is this cell's other half — same
+   `var(fallback, ...)` pattern as every other token above, so an unbranded render is untouched. */
 .cf-chat-sim[data-chrome='branded'] {
   --cf-cs-bubble-out: var(--cf-cs-consumer-out, var(--cf-cs-accent));
   --cf-cs-bubble-out-meta: var(--cf-cs-consumer-out-meta, var(--cf-cs-bubble-out-meta));
+  --channel-whatsapp-read: var(--cf-cs-consumer-out-meta, #53bdeb);
 }
 .cf-chat-sim[data-chrome='branded'][data-channel='telegram'] .cf-msg[data-dir='out'] .cf-bubble {
   background: var(--cf-cs-consumer-out, var(--cf-cs-accent));
