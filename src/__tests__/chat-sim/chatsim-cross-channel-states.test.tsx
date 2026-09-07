@@ -91,6 +91,17 @@ describe('<ChatSim> — imported via the public barrel', () => {
   // (adapters/whatsapp.ts:25 documents it) — color is now adapter data (`style.color`), not a DOM
   // attribute. Rewritten against the live contract: WhatsApp keeps the glyph fixed (double-check)
   // and flips COLOR to `#53bdeb` at read (telegram-fidelity-fix.md §F-2).
+  //
+  // Not a `rgb(83, 189, 235)` literal check: since `channel`'s e65f069, the `read` state's color
+  // is `var(--channel-whatsapp-read, #53bdeb)` (adapters/whatsapp.ts:40) so a `branded` chrome
+  // consumer can retint it — jsdom's CSSOM stores that string as-is and never resolves `var()`
+  // (a real browser does; team-lead/skin verified in Chrome). Asserting the resolved rgb() here
+  // would just be wrong in jsdom, not stale. So this checks the two things that ARE inspectable
+  // without a browser and that make up the actual contract: the color routes through the
+  // brand-override custom property, and its fallback still matches stock WhatsApp. The
+  // read-vs-delivered distinction (the axis this test exists for) is the `not.toBe` below, which
+  // holds on the raw strings regardless of var() resolution — different var name in, different
+  // string out.
   it('WhatsApp: tick color flips to blue at read (glyph fixed at double-check) — the tick is ReceiptModel data', () => {
     const deliveredScript: SimScript = [
       { k: 'post', by: 'out:ai', text: 'listo' },
@@ -105,7 +116,8 @@ describe('<ChatSim> — imported via the public barrel', () => {
     const readTick = readContainer.querySelector<SVGSVGElement>('svg.cf-receipt')!;
     expect(deliveredTick.querySelectorAll('path')).toHaveLength(2);
     expect(readTick.querySelectorAll('path')).toHaveLength(2); // glyph fixed
-    expect(deliveredTick.style.color).not.toBe(readTick.style.color); // color flipped
-    expect(readTick.style.color).toBe('rgb(83, 189, 235)'); // adapters/whatsapp.ts's read state (#53bdeb)
+    expect(deliveredTick.style.color).not.toBe(readTick.style.color); // color flipped (twin axis: WhatsApp=color, Telegram=glyph)
+    expect(readTick.style.color).toContain('var(--channel-whatsapp-read'); // routes through the brand-override slot
+    expect(readTick.style.color).toContain('#53bdeb'); // fallback preserves stock WhatsApp fidelity unoverridden
   });
 });
