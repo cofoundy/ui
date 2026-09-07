@@ -905,17 +905,34 @@ var CfChatSimCapture = (() => {
       media: msg.media
     };
   }
-  var _timeline, _postedAt, _msgEls, _log, _typingRows, _dateSeps, _playhead, _fromPlayhead, _scrollRaf, _scrollCatchup, _loop, _loopPauseMs, _loopTimer, _adapter, _lastStep, _CfChatSimElement_instances, buildHead_fn, buildComposer_fn, composerIcon_fn, onPlaybackComplete_fn, clearLoopTimer_fn, readScript_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn, applyScroll_fn, cancelScrollAnimation_fn;
+  var _slides, _activeIndex, _frame, _tagEl, _tagIconEl, _tagLabelEl, _badgeFlagKey, _badgeOnLabel, _badgeOffLabel, _badgeEl, _playhead, _fromPlayhead, _scrollRaf, _scrollCatchup, _loop, _loopPauseMs, _loopTimer, _adapter, _CfChatSimElement_instances, active_get, buildHead_fn, buildTag_fn, applyTagForActiveSlide_fn, activateSlide_fn, buildComposer_fn, composerIcon_fn, onPlaybackComplete_fn, clearLoopTimer_fn, readScripts_fn, applyStep_fn, measurePad_fn, reconcile_fn, applyBottomAnchor_fn, applyScroll_fn, cancelScrollAnimation_fn;
   var CfChatSimElement = class extends HTMLElement {
     constructor() {
       super(...arguments);
       __privateAdd(this, _CfChatSimElement_instances);
-      __privateAdd(this, _timeline, null);
-      __privateAdd(this, _postedAt, /* @__PURE__ */ new Map());
-      __privateAdd(this, _msgEls, /* @__PURE__ */ new Map());
-      __privateAdd(this, _log, null);
-      __privateAdd(this, _typingRows, []);
-      __privateAdd(this, _dateSeps, []);
+      /** T-031 B — one entry per script; N===1 is the pre-existing single-script shape verbatim (same
+       * fields that used to live directly on the instance, just addressed through `this.#active` now
+       * — see that getter's own comment for why every existing single-script code path is unchanged
+       * by this indirection). */
+      __privateAdd(this, _slides, []);
+      __privateAdd(this, _activeIndex, 0);
+      /** T-031 A/D — the visual "phone frame" (head + logs + composer): fixed-height and the tag
+       * pill (D) live OUTSIDE it, as siblings on the host, so an optional tag never eats into the
+       * fixed pixel budget acceptance #1 asks for. `null` only for the instant before
+       * `connectedCallback` runs. */
+      __privateAdd(this, _frame, null);
+      __privateAdd(this, _tagEl, null);
+      __privateAdd(this, _tagIconEl, null);
+      __privateAdd(this, _tagLabelEl, null);
+      /** T-031 C — badge is a SLOT, not logic: `null` key means "consumer didn't ask for one", and
+       * nothing renders. `#badgeFlagKey` names which `SimState.flags` key (core's existing `flag`
+       * event, architecture-v1.md — T-001 already ships it) drives it; `#badgeEl` is only ever created
+       * by `#buildHead` when the key is set. Mount-time-only, same as every other playback attribute
+       * here (channel/seed/locale/tz/t0/loop). */
+      __privateAdd(this, _badgeFlagKey, null);
+      __privateAdd(this, _badgeOnLabel, "ON");
+      __privateAdd(this, _badgeOffLabel, "OFF");
+      __privateAdd(this, _badgeEl, null);
       __privateAdd(this, _playhead, null);
       /** T-027 A: true only while `dataset.step` is being written FROM `play()`'s own onFrame — i.e.
        * a playback tick, not an external scrub/seek. `#applyStep` reads it synchronously (custom
@@ -939,11 +956,6 @@ var CfChatSimCapture = (() => {
        * and nobody closed the loop. `connectedCallback` overwrites this with the real adapter before
        * anything gets built; the default here only matters for the instant before that runs. */
       __privateAdd(this, _adapter, getAdapter("whatsapp"));
-      /** Guards against redoing any work when `data-step` is set to the value it already holds — the
-       * root cause of the animation bug (team-lead, iteration 3): the playhead writes this attribute
-       * on EVERY rAF tick (~60/s), and most ticks land between script steps, so without this guard
-       * every visible node got repopulated/reinserted dozens of times per script step for no reason. */
-      __privateAdd(this, _lastStep, null);
     }
     /** Settable so a caller (a devtools console, a future capture/ harness, or T-005's real
      * `getAdapter(channel)` once it lands) can swap the whole 16-field object and see the DOM
@@ -955,13 +967,16 @@ var CfChatSimCapture = (() => {
     set adapter(next) {
       __privateSet(this, _adapter, next);
       this.dataset.wallpaper = next.wallpaper;
-      __privateSet(this, _lastStep, null);
-      if (__privateGet(this, _timeline)) __privateMethod(this, _CfChatSimElement_instances, applyStep_fn).call(this, Number(this.dataset.step ?? __privateGet(this, _timeline).frames.length));
+      __privateGet(this, _slides).forEach((s) => {
+        s.lastStep = null;
+      });
+      const active = __privateGet(this, _CfChatSimElement_instances, active_get);
+      if (active) __privateMethod(this, _CfChatSimElement_instances, applyStep_fn).call(this, Number(this.dataset.step ?? active.timeline.frames.length));
     }
     connectedCallback() {
       this.classList.add("cf-chat-sim");
       if (!this.hasAttribute("role")) this.setAttribute("role", "group");
-      const script = __privateMethod(this, _CfChatSimElement_instances, readScript_fn).call(this);
+      const scripts = __privateMethod(this, _CfChatSimElement_instances, readScripts_fn).call(this);
       const channel = this.getAttribute("channel") || "whatsapp";
       const chromeAttr = this.getAttribute("chrome");
       const chrome = chromeAttr === "consistent" ? "consistent" : chromeAttr === "branded" ? "branded" : "fidelity";
@@ -975,47 +990,68 @@ var CfChatSimCapture = (() => {
       this.dataset.wallpaper = __privateGet(this, _adapter).wallpaper;
       this.dataset.channel = channel;
       this.dataset.chrome = chrome;
-      __privateSet(this, _timeline, compile(script, { seed, channel, locale, tz, t0 }));
-      __privateSet(this, _postedAt, postedAtByMsgId(__privateGet(this, _timeline).frames));
+      const heightAttr = this.getAttribute("height");
+      if (heightAttr) {
+        this.style.setProperty("--cf-cs-height", /^\d+$/.test(heightAttr) ? `${heightAttr}px` : heightAttr);
+      }
+      __privateSet(this, _badgeFlagKey, this.getAttribute("badge-flag"));
+      __privateSet(this, _badgeOnLabel, this.getAttribute("badge-on-label") || "ON");
+      __privateSet(this, _badgeOffLabel, this.getAttribute("badge-off-label") || "OFF");
       this.textContent = "";
-      this.appendChild(__privateMethod(this, _CfChatSimElement_instances, buildHead_fn).call(this));
-      __privateSet(this, _log, document.createElement("ol"));
-      __privateGet(this, _log).className = "cf-log";
-      this.appendChild(__privateGet(this, _log));
-      const finalState = stateAtStep(__privateGet(this, _timeline), __privateGet(this, _timeline).frames.length);
-      finalState.order.forEach((id) => {
-        const li = document.createElement("li");
-        li.className = "cf-msg";
-        li.hidden = true;
-        __privateGet(this, _msgEls).set(id, li);
-        __privateGet(this, _log).appendChild(li);
-      });
-      let lastDayKey = null;
-      finalState.order.forEach((id) => {
-        const tick = __privateGet(this, _postedAt).get(id) ?? 0;
-        const dayKey = dayKeyOf(t0, tick, tz);
-        if (dayKey === lastDayKey) return;
-        lastDayKey = dayKey;
-        const sep = document.createElement("li");
-        sep.className = "cf-date-sep";
-        sep.hidden = true;
-        sep.innerHTML = `<span class="cf-date-pill">${dayLabelOf(t0, tick, locale, tz)}</span>`;
-        __privateGet(this, _log).insertBefore(sep, __privateGet(this, _msgEls).get(id));
-        __privateGet(this, _dateSeps).push({ triggerId: id, li: sep });
-      });
-      __privateSet(this, _typingRows, draftIntervals(__privateGet(this, _timeline)).map((interval) => {
-        const li = document.createElement("li");
-        li.className = "cf-typing-row";
-        li.dataset.dir = actorDir(interval.by);
-        li.hidden = true;
-        li.innerHTML = '<span class="cf-bubble cf-typing"><i></i><i></i><i></i></span>';
-        const anchorIdx = interval.afterMsgId ? finalState.order.indexOf(interval.afterMsgId) + 1 : 0;
-        const anchor = anchorIdx < finalState.order.length ? __privateGet(this, _msgEls).get(finalState.order[anchorIdx]) : null;
-        __privateGet(this, _log).insertBefore(li, anchor);
-        return { interval, li };
+      __privateSet(this, _tagEl, __privateMethod(this, _CfChatSimElement_instances, buildTag_fn).call(this));
+      this.appendChild(__privateGet(this, _tagEl));
+      __privateSet(this, _frame, document.createElement("div"));
+      __privateGet(this, _frame).className = "cf-frame";
+      this.appendChild(__privateGet(this, _frame));
+      __privateGet(this, _frame).appendChild(__privateMethod(this, _CfChatSimElement_instances, buildHead_fn).call(this));
+      __privateSet(this, _slides, scripts.map(({ script, scriptEl }) => {
+        const timeline = compile(script, { seed, channel, locale, tz, t0 });
+        const postedAt = postedAtByMsgId(timeline.frames);
+        const msgEls = /* @__PURE__ */ new Map();
+        const dateSeps = [];
+        const log = document.createElement("ol");
+        log.className = "cf-log";
+        log.hidden = true;
+        const finalState = stateAtStep(timeline, timeline.frames.length);
+        finalState.order.forEach((id) => {
+          const li = document.createElement("li");
+          li.className = "cf-msg";
+          li.hidden = true;
+          msgEls.set(id, li);
+          log.appendChild(li);
+        });
+        let lastDayKey = null;
+        finalState.order.forEach((id) => {
+          const tick = postedAt.get(id) ?? 0;
+          const dayKey = dayKeyOf(t0, tick, tz);
+          if (dayKey === lastDayKey) return;
+          lastDayKey = dayKey;
+          const sep = document.createElement("li");
+          sep.className = "cf-date-sep";
+          sep.hidden = true;
+          sep.innerHTML = `<span class="cf-date-pill">${dayLabelOf(t0, tick, locale, tz)}</span>`;
+          log.insertBefore(sep, msgEls.get(id));
+          dateSeps.push({ triggerId: id, li: sep });
+        });
+        const typingRows = draftIntervals(timeline).map((interval) => {
+          const li = document.createElement("li");
+          li.className = "cf-typing-row";
+          li.dataset.dir = actorDir(interval.by);
+          li.hidden = true;
+          li.innerHTML = '<span class="cf-bubble cf-typing"><i></i><i></i><i></i></span>';
+          const anchorIdx = interval.afterMsgId ? finalState.order.indexOf(interval.afterMsgId) + 1 : 0;
+          const anchor = anchorIdx < finalState.order.length ? msgEls.get(finalState.order[anchorIdx]) : null;
+          log.insertBefore(li, anchor);
+          return { interval, li };
+        });
+        __privateGet(this, _frame).appendChild(log);
+        return { scriptEl, timeline, postedAt, log, msgEls, typingRows, dateSeps, lastStep: null };
       }));
-      this.appendChild(__privateMethod(this, _CfChatSimElement_instances, buildComposer_fn).call(this, channel, chrome));
-      const initialStep = this.hasAttribute("data-step") ? Number(this.getAttribute("data-step")) : __privateGet(this, _timeline).frames.length;
+      __privateSet(this, _activeIndex, 0);
+      __privateGet(this, _slides)[0].log.hidden = false;
+      __privateMethod(this, _CfChatSimElement_instances, applyTagForActiveSlide_fn).call(this);
+      __privateGet(this, _frame).appendChild(__privateMethod(this, _CfChatSimElement_instances, buildComposer_fn).call(this, channel, chrome));
+      const initialStep = this.hasAttribute("data-step") ? Number(this.getAttribute("data-step")) : __privateGet(this, _slides)[0].timeline.frames.length;
       this.dataset.step = String(initialStep);
       __privateMethod(this, _CfChatSimElement_instances, applyStep_fn).call(this, initialStep);
     }
@@ -1025,8 +1061,9 @@ var CfChatSimCapture = (() => {
       __privateMethod(this, _CfChatSimElement_instances, clearLoopTimer_fn).call(this);
     }
     attributeChangedCallback(name) {
-      if (name === "data-step" && __privateGet(this, _timeline)) {
-        __privateMethod(this, _CfChatSimElement_instances, applyStep_fn).call(this, Number(this.dataset.step ?? __privateGet(this, _timeline).frames.length));
+      const active = __privateGet(this, _CfChatSimElement_instances, active_get);
+      if (name === "data-step" && active) {
+        __privateMethod(this, _CfChatSimElement_instances, applyStep_fn).call(this, Number(this.dataset.step ?? active.timeline.frames.length));
       }
     }
     /** Drives `data-step` from the real core playhead — see file header: same attribute, same path
@@ -1042,10 +1079,11 @@ var CfChatSimCapture = (() => {
      * only ever repopulate/hide the SAME pre-built `<li>`s (connectedCallback), the exact contract
      * T-017's typing-animation regression exists to protect (acceptance #2's gemelo). */
     play() {
-      if (!__privateGet(this, _timeline)) throw new Error("cf-chat-sim: play() before connectedCallback");
+      const active = __privateGet(this, _CfChatSimElement_instances, active_get);
+      if (!active) throw new Error("cf-chat-sim: play() before connectedCallback");
       __privateGet(this, _playhead)?.pause();
       __privateMethod(this, _CfChatSimElement_instances, clearLoopTimer_fn).call(this);
-      const tl = __privateGet(this, _timeline);
+      const tl = active.timeline;
       const ph = createPlayhead(tl);
       ph.onFrame((_state, t) => {
         let step = 0;
@@ -1060,12 +1098,16 @@ var CfChatSimCapture = (() => {
       return ph;
     }
   };
-  _timeline = new WeakMap();
-  _postedAt = new WeakMap();
-  _msgEls = new WeakMap();
-  _log = new WeakMap();
-  _typingRows = new WeakMap();
-  _dateSeps = new WeakMap();
+  _slides = new WeakMap();
+  _activeIndex = new WeakMap();
+  _frame = new WeakMap();
+  _tagEl = new WeakMap();
+  _tagIconEl = new WeakMap();
+  _tagLabelEl = new WeakMap();
+  _badgeFlagKey = new WeakMap();
+  _badgeOnLabel = new WeakMap();
+  _badgeOffLabel = new WeakMap();
+  _badgeEl = new WeakMap();
   _playhead = new WeakMap();
   _fromPlayhead = new WeakMap();
   _scrollRaf = new WeakMap();
@@ -1074,8 +1116,10 @@ var CfChatSimCapture = (() => {
   _loopPauseMs = new WeakMap();
   _loopTimer = new WeakMap();
   _adapter = new WeakMap();
-  _lastStep = new WeakMap();
   _CfChatSimElement_instances = new WeakSet();
+  active_get = function() {
+    return __privateGet(this, _slides)[__privateGet(this, _activeIndex)];
+  };
   /** Header — ChatDemo.astro precedent (`.chat-head`: avatar + name + meta). Visual-only, driven
    * by attributes so any consumer can set it; falls back to a channel-neutral default rather than
    * hardcoding a business name into a shared component. */
@@ -1099,7 +1143,65 @@ var CfChatSimCapture = (() => {
       who.appendChild(statusEl);
     }
     head.appendChild(who);
+    if (__privateGet(this, _badgeFlagKey)) {
+      const badge = document.createElement("span");
+      badge.className = "cf-badge";
+      head.appendChild(badge);
+      __privateSet(this, _badgeEl, badge);
+    }
     return head;
+  };
+  /** T-031 D — "encima del chat", cromo del CONSUMIDOR: an icon+label pill this element renders,
+   * but whose content is never a literal here — `#applyTagForActiveSlide` is the only place that
+   * ever sets `textContent` on `#tagIconEl`/`#tagLabelEl`, straight from attributes. Built once,
+   * hidden by default; a mount with no `tag-icon`/`tag-label` anywhere (host or per-slide) never
+   * shows it — same "opt-in slot" discipline as the badge above. */
+  buildTag_fn = function() {
+    const tag = document.createElement("div");
+    tag.className = "cf-tag";
+    tag.hidden = true;
+    const icon = document.createElement("span");
+    icon.className = "cf-tag-icon";
+    icon.setAttribute("aria-hidden", "true");
+    tag.appendChild(icon);
+    const label = document.createElement("span");
+    label.className = "cf-tag-label";
+    tag.appendChild(label);
+    __privateSet(this, _tagIconEl, icon);
+    __privateSet(this, _tagLabelEl, label);
+    return tag;
+  };
+  /** Reads the ACTIVE slide's own `<script data-tag-icon="…" data-tag-label="…">` first (T-031 B
+   * rotation — production's real shape: each rubro carries its own tag), falling back to the
+   * host-level `tag-icon`/`tag-label` attributes for the common single-script case. Neither source
+   * is a literal owned by this file — both are the consumer's data, read verbatim. */
+  applyTagForActiveSlide_fn = function() {
+    if (!__privateGet(this, _tagEl) || !__privateGet(this, _tagIconEl) || !__privateGet(this, _tagLabelEl)) return;
+    const slide = __privateGet(this, _CfChatSimElement_instances, active_get);
+    const icon = slide?.scriptEl?.getAttribute("data-tag-icon") || this.getAttribute("tag-icon") || "";
+    const label = slide?.scriptEl?.getAttribute("data-tag-label") || this.getAttribute("tag-label") || "";
+    if (!icon && !label) {
+      __privateGet(this, _tagEl).hidden = true;
+      return;
+    }
+    __privateGet(this, _tagEl).hidden = false;
+    __privateGet(this, _tagIconEl).hidden = !icon;
+    __privateGet(this, _tagIconEl).textContent = icon;
+    __privateGet(this, _tagLabelEl).textContent = label;
+  };
+  /** T-031 B — advances rotation to slide `index`: hides the current slide's (already fully
+   * built) log, shows the target's, and resets ITS `lastStep` guard so the next `#applyStep` does
+   * a real reconcile even if `data-step` happens to already equal the value being written (the
+   * step-unchanged guard's own reasoning, applied across a slide switch instead of across rAF
+   * ticks). Never creates or removes a node — the gemelo (acceptance #2) this exists to satisfy. */
+  activateSlide_fn = function(index) {
+    const current = __privateGet(this, _CfChatSimElement_instances, active_get);
+    if (current) current.log.hidden = true;
+    __privateSet(this, _activeIndex, index);
+    const next = __privateGet(this, _slides)[index];
+    next.log.hidden = false;
+    next.lastStep = null;
+    __privateMethod(this, _CfChatSimElement_instances, applyTagForActiveSlide_fn).call(this);
   };
   /** Composer — always shown (visual-only for this wave; a real, operable composer with mobile
    * keyboard handling is react/'s T-007). Its absence read as "broken" rather than "conversation
@@ -1139,12 +1241,23 @@ var CfChatSimCapture = (() => {
   };
   /** T-027 B acceptance: "el loop reinicia sin recrear nodos" — restarting is just calling
    * `play()` again (see its own comment above for why that's safe); the pause between rubros in
-   * ChatDemo.astro (4200ms, a full context-switch to a DIFFERENT script) doesn't apply here — this
-   * loops the SAME script, so the default is shorter and consumer-tunable via `loop-pause-ms`. */
+   * ChatDemo.astro (4200ms, a full context-switch to a DIFFERENT script) doesn't apply here for
+   * the single-script case, so the default is shorter and consumer-tunable via `loop-pause-ms`.
+   *
+   * T-031 B extends this to N>1 scripts: when there's more than one slide, "restart" means
+   * "advance to the next one" (wrapping back to the first after the last — the acceptance's own
+   * "al terminar el último vuelve al primero"), gated behind the SAME `loop` attribute rather than
+   * being unconditional — consistent with every other opt-in playback attribute here (chrome,
+   * badge, tag). `#activateSlide` only ever hides/shows already-built logs, never recreates one,
+   * so `play()` right after it operates on `this.#active`'s (now the next slide's) real
+   * timeline — same "brand-new Playhead" reasoning as the single-script restart above. */
   onPlaybackComplete_fn = function() {
     if (!__privateGet(this, _loop)) return;
     __privateSet(this, _loopTimer, setTimeout(() => {
       __privateSet(this, _loopTimer, null);
+      if (__privateGet(this, _slides).length > 1) {
+        __privateMethod(this, _CfChatSimElement_instances, activateSlide_fn).call(this, (__privateGet(this, _activeIndex) + 1) % __privateGet(this, _slides).length);
+      }
       this.play();
     }, __privateGet(this, _loopPauseMs)));
   };
@@ -1154,19 +1267,32 @@ var CfChatSimCapture = (() => {
       __privateSet(this, _loopTimer, null);
     }
   };
-  readScript_fn = function() {
-    const inline = this.querySelector('script[type="application/json"]');
-    const raw = inline?.textContent ?? this.getAttribute("script");
+  /** T-031 B — every `<script type="application/json">` child, in document order, is its own
+   * rotation slide; the pre-existing single `script` ATTRIBUTE stays a single-slide fallback
+   * (unchanged priority: inline children win when both are present, exactly like `#readScript`
+   * did before this). `scriptEl` lets `#applyTagForActiveSlide` read a per-slide
+   * `data-tag-icon`/`data-tag-label` override straight off the markup — `null` for the
+   * attribute-sourced fallback, which has no element to read one from. */
+  readScripts_fn = function() {
+    const inlineScripts = [...this.querySelectorAll('script[type="application/json"]')];
+    if (inlineScripts.length > 0) {
+      return inlineScripts.map((scriptEl) => ({
+        script: JSON.parse(scriptEl.textContent ?? "[]"),
+        scriptEl
+      }));
+    }
+    const raw = this.getAttribute("script");
     if (!raw) throw new Error("cf-chat-sim: no script provided (attribute or inline JSON child)");
-    return JSON.parse(raw);
+    return [{ script: JSON.parse(raw), scriptEl: null }];
   };
   applyStep_fn = function(step) {
-    if (!__privateGet(this, _timeline) || !__privateGet(this, _log)) return;
-    if (step === __privateGet(this, _lastStep)) return;
-    __privateSet(this, _lastStep, step);
+    const slide = __privateGet(this, _CfChatSimElement_instances, active_get);
+    if (!slide) return;
+    if (step === slide.lastStep) return;
+    slide.lastStep = step;
     const animate = __privateGet(this, _fromPlayhead);
-    const state = stateAtStep(__privateGet(this, _timeline), step);
-    __privateMethod(this, _CfChatSimElement_instances, reconcile_fn).call(this, state, step, animate);
+    const state = stateAtStep(slide.timeline, step);
+    __privateMethod(this, _CfChatSimElement_instances, reconcile_fn).call(this, slide, state, step, animate);
   };
   /** ChatDemo.astro's exact trick (`s.offsetWidth + 10`, global.css's `measure()`): `--cf-cs-pad`
    * (styles.css) is a static FALLBACK only — a stamp with a receipt glyph is measurably wider
@@ -1184,49 +1310,53 @@ var CfChatSimCapture = (() => {
   /** Pre-render contract: every MsgId's <li> already exists (built in connectedCallback from the
    * final state) — this only repopulates content for currently-visible messages and flips
    * `hidden`. It never creates, removes, or reorders nodes. */
-  reconcile_fn = function(state, step, animate) {
-    const t0 = __privateGet(this, _timeline).t0;
+  reconcile_fn = function(slide, state, step, animate) {
+    const t0 = slide.timeline.t0;
     const locale = this.getAttribute("locale") || "es-PE";
     const tz = this.getAttribute("tz") || "America/Lima";
     const editedLabel = this.getAttribute("edited-label") || "Editado";
     const replyLabel = this.getAttribute("reply-label") || "Respondi\xF3 r\xE1pido";
     const visible = state.order.map((id) => state.msgs.get(id)).filter((m) => !!m && m.deleted === null).map((m) => {
-      const tick = __privateGet(this, _postedAt).get(m.id) ?? 0;
+      const tick = slide.postedAt.get(m.id) ?? 0;
       return toRenderMessage(m, formatTime(t0, tick, locale, tz), editedLabel, replyLabel);
     });
     const flags = computeGroupFlags(visible, __privateGet(this, _adapter).tail);
     const visibleIds = new Set(visible.map((m) => m.id));
     visible.forEach((rm) => {
-      const li = __privateGet(this, _msgEls).get(rm.id);
+      const li = slide.msgEls.get(rm.id);
       if (!li) return;
       populateMessageElement(li, rm, __privateGet(this, _adapter), flags.get(rm.id));
       li.hidden = false;
       __privateMethod(this, _CfChatSimElement_instances, measurePad_fn).call(this, li);
     });
-    __privateGet(this, _msgEls).forEach((li, id) => {
+    slide.msgEls.forEach((li, id) => {
       if (!visibleIds.has(id)) li.hidden = true;
     });
-    __privateGet(this, _dateSeps).forEach((sep) => {
+    slide.dateSeps.forEach((sep) => {
       sep.li.hidden = !visibleIds.has(sep.triggerId);
     });
     if (state.draft) this.setAttribute("data-drafting", state.draft.by);
     else this.removeAttribute("data-drafting");
-    __privateGet(this, _typingRows).forEach((row) => {
+    slide.typingRows.forEach((row) => {
       row.li.hidden = !(step >= row.interval.appearStep && step < row.interval.vanishStep);
     });
-    __privateMethod(this, _CfChatSimElement_instances, applyBottomAnchor_fn).call(this);
-    __privateMethod(this, _CfChatSimElement_instances, applyScroll_fn).call(this, state.scrollId, animate);
+    if (__privateGet(this, _badgeFlagKey) && __privateGet(this, _badgeEl)) {
+      const on = Boolean(state.flags[__privateGet(this, _badgeFlagKey)]);
+      __privateGet(this, _badgeEl).textContent = on ? __privateGet(this, _badgeOnLabel) : __privateGet(this, _badgeOffLabel);
+      __privateGet(this, _badgeEl).dataset.on = String(on);
+    }
+    __privateMethod(this, _CfChatSimElement_instances, applyBottomAnchor_fn).call(this, slide.log);
+    __privateMethod(this, _CfChatSimElement_instances, applyScroll_fn).call(this, slide.log, state.scrollId, animate);
   };
   /** Team-lead, iteration 3: measured 41% of the log's height sitting empty at the BOTTOM (216px
    * of 522px) — a short thread should hug the composer and grow upward, not float at the top.
    * `.cf-anchor-top` (styles.css) only ever lives on the first VISIBLE child at any moment; date
    * separators (below) and typing rows are ordinary flex items too, so whichever of the three
    * kinds happens to be first-and-visible gets it. */
-  applyBottomAnchor_fn = function() {
-    if (!__privateGet(this, _log)) return;
-    const prev = __privateGet(this, _log).querySelector(".cf-anchor-top");
+  applyBottomAnchor_fn = function(log) {
+    const prev = log.querySelector(".cf-anchor-top");
     if (prev) prev.classList.remove("cf-anchor-top");
-    const firstVisible = [...__privateGet(this, _log).children].find((el) => !el.hidden);
+    const firstVisible = [...log.children].find((el) => !el.hidden);
     firstVisible?.classList.add("cf-anchor-top");
   };
   /** T-027 A — `core`'s `scrollId` (fold.ts: set to the MsgId on every `post`, types.ts:269)
@@ -1238,10 +1368,9 @@ var CfChatSimCapture = (() => {
    * `animate` is false for the initial render and any external/manual `data-step` write (devtools
    * scrub, a consumer's own seek UI) — acceptance #1's "instantáneo al seek": those jump straight
    * to bottom, never glide. `scrollId === null` (nothing posted yet) is a no-op. */
-  applyScroll_fn = function(scrollId, animate) {
-    if (!__privateGet(this, _log) || scrollId === null) return;
+  applyScroll_fn = function(log, scrollId, animate) {
+    if (scrollId === null) return;
     __privateMethod(this, _CfChatSimElement_instances, cancelScrollAnimation_fn).call(this);
-    const log = __privateGet(this, _log);
     const to = Math.max(0, log.scrollHeight - log.clientHeight);
     const reduceMotion = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!animate || reduceMotion) {
