@@ -45,3 +45,8 @@ pnpm-lock.yaml
 .cofoundy/state/escalation-queue.jsonl
 .cofoundy/state/escalation-effective.yaml
 .cofoundy/state/fix-attempts.yaml
+
+# Runtime del orquestador que los hooks reescriben solos: por worktree, nunca versionado
+.cofoundy/state/history.jsonl
+.cofoundy/state/**/worker-id*
+.cofoundy/state/**/*.lock
