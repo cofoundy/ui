@@ -603,3 +603,15 @@ export type {
   LinkPreviewVariant,
   LinkPreviewProviderProps,
 } from "./components/docs/link-preview";
+
+// Motion — closed-form springs (tokens: --cf-spring-*; regenerate with npm run gen:springs)
+export {
+  SPRINGS,
+  springAt,
+  springOvershoot,
+  springSettleTime,
+  springToCSSLinear,
+  springTrack,
+  springTransition,
+} from "./lib/spring";
+export type { SpringParams, SpringName, SpringChange } from "./lib/spring";

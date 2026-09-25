@@ -196,6 +196,8 @@ For **brand identity work** (badge, logo, attribution) use the `/branding` skill
 | `Foundation/Spacing` | Spacing scale (Tailwind-aligned). |
 | `Foundation/Animation` | Duration / easing / stagger tokens. |
 
+**Motion (importable):** `SPRINGS` (`snappy` · `smooth` · `gentle`), `springTransition(name)` for framer-motion, `springAt` / `springTrack` (pure functions of time, for seek(t)-style stories), `springToCSSLinear`. CSS: `transition: transform var(--cf-spring-snappy-duration) var(--cf-spring-snappy)`. Tokens are generated — `npm run gen:springs`, drift-checked by `verify:springs` and a test. `--cf-ease-spring` is deprecated (56 % overshoot).
+
 ### Hero
 
 | Component | Description |
