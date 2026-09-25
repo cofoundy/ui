@@ -106,6 +106,8 @@
     "build:iife:watch": "vite build --config vite.config.iife.ts --watch",
     "capture-shader-poster": "node scripts/capture-shader-poster.mjs",
     "gen:agents": "tsx scripts/gen-atelier-agents-md.ts",
-    "verify:agents": "tsx scripts/gen-atelier-agents-md.ts --check"
+    "verify:agents": "tsx scripts/gen-atelier-agents-md.ts --check",
+    "gen:springs": "tsx scripts/gen-spring-tokens.ts",
+    "verify:springs": "tsx scripts/gen-spring-tokens.ts --check"
   }
 }
