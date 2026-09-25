@@ -8,6 +8,7 @@ import {
   springSettleTime,
   springToCSSLinear,
   springTrack,
+  springTrackLoop,
   springTransition,
 } from "../../lib/spring";
 
@@ -76,6 +77,27 @@ describe("springTrack", () => {
     const after = springTrack(0.15 + 1e-6, changes);
     expect(Math.abs(after - before)).toBeLessThan(0.01);
     expect(springTrack(5, changes)).toBeCloseTo(20, 3);
+  });
+});
+
+describe("springTrackLoop", () => {
+  const changes = [
+    { at: 0.1, to: 1 },
+    { at: 0.9, to: 0 },
+  ];
+  const P = 1.2; // the 0.9 change is still settling at the wrap
+  it("wraps with matching position and velocity", () => {
+    const dt = 1e-4;
+    const f = (t: number) => springTrackLoop(t, changes, P);
+    expect(f(P - 1e-9)).toBeCloseTo(f(0), 6);
+    const vEnd = (f(P) - f(P - dt)) / dt;
+    const vStart = (f(dt) - f(0)) / dt;
+    expect(vEnd).toBeCloseTo(vStart, 2);
+  });
+  it("carries the previous cycle's tail into the start", () => {
+    // at t=0 the 0.9s change from the prior cycle has not fully settled
+    expect(springTrackLoop(0, changes, P)).not.toBe(0);
+    expect(springTrack(0, changes)).toBe(0);
   });
 });
 

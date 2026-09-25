@@ -129,3 +129,24 @@ export function springTrack(
   }
   return value;
 }
+
+/**
+ * springTrack for a seamless loop of length `period`. The signal is periodic: at any time the
+ * current cycle's springs plus the still-settling tails of the previous cycles. A closed loop's
+ * deltas sum to 0 (`changes` must end on `from`), so older cycles fade and a few suffice.
+ * Position AND velocity match at t = 0 and t = period — a loop that ends at a different
+ * velocity stutters.
+ */
+export function springTrackLoop(
+  t: number,
+  changes: SpringChange[],
+  period: number,
+  params: SpringParams = SPRINGS.smooth,
+  from = 0,
+): number {
+  const tt = ((t % period) + period) % period;
+  const cycles = Math.ceil(springSettleTime(params) / period) + 1;
+  let value = from;
+  for (let k = 0; k <= cycles; k++) value += springTrack(tt + k * period, changes, params, from) - from;
+  return value;
+}

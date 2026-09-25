@@ -212,7 +212,7 @@ All components use CSS variables for theming:
 ```css
 :root {
   /* Brand colors */
-  --chat-primary: #2984AD;
+  --chat-primary: #46A0D0;   /* brand primary — SSOT: src/styles/index.css */
   --chat-background: #020916;
   --chat-foreground: #ffffff;
   --chat-muted: #848386;

@@ -612,6 +612,7 @@ export {
   springSettleTime,
   springToCSSLinear,
   springTrack,
+  springTrackLoop,
   springTransition,
 } from "./lib/spring";
 export type { SpringParams, SpringName, SpringChange } from "./lib/spring";
