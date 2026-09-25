@@ -1,16 +1,17 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Toaster, toast } from "../../components/ui/sonner";
 import { Button } from "../../components/ui/button";
+import { VIEWPORT_MOBILE } from "../_shared/viewports";
 
 const meta: Meta<typeof Toaster> = {
   title: "UI/Sonner",
   component: Toaster,
   tags: ["autodocs"],
   decorators: [
-    (Story) => (
+    (Story, ctx) => (
       <div>
         <Story />
-        <Toaster />
+        <Toaster position="bottom-center" dock={ctx.parameters.dock as number | undefined} />
       </div>
     ),
   ],
@@ -132,6 +133,61 @@ export const AllVariants: Story = {
         <Button onClick={() => toast.warning("Warning toast")}>Warning</Button>
         <Button onClick={() => toast.info("Info toast")}>Info</Button>
       </div>
+    </div>
+  ),
+};
+
+/**
+ * The toast rule: only for failures or for results that live elsewhere — here the
+ * conversation moved to Lucía's inbox, so the operator gets "Asignada a Lucía" + Deshacer.
+ * Saving never raises a toast (the Button `status` answers in place).
+ */
+export const RemoteResult: Story = {
+  render: () => (
+    <div className="flex flex-wrap gap-2">
+      <Button
+        onClick={() =>
+          toast.success("Asignada a Lucía", {
+            description: "La conversación pasó a su bandeja.",
+            action: { label: "Deshacer", onClick: () => {} },
+          })
+        }
+      >
+        Asignar a Lucía
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() => toast.error("No se envió el mensaje", { description: "Sin conexión. Se reintenta al volver." })}
+      >
+        Falla en segundo plano
+      </Button>
+    </div>
+  ),
+};
+
+/** Bottom-center on a phone, rising out of the top edge of a 72 px dock (`dock={72}`). */
+export const MobileBaseline: Story = {
+  parameters: { viewport: VIEWPORT_MOBILE, dock: 72, layout: "fullscreen" },
+  decorators: [
+    (Story) => (
+      <div className="relative min-h-[600px]">
+        <Story />
+        <div className="fixed inset-x-0 bottom-0 h-[72px] border-t border-[var(--border)] bg-[var(--background)] p-4 text-xs text-[var(--muted-foreground)]">
+          Dock (composer)
+        </div>
+      </div>
+    ),
+  ],
+  render: () => (
+    <div className="p-4">
+      <Button
+        size="lg"
+        onClick={() =>
+          toast.success("Asignada a Lucía", { action: { label: "Deshacer", onClick: () => {} } })
+        }
+      >
+        Asignar a Lucía
+      </Button>
     </div>
   ),
 };

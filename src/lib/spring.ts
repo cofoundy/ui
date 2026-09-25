@@ -23,6 +23,11 @@ export interface SpringParams {
 export const SPRINGS = {
   /** Toggles, presses, knobs — quick with a barely-there settle. */
   snappy: { duration: 0.35, bounce: 0.15 },
+  /**
+   * Leading edge of two-edge indicators (switch knob, tab pill): stiffer than the trailing
+   * edge (smooth, compressed to --cf-duration-trail) so the indicator stretches, then settles.
+   */
+  edge: { duration: 0.25, bounce: 0.15 },
   /** Tabs, dropdowns, popovers, content swaps. */
   smooth: { duration: 0.5, bounce: 0 },
   /** Sheets, dialogs, large layout moves. */

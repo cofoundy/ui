@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { Switch } from '../../components/ui/switch';
+import { VIEWPORT_MOBILE } from '../_shared/viewports';
 
 const meta: Meta<typeof Switch> = {
   title: 'UI/Switch',
@@ -105,6 +106,74 @@ export const SettingsExample: Story = {
           </div>
           <Switch defaultChecked />
         </div>
+      </div>
+    </div>
+  ),
+};
+
+/**
+ * Optimistic toggle that fails: the knob flips immediately, the save fails, the knob returns
+ * on the same spring and the status line says what happened (no toast — it happened here).
+ */
+function FailingSwitchDemo() {
+  const [on, setOn] = useState(false);
+  const [line, setLine] = useState<{ tone: 'idle' | 'error'; text: string }>({
+    tone: 'idle',
+    text: 'Tú respondes a todas las conversaciones.',
+  });
+  return (
+    <div className="flex max-w-sm items-start gap-4 rounded-xl border border-[var(--border)] p-4">
+      <div className="flex-1">
+        <p id="op-title" className="text-sm font-semibold text-[var(--foreground)]">
+          Modo operador
+        </p>
+        <p
+          role="status"
+          className="mt-0.5 min-h-9 text-[13px] leading-[18px]"
+          style={{
+            color:
+              line.tone === 'error'
+                ? 'color-mix(in srgb, var(--destructive) 62%, var(--foreground))'
+                : 'var(--muted-foreground)',
+          }}
+        >
+          {line.text}
+        </p>
+      </div>
+      <Switch
+        size="lg"
+        aria-labelledby="op-title"
+        checked={on}
+        onCheckedChange={(next) => {
+          setOn(next);
+          window.setTimeout(() => {
+            setOn(!next);
+            setLine({ tone: 'error', text: 'No se pudo cambiar. Sin conexión; sigue como estaba.' });
+          }, 700);
+        }}
+      />
+    </div>
+  );
+}
+
+export const OptimisticFailure: Story = {
+  render: () => <FailingSwitchDemo />,
+};
+
+export const Large: Story = {
+  args: { size: 'lg', 'aria-label': 'Modo operador' },
+};
+
+export const MobileBaseline: Story = {
+  parameters: { viewport: VIEWPORT_MOBILE },
+  render: () => (
+    <div className="flex flex-col gap-4 p-4">
+      <FailingSwitchDemo />
+      <div className="flex items-center gap-4">
+        <Switch aria-label="default" />
+        <Switch aria-label="default on" defaultChecked />
+        <Switch aria-label="lg" size="lg" />
+        <Switch aria-label="lg on" size="lg" defaultChecked />
       </div>
     </div>
   ),
