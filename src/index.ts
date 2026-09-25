@@ -33,13 +33,14 @@ export { createWebSocketTransport } from "./transports";
 
 // UI Components
 export { Button, buttonVariants } from "./components/ui";
+export type { ButtonProps, ButtonStatus, ButtonStatusLabels } from "./components/ui";
 export { CalBookingButton, calBookingButtonVariants, CalendlyButton, calendlyButtonVariants } from "./components/ui";
 export type { CalBookingButtonProps, CalendlyButtonProps } from "./components/ui";
 export { Input } from "./components/ui";
 export { Avatar, AvatarImage, AvatarFallback } from "./components/ui";
 export { Spinner, spinnerVariants } from "./components/ui";
 export { Toaster, toast } from "./components/ui";
-export { Switch } from "./components/ui";
+export { Switch, switchVariants } from "./components/ui";
 export { Badge, badgeVariants } from "./components/ui";
 export { ChannelBadge, channelBadgeVariants } from "./components/ui";
 export type { ChannelBadgeProps } from "./components/ui";

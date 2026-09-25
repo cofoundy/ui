@@ -1,5 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
+import { Button } from '../../components/ui/button';
+import { VIEWPORT_MOBILE } from '../_shared/viewports';
 
 const meta: Meta<typeof Tabs> = {
   title: 'UI/Tabs',
@@ -186,6 +189,57 @@ export const SettingsPanel: Story = {
           </div>
         </TabsContent>
       </Tabs>
+    </div>
+  ),
+};
+
+/** Designed empty and load-error states inside tabs. The pill travels; content swaps. */
+function InboxTabsDemo() {
+  const [failed, setFailed] = useState(true);
+  return (
+    <Tabs defaultValue="todas" className="w-full max-w-sm">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="todas">Todas 12</TabsTrigger>
+        <TabsTrigger value="mias">Mías</TabsTrigger>
+        <TabsTrigger value="cerradas">Cerradas</TabsTrigger>
+      </TabsList>
+      <TabsContent value="todas" className="p-4 text-sm text-[var(--foreground)]">
+        12 conversaciones abiertas.
+      </TabsContent>
+      <TabsContent value="mias" className="flex flex-col items-start gap-1.5 px-6 py-10">
+        <p className="text-[17px] font-semibold text-[var(--foreground)]">Nada pendiente</p>
+        <p className="max-w-[30ch] text-sm text-[var(--muted-foreground)]">
+          Cuando te asignen una conversación aparece aquí.
+        </p>
+      </TabsContent>
+      <TabsContent value="cerradas" className="flex flex-col items-start gap-1.5 px-6 py-10">
+        {failed ? (
+          <>
+            <p className="text-[17px] font-semibold text-[var(--foreground)]">No se pudieron cargar</p>
+            <p className="max-w-[30ch] text-sm text-[var(--muted-foreground)]">
+              Revisa tu conexión e inténtalo otra vez.
+            </p>
+            <Button variant="outline" size="lg" className="mt-2" onClick={() => setFailed(false)}>
+              Volver a cargar
+            </Button>
+          </>
+        ) : (
+          <p className="text-sm text-[var(--foreground)]">48 conversaciones cerradas.</p>
+        )}
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+export const EmptyAndError: Story = {
+  render: () => <InboxTabsDemo />,
+};
+
+export const MobileBaseline: Story = {
+  parameters: { viewport: VIEWPORT_MOBILE },
+  render: () => (
+    <div className="w-full p-4">
+      <InboxTabsDemo />
     </div>
   ),
 };

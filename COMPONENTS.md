@@ -1,6 +1,6 @@
 # @cofoundy/ui — Component Catalog
 
-**Last updated:** 2026-09-04 · **Storybook:** [ui.cofoundy.dev](https://ui.cofoundy.dev) · **Total exports:** ~95 (`chat-sim` is a separate subpath, not yet in this count — see its section)
+**Last updated:** 2026-09-25 · **Storybook:** [ui.cofoundy.dev](https://ui.cofoundy.dev) · **Total exports:** ~95 (`chat-sim` is a separate subpath, not yet in this count — see its section)
 
 > **For agents:** start at the [Intent Map](#intent-map) below — maps "I need X" → component name + import + story URL. If you don't find your need there, fall through to the [Section tables](#chat) (alphabetical) or run `grep '^export' ~/cofoundy/packages/ui/src/index.ts` for the raw export list. Storybook auto-discovery: `curl -sS https://ui.cofoundy.dev/index.json` returns 598 entries (all stories, parseable JSON).
 
@@ -45,18 +45,19 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 | Dropdown menu | `DropdownMenu` (+ subcomponents) | UI | `ui-dropdownmenu` |
 | Bottom sheet / side sheet | `Sheet` (+ subcomponents) | UI | `ui-sheet` |
 | Select / combobox | `Select` (+ subcomponents) | UI | `ui-select` |
-| Tabs | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | UI | `ui-tabs` |
+| Tabs (travelling two-edge pill) | `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent` | UI | `ui-tabs` |
 | Tooltip | `Tooltip` (+ `TooltipContent`, `TooltipTrigger`, `TooltipProvider`) | UI | `ui-tooltip` |
 | Collapsible | `Collapsible`, `CollapsibleContent`, `CollapsibleTrigger` | UI | `ui-collapsible` |
 | Breadcrumb | `Breadcrumb` (+ subcomponents) | UI | `ui-breadcrumb` |
 | Avatar | `Avatar`, `AvatarImage`, `AvatarFallback` | UI | `ui-avatar` |
 | Badge (channel-aware variants) | `Badge`, `ChannelBadge`, `CofoundyBadge` | UI | `ui-badge`, `ui-channelbadge` |
 | Button (CVA variants) | `Button` | UI | `ui-button` |
+| Save/submit feedback on the tapped button (loading → saved / error · retry, morph in place) | `Button` with `status` + `statusLabels` | UI | `ui-button--status` |
 | Input | `Input` | UI | `ui-input` |
 | Spinner / skeleton | `Spinner`, `Skeleton` | UI | `ui-spinner`, `ui-skeleton` |
 | Theme toggle | `ThemeSwitcher` | UI | `ui-themeswitcher` |
-| Toast notifications | `Toaster`, `toast` | UI | `ui-toaster` |
-| Switch / Separator | `Switch`, `Separator` | UI | `ui-switch`, `ui-separator` |
+| Toast notifications (failures / results that live elsewhere — never "saved"; `dock` prop) | `Toaster`, `toast` | UI | `ui-toaster` |
+| Switch (two-edge knob, `size="lg"` 48×28) / Separator | `Switch`, `switchVariants`, `Separator` | UI | `ui-switch`, `ui-separator` |
 | Logo (3D cube isologo) | `Logo` | UI | `ui-logo` |
 | Dropdown nav (mega-menu-lite) | `NavDropdown` | Navigation | `navigation-navdropdown` |
 | Hero with animated WebGL gradient + poster fallback | `ShaderHero` | Hero | `hero-shaderhero` |

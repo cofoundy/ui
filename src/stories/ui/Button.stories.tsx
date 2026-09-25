@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { Button } from '../../components/ui/button';
+import * as React from 'react';
+import { Button, type ButtonStatus } from '../../components/ui/button';
 import { Send, Plus, Check, X } from 'lucide-react';
 import { VIEWPORT_MOBILE } from '../_shared/viewports';
 
@@ -151,6 +152,95 @@ export const AllVariants: Story = {
         <Button size="icon"><Check className="w-4 h-4" /></Button>
         <Button size="icon-lg"><Check className="w-5 h-5" /></Button>
       </div>
+    </div>
+  ),
+};
+
+/* ------------------------------------------------------------------------ */
+/* status — morph in place                                                   */
+/* ------------------------------------------------------------------------ */
+
+function StatusDemo({ fail, full }: { fail?: boolean; full?: boolean }) {
+  const [text, setText] = React.useState('Hola, te confirmo la cita del jueves.');
+  const [status, setStatus] = React.useState<ButtonStatus>('idle');
+  const [failNext, setFailNext] = React.useState(!!fail);
+  const save = () => {
+    setStatus('loading');
+    window.setTimeout(() => {
+      setStatus(failNext ? 'error' : 'success');
+      setFailNext(false); // the retry succeeds
+    }, 900);
+  };
+  return (
+    <div className="flex w-full max-w-sm flex-col gap-3">
+      <textarea
+        aria-label="Respuesta rápida"
+        className="min-h-20 rounded-md bg-[var(--muted)] p-2 text-base text-[var(--foreground)]"
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          setStatus('idle'); // success persists until the content changes
+        }}
+      />
+      <div className={full ? 'grid' : 'flex'}>
+        <Button status={status} onClick={save} className={full ? 'w-full' : undefined} size="lg">
+          Guardar respuesta
+        </Button>
+      </div>
+      <label className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
+        <input type="checkbox" checked={failNext} onChange={(e) => setFailNext(e.target.checked)} />
+        El próximo guardado falla
+      </label>
+    </div>
+  );
+}
+
+/**
+ * `status` is opt-in: the tapped button answers (Guardando → Guardada / No se guardó ·
+ * Reintentar). Success persists until the content changes; the error click is the retry and
+ * the user's text is untouched. No toast for "saved".
+ */
+export const Status: Story = {
+  render: () => <StatusDemo />,
+};
+
+export const StatusError: Story = {
+  render: () => <StatusDemo fail />,
+};
+
+/** Every designed state, pinned. The width is reserved for the longest state words. */
+export const StatusStates: Story = {
+  render: () => (
+    <div className="grid gap-6 text-xs text-[var(--muted-foreground)]">
+      {(['default', 'outline', 'destructive'] as const).map((variant) => (
+        <div key={variant} className="flex flex-wrap items-center gap-4">
+          {(['idle', 'loading', 'success', 'error'] as const).map((st) => (
+            <div key={st} className="grid justify-items-center gap-2">
+              <Button variant={variant} status={st} size="lg">
+                Guardar
+              </Button>
+              <span>
+                {variant} · {st}
+              </span>
+            </div>
+          ))}
+          <div className="grid justify-items-center gap-2">
+            <Button variant={variant} status="idle" size="lg" disabled>
+              Guardar
+            </Button>
+            <span>{variant} · disabled</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  ),
+};
+
+export const StatusMobileBaseline: Story = {
+  parameters: { viewport: VIEWPORT_MOBILE },
+  render: () => (
+    <div className="p-4">
+      <StatusDemo full />
     </div>
   ),
 };

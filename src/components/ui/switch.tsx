@@ -1,30 +1,74 @@
 import * as React from "react"
 import * as SwitchPrimitive from "@radix-ui/react-switch"
+import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "../../utils/cn"
+import { EdgeLayers } from "./edge-layers"
 
+const switchVariants = cva("cf-switch peer", {
+  variants: {
+    size: {
+      /** 36 × 20 track — the historical footprint (hit area still 44 px tall). */
+      default: "",
+      /** 48 × 28 track — touch-first surfaces (Fovente operator). */
+      lg: "",
+    },
+  },
+  defaultVariants: { size: "default" },
+})
+
+const setPressed = (e: React.PointerEvent<HTMLButtonElement>) => {
+  e.currentTarget.dataset.pressed = ""
+}
+const clearPressed = (e: React.PointerEvent<HTMLButtonElement>) => {
+  delete e.currentTarget.dataset.pressed
+}
+
+/**
+ * The knob is one indicator with two edges: the leading edge rides `--cf-spring-edge`, the
+ * trailing edge `--cf-spring-smooth` compressed to 400 ms, so it stretches toward the target
+ * and settles. Pointer-down reaches 6 px toward the target (first-frame response).
+ *
+ * Optimistic use: flip `checked` immediately; if the save fails, flip it back — the knob
+ * returns on the same spring — and explain what happened in a status line next to it.
+ */
 function Switch({
   className,
+  size = "default",
+  onPointerDown,
+  onPointerUp,
+  onPointerLeave,
+  onPointerCancel,
   ...props
-}: React.ComponentProps<typeof SwitchPrimitive.Root>) {
+}: React.ComponentProps<typeof SwitchPrimitive.Root> & VariantProps<typeof switchVariants>) {
   return (
     <SwitchPrimitive.Root
       data-slot="switch"
-      className={cn(
-        "peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-[var(--border)] transition-colors",
-        "data-[state=checked]:bg-[var(--primary)] data-[state=unchecked]:bg-[var(--input)]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        className
-      )}
+      data-size={size}
+      className={cn(switchVariants({ size }), className)}
+      onPointerDown={(e) => {
+        setPressed(e)
+        onPointerDown?.(e)
+      }}
+      onPointerUp={(e) => {
+        clearPressed(e)
+        onPointerUp?.(e)
+      }}
+      onPointerLeave={(e) => {
+        clearPressed(e)
+        onPointerLeave?.(e)
+      }}
+      onPointerCancel={(e) => {
+        clearPressed(e)
+        onPointerCancel?.(e)
+      }}
       {...props}
     >
-      <SwitchPrimitive.Thumb
-        data-slot="switch-thumb"
-        className="pointer-events-none block h-4 w-4 rounded-full shadow-md ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0 data-[state=unchecked]:bg-foreground data-[state=checked]:bg-primary-foreground"
-      />
+      <SwitchPrimitive.Thumb data-slot="switch-thumb" className="cf-switch__knob">
+        <EdgeLayers />
+      </SwitchPrimitive.Thumb>
     </SwitchPrimitive.Root>
   )
 }
 
-export { Switch }
+export { Switch, switchVariants }

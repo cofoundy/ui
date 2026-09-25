@@ -1,11 +1,12 @@
 export { Button, buttonVariants } from "./button";
+export type { ButtonProps, ButtonStatus, ButtonStatusLabels } from "./button";
 export { CalBookingButton, calBookingButtonVariants, CalendlyButton, calendlyButtonVariants } from "./calendly-button";
 export type { CalBookingButtonProps, CalendlyButtonProps } from "./calendly-button";
 export { Input } from "./input";
 export { Avatar, AvatarImage, AvatarFallback } from "./avatar";
 export { Spinner, spinnerVariants } from "./spinner";
 export { Toaster, toast } from "./sonner";
-export { Switch } from "./switch";
+export { Switch, switchVariants } from "./switch";
 export { Badge, badgeVariants } from "./badge";
 export { ChannelBadge, channelBadgeVariants } from "./channel-badge";
 export type { ChannelBadgeProps } from "./channel-badge";
