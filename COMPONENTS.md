@@ -188,7 +188,6 @@ shadcn/ui base, theme-tokenized.
 
 `Button`, `Input`, `Badge`, `ChannelBadge`, `Avatar`, `Spinner`, `Skeleton`, `Switch`, `Separator`, `Tabs`, `Tooltip`, `Collapsible`, `Select`, `DropdownMenu`, `Sheet`, `Dialog`, `Breadcrumb`, `Sidebar` (+ ~20 subcomponents), `Toaster`/`toast`, `ConfirmDialog`, `DangerZone`/`DangerZoneItem`/`DangerZoneHeader`, `RoleChip`, `ActivationNote`, `ComposerQuickAction`, `Logo`, `LogoHeader`/`Wordmark`, `CofoundyBadge`, `ChannelBadge`, `CalBookingButton`/`CalendlyButton` (legacy alias), `NotFound`, `ThemeSwitcher`, `ShimmerText`, `GradientBorder`.
 
-**App shell** — `WorkspaceShell` (+ `Identity`, `Nav`, `NavItem`, `Rail`, `RailFooter`, `Well` slots): full product-app layout chrome (rail + nav + content well).
 
 **Command palette** — `CommandPalette` + `CommandPaletteTrigger`: ⌘K-style fuzzy command launcher. Styles eager-inject so the trigger renders styled on first paint.
 

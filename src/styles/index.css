@@ -193,7 +193,7 @@
 
 /* ============================================
    WORKSPACE GOVERNANCE TOKENS
-   Consumed by RoleChip, WorkspaceShell, ActivationNote
+   Consumed by RoleChip, ActivationNote
    (@cofoundy/ui workspace governance primitives, promoted
    from the docs-ai Workspace Ledger 2026-06-13).
    Dark-mode defaults; light overrides in [data-theme="light"] below.

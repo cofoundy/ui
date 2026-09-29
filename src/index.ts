@@ -53,29 +53,11 @@ export { CofoundyBadge, cofoundyBadgeVariants } from "./components/ui";
 export type { CofoundyBadgeProps } from "./components/ui";
 export { ThemeSwitcher, themeSwitcherVariants } from "./components/ui";
 
-// Workspace governance primitives — RoleChip, WorkspaceShell, ActivationNote
+// Workspace governance primitives — RoleChip, ActivationNote
 export { RoleChip, roleChipVariants } from "./components/ui";
 export type { RoleChipProps } from "./components/ui";
 export { ActivationNote, activationNoteVariants } from "./components/ui";
 export type { ActivationNoteProps } from "./components/ui";
-export {
-  WorkspaceShell,
-  WorkspaceShellRail,
-  WorkspaceShellIdentity,
-  WorkspaceShellNav,
-  WorkspaceShellNavItem,
-  WorkspaceShellRailFooter,
-  WorkspaceShellWell,
-} from "./components/ui";
-export type {
-  WorkspaceShellProps,
-  WorkspaceShellRailProps,
-  WorkspaceShellIdentityProps,
-  WorkspaceShellNavProps,
-  WorkspaceShellNavItemProps,
-  WorkspaceShellRailFooterProps,
-  WorkspaceShellWellProps,
-} from "./components/ui";
 
 // Sidebar system components
 export { Separator } from "./components/ui";
