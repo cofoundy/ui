@@ -65,6 +65,11 @@
   /* === STAGGER TOKENS === */
   --cf-stagger-fast: 50ms;        /* Lists in products */
   --cf-stagger-normal: 100ms;     /* Grids */
+  --cf-stagger-row: 25ms;         /* Rows of a menu / sheet / overflow list entering in cascade */
+
+  /* === SURFACE MOTION TOKENS === */
+  --cf-dd-exit: 150ms;            /* DropdownMenu leaves: --cf-spring-smooth compressed to 150 ms */
+  --cf-skeleton-duration: 1.8s;   /* one Skeleton shimmer pass (band travel + rest) */
 
   /* ============================================
      TYPOGRAPHY SYSTEM
@@ -274,6 +279,16 @@
   --chat-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   --chat-inset-highlight: rgba(255, 255, 255, 0.05);
 
+  /* Navigation + floating-surface tokens (NavRail, TabBar, WorkspaceSwitcher, PluginCard…).
+     Declared per theme on purpose: a custom property that reads var(--primary) is computed
+     where it is DECLARED, so a single :root value would keep the dark tint under a nested
+     [data-theme="light"]. */
+  --cf-nav-active-bg: color-mix(in srgb, var(--primary) 20%, transparent);
+  --cf-nav-active-fg: var(--primary);
+  --cf-nav-hover-bg: color-mix(in srgb, var(--foreground) 8%, transparent);
+  --cf-shadow-float: 0 10px 28px -8px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --cf-skeleton-highlight: color-mix(in oklab, var(--foreground) 7%, transparent);
+
   /* Sidebar tokens */
   --sidebar-background: var(--background);
   --sidebar-foreground: var(--foreground);
@@ -296,6 +311,15 @@
   --chat-input-bg: rgba(0, 0, 0, 0.03);
   --chat-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   --chat-inset-highlight: rgba(255, 255, 255, 0.5);
+
+  /* Navigation + floating-surface tokens — light (see the dark block for why per theme).
+     The active ink mixes toward --foreground so a tenant's light primary still reads on its
+     own 16 % tint. */
+  --cf-nav-active-bg: color-mix(in srgb, var(--primary) 16%, transparent);
+  --cf-nav-active-fg: color-mix(in srgb, var(--primary) 80%, var(--foreground));
+  --cf-nav-hover-bg: color-mix(in srgb, var(--foreground) 6%, transparent);
+  --cf-shadow-float: 0 10px 28px -10px rgba(15, 23, 42, 0.2), 0 2px 6px rgba(15, 23, 42, 0.06);
+  --cf-skeleton-highlight: color-mix(in oklab, var(--foreground) 7%, transparent);
 
   /* UI Component Semantic Tokens - Light theme overrides */
   --background: #ffffff;
@@ -479,10 +503,12 @@
   40% { transform: scale(1); opacity: 1; }
 }
 
-/* Shimmer for skeleton loading */
-@keyframes cf-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* Shimmer for skeleton loading — ONE keyframe for Skeleton and .cf-animate-shimmer (it
+   replaced the old background-position `cf-shimmer`, which repainted every frame). A band on
+   ::after travels by transform (compositor only), then rests until the next pass. */
+@keyframes cf-skeleton-sweep {
+  0% { transform: translateX(-100%); }
+  62%, 100% { transform: translateX(100%); }
 }
 
 /* Spin for loading indicators */
@@ -757,14 +783,36 @@
 
 /* === LOADING UTILITIES === */
 .cf-animate-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--chat-card) 0%,
-    var(--chat-card-hover) 50%,
-    var(--chat-card) 100%
-  );
-  background-size: 200% 100%;
-  animation: cf-shimmer 1.5s linear infinite;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--chat-card);
+}
+.cf-animate-shimmer::after,
+[data-slot="skeleton"][data-animation="shimmer"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent 0%, var(--cf-skeleton-highlight) 50%, transparent 100%);
+  /* linear on purpose: a loop has no start or end to ease into. */
+  animation: cf-skeleton-sweep var(--cf-skeleton-duration) linear infinite;
+  pointer-events: none;
+}
+/* Skeleton (ui/skeleton.tsx): `shimmer` (default) | `pulse` | none. The only loop in the kit,
+   and only because it signals loading. Reduced motion (OS, MotionConfig, or `reduced`) → a
+   static block, no band rendered at all. */
+[data-slot="skeleton"][data-animation="shimmer"] {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+[data-slot="skeleton"][data-reduced][data-animation]::after { content: none; animation: none; }
+[data-slot="skeleton"][data-reduced][data-animation] { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .cf-animate-shimmer::after,
+  [data-slot="skeleton"][data-animation]::after { content: none; animation: none; }
+  [data-slot="skeleton"][data-animation] { animation: none; }
 }
 
 .cf-animate-spin {
@@ -1212,9 +1260,10 @@
 [data-slot="button"].cf-btn[data-variant="ghost"],
 [data-slot="button"].cf-btn[data-variant="link"] { --cf-btn-fill: transparent; }
 
-/* Press-down: the first frame after pointerdown moves. */
+/* Press-down: the first frame after pointerdown moves, to .96 — the same press as every
+   framer `whileTap` in the kit (BRIEF §Motion), so a CSS button and a motion row feel alike. */
 [data-slot="button"].cf-btn[data-pressed] {
-  transform: scale(0.97);
+  transform: scale(0.96);
   transition-duration: var(--cf-duration-press);
 }
 
@@ -1532,16 +1581,53 @@
 }
 
 /* --- Toast (sonner) — rises out of the bottom slot on the smooth spring, leaves back down.
-   Rule: only for failures or results that live elsewhere; never for "saved". --- */
-.cf-toaster[data-sonner-toaster] [data-sonner-toast][data-sonner-toast]:not([data-swiping="true"]) {
+   Rule: only for failures or results that live elsewhere; never for "saved".
+   Selectors are doubled so they win over sonner's own injected stylesheet.
+   - Every property that moves while the stack reflows (transform, height) rides the SAME
+     spring: sonner's default drops `height` onto a different 400 ms ease, so a front toast of
+     a different height made the stack behind it jump.
+   - Exit: the smooth curve compressed to the snappy duration — leaves faster than it came.
+   - Content of a toast that goes BEHIND the stack leaves first (--cf-duration-exit); content
+     that comes forward enters after (--cf-duration-enter). Never two texts at full ink.
+   - Reduced motion (OS, or `.cf-toaster--reduce` from MotionConfig): opacity ≤ 120 ms. --- */
+.cf-toaster.cf-toaster[data-sonner-toaster] [data-sonner-toast][data-sonner-toast]:not([data-swiping="true"]) {
   transition:
     transform var(--cf-spring-smooth-duration) var(--cf-spring-smooth),
-    opacity var(--cf-duration-enter) linear;
+    height var(--cf-spring-smooth-duration) var(--cf-spring-smooth),
+    opacity var(--cf-duration-enter) linear,
+    box-shadow var(--cf-duration-fast) linear;
 }
-.cf-toaster[data-sonner-toaster] [data-sonner-toast][data-sonner-toast][data-removed="true"]:not([data-swiping="true"]) {
+.cf-toaster.cf-toaster[data-sonner-toaster] [data-sonner-toast][data-sonner-toast][data-removed="true"]:not([data-swiping="true"]) {
   transition:
     transform var(--cf-spring-snappy-duration) var(--cf-spring-smooth),
-    opacity var(--cf-spring-snappy-duration) linear;
+    height var(--cf-spring-snappy-duration) var(--cf-spring-smooth),
+    opacity var(--cf-duration-enter) linear;
+}
+.cf-toaster.cf-toaster [data-sonner-toast][data-sonner-toast] > * {
+  transition: opacity var(--cf-duration-enter) linear var(--cf-duration-exit);
+}
+.cf-toaster.cf-toaster [data-sonner-toast][data-sonner-toast][data-expanded="false"][data-front="false"] > * {
+  transition: opacity var(--cf-duration-exit) linear;
+}
+.cf-toaster.cf-toaster [data-sonner-toast][data-promise="true"] [data-icon] > svg {
+  animation-duration: var(--cf-spring-snappy-duration);
+  animation-timing-function: var(--cf-spring-smooth);
+}
+.cf-toaster [data-sonner-toast][data-type="success"] [data-icon] { color: var(--status-success, var(--cf-success)); }
+.cf-toaster [data-sonner-toast][data-type="warning"] [data-icon] { color: var(--status-warning, var(--cf-warning)); }
+.cf-toaster [data-sonner-toast][data-type="error"] [data-icon] { color: var(--destructive); }
+.cf-toaster [data-sonner-toast][data-type="info"] [data-icon],
+.cf-toaster [data-sonner-toast][data-type="loading"] [data-icon] { color: var(--primary); }
+.cf-toaster.cf-toaster--reduce[data-sonner-toaster] [data-sonner-toast][data-sonner-toast],
+.cf-toaster.cf-toaster--reduce[data-sonner-toaster] [data-sonner-toast][data-sonner-toast][data-removed="true"] {
+  transition: opacity 120ms linear !important;
+}
+.cf-toaster.cf-toaster--reduce [data-sonner-toast][data-sonner-toast] > * {
+  transition: opacity 120ms linear !important;
+}
+.cf-toaster.cf-toaster--reduce [data-sonner-toast] [data-icon] > svg { animation: none !important; opacity: 1 !important; transform: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  .cf-toaster.cf-toaster[data-sonner-toaster] [data-sonner-toast][data-sonner-toast] { transition: opacity 120ms linear !important; }
 }
 /* With a dock: the stack's bottom edge is the dock's top edge — toasts rise OUT of it and
    never travel over the dock. Without a dock nothing is clipped. */
@@ -1571,4 +1657,78 @@
 }
 .cf-toaster [data-sonner-toast][data-styled="true"] [data-button].cf-toast-action:focus-visible {
   box-shadow: 0 0 0 2px var(--ring);
+}
+
+/* --- Pop surfaces: Tooltip + DropdownMenu share ONE keyframe pair and ONE [data-side] rule.
+   The surface starts 4 px back from the side it opened on and travels toward it (a tooltip
+   rises out of its trigger; a menu drops out of it), from Radix's transform-origin.
+   Radix `Presence` waits for `animationend` before unmounting, so this is CSS, not framer —
+   and the Root stays uncontrolled. Knobs per surface: --cf-pop-scale (enter), and
+   --cf-pop-out-travel / --cf-pop-out-scale (exit). Reduced motion zeroes the travel and the
+   scale and shortens to an opacity fade of --cf-duration-instant. --- */
+@keyframes cf-pop-in {
+  from {
+    opacity: 0;
+    transform: translate(var(--cf-pop-x, 0px), var(--cf-pop-y, 0px)) scale(var(--cf-pop-scale, 1));
+  }
+}
+@keyframes cf-pop-out {
+  to {
+    opacity: 0;
+    transform:
+      translate(calc(var(--cf-pop-x, 0px) * var(--cf-pop-out-travel, 0.5)), calc(var(--cf-pop-y, 0px) * var(--cf-pop-out-travel, 0.5)))
+      scale(var(--cf-pop-out-scale, 1));
+  }
+}
+:is([data-slot="tooltip-content"], .cf-dd-surface)[data-side="top"] { --cf-pop-y: 4px; }
+:is([data-slot="tooltip-content"], .cf-dd-surface)[data-side="bottom"] { --cf-pop-y: -4px; }
+:is([data-slot="tooltip-content"], .cf-dd-surface)[data-side="left"] { --cf-pop-x: 4px; }
+:is([data-slot="tooltip-content"], .cf-dd-surface)[data-side="right"] { --cf-pop-x: -4px; }
+
+/* Tooltip: in on snappy; out faster (--cf-duration-fast), travelling back only half. */
+[data-slot="tooltip-content"][data-state$="open"] {
+  animation: cf-pop-in var(--cf-spring-snappy-duration) var(--cf-spring-snappy) both;
+}
+[data-slot="tooltip-content"][data-state="closed"] {
+  animation: cf-pop-out var(--cf-duration-fast) var(--cf-spring-snappy) both;
+}
+
+/* DropdownMenu (+ sub-menus): grows out of the trigger (scale .96 → 1) on smooth; leaves on
+   the same curve compressed to --cf-dd-exit, scale .97, no travel. */
+.cf-dd-surface {
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
+  --cf-pop-scale: 0.96;
+  --cf-pop-out-scale: 0.97;
+  --cf-pop-out-travel: 0;
+}
+.cf-dd-surface[data-state="open"] {
+  animation: cf-pop-in var(--cf-spring-smooth-duration) var(--cf-spring-smooth) both;
+}
+.cf-dd-surface[data-state="closed"] {
+  animation: cf-pop-out var(--cf-dd-exit) var(--cf-spring-smooth) both;
+  pointer-events: none;
+}
+
+/* Reduced motion — framer `MotionConfig reducedMotion` arrives as a data attribute. */
+:is([data-slot="tooltip-content"][data-reduced], .cf-dd-surface[data-reduced-motion]) {
+  --cf-pop-x: 0px;
+  --cf-pop-y: 0px;
+  --cf-pop-scale: 1;
+  --cf-pop-out-scale: 1;
+}
+:is([data-slot="tooltip-content"][data-reduced], .cf-dd-surface[data-reduced-motion])[data-state] {
+  animation-duration: var(--cf-duration-instant);
+  animation-timing-function: linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is([data-slot="tooltip-content"], .cf-dd-surface)[data-side] {
+    --cf-pop-x: 0px;
+    --cf-pop-y: 0px;
+    --cf-pop-scale: 1;
+    --cf-pop-out-scale: 1;
+  }
+  :is([data-slot="tooltip-content"], .cf-dd-surface)[data-state] {
+    animation-duration: var(--cf-duration-instant);
+    animation-timing-function: linear;
+  }
 }

@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as MenuPrimitive from "@radix-ui/react-dropdown-menu";
 import {
   AnimatePresence,
   LayoutGroup,
@@ -10,6 +9,14 @@ import { Check, ChevronsUpDown } from "lucide-react";
 
 import { cn } from "../../utils/cn";
 import { springTransition } from "../../lib/spring";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 /**
  * WorkspaceSwitcher — selector de negocio / workspace.
@@ -18,14 +25,14 @@ import { springTransition } from "../../lib/spring";
  * - `rail`: la marca del negocio (40–44 px) arriba de un riel, con un badge SÓLIDO de chevrons
  *   que gira al abrir. No hay caja contenedora: el hover es un anillo concéntrico en la marca
  *   misma (radio = radio de la marca + separación), así nunca hay dos bordes con radios distintos.
- *   El menú nace desde la marca (radix, origen del trigger).
+ *   El menú es el `DropdownMenu` del paquete: nace desde la marca y su highlight viaja entre filas.
  * - `sheet`: fila de cabecera (p. ej. dentro de una hoja «Más») con marca + nombre + rol y un
  *   «Cambiar» ↔ «Cerrar» que despliega la lista inline con alto animado.
  *
- * Lista: marca + nombre + rol; un solo fondo de hover que viaja entre filas; el ✓ viaja a la fila
- * elegida y RECIÉN después se llama `onSelect` (la elección se ve confirmada antes del cambio).
+ * Lista: marca + nombre + rol; el ✓ viaja a la fila elegida y RECIÉN después se llama `onSelect`
+ * (la elección se ve confirmada antes del cambio).
  *
- * Motion: springs de `lib/spring` — smooth (menú, contenido), edge (hover y ✓ que viajan),
+ * Motion: springs de `lib/spring` — smooth (contenido), edge (✓ que viaja),
  * snappy (presión, giro del chevron, filas). El nombre del negocio NUNCA se desenfoca (en texto
  * chico el blur flickea): cambia con opacidad, sale primero y entra después.
  */
@@ -112,10 +119,6 @@ const rowVariantsReduced = {
   show: { opacity: 1, transition: { duration: 0.1, ease: "linear" as const } },
 };
 
-function useReduced() {
-  return useReducedMotionConfig() ?? false;
-}
-
 // ============================================
 // Mark
 // ============================================
@@ -149,14 +152,23 @@ export function WorkspaceMark({ workspace, size = 32, className }: WorkspaceMark
     height: size,
     borderRadius: markRadius(size),
   };
+  const initialsStyle: React.CSSProperties = {
+    fontSize: Math.round(size * 0.38),
+    background: "var(--primary)",
+    color: "var(--primary-foreground)",
+  };
   if (typeof logo === "string") {
+    // Avatar del paquete: si la imagen falla (404, CORS, URL vieja) quedan las iniciales.
     return (
-      <img
-        src={logo}
-        alt=""
-        className={cn("block shrink-0 object-cover", className)}
-        style={style}
-      />
+      <Avatar aria-hidden className={cn("size-auto", className)} style={style}>
+        <AvatarImage src={logo} alt="" className="object-cover" />
+        <AvatarFallback
+          className="select-none rounded-[inherit] font-brand font-semibold leading-none"
+          style={initialsStyle}
+        >
+          {initialsOf(workspace)}
+        </AvatarFallback>
+      </Avatar>
     );
   }
   if (logo) {
@@ -176,12 +188,7 @@ export function WorkspaceMark({ workspace, size = 32, className }: WorkspaceMark
         "flex shrink-0 select-none items-center justify-center font-brand font-semibold leading-none",
         className,
       )}
-      style={{
-        ...style,
-        fontSize: Math.round(size * 0.38),
-        background: "var(--primary)",
-        color: "var(--primary-foreground)",
-      }}
+      style={{ ...style, ...initialsStyle }}
     >
       {initialsOf(workspace)}
     </span>
@@ -297,20 +304,16 @@ function WorkspaceRows({
   reduced,
 }: ListProps) {
   const group = React.useId();
-  const [hovered, setHovered] = React.useState<string | null>(null);
   const variants = reduced ? rowVariantsReduced : rowVariants;
 
+  // El contenido de la fila entra en cascada; en modo menú el highlight que viaja lo pone
+  // `DropdownMenuItem` (hermano de este span), en modo inline es un hover CSS.
   const rowInner = (w: Workspace) => (
-    <>
-      {hovered === w.id && (
-        <motion.span
-          layoutId="ws-hover"
-          aria-hidden
-          className="absolute inset-0 rounded-[10px]"
-          style={{ background: "var(--accent)" }}
-          transition={reduced ? INSTANT : EDGE}
-        />
-      )}
+    <motion.span
+      variants={variants}
+      whileTap={reduced ? undefined : TAP}
+      className="flex min-w-0 flex-1 items-center gap-3"
+    >
       <span className="relative">
         {renderMark ? renderMark(w, 28) : <WorkspaceMark workspace={w} size={28} />}
       </span>
@@ -335,70 +338,53 @@ function WorkspaceRows({
           </motion.span>
         )}
       </span>
-    </>
+    </motion.span>
   );
 
+  /** Radio 10 = radio de la superficie (16) − padding (6): una sola forma concéntrica. */
   const rowClass =
     "relative flex min-h-[48px] w-full cursor-pointer items-center gap-3 rounded-[10px] px-2.5 py-1.5 text-left outline-none focus-visible:outline-none";
+  const headingClass =
+    "px-2.5 pb-1 pt-1.5 font-mono text-[10px] font-normal uppercase tracking-[0.14em] text-[var(--muted-foreground)]";
 
   return (
     <LayoutGroup id={group}>
-      <motion.div
-        variants={listVariants}
-        initial="hidden"
-        animate="show"
-        onPointerLeave={() => setHovered(null)}
-      >
+      <motion.div variants={listVariants} initial="hidden" animate="show">
         {mode === "menu" ? (
-          <MenuPrimitive.Label className="px-2.5 pb-1 pt-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-            {heading}
-          </MenuPrimitive.Label>
+          <DropdownMenuLabel className={headingClass}>{heading}</DropdownMenuLabel>
         ) : (
-          <p className="px-2.5 pb-1 pt-1.5 font-mono text-[10px] uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-            {heading}
-          </p>
+          <p className={headingClass}>{heading}</p>
         )}
         {workspaces.map((w) =>
           mode === "menu" ? (
-            <MenuPrimitive.Item
+            <DropdownMenuItem
               key={w.id}
-              asChild
               onSelect={(e) => {
                 // El menú se cierra cuando el ✓ llegó, no al hacer clic.
                 e.preventDefault();
                 onChoose(w.id);
               }}
-              onFocus={() => setHovered(w.id)}
-            >
-              <motion.div
-                variants={variants}
-                whileTap={reduced ? undefined : TAP}
-                data-workspace={w.id}
-                aria-current={w.id === activeId ? "true" : undefined}
-                className={rowClass}
-              >
-                {rowInner(w)}
-              </motion.div>
-            </MenuPrimitive.Item>
-          ) : (
-            <motion.button
-              key={w.id}
-              type="button"
-              variants={variants}
-              whileTap={reduced ? undefined : TAP}
               data-workspace={w.id}
               aria-current={w.id === activeId ? "true" : undefined}
-              onPointerEnter={() => setHovered(w.id)}
-              onFocus={() => setHovered(w.id)}
-              onBlur={() => setHovered(null)}
+              className={rowClass}
+            >
+              {rowInner(w)}
+            </DropdownMenuItem>
+          ) : (
+            <button
+              key={w.id}
+              type="button"
+              data-workspace={w.id}
+              aria-current={w.id === activeId ? "true" : undefined}
               onClick={() => onChoose(w.id)}
               className={cn(
                 rowClass,
+                "transition-colors hover:bg-[var(--cf-nav-hover-bg,var(--accent))]",
                 "focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ring)]",
               )}
             >
               {rowInner(w)}
-            </motion.button>
+            </button>
           ),
         )}
       </motion.div>
@@ -480,7 +466,7 @@ function RailSwitcher({
   labels,
   className,
 }: WorkspaceSwitcherProps) {
-  const reduced = useReduced();
+  const reduced = useReducedMotionConfig() === true;
   const l = { ...DEFAULT_LABELS, ...labels };
   const active = workspaces.find((w) => w.id === activeId) ?? workspaces[0];
   const [isOpen, setOpen] = useOpenState(open, onOpenChange);
@@ -543,7 +529,7 @@ function RailSwitcher({
   }
 
   return (
-    <MenuPrimitive.Root
+    <DropdownMenu
       open={isOpen}
       onOpenChange={(o) => {
         if (o) reset();
@@ -551,7 +537,7 @@ function RailSwitcher({
       }}
       modal={false}
     >
-      <MenuPrimitive.Trigger asChild>
+      <DropdownMenuTrigger asChild>
         <motion.button
           ref={triggerRef}
           type="button"
@@ -564,60 +550,39 @@ function RailSwitcher({
           {mark}
           {name}
         </motion.button>
-      </MenuPrimitive.Trigger>
-      <AnimatePresence>
-        {isOpen && (
-          <MenuPrimitive.Portal forceMount>
-            <MenuPrimitive.Content
-              forceMount
-              asChild
-              side={side}
-              align="start"
-              sideOffset={10}
-              collisionPadding={8}
-              loop
-              onCloseAutoFocus={(e) => {
-                // El foco vuelve al trigger, pero sin anillo de foco si se eligió con el puntero
-                // (el anillo es también el hover: quedaría «pegado» tras un clic).
-                e.preventDefault();
-                triggerRef.current?.focus({ focusVisible: false } as FocusOptions);
-              }}
-            >
-              <motion.div
-                data-workspace-menu
-                initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={
-                  reduced
-                    ? { opacity: 0, transition: EXIT_FAST }
-                    : { opacity: 0, scale: 0.97, transition: { duration: 0.1, ease: "linear" } }
-                }
-                transition={reduced ? { duration: 0.1, ease: "linear" } : SMOOTH}
-                className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] w-[288px] overflow-y-auto rounded-[16px] border p-1.5 outline-none"
-                style={{
-                  transformOrigin: "var(--radix-dropdown-menu-content-transform-origin)",
-                  background: "var(--popover)",
-                  color: "var(--popover-foreground)",
-                  borderColor: "var(--border)",
-                  boxShadow: "0 12px 32px color-mix(in srgb, black 18%, transparent)",
-                }}
-              >
-                <WorkspaceRows
-                  mode="menu"
-                  workspaces={workspaces}
-                  activeId={activeId}
-                  checkedId={checkedId}
-                  onChoose={choose}
-                  heading={l.heading(workspaces.length)}
-                  renderMark={renderMark}
-                  reduced={reduced}
-                />
-              </motion.div>
-            </MenuPrimitive.Content>
-          </MenuPrimitive.Portal>
-        )}
-      </AnimatePresence>
-    </MenuPrimitive.Root>
+      </DropdownMenuTrigger>
+      {/* Entrada desde el trigger, salida y highlight que viaja: los pone DropdownMenuContent. */}
+      <DropdownMenuContent
+        data-workspace-menu
+        side={side}
+        align="start"
+        sideOffset={10}
+        collisionPadding={8}
+        loop
+        onCloseAutoFocus={(e) => {
+          // El foco vuelve al trigger, pero sin anillo de foco si se eligió con el puntero
+          // (el anillo es también el hover: quedaría «pegado» tras un clic).
+          e.preventDefault();
+          triggerRef.current?.focus({ focusVisible: false } as FocusOptions);
+        }}
+        className="w-[288px] rounded-[16px] p-1.5 shadow-none"
+        style={{
+          boxShadow:
+            "var(--cf-shadow-float, 0 12px 32px color-mix(in srgb, black 18%, transparent))",
+        }}
+      >
+        <WorkspaceRows
+          mode="menu"
+          workspaces={workspaces}
+          activeId={activeId}
+          checkedId={checkedId}
+          onChoose={choose}
+          heading={l.heading(workspaces.length)}
+          renderMark={renderMark}
+          reduced={reduced}
+        />
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -632,7 +597,7 @@ function SheetSwitcher({
   labels,
   className,
 }: WorkspaceSwitcherProps) {
-  const reduced = useReduced();
+  const reduced = useReducedMotionConfig() === true;
   const l = { ...DEFAULT_LABELS, ...labels };
   const active = workspaces.find((w) => w.id === activeId) ?? workspaces[0];
   const [isOpen, setOpen] = useOpenState(open, onOpenChange);

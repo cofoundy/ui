@@ -4,7 +4,9 @@ import { AnimatePresence, motion, useReducedMotionConfig } from "framer-motion";
 
 import { cn } from "../../utils/cn";
 import { springTransition } from "../../lib/spring";
-import { EdgeLayers } from "../ui/edge-layers";
+import { EdgeLayers, useEdgeIndicator } from "../ui/edge-layers";
+import { Badge } from "../ui/badge";
+import { NewDot } from "./NewIndicator";
 
 /**
  * TabBar — bottom navigation for phones (max. 5 destinations).
@@ -13,7 +15,8 @@ import { EdgeLayers } from "../ui/edge-layers";
  *    as Tabs and Switch): the leading edge on `--cf-spring-edge`, the trailing one on
  *    `--cf-spring-smooth` compressed to `--cf-duration-trail`. It stretches toward the target
  *    and settles; nothing animates a length. No slide-in on mount or after an "empty" state.
- *  - Numeric badge pops (scale, snappy) when its value changes; enters/leaves with scale+opacity.
+ *  - Numeric badge = `Badge count` (pop on the snappy spring, digit swap, enter/leave at 0);
+ *    the "new" dot = `NewDot` (enters once, never pulses). The pill is driven by `useEdgeIndicator`.
  *  - Press = `whileTap` scale .96 on the item's content.
  *  - Safe-area: the bar adds `env(safe-area-inset-bottom)` below its 56 px row (needs
  *    `viewport-fit=cover` in the page's viewport meta to be non-zero).
@@ -63,9 +66,6 @@ export const TabBar = React.forwardRef<HTMLElement, TabBarProps>(function TabBar
   const reduced = useReducedMotionConfig() === true;
   const navRef = React.useRef<HTMLElement | null>(null);
   const pillRef = React.useRef<HTMLSpanElement | null>(null);
-  const lastLeft = React.useRef<number | null>(null);
-  const reducedRef = React.useRef(reduced);
-  reducedRef.current = reduced;
 
   const setRefs = React.useCallback(
     (node: HTMLElement | null) => {
@@ -83,49 +83,14 @@ export const TabBar = React.forwardRef<HTMLElement, TabBarProps>(function TabBar
     }
   }
 
-  const measure = React.useCallback(() => {
-    const nav = navRef.current;
-    const pill = pillRef.current;
-    if (!nav || !pill) return;
-    const anchor = nav.querySelector<HTMLElement>(
-      '[data-slot="tab-bar-item"][data-active] [data-slot="tab-bar-anchor"]',
-    );
-    if (!anchor) {
-      // Nothing active (e.g. a screen that lives in "Más"): hide, and forget the position so
-      // the next active item gets the pill in place instead of sliding in from a stale spot.
-      pill.dataset.empty = "";
-      delete nav.dataset.cfDir;
-      lastLeft.current = null;
-      return;
-    }
-    const p = pill.getBoundingClientRect();
-    const a = anchor.getBoundingClientRect();
-    const l = a.left - p.left;
-    const r = a.right - p.left;
-    if (reducedRef.current || lastLeft.current === null) {
-      delete nav.dataset.cfDir; // no transition rule matches → instant placement
-    } else if (l !== lastLeft.current) {
-      nav.dataset.cfDir = l > lastLeft.current ? "right" : "left";
-    }
-    lastLeft.current = l;
-    pill.style.setProperty("--cf-edge-l", `${l}px`);
-    pill.style.setProperty("--cf-edge-r", `${r}px`);
-    delete pill.dataset.empty;
-  }, []);
-
-  React.useLayoutEffect(() => {
-    const nav = navRef.current;
-    if (!nav) return;
-    measure();
-    const mo = new MutationObserver(measure);
-    mo.observe(nav, { subtree: true, attributes: true, attributeFilter: ["data-active"] });
-    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => measure());
-    ro?.observe(nav);
-    return () => {
-      mo.disconnect();
-      ro?.disconnect();
-    };
-  }, [measure]);
+  // Nothing active (e.g. a screen that lives in "Más") hides the pill and forgets the position,
+  // so the next active item gets the pill in place instead of sliding in from a stale spot.
+  useEdgeIndicator(
+    navRef,
+    pillRef,
+    '[data-slot="tab-bar-item"][data-active] [data-slot="tab-bar-anchor"]',
+    { observe: ["data-active"], reduced, resetOnEmpty: true, armReady: false },
+  );
 
   const ctx = React.useMemo<TabBarContextValue>(
     () => ({ value, select: (v) => onValueChange?.(v), reduced }),
@@ -249,40 +214,21 @@ export const TabBarItem = React.forwardRef<HTMLButtonElement, TabBarItemProps>(f
         )}
       >
         {icon}
+        {/* Counter: Badge owns the pop (snappy), the digit swap and its own enter/leave at 0.
+            aria-hidden: the item's sr-only text below carries `badgeLabel`. */}
+        <span aria-hidden className="absolute -top-0.5 right-1.5">
+          <Badge
+            count={showBadge ? badge : 0}
+            max={badgeMax}
+            size="sm"
+            data-slot="tab-bar-badge"
+            className="text-[11px] font-semibold"
+            style={{ borderRadius: 9999, boxShadow: "0 0 0 2px var(--popover)" }}
+          />
+        </span>
         <AnimatePresence initial={false}>
-          {showBadge ? (
-            <motion.span
-              key="badge"
-              className="absolute -top-0.5 right-1.5"
-              initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.5 }}
-              transition={reduced ? { duration: 0 } : springTransition("snappy")}
-            >
-              {/* Keyed by value: the old number is gone before the new one pops — never two on top. */}
-              <motion.span
-                key={badgeText}
-                data-slot="tab-bar-badge"
-                className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[var(--primary)] px-1 text-[11px] font-semibold leading-none tabular-nums text-[var(--primary-foreground)]"
-                style={{ boxShadow: "0 0 0 2px var(--popover)" }}
-                initial={reduced ? false : { scale: 0.7 }}
-                animate={{ scale: 1 }}
-                transition={springTransition("snappy")}
-              >
-                <span aria-hidden>{badgeText}</span>
-              </motion.span>
-            </motion.span>
-          ) : dot ? (
-            <motion.span
-              key="dot"
-              aria-hidden
-              className="absolute right-3 top-0.5 size-2 rounded-full bg-[var(--primary)]"
-              style={{ boxShadow: "0 0 0 2px var(--popover)" }}
-              initial={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.5 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={reduced ? { opacity: 0 } : { opacity: 0, scale: 0.5 }}
-              transition={reduced ? { duration: 0 } : springTransition("snappy")}
-            />
+          {!showBadge && dot ? (
+            <NewDot key="dot" decorative ringColor="var(--popover)" className="right-3 top-0.5" />
           ) : null}
         </AnimatePresence>
       </span>

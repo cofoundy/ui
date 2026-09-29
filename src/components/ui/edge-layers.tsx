@@ -17,3 +17,6 @@ export function EdgeLayers() {
     </span>
   )
 }
+
+export { useEdgeIndicator } from "./use-edge-indicator"
+export type { UseEdgeIndicatorOptions } from "./use-edge-indicator"

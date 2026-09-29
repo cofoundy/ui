@@ -26,59 +26,10 @@ type SonnerToasterProps = ToasterProps & {
 }
 
 /*
- * Motion + brand layer over sonner. Scoped to `.cf-toaster` and doubled selectors so it wins
- * over sonner's own stylesheet AND the older `.cf-toaster` block in styles/index.css.
- *
- * - Every property that moves while the stack reflows (transform, height) rides the SAME
- *   spring (`--cf-spring-smooth`): sonner's default drops `height` onto a different 400 ms
- *   ease, so a front toast of a different height made the stack behind it jump.
- * - Exit: the smooth curve compressed to the snappy duration — leaves faster than it came,
- *   no overshoot either way.
- * - Content of a toast that goes BEHIND the stack leaves first (`--cf-duration-exit`); content
- *   that comes forward enters after (`--cf-duration-enter`). Never two texts at full ink.
- * - Reduced motion (OS or <MotionConfig reducedMotion="always">): no travel, opacity ≤ 120 ms.
+ * Motion + brand layer over sonner: the `.cf-toaster` block in `styles/index.css` (every
+ * property that moves during a restack rides --cf-spring-smooth; content leaves before and
+ * enters after; `.cf-toaster--reduce` = opacity only).
  */
-const TOASTER_CSS = `
-.cf-toaster.cf-toaster[data-sonner-toaster] [data-sonner-toast][data-sonner-toast]:not([data-swiping="true"]) {
-  transition:
-    transform var(--cf-spring-smooth-duration) var(--cf-spring-smooth),
-    height var(--cf-spring-smooth-duration) var(--cf-spring-smooth),
-    opacity var(--cf-duration-enter) linear,
-    box-shadow var(--cf-duration-fast) linear;
-}
-.cf-toaster.cf-toaster[data-sonner-toaster] [data-sonner-toast][data-sonner-toast][data-removed="true"]:not([data-swiping="true"]) {
-  transition:
-    transform var(--cf-spring-snappy-duration) var(--cf-spring-smooth),
-    height var(--cf-spring-snappy-duration) var(--cf-spring-smooth),
-    opacity var(--cf-duration-enter) linear;
-}
-.cf-toaster.cf-toaster [data-sonner-toast][data-sonner-toast] > * {
-  transition: opacity var(--cf-duration-enter) linear var(--cf-duration-exit);
-}
-.cf-toaster.cf-toaster [data-sonner-toast][data-sonner-toast][data-expanded="false"][data-front="false"] > * {
-  transition: opacity var(--cf-duration-exit) linear;
-}
-.cf-toaster.cf-toaster [data-sonner-toast][data-promise="true"] [data-icon] > svg {
-  animation-duration: var(--cf-spring-snappy-duration);
-  animation-timing-function: var(--cf-spring-smooth);
-}
-.cf-toaster [data-sonner-toast][data-type="success"] [data-icon] { color: var(--status-success, var(--cf-success)); }
-.cf-toaster [data-sonner-toast][data-type="warning"] [data-icon] { color: var(--status-warning, var(--cf-warning)); }
-.cf-toaster [data-sonner-toast][data-type="error"] [data-icon] { color: var(--destructive); }
-.cf-toaster [data-sonner-toast][data-type="info"] [data-icon],
-.cf-toaster [data-sonner-toast][data-type="loading"] [data-icon] { color: var(--primary); }
-.cf-toaster.cf-toaster--reduce[data-sonner-toaster] [data-sonner-toast][data-sonner-toast],
-.cf-toaster.cf-toaster--reduce[data-sonner-toaster] [data-sonner-toast][data-sonner-toast][data-removed="true"] {
-  transition: opacity 120ms linear !important;
-}
-.cf-toaster.cf-toaster--reduce [data-sonner-toast][data-sonner-toast] > * {
-  transition: opacity 120ms linear !important;
-}
-.cf-toaster.cf-toaster--reduce [data-sonner-toast] [data-icon] > svg { animation: none !important; opacity: 1 !important; transform: none !important; }
-@media (prefers-reduced-motion: reduce) {
-  .cf-toaster.cf-toaster[data-sonner-toaster] [data-sonner-toast][data-sonner-toast] { transition: opacity 120ms linear !important; }
-}
-`
 
 /**
  * Toast rule: a toast is for results the operator can't see where they tapped — an action
@@ -105,9 +56,7 @@ function Toaster({
   const reduce = useReducedMotionConfig() === true
   const dockOffset = dock === undefined ? undefined : { bottom: dock + 12 }
   return (
-    <>
-      <style data-cf-toaster="">{TOASTER_CSS}</style>
-      <Sonner
+    <Sonner
         theme={theme}
         position={position}
         className={cn(
@@ -142,8 +91,7 @@ function Toaster({
           } as React.CSSProperties
         }
         {...props}
-      />
-    </>
+    />
   )
 }
 

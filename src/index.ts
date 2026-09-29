@@ -348,7 +348,12 @@ export {
   NewChip,
   type NewDotProps,
   type NewChipProps,
+  NavListRow,
+  type NavListRowProps,
+  MoreSheetRow,
+  type MoreSheetRowProps,
 } from "./components/navigation";
+export { useEdgeIndicator, type UseEdgeIndicatorOptions } from "./components/ui/use-edge-indicator";
 
 // Plugins, estado y formularios generados (nav-motion 2026-09-29)
 export {

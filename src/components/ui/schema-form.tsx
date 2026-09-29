@@ -1,17 +1,18 @@
 import * as React from "react"
 import {
   AnimatePresence,
-  LayoutGroup,
   motion,
-  useReducedMotion,
   useReducedMotionConfig,
   type Transition,
 } from "framer-motion"
-import { ChevronDown, CircleAlert, Plus, X } from "lucide-react"
+import { CircleAlert, Plus, X } from "lucide-react"
 
 import { cn } from "../../utils/cn"
 import { springTransition, type SpringName } from "../../lib/spring"
 import { Switch } from "./switch"
+import { Input } from "./input"
+import { Collapsible, CollapsibleChevron, CollapsibleContent, CollapsibleTrigger } from "./collapsible"
+import { EdgeLayers, useEdgeIndicator } from "./edge-layers"
 
 /* ──────────────────────────────────────────────────────────────────────────────────────────
  * SchemaForm — a form generated from a JSON Schema (pydantic `model_json_schema()` shape)
@@ -219,25 +220,18 @@ export function validateSchemaForm(
 
 /* ── motion ─────────────────────────────────────────────────────────────────────────────── */
 
-/** `useReducedMotion()` (OS) OR a `<MotionConfig reducedMotion="always">` above us. */
-function useReduce() {
-  const os = useReducedMotion()
-  const cfg = useReducedMotionConfig()
-  return Boolean(os || cfg)
-}
-
 const INSTANT: Transition = { duration: 0 }
 /** Content leaves first (≈ 80 ms, opacity only: this text is < 14 px, blur would flicker). */
 const EXIT: Transition = { duration: 0.08, ease: "linear" as const }
 
 function useSprings() {
-  const reduce = useReduce()
+  const reduce = useReducedMotionConfig() ?? false
   return React.useMemo(
     () => ({
       reduce,
       t: (name: SpringName): Transition => (reduce ? INSTANT : springTransition(name)),
       exit: reduce ? INSTANT : EXIT,
-      /** Height auto (smooth) then the content's opacity, once the box is mostly open. */
+      /** Service rows: height auto (smooth), then the content's opacity once the box is mostly open. */
       reveal: {
         initial: { height: 0, opacity: 0 },
         animate: {
@@ -373,6 +367,18 @@ function FieldShell({
 
 /* ── widgets ────────────────────────────────────────────────────────────────────────────── */
 
+/**
+ * Radiogroup whose selection is ONE pill with two edges (`EdgeLayers`), the same indicator as
+ * Tabs and Switch: the leading edge rides `edge`, the trailing one the compressed `smooth`,
+ * so it stretches and settles. `useEdgeIndicator` measures the checked radio; nothing checked
+ * (no value yet) hides the pill and the first choice places it in place, without sliding in.
+ */
+const SEG_PILL_STYLE = {
+  "--cf-edge-fill": "var(--background)",
+  filter:
+    "drop-shadow(1px 0 0 var(--border)) drop-shadow(-1px 0 0 var(--border)) drop-shadow(0 1px 0 var(--border)) drop-shadow(0 -1px 0 var(--border)) drop-shadow(0 1px 2px color-mix(in srgb, var(--foreground) 10%, transparent))",
+} as React.CSSProperties
+
 function Segmented({
   id,
   options,
@@ -388,6 +394,13 @@ function Segmented({
 }) {
   const { t, reduce } = useSprings()
   const refs = React.useRef<(HTMLButtonElement | null)[]>([])
+  const listRef = React.useRef<HTMLDivElement | null>(null)
+  const pillRef = React.useRef<HTMLSpanElement | null>(null)
+  useEdgeIndicator(listRef, pillRef, '[role="radio"][data-state="checked"]', {
+    concentric: true,
+    resetOnEmpty: true,
+    reduced: reduce,
+  })
   const idx = Math.max(
     0,
     options.findIndex(([v]) => v === String(value)),
@@ -398,61 +411,61 @@ function Segmented({
     refs.current[n]?.focus()
   }
   return (
-    <LayoutGroup id={id}>
-      <div
-        id={id}
-        role="radiogroup"
-        aria-labelledby={labelledBy}
-        className="inline-flex w-full gap-1 self-start rounded-[12px] border border-[var(--border)] bg-[var(--muted)] p-1 sm:w-auto"
+    <div
+      ref={listRef}
+      id={id}
+      role="radiogroup"
+      aria-labelledby={labelledBy}
+      data-slot="schema-form-segmented"
+      className="relative inline-flex w-full gap-1 self-start rounded-[12px] border border-[var(--border)] bg-[var(--muted)] p-1 sm:w-auto"
+    >
+      <span
+        ref={pillRef}
+        aria-hidden
+        data-slot="schema-form-segmented-pill"
+        className="pointer-events-none absolute inset-1 overflow-clip data-[empty]:opacity-0"
+        style={SEG_PILL_STYLE}
       >
-        {options.map(([v, l], i) => {
-          const on = v === String(value)
-          return (
-            <motion.button
-              key={v}
-              ref={(n) => {
-                refs.current[i] = n
-              }}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              tabIndex={on || (value === undefined && i === 0) ? 0 : -1}
-              onClick={() => onChange(v)}
-              onKeyDown={(e) => {
-                if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-                  e.preventDefault()
-                  move(1)
-                } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-                  e.preventDefault()
-                  move(-1)
-                }
-              }}
-              whileTap={reduce ? undefined : { scale: 0.96 }}
-              transition={t("snappy")}
-              className={cn(
-                // Inactive options stack ABOVE the travelling pill (it lives in the active one and
-                // flies over its siblings), so no label is ever covered mid-flight.
-                on ? "z-0" : "z-10",
-                "relative h-9 flex-1 rounded-[8px] px-3.5 text-[14px] font-medium outline-none sm:flex-none",
-                "focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--ring)_35%,transparent)]",
-                colorT,
-                on ? "text-[var(--foreground)]" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
-              )}
-            >
-              {on ? (
-                <motion.span
-                  layoutId="pill"
-                  aria-hidden
-                  transition={t("edge")}
-                  className="absolute inset-0 rounded-[8px] bg-[var(--background)] shadow-[0_1px_2px_rgba(0,0,0,.12),0_0_0_1px_var(--border)]"
-                />
-              ) : null}
-              <span className="relative">{l}</span>
-            </motion.button>
-          )
-        })}
-      </div>
-    </LayoutGroup>
+        <EdgeLayers />
+      </span>
+      {options.map(([v, l], i) => {
+        const on = v === String(value)
+        return (
+          <motion.button
+            key={v}
+            ref={(n) => {
+              refs.current[i] = n
+            }}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            data-state={on ? "checked" : "unchecked"}
+            tabIndex={on || (value === undefined && i === 0) ? 0 : -1}
+            onClick={() => onChange(v)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+                e.preventDefault()
+                move(1)
+              } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+                e.preventDefault()
+                move(-1)
+              }
+            }}
+            whileTap={reduce ? undefined : { scale: 0.96 }}
+            transition={t("snappy")}
+            className={cn(
+              // Labels sit above the pill, which lives in the list, not in the active option.
+              "relative z-[1] h-9 flex-1 rounded-[8px] px-3.5 text-[14px] font-medium outline-none sm:flex-none",
+              "focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--ring)_35%,transparent)]",
+              colorT,
+              on ? "text-[var(--foreground)]" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
+            )}
+          >
+            {l}
+          </motion.button>
+        )
+      })}
+    </div>
   )
 }
 
@@ -478,7 +491,7 @@ function NumberInput({
   const shown = draft ?? (value === null || value === undefined || Number.isNaN(value) ? "" : String(value))
   return (
     <div className="flex items-center gap-2">
-      <input
+      <Input
         id={id}
         inputMode="decimal"
         aria-invalid={invalid || undefined}
@@ -532,6 +545,8 @@ function DurationInput({
         onChange={(n) => onChange(n === null || Number.isNaN(n) ? n : Math.round((n * UNIT_MIN[unit]) / UNIT_MIN[base]))}
       />
       {units.length > 1 ? (
+        // Native <select> on purpose: 2–3 options, and on a phone it opens the OS picker (wheel /
+        // sheet) instead of a popover that fights the on-screen keyboard. Styled like `Input`.
         <select
           aria-label={s.unitAria}
           className={cn(inputCls, "w-auto pr-8")}
@@ -608,7 +623,7 @@ function TagsInput({
           </motion.span>
         ))}
       </AnimatePresence>
-      <input
+      <Input
         id={id}
         value={txt}
         aria-describedby={describedBy}
@@ -623,7 +638,8 @@ function TagsInput({
         }}
         onBlur={add}
         placeholder={list.length ? s.tagsAddAnother : (placeholder ?? s.tagsPlaceholder)}
-        className="h-8 min-w-[140px] flex-1 bg-transparent px-1.5 text-[16px] text-[var(--foreground)] outline-none placeholder:text-[var(--muted-foreground)] md:text-[14px]"
+        // The chip box is the field (border + focus ring); the Input inside is bare.
+        className="h-8 w-auto min-w-[140px] flex-1 rounded-none border-0 bg-transparent px-1.5 py-0 text-[16px] shadow-none focus-visible:ring-0 md:text-[14px]"
       />
     </div>
   )
@@ -669,7 +685,7 @@ function ServiceList({
         {list.map((svc, i) => (
           <motion.div key={keys.current[i]} {...reveal} className="overflow-hidden">
             <div className="flex items-center gap-2 pb-2">
-              <input
+              <Input
                 ref={i === list.length - 1 ? lastNameRef : undefined}
                 aria-label={s.serviceName}
                 aria-invalid={(invalid && !String(svc.name ?? "").trim()) || undefined}
@@ -823,7 +839,6 @@ function NullableThreshold({
   highlight?: boolean
   s: SchemaFormStrings
 }) {
-  const { reveal } = useSprings()
   const on = value !== null && value !== undefined
   const unit = field["x-unit"]
   return (
@@ -844,22 +859,18 @@ function NullableThreshold({
           onCheckedChange={(next) => onChange(next ? Number(field.default ?? field.minimum ?? 1) : null)}
         />
       </div>
-      <AnimatePresence initial={false}>
-        {on ? (
-          <motion.div key="n" {...reveal} className="overflow-hidden">
-            <div className="pt-2.5">
-              <NumberInput
-                id={id}
-                value={value}
-                invalid={Boolean(error)}
-                describedBy={`${id}-msg`}
-                onChange={(n) => onChange(n)}
-                suffix={suffix ?? (unit ? unitWord(s, unit, Number(value)) : undefined)}
-              />
-            </div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      <Collapsible open={on}>
+        <CollapsibleContent className="pt-2.5">
+          <NumberInput
+            id={id}
+            value={value}
+            invalid={Boolean(error)}
+            describedBy={`${id}-msg`}
+            onChange={(n) => onChange(n)}
+            suffix={suffix ?? (unit ? unitWord(s, unit, Number(value)) : undefined)}
+          />
+        </CollapsibleContent>
+      </Collapsible>
       <FieldMessage id={`${id}-msg`} error={error} />
     </div>
   )
@@ -917,7 +928,7 @@ export function SchemaForm({
   const s = React.useMemo(() => ({ ...SCHEMA_FORM_STRINGS, ...stringsProp }), [stringsProp])
   const auto = React.useId()
   const prefix = idPrefix ?? `sf${auto.replace(/:/g, "")}`
-  const { t, reveal, reduce } = useSprings()
+  const { t, reduce } = useSprings()
   const [open, setOpen] = React.useState<Record<string, boolean>>({})
 
   const entries = Object.entries(schema.properties)
@@ -1039,6 +1050,7 @@ export function SchemaForm({
       labelFor = false
       control = <Segmented id={id} options={enumOpts} value={v} onChange={(x) => set(k, x)} labelledBy={`${id}-label`} />
     } else if (f.enum) {
+      // Native <select> on purpose (long enums): on a phone the OS picker beats a popover.
       control = (
         <select
           id={id}
@@ -1069,7 +1081,7 @@ export function SchemaForm({
     } else {
       // `secret` / links / plain strings.
       control = (
-        <input
+        <Input
           id={id}
           aria-invalid={invalid || undefined}
           aria-describedby={msgId}
@@ -1091,69 +1103,84 @@ export function SchemaForm({
     )
   }
 
-  /** Fields of a group; the ones toggled by `x-show-if` open and close with animated height. */
-  const renderFields = (list: [string, SchemaFormField][]) => (
-    <div className="flex flex-col">
-      <AnimatePresence initial={false}>
-        {list.map(([k, f], i) => (
-          <motion.div key={k} {...(f["x-show-if"] ? reveal : {})} className={f["x-show-if"] ? "overflow-hidden" : undefined}>
-            <div className={i === 0 ? undefined : "pt-5"}>{renderField(k, f)}</div>
-          </motion.div>
-        ))}
-      </AnimatePresence>
-    </div>
-  )
+  /**
+   * Fields of a group. The ones with `x-show-if` stay in the list and open/close through
+   * `Collapsible` (animated height; unmounted once closed). The gap above a field is padding
+   * inside its box, so it is clipped with the field instead of popping.
+   */
+  const renderFields = (list: [string, SchemaFormField][]) => {
+    const firstVisible = list.find(([, f]) => isSchemaFieldVisible(f, value))?.[0]
+    return (
+      <div className="flex flex-col">
+        {list.map(([k, f]) => {
+          const pad = k === firstVisible ? undefined : "pt-5"
+          if (!f["x-show-if"]) {
+            return (
+              <div key={k} className={pad}>
+                {renderField(k, f)}
+              </div>
+            )
+          }
+          return (
+            <Collapsible key={k} open={isSchemaFieldVisible(f, value)}>
+              <CollapsibleContent className={pad}>{renderField(k, f)}</CollapsibleContent>
+            </Collapsible>
+          )
+        })}
+      </div>
+    )
+  }
 
   const plainGroups = groups.filter((g) => !g.advanced).length
 
   return (
     <div data-slot="schema-form" className={cn("flex min-w-0 flex-col gap-7", className)}>
       {groups.map((g) => {
-        const fields = entries.filter(([, f]) => (f["x-group"] ?? firstGroup) === g.key && isSchemaFieldVisible(f, value))
-        if (!fields.length) return null
-        const hasError = fields.some(([k]) => errors[k])
+        // Every field of the group (the hidden `x-show-if` ones animate out); the group itself
+        // only renders while at least one of them is visible.
+        const fields = entries.filter(([, f]) => (f["x-group"] ?? firstGroup) === g.key)
+        const visible = fields.filter(([, f]) => isSchemaFieldVisible(f, value))
+        if (!visible.length) return null
+        const hasError = visible.some(([k]) => errors[k])
         const title = g.title ?? g.key
         if (g.advanced) {
           const isOpen = Boolean(open[g.key]) || hasError
-          const panelId = `${prefix}-g-${g.key}`
           return (
-            <section key={g.key} className="border-t border-[var(--border)] pt-2">
-              <motion.button
-                type="button"
-                aria-expanded={isOpen}
-                aria-controls={panelId}
-                whileTap={reduce ? undefined : { scale: 0.985 }}
-                transition={t("snappy")}
-                onClick={() => setOpen((o) => ({ ...o, [g.key]: !isOpen }))}
-                className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center justify-between rounded-[8px] px-2 text-left text-[13.5px] font-semibold text-[var(--foreground)] outline-none hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--ring)_35%,transparent)]"
-              >
-                {title}
-                <span className="flex items-center gap-2 text-[12.5px] font-normal text-[var(--muted-foreground)]">
-                  <AnimatePresence initial={false} mode="wait">
-                    {isOpen ? null : (
-                      <motion.span
-                        key="opt"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1, transition: reduce ? INSTANT : { duration: 0.12, ease: "linear" as const } }}
-                        exit={{ opacity: 0, transition: reduce ? INSTANT : EXIT }}
-                      >
-                        {s.optional}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                  <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={t("snappy")} className="grid place-items-center">
-                    <ChevronDown aria-hidden className="size-4" />
-                  </motion.span>
-                </span>
-              </motion.button>
-              <AnimatePresence initial={false}>
-                {isOpen ? (
-                  <motion.div key="body" id={panelId} {...reveal} className="overflow-hidden">
-                    <div className="pb-1 pt-3">{renderFields(fields)}</div>
-                  </motion.div>
-                ) : null}
-              </AnimatePresence>
-            </section>
+            <Collapsible
+              key={g.key}
+              asChild
+              open={isOpen}
+              onOpenChange={(next) => setOpen((o) => ({ ...o, [g.key]: next }))}
+            >
+              <section className="border-t border-[var(--border)] pt-2">
+                <CollapsibleTrigger asChild>
+                  <motion.button
+                    type="button"
+                    whileTap={reduce ? undefined : { scale: 0.985 }}
+                    transition={t("snappy")}
+                    className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] items-center justify-between rounded-[8px] px-2 text-left text-[13.5px] font-semibold text-[var(--foreground)] outline-none hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] focus-visible:ring-[3px] focus-visible:ring-[color-mix(in_srgb,var(--ring)_35%,transparent)]"
+                  >
+                    {title}
+                    <span className="flex items-center gap-2 text-[12.5px] font-normal text-[var(--muted-foreground)]">
+                      <AnimatePresence initial={false} mode="wait">
+                        {isOpen ? null : (
+                          <motion.span
+                            key="opt"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1, transition: reduce ? INSTANT : { duration: 0.12, ease: "linear" as const } }}
+                            exit={{ opacity: 0, transition: reduce ? INSTANT : EXIT }}
+                          >
+                            {s.optional}
+                          </motion.span>
+                        )}
+                      </AnimatePresence>
+                      <CollapsibleChevron />
+                    </span>
+                  </motion.button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="pb-1 pt-3">{renderFields(fields)}</CollapsibleContent>
+              </section>
+            </Collapsible>
           )
         }
         return (

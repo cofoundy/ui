@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { createPortal } from "react-dom";
+import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { AnimatePresence, motion, useReducedMotionConfig } from "framer-motion";
 
 import { cn } from "../../utils/cn";
 import { springTransition } from "../../lib/spring";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuLabel, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 /**
  * NavRailOverflow — a vertical rail region that MEASURES the height it has (ResizeObserver) and
@@ -107,7 +108,10 @@ export interface NavRailOverflowProps<T> {
   /** Controlled open state (optional). */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-  /** Where the popover is portalled. Default `document.body`. */
+  /**
+   * @deprecated No-op since the popover became the package `DropdownMenuContent` (always
+   * portalled to `document.body`). Kept so existing callers still type-check.
+   */
   portalContainer?: HTMLElement | null;
   /** Class of the measured column (it is `flex-1 min-h-0 overflow-hidden flex-col`). */
   className?: string;
@@ -151,7 +155,6 @@ export function NavRailOverflow<T>({
   anchorRef,
   open: openProp,
   onOpenChange,
-  portalContainer,
   className,
   itemClassName,
   triggerClassName,
@@ -159,7 +162,6 @@ export function NavRailOverflow<T>({
   onVisibleCountChange,
 }: NavRailOverflowProps<T>) {
   const reduce = useReducedMotionConfig() ?? false;
-  const popoverId = React.useId();
 
   // ── open state (controlled or not) ──
   const [openState, setOpenState] = React.useState(false);
@@ -265,102 +267,16 @@ export function NavRailOverflow<T>({
     if (open && hiddenCount === 0) close();
   }, [open, hiddenCount, close]);
 
-  // ── popover position: anchored to the trigger, clamped to the viewport ──
-  const popRef = React.useRef<HTMLDivElement>(null);
-  const [pos, setPos] = React.useState<{ top: number; left: number; width: number; maxHeight: number } | null>(null);
-
-  const place = React.useCallback(() => {
-    const t = triggerRef.current;
-    const p = popRef.current;
-    if (!t || !p) return;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const tr = t.getBoundingClientRect();
-    const ar = anchorRef?.current?.getBoundingClientRect() ?? tr;
-    const width = Math.min(popoverWidth, vw - VIEWPORT_MARGIN * 2);
-    const maxHeight = vh - VIEWPORT_MARGIN * 2;
-    const h = Math.min(p.scrollHeight, maxHeight);
-    // First row lines up with the trigger (minus the panel's padding), then clamp.
-    const top = Math.max(VIEWPORT_MARGIN, Math.min(tr.top - 6, vh - h - VIEWPORT_MARGIN));
-    let left = ar.right + sideOffset;
-    if (left + width > vw - VIEWPORT_MARGIN) left = ar.left - sideOffset - width; // no room: flip
-    left = Math.max(VIEWPORT_MARGIN, Math.min(left, vw - width - VIEWPORT_MARGIN));
-    setPos((prev) =>
-      prev && prev.top === top && prev.left === left && prev.width === width && prev.maxHeight === maxHeight
-        ? prev
-        : { top, left, width, maxHeight },
-    );
-  }, [anchorRef, popoverWidth, sideOffset]);
-
+  // `anchorRef`: the popover opens past that element's edge instead of the trigger's. Radix
+  // anchors to the trigger, so the difference becomes extra side offset, measured on open.
+  const [extraOffset, setExtraOffset] = React.useState(0);
   useIsoLayoutEffect(() => {
-    if (!open) {
-      setPos(null);
-      return;
-    }
-    place();
-  }, [open, place, hiddenCount]);
-
-  React.useEffect(() => {
     if (!open) return;
-    const onResize = () => place();
-    window.addEventListener("resize", onResize);
-    window.addEventListener("scroll", onResize, true);
-    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(onResize) : null;
-    if (ro && popRef.current) ro.observe(popRef.current);
-    return () => {
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("scroll", onResize, true);
-      ro?.disconnect();
-    };
-  }, [open, place]);
-
-  // ── dismissal: outside press, Esc, focus leaving ──
-  const openedByKeyboard = React.useRef(false);
-  React.useEffect(() => {
-    if (!open) return;
-    const onDown = (e: PointerEvent) => {
-      const target = e.target as Node;
-      if (popRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
-      close();
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      e.stopPropagation();
-      close();
-      triggerRef.current?.focus();
-    };
-    document.addEventListener("pointerdown", onDown, true);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("pointerdown", onDown, true);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open, close]);
-
-  // Opened from the keyboard → focus lands on the first row.
-  React.useEffect(() => {
-    if (!open || !pos || !openedByKeyboard.current) return;
-    openedByKeyboard.current = false;
-    focusables(popRef.current)[0]?.focus();
-  }, [open, pos]);
-
-  const onPopoverKeyDown = (e: React.KeyboardEvent) => {
-    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
-    const els = focusables(popRef.current);
-    if (!els.length) return;
-    e.preventDefault();
-    const i = els.indexOf(document.activeElement as HTMLElement);
-    const next =
-      e.key === "Home" ? 0 : e.key === "End" ? els.length - 1 : e.key === "ArrowDown" ? (i + 1) % els.length : (i - 1 + els.length) % els.length;
-    els[next]?.focus();
-  };
-
-  const onPopoverBlur = (e: React.FocusEvent) => {
-    const to = e.relatedTarget as Node | null;
-    if (!to) return;
-    if (popRef.current?.contains(to) || triggerRef.current?.contains(to)) return;
-    close();
-  };
+    const t = triggerRef.current?.getBoundingClientRect();
+    const a = anchorRef?.current?.getBoundingClientRect();
+    const next = t && a ? Math.max(0, Math.round(a.right - t.right)) : 0;
+    setExtraOffset((prev) => (prev === next ? prev : next));
+  }, [open, anchorRef]);
 
   // ── render ──
   const titleNode = typeof title === "function" ? title(hidden) : (title ?? label);
@@ -378,8 +294,6 @@ export function NavRailOverflow<T>({
     if (el) itemEls.current.set(k, el);
     else itemEls.current.delete(k);
   };
-
-  const portalTarget = portalContainer ?? (typeof document !== "undefined" ? document.body : null);
 
   return (
     <div
@@ -404,216 +318,122 @@ export function NavRailOverflow<T>({
 
       {hiddenCount > 0 && (
         <div className="flex w-full shrink-0 justify-center">
-          <motion.button
-            ref={triggerRef}
-            type="button"
-            data-slot="nav-rail-overflow-trigger"
-            data-state={open ? "open" : "closed"}
-            data-active={hiddenActive || undefined}
-            aria-expanded={open}
-            aria-controls={open ? popoverId : undefined}
-            aria-haspopup="true"
-            aria-label={ariaLabel}
-            onClick={(e) => {
-              openedByKeyboard.current = e.detail === 0;
-              setOpen(!open);
-            }}
-            whileTap={reduce ? undefined : { scale: 0.94 }}
-            transition={SPRING_SNAPPY}
-            className={cn(
-              "group/overflow flex items-center justify-center text-[var(--muted-foreground)] outline-none transition-colors hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
-              showLabel ? "w-full flex-col gap-1 rounded-[10px] px-1 py-1.5" : "size-9 rounded-[10px]",
-              on && "text-[var(--nav-overflow-active-fg)] hover:text-[var(--nav-overflow-active-fg)]",
-              triggerClassName,
-            )}
-            style={TOKENS}
-          >
-            {renderTrigger ? (
-              renderTrigger({ count: hiddenCount, open, active: hiddenActive })
-            ) : (
-              <>
-                <span
-                  className={cn(
-                    "flex items-center justify-center overflow-hidden font-mono text-[12px] font-semibold tabular-nums transition-colors",
-                    showLabel ? "h-7 w-11 rounded-full" : "size-9 rounded-[10px]",
-                    on
-                      ? "bg-[var(--nav-overflow-active-bg)]"
-                      : "group-hover/overflow:bg-[var(--accent)]",
-                  )}
-                >
-                  {/* The count changes when the window resizes: old number leaves, new one enters.
-                      Text is 12 px → opacity only (blur flickers on small text). */}
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.span
-                      key={hiddenCount}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1, transition: reduce ? REDUCED : SPRING_SMOOTH }}
-                      exit={{ opacity: 0, transition: EXIT }}
+          {/* Non-modal: the rest of the rail stays hoverable while the list is open. Radix gives
+              us Esc/outside-press dismissal, focus on open-by-keyboard, arrow keys and typeahead. */}
+          <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
+            <DropdownMenuTrigger asChild>
+              <motion.button
+                ref={triggerRef}
+                type="button"
+                data-slot="nav-rail-overflow-trigger"
+                data-active={hiddenActive || undefined}
+                aria-label={ariaLabel}
+                whileTap={reduce ? undefined : { scale: 0.94 }}
+                transition={SPRING_SNAPPY}
+                className={cn(
+                  "group/overflow flex items-center justify-center text-[var(--muted-foreground)] outline-none transition-colors hover:text-[var(--foreground)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
+                  showLabel ? "w-full flex-col gap-1 rounded-[10px] px-1 py-1.5" : "size-9 rounded-[10px]",
+                  on && "text-[var(--nav-overflow-active-fg)] hover:text-[var(--nav-overflow-active-fg)]",
+                  triggerClassName,
+                )}
+                style={TOKENS}
+              >
+                {renderTrigger ? (
+                  renderTrigger({ count: hiddenCount, open, active: hiddenActive })
+                ) : (
+                  <>
+                    <span
+                      className={cn(
+                        "flex items-center justify-center overflow-hidden font-mono text-[12px] font-semibold tabular-nums transition-colors",
+                        showLabel ? "h-7 w-11 rounded-full" : "size-9 rounded-[10px]",
+                        on ? "bg-[var(--nav-overflow-active-bg)]" : "group-hover/overflow:bg-[var(--accent)]",
+                      )}
                     >
-                      +{hiddenCount}
-                    </motion.span>
-                  </AnimatePresence>
-                </span>
-                {showLabel && <span className="text-center text-[10.5px] font-medium leading-none">{label}</span>}
-              </>
-            )}
-          </motion.button>
+                      {/* The count changes when the window resizes: old number leaves, new one enters.
+                          Text is 12 px → opacity only (blur flickers on small text). */}
+                      <AnimatePresence mode="wait" initial={false}>
+                        <motion.span
+                          key={hiddenCount}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1, transition: reduce ? REDUCED : SPRING_SMOOTH }}
+                          exit={{ opacity: 0, transition: EXIT }}
+                        >
+                          +{hiddenCount}
+                        </motion.span>
+                      </AnimatePresence>
+                    </span>
+                    {showLabel && <span className="text-center text-[10.5px] font-medium leading-none">{label}</span>}
+                  </>
+                )}
+              </motion.button>
+            </DropdownMenuTrigger>
+
+            {/* The package surface: grows out of the trigger (smooth), stays 8 px inside the
+                viewport (`collisionPadding`), flips left when there is no room on the right.
+                Title fixed; only the list scrolls. First row lines up with the trigger
+                (alignOffset = −panel padding). */}
+            <DropdownMenuContent
+              side="right"
+              align="start"
+              sideOffset={sideOffset + extraOffset}
+              alignOffset={-6}
+              collisionPadding={VIEWPORT_MARGIN}
+              aria-label={typeof titleNode === "string" ? titleNode : ariaLabel}
+              data-slot="nav-rail-overflow-popover"
+              className={cn(
+                "flex flex-col overflow-hidden rounded-[14px] p-1.5",
+                "max-h-[var(--radix-dropdown-menu-content-available-height)]",
+                popoverClassName,
+              )}
+              style={{
+                ...TOKENS,
+                width: `min(${popoverWidth}px, calc(100vw - ${VIEWPORT_MARGIN * 2}px))`,
+                boxShadow: "var(--nav-overflow-shadow)",
+              }}
+            >
+              <DropdownMenuLabel className={cn(KICKER, "shrink-0 pb-1 pt-1.5")}>{titleNode}</DropdownMenuLabel>
+              <motion.ul
+                role="none"
+                className="min-h-0 overflow-y-auto overscroll-contain"
+                variants={list}
+                initial="hidden"
+                animate="show"
+              >
+                {hidden.map((item, i) => {
+                  const index = shownCount + i;
+                  const section = getSection?.(item);
+                  const prevSection = i > 0 ? getSection?.(hidden[i - 1]) : undefined;
+                  const newSection = !!getSection && i > 0 && section !== prevSection && !!section;
+                  const node = renderItem(item, { placement: "menu", index, close });
+                  return (
+                    <motion.li key={keys[index]} role="none" variants={row}>
+                      {newSection && (
+                        <DropdownMenuLabel className={cn(KICKER, "mt-1 border-t border-[var(--border)] pb-1 pt-2.5")}>
+                          {section}
+                        </DropdownMenuLabel>
+                      )}
+                      {/* A single element becomes a Radix menu item (roving focus, typeahead,
+                          select closes the menu). It must forward its ref and props — NavListRow does. */}
+                      {React.isValidElement(node) ? <DropdownMenuPrimitive.Item asChild>{node}</DropdownMenuPrimitive.Item> : node}
+                    </motion.li>
+                  );
+                })}
+              </motion.ul>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
-
-      {portalTarget &&
-        createPortal(
-          <AnimatePresence>
-            {open && hiddenCount > 0 && (
-              <motion.div
-                ref={popRef}
-                id={popoverId}
-                role="region"
-                aria-label={typeof titleNode === "string" ? titleNode : ariaLabel}
-                data-slot="nav-rail-overflow-popover"
-                initial={reduce ? { opacity: 0 } : { opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0, transition: reduce ? REDUCED : SPRING_SMOOTH }}
-                exit={{ opacity: 0, transition: EXIT }}
-                onKeyDown={onPopoverKeyDown}
-                onBlur={onPopoverBlur}
-                className={cn(
-                  "fixed z-50 flex flex-col rounded-[14px] border border-[var(--border)] bg-[var(--popover)] p-1.5 text-[var(--popover-foreground)]",
-                  popoverClassName,
-                )}
-                style={{
-                  ...TOKENS,
-                  top: pos?.top ?? VIEWPORT_MARGIN,
-                  left: pos?.left ?? VIEWPORT_MARGIN,
-                  width: pos?.width ?? popoverWidth,
-                  maxHeight: pos?.maxHeight ?? `calc(100dvh - ${VIEWPORT_MARGIN * 2}px)`,
-                  visibility: pos ? "visible" : "hidden",
-                  boxShadow: "var(--nav-overflow-shadow)",
-                }}
-              >
-                <p className="shrink-0 px-2.5 pb-1 pt-1.5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-                  {titleNode}
-                </p>
-                <motion.ul
-                  className="min-h-0 overflow-y-auto overscroll-contain"
-                  variants={list}
-                  initial="hidden"
-                  animate="show"
-                >
-                  {hidden.map((item, i) => {
-                    const index = shownCount + i;
-                    const section = getSection?.(item);
-                    const prevSection = i > 0 ? getSection?.(hidden[i - 1]) : undefined;
-                    const newSection = !!getSection && i > 0 && section !== prevSection && !!section;
-                    return (
-                      <motion.li key={keys[index]} variants={row}>
-                        {newSection && (
-                          <p className="mt-1 border-t border-[var(--border)] px-2.5 pb-1 pt-2.5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--muted-foreground)]">
-                            {section}
-                          </p>
-                        )}
-                        {renderItem(item, { placement: "menu", index, close })}
-                      </motion.li>
-                    );
-                  })}
-                </motion.ul>
-              </motion.div>
-            )}
-          </AnimatePresence>,
-          portalTarget,
-        )}
     </div>
   );
 }
 
 // ───────────────────────── row helper ─────────────────────────
 
-export interface NavRailOverflowRowProps
-  extends Omit<React.HTMLAttributes<HTMLElement>, "onSelect" | "title"> {
-  /** Icon element (16 px), drawn in a 32 px tile. */
-  icon?: React.ReactNode;
-  label: React.ReactNode;
-  /** One-line hint; clamps to 2 lines. */
-  description?: React.ReactNode;
-  /** Something after the label (a «nuevo» chip, a count). */
-  trailing?: React.ReactNode;
-  active?: boolean;
-  /** Renders an `<a>` instead of a `<button>`. */
-  href?: string;
-  onSelect?: () => void;
-}
-
 /**
- * A ready-made row for the «+N» popover (icon + label + description), 48 px tall, radius 8 inside
- * the 14 px panel with 6 px padding. Optional: `renderItem` can draw any row it wants.
+ * `NavRailOverflowRow` is the shared `NavListRow` (`size="sm"`), re-exported under its old name.
+ * Optional: `renderItem` can draw any row it wants.
  */
-export const NavRailOverflowRow = React.forwardRef<HTMLElement, NavRailOverflowRowProps>(
-  function NavRailOverflowRow({ icon, label, description, trailing, active, href, onSelect, className, onClick, ...rest }, ref) {
-    const cls = cn(
-      "flex min-h-12 w-full items-center gap-3 rounded-[8px] px-2.5 py-2 text-left outline-none transition-colors",
-      "hover:bg-[var(--accent)] focus-visible:bg-[var(--accent)] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--ring)]",
-      active && "bg-[var(--nav-overflow-active-bg)] hover:bg-[var(--nav-overflow-active-bg)]",
-      className,
-    );
-    const body = (
-      <>
-        {icon && (
-          <span
-            aria-hidden
-            className={cn(
-              "flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-[var(--muted)] [&_svg]:size-4",
-              active ? "text-[var(--nav-overflow-active-fg)]" : "text-[var(--foreground)]",
-            )}
-          >
-            {icon}
-          </span>
-        )}
-        <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2 text-[14px] font-medium text-[var(--popover-foreground)]">
-            <span className="truncate">{label}</span>
-            {trailing}
-          </span>
-          {description && (
-            <span className="mt-0.5 line-clamp-2 block text-[12px] leading-snug text-[var(--muted-foreground)]">
-              {description}
-            </span>
-          )}
-        </span>
-      </>
-    );
-    const handle = (e: React.MouseEvent<HTMLElement>) => {
-      onClick?.(e);
-      if (!e.defaultPrevented) onSelect?.();
-    };
-    if (href) {
-      return (
-        <a
-          ref={ref as React.Ref<HTMLAnchorElement>}
-          href={href}
-          aria-current={active ? "page" : undefined}
-          className={cls}
-          onClick={handle}
-          style={TOKENS}
-          {...rest}
-        >
-          {body}
-        </a>
-      );
-    }
-    return (
-      <button
-        ref={ref as React.Ref<HTMLButtonElement>}
-        type="button"
-        aria-current={active ? "page" : undefined}
-        className={cls}
-        onClick={handle}
-        style={TOKENS}
-        {...rest}
-      >
-        {body}
-      </button>
-    );
-  },
-);
+export { NavRailOverflowRow, type NavRailOverflowRowProps } from "./NavListRow";
 
 // ───────────────────────── internals ─────────────────────────
 
@@ -627,11 +447,8 @@ const TOKENS = {
   "--nav-overflow-shadow": "var(--cf-shadow-float, 0 12px 32px rgb(0 0 0 / 0.18), 0 2px 6px rgb(0 0 0 / 0.08))",
 } as React.CSSProperties;
 
-function noop() {}
+/** Kicker of the popover title and of each section (overrides DropdownMenuLabel's text-sm). */
+const KICKER =
+  "px-2.5 font-mono text-[10px] font-medium uppercase tracking-[0.14em] text-[var(--muted-foreground)]";
 
-function focusables(root: HTMLElement | null): HTMLElement[] {
-  if (!root) return [];
-  return Array.from(
-    root.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'),
-  );
-}
+function noop() {}

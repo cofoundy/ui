@@ -26,3 +26,5 @@ export {
   type WorkspaceMarkProps,
 } from "./WorkspaceSwitcher";
 export { NewDot, NewChip, type NewDotProps, type NewChipProps } from "./NewIndicator";
+export { NavListRow, type NavListRowProps } from "./NavListRow";
+export { MoreSheetRow, type MoreSheetRowProps } from "./MoreSheet";

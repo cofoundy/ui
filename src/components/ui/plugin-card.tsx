@@ -12,6 +12,7 @@ import { springTransition } from "../../lib/spring";
 import { Button, type ButtonStatus, type ButtonStatusLabels } from "./button";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "./sheet";
 import { Skeleton } from "./skeleton";
+import { StatusPill, type StatusPillTone } from "./status-pill";
 
 /**
  * PluginCard + PluginSheet — a catalog of add-ons (plugins, integrations, capabilities).
@@ -45,27 +46,23 @@ export interface PluginStatusValue {
   label: string;
 }
 
-// Proposed tokens (local until promoted to styles/index.css):
-//   --cf-plugin-ok/-warn/-danger/-info → the status-* semantic colors.
-const TONE_COLOR: Record<PluginTone, string> = {
-  ok: "var(--status-success, #059669)",
-  warn: "var(--status-warning, #D97706)",
-  danger: "var(--status-error, #BE123C)",
-  info: "var(--status-info, var(--primary))",
-  muted: "var(--muted-foreground)",
-  neutral: "var(--muted-foreground)",
-};
-
-/** Label ink: the tone pulled toward the foreground, so amber/green text clears AA on both themes. */
-function toneInk(tone: PluginTone) {
-  if (tone === "muted" || tone === "neutral") return "var(--muted-foreground)";
-  return `color-mix(in oklab, ${TONE_COLOR[tone]} 72%, var(--foreground))`;
+/**
+ * Tone → the theme's semantic status token (defined in `styles/index.css`, light + dark). Used
+ * only for the non-pill surfaces (flagged border, notice, guarantee icon); the status itself is
+ * the package `StatusPill`, which owns its own dot/ink/fill mix.
+ */
+function toneToken(tone: Exclude<PluginTone, "muted" | "neutral">) {
+  return {
+    ok: "var(--status-success)",
+    warn: "var(--status-warning)",
+    danger: "var(--status-error)",
+    info: "var(--status-info)",
+  }[tone];
 }
 
-function toneDot(tone: PluginTone) {
-  if (tone === "neutral")
-    return "color-mix(in oklab, var(--muted-foreground) 55%, transparent)";
-  return TONE_COLOR[tone];
+/** `StatusPill` has no `neutral`: it reads as `muted` (same grey, no alarm). */
+function pillTone(tone: PluginTone): StatusPillTone {
+  return tone === "neutral" ? "muted" : tone;
 }
 
 const SMOOTH = springTransition("smooth");
@@ -79,9 +76,9 @@ const COLOR_TRANSITION =
 // ── Status (dot + words) ─────────────────────────────────────────────────────
 
 /**
- * Dot + label. A tone change recolors in place (CSS spring on color); a label change swaps by
- * opacity (out 80 ms, then in) — never two labels on top of each other.
- * TODO(architect): swap for `StatusPill` (slot 09) once it lands; same `{ tone, label }` shape.
+ * The plugin's status = the package `StatusPill` (tone change morphs colour + width, label swaps
+ * by opacity). Kept as a thin adapter so `{ tone, label }` stays the public shape. `max-w-full`
+ * + `shrink` so a long label clips inside the card row instead of pushing the action out.
  */
 function PluginStatus({
   status,
@@ -92,41 +89,15 @@ function PluginStatus({
   live?: boolean;
   className?: string;
 }) {
-  const reduce = useReducedMotion();
   return (
-    <span
+    <StatusPill
       data-slot="plugin-status"
-      data-tone={status.tone}
-      aria-live={live ? "polite" : undefined}
-      className={cn(
-        "inline-flex min-w-0 items-center gap-1.5 text-[12.5px] font-medium leading-none",
-        className,
-      )}
-      style={{ color: toneInk(status.tone), transition: COLOR_TRANSITION }}
+      tone={pillTone(status.tone)}
+      live={live}
+      className={cn("max-w-full shrink", className)}
     >
-      <span
-        aria-hidden
-        className="size-[7px] shrink-0 rounded-full"
-        style={{
-          background: toneDot(status.tone),
-          transition: COLOR_TRANSITION,
-        }}
-      />
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={status.label}
-          className="truncate"
-          initial={{ opacity: 0 }}
-          animate={{
-            opacity: 1,
-            transition: reduce ? FADE_REDUCED : { duration: 0.16 },
-          }}
-          exit={{ opacity: 0, transition: reduce ? { duration: 0 } : EXIT }}
-        >
-          {status.label}
-        </motion.span>
-      </AnimatePresence>
-    </span>
+      {status.label}
+    </StatusPill>
   );
 }
 
@@ -241,7 +212,7 @@ function PluginCard({
       )}
       style={{
         borderColor: flagged
-          ? `color-mix(in oklab, ${TONE_COLOR[status.tone === "danger" ? "danger" : "warn"]} 42%, var(--border))`
+          ? `color-mix(in oklab, ${toneToken(status.tone === "danger" ? "danger" : "warn")} 42%, var(--border))`
           : "var(--border)",
         transition: COLOR_TRANSITION,
         ...style,
@@ -395,11 +366,10 @@ export interface PluginSheetProps {
 }
 
 const NOTICE_BG: Record<PluginNotice["tone"], string> = {
-  ok: "color-mix(in oklab, var(--status-success, #059669) 12%, var(--background))",
-  warn: "color-mix(in oklab, var(--status-warning, #D97706) 12%, var(--background))",
-  danger:
-    "color-mix(in oklab, var(--status-error, #BE123C) 12%, var(--background))",
-  info: "color-mix(in oklab, var(--status-info, #46a0d0) 12%, var(--background))",
+  ok: "color-mix(in oklab, var(--status-success) 12%, var(--background))",
+  warn: "color-mix(in oklab, var(--status-warning) 12%, var(--background))",
+  danger: "color-mix(in oklab, var(--status-error) 12%, var(--background))",
+  info: "color-mix(in oklab, var(--status-info) 12%, var(--background))",
   muted: "var(--muted)",
 };
 
@@ -455,14 +425,19 @@ function NoticeSlot({ notice }: { notice?: PluginNotice | null }) {
                   borderColor:
                     notice.tone === "muted"
                       ? "var(--border)"
-                      : `color-mix(in oklab, ${TONE_COLOR[notice.tone]} 35%, transparent)`,
+                      : `color-mix(in oklab, ${toneToken(notice.tone)} 35%, transparent)`,
                 }}
               >
                 <p className="flex items-center gap-2 text-[14px] font-semibold text-[var(--foreground)]">
                   {notice.icon ? (
                     <span
                       className="shrink-0 [&_svg]:size-4"
-                      style={{ color: TONE_COLOR[notice.tone] }}
+                      style={{
+                        color:
+                          notice.tone === "muted"
+                            ? "var(--muted-foreground)"
+                            : toneToken(notice.tone),
+                      }}
                     >
                       {notice.icon}
                     </span>
@@ -619,7 +594,7 @@ function PluginSheet({
                     <ShieldCheckIcon
                       aria-hidden
                       className="mt-[2px] size-4 shrink-0"
-                      style={{ color: TONE_COLOR.ok }}
+                      style={{ color: toneToken("ok") }}
                     />
                     <span>{guarantee}</span>
                   </p>

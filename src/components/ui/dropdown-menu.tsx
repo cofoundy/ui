@@ -14,31 +14,13 @@ import { springTransition } from "../../lib/spring";
  *   same spring compressed to `--cf-dd-exit` (opacity + scale .97).
  *   CSS keyframes (not framer) so Radix `Presence` keeps the surface mounted
  *   until the exit ends and the Root stays uncontrolled — the API is untouched.
+ *   The CSS is `.cf-dd-surface` + the shared `cf-pop-in/out` pair in
+ *   `styles/index.css` (same `[data-side]` rule as Tooltip).
  * - The highlight is ONE element per menu that travels between items
  *   (framer `layoutId`, `edge` spring). Sub-menus get their own.
  * - Reduced motion (OS or framer `MotionConfig reducedMotion`): opacity only,
- *   100 ms, and the highlight jumps.
- * Token proposed for index.css: --cf-dd-exit (150ms).
+ *   --cf-duration-instant, and the highlight jumps.
  * ------------------------------------------------------------------------- */
-const DD_MOTION_CSS = `
-.cf-dd-surface{--cf-dd-exit:150ms;transform-origin:var(--radix-dropdown-menu-content-transform-origin)}
-.cf-dd-surface[data-side="bottom"]{--cf-dd-dy:-4px}
-.cf-dd-surface[data-side="top"]{--cf-dd-dy:4px}
-.cf-dd-surface[data-side="right"]{--cf-dd-dx:-4px}
-.cf-dd-surface[data-side="left"]{--cf-dd-dx:4px}
-.cf-dd-surface[data-state="open"]{animation:cf-dd-in var(--cf-spring-smooth-duration,592ms) var(--cf-spring-smooth,linear) both}
-.cf-dd-surface[data-state="closed"]{animation:cf-dd-out var(--cf-dd-exit) var(--cf-spring-smooth,linear) both;pointer-events:none}
-.cf-dd-surface[data-reduced-motion][data-state="open"]{animation:cf-dd-fade-in 100ms linear both}
-.cf-dd-surface[data-reduced-motion][data-state="closed"]{animation:cf-dd-fade-out 100ms linear both}
-@media (prefers-reduced-motion:reduce){
-.cf-dd-surface[data-state="open"]{animation:cf-dd-fade-in 100ms linear both}
-.cf-dd-surface[data-state="closed"]{animation:cf-dd-fade-out 100ms linear both}
-}
-@keyframes cf-dd-in{from{opacity:0;transform:translate(var(--cf-dd-dx,0px),var(--cf-dd-dy,0px)) scale(.96)}to{opacity:1;transform:none}}
-@keyframes cf-dd-out{from{opacity:1;transform:none}to{opacity:0;transform:scale(.97)}}
-@keyframes cf-dd-fade-in{from{opacity:0}to{opacity:1}}
-@keyframes cf-dd-fade-out{from{opacity:1}to{opacity:0}}
-`;
 
 /** Present only inside our Content/SubContent: enables the travelling highlight. */
 const HighlightScope = React.createContext<{ reduced: boolean } | null>(null);
@@ -56,7 +38,6 @@ function MenuSurface({
   if (asChild) return <>{children}</>;
   return (
     <HighlightScope.Provider value={scope}>
-      <style>{DD_MOTION_CSS}</style>
       <LayoutGroup id={`cf-dd-${id}`}>{children}</LayoutGroup>
     </HighlightScope.Provider>
   );
@@ -155,7 +136,7 @@ function DropdownMenuContent({
         sideOffset={sideOffset}
         className={cn(
           SURFACE,
-          "max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-x-hidden overflow-y-auto shadow-md",
+          "max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-x-hidden overflow-y-auto shadow-[var(--cf-shadow-float)]",
           className
         )}
         {...props}
@@ -395,7 +376,7 @@ function DropdownMenuSubContent({
     <DropdownMenuPrimitive.SubContent
       data-slot="dropdown-menu-sub-content"
       data-reduced-motion={reduced ? "" : undefined}
-      className={cn(SURFACE, "overflow-hidden shadow-lg", className)}
+      className={cn(SURFACE, "overflow-hidden shadow-[var(--cf-shadow-float)]", className)}
       {...props}
     >
       <MenuSurface asChild={props.asChild}>{children}</MenuSurface>

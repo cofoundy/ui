@@ -18,6 +18,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../ui/sheet";
+import { NavListRow } from "./NavListRow";
 
 /* ------------------------------------------------------------------------------------------------
  * MoreSheet — the «Más» bottom sheet of a mobile tab bar.
@@ -243,7 +244,7 @@ function MoreSheet({
                         whileTap={reduce || item.disabled ? undefined : PRESS}
                         transition={springTransition("snappy")}
                       >
-                        <MoreSheetRow item={item} onChoose={choose} linkComponent={linkComponent} />
+                        <MoreSheetItemRow item={item} onChoose={choose} linkComponent={linkComponent} />
                       </motion.li>
                     ))}
                   </ul>
@@ -263,7 +264,8 @@ function MoreSheet({
   );
 }
 
-function MoreSheetRow({
+/** One row: the shared `NavListRow` at touch size. */
+function MoreSheetItemRow({
   item,
   onChoose,
   linkComponent,
@@ -272,75 +274,24 @@ function MoreSheetRow({
   onChoose: (item: MoreSheetItem) => void;
   linkComponent?: React.ElementType<LinkLikeProps>;
 }) {
-  const rowClass = cn(
-    "group/row flex w-full items-center gap-3 rounded-[12px] px-2.5 py-2 text-left outline-none",
-    item.description ? "min-h-[56px]" : "min-h-[48px]",
-    "transition-colors hover:bg-[var(--accent)] focus-visible:ring-2 focus-visible:ring-[var(--ring)]",
-    item.active && "bg-[color-mix(in_srgb,var(--primary)_12%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_16%,transparent)]",
-    item.disabled && "pointer-events-none opacity-50",
-  );
-
-  const body = (
-    <>
-      {item.icon !== undefined ? (
-        <span
-          aria-hidden
-          className={cn(
-            "flex size-9 shrink-0 items-center justify-center rounded-[10px] transition-colors [&_svg]:size-[18px]",
-            item.dashed
-              ? "border border-dashed border-[var(--border)] text-[var(--muted-foreground)] group-hover/row:border-[var(--muted-foreground)]"
-              : item.active
-                ? "bg-[color-mix(in_srgb,var(--primary)_18%,transparent)] text-[var(--primary)]"
-                : "bg-[var(--muted)] text-[var(--muted-foreground)] group-hover/row:text-[var(--foreground)]",
-          )}
-        >
-          {item.icon}
-        </span>
-      ) : null}
-      <span className="min-w-0 flex-1">
-        <span
-          className={cn(
-            "block truncate text-[14.5px] font-medium leading-5",
-            item.active ? "text-[var(--primary)]" : "text-[var(--popover-foreground)]",
-          )}
-        >
-          {item.label}
-        </span>
-        {item.description ? (
-          <span className="line-clamp-2 text-[12.5px] leading-[1.35] text-[var(--muted-foreground)]">
-            {item.description}
-          </span>
-        ) : null}
-      </span>
-      {item.trailing ? <span className="shrink-0">{item.trailing}</span> : null}
-    </>
-  );
-
-  const common = {
-    "data-more-item": item.key,
-    "aria-current": item.active ? ("page" as const) : undefined,
-  };
-
-  if (item.href) {
-    const Link = (linkComponent ?? "a") as React.ElementType<LinkLikeProps>;
-    return (
-      <Link
-        href={item.href}
-        className={rowClass}
-        aria-disabled={item.disabled || undefined}
-        onClick={() => onChoose(item)}
-        {...common}
-      >
-        {body}
-      </Link>
-    );
-  }
-
   return (
-    <button type="button" className={rowClass} disabled={item.disabled} onClick={() => onChoose(item)} {...common}>
-      {body}
-    </button>
+    <NavListRow
+      size="md"
+      data-more-item={item.key}
+      icon={item.icon}
+      label={item.label}
+      description={item.description}
+      trailing={item.trailing}
+      active={item.active}
+      dashed={item.dashed}
+      disabled={item.disabled}
+      href={item.href}
+      linkComponent={linkComponent}
+      onSelect={() => onChoose(item)}
+    />
   );
 }
 
 export { MoreSheet };
+/** The row of `MoreSheet`, re-exported under its old name (= `<NavListRow size="md">`). */
+export { MoreSheetRow, type MoreSheetRowProps } from "./NavListRow";

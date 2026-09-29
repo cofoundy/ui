@@ -13,6 +13,8 @@ import {
 import { cn } from "../../utils/cn";
 import { springTransition } from "../../lib/spring";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Badge } from "../ui/badge";
+import { NewChip, NewDot } from "./NewIndicator";
 
 /**
  * NavRail — vertical icon rail for app shells.
@@ -28,12 +30,13 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
  *   fade out first (80 ms, opacity only — rail labels are < 14 px, blur would flicker).
  * - active indicator: ONE element that travels between items (`layoutId`) on `edge`.
  * - press: the icon pill scales to .94 on `snappy`.
- * - new dot: scales in once on `snappy`, never pulses.
+ * - badge: `Badge count` (numbers) — pops and swaps digits on `snappy`; strings render as a plain `Badge`.
+ * - new dot: `NewDot` — scales in once on `snappy`, never pulses.
  */
 
 // ─────────────────────────────── tokens ───────────────────────────────
 
-/** Proposed tokens (local until the architect lifts them into styles/index.css). */
+/** Nav tokens live in styles/index.css; the fallbacks keep the rail usable without them. */
 const ACTIVE_BG = "var(--cf-nav-active-bg, color-mix(in oklab, var(--primary) 16%, transparent))";
 const ACTIVE_FG = "var(--cf-nav-active-fg, var(--primary))";
 const HOVER_BG = "var(--cf-nav-hover-bg, color-mix(in oklab, var(--sidebar-foreground, var(--foreground)) 7%, transparent))";
@@ -58,6 +61,8 @@ interface NavRailContextValue {
   expandedWidth: number;
   reduce: boolean;
   newLabel: string;
+  /** Per-rail id so two rails on one page never steal each other's active indicator. */
+  railId: string;
 }
 
 const NavRailContext = React.createContext<NavRailContextValue | null>(null);
@@ -170,8 +175,8 @@ export function NavRail({
     : {};
 
   const ctx = React.useMemo<NavRailContextValue>(
-    () => ({ expanded, expandable: expandOnHover, collapsedWidth, expandedWidth, reduce, newLabel }),
-    [expanded, expandOnHover, collapsedWidth, expandedWidth, reduce, newLabel],
+    () => ({ expanded, expandable: expandOnHover, collapsedWidth, expandedWidth, reduce, newLabel, railId: layoutGroupId }),
+    [expanded, expandOnHover, collapsedWidth, expandedWidth, reduce, newLabel, layoutGroupId],
   );
 
   const panelWidth = expandOnHover ? expandedWidth : collapsedWidth;
@@ -236,7 +241,7 @@ type ItemBase = {
   /** Visible name (expanded), tooltip (icon rail) and accessible name. */
   label: string;
   active?: boolean;
-  /** Count or short text. Numbers above 99 render as "99+". */
+  /** Count (rendered with `Badge count`, above 99 → "99+") or short text (plain `Badge`). */
   badge?: number | string;
   /** Show the "new" dot (enters once, never pulses). */
   isNew?: boolean;
@@ -265,17 +270,18 @@ function renderIcon(icon: ItemBase["icon"]) {
   return icon as React.ReactNode;
 }
 
-function formatBadge(badge: number | string) {
-  return typeof badge === "number" && badge > 99 ? "99+" : String(badge);
-}
-
 export function NavRailItem(props: NavRailItemProps) {
   const { icon, label, active = false, badge, isNew = false, disabled = false, className, ...rest } = props;
-  const { expanded, expandable, collapsedWidth, reduce, newLabel } = useNavRail("NavRailItem");
+  const { expanded, expandable, collapsedWidth, reduce, newLabel, railId } = useNavRail("NavRailItem");
   const [pressed, setPressed] = React.useState(false);
 
-  const hasBadge = badge !== undefined && badge !== null && badge !== "" && badge !== 0;
-  const srExtra = [hasBadge ? `(${formatBadge(badge!)})` : null, isNew ? `(${newLabel})` : null].filter(Boolean).join(" ");
+  const numericBadge = typeof badge === "number";
+  const hasBadge = numericBadge ? badge > 0 : badge !== undefined && badge !== null && badge !== "";
+  const badgeText = numericBadge ? (badge > 99 ? "99+" : String(Math.max(0, Math.floor(badge)))) : String(badge ?? "");
+  const srExtra = [hasBadge ? `(${badgeText})` : null, isNew ? `(${newLabel})` : null].filter(Boolean).join(" ");
+  // Same box as the old hand-rolled badge: 16 px, 10 px digits, ringed by the rail surface.
+  const badgeClass = "absolute -right-1.5 -top-1 border-0 h-4 min-w-4 px-1 text-[10px] font-semibold leading-none";
+  const badgeStyle = { borderRadius: 9999, boxShadow: `0 0 0 2px ${RAIL_BG}` } as const;
 
   const content = (
     <>
@@ -287,7 +293,7 @@ export function NavRailItem(props: NavRailItemProps) {
         >
           {active && (
             <motion.span
-              layoutId="nav-rail-active"
+              layoutId={`${railId}-nav-rail-active`}
               aria-hidden
               className="absolute inset-0 rounded-[10px]"
               style={{ background: ACTIVE_BG, borderRadius: 10 }}
@@ -304,29 +310,16 @@ export function NavRailItem(props: NavRailItemProps) {
             }}
           />
           <span className="relative flex [&_svg]:size-[18px] [&_svg]:shrink-0">{renderIcon(icon)}</span>
-          {hasBadge && (
-            <span
-              aria-hidden
-              className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums leading-none"
-              style={{
-                background: "var(--primary)",
-                color: "var(--primary-foreground)",
-                boxShadow: `0 0 0 2px ${RAIL_BG}`,
-              }}
-            >
-              {formatBadge(badge!)}
-            </span>
-          )}
+          {/* Numbers always go through `Badge count` so 3 → 0 leaves with its own exit. */}
+          {numericBadge ? (
+            <Badge aria-hidden count={badge} max={99} size="sm" className={badgeClass} style={badgeStyle} />
+          ) : hasBadge ? (
+            <Badge aria-hidden size="sm" className={cn(badgeClass, "py-0")} style={badgeStyle}>
+              {badgeText}
+            </Badge>
+          ) : null}
           {isNew && !hasBadge && (
-            <motion.span
-              aria-hidden
-              data-slot="nav-rail-new-dot"
-              className="absolute -right-0.5 -top-0.5 size-2 rounded-full"
-              style={{ background: "var(--primary)", boxShadow: `0 0 0 2px ${RAIL_BG}` }}
-              initial={reduce ? false : { scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ ...SNAPPY, delay: 0.25 }}
-            />
+            <NewDot decorative ringColor={RAIL_BG} delay={0.25} data-slot="nav-rail-new-dot" />
           )}
         </motion.span>
       </span>
@@ -411,7 +404,18 @@ export function NavRailItem(props: NavRailItemProps) {
       <TooltipTrigger asChild>{element}</TooltipTrigger>
       <TooltipContent side="right" align="center">
         {label}
-        {isNew && <span className="ml-1.5 text-[10px] uppercase tracking-wider opacity-70">{newLabel}</span>}
+        {isNew && (
+          // The tooltip surface is `--primary`, so the chip tints from its foreground instead.
+          <NewChip
+            className="ml-1.5 align-middle"
+            style={{
+              background: "color-mix(in srgb, var(--primary-foreground) 22%, transparent)",
+              color: "var(--primary-foreground)",
+            }}
+          >
+            {newLabel}
+          </NewChip>
+        )}
       </TooltipContent>
     </Tooltip>
   );
