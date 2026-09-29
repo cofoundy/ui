@@ -3,8 +3,11 @@ import { Slot } from "@radix-ui/react-slot";
 import {
   AnimatePresence,
   LayoutGroup,
+  animate,
   motion,
+  useMotionValue,
   useReducedMotionConfig,
+  useTransform,
 } from "framer-motion";
 
 import { cn } from "../../utils/cn";
@@ -174,6 +177,18 @@ export function NavRail({
   const panelWidth = expandOnHover ? expandedWidth : collapsedWidth;
   const hiddenRight = panelWidth - collapsedWidth;
   const reveal = reduce ? INSTANT : SMOOTH;
+  // px revealed beyond the collapsed rail: 0 … hiddenRight. The single source for clip, edge, shadow.
+  const revealed = useMotionValue(expanded ? hiddenRight : 0);
+  React.useEffect(() => {
+    const c = animate(revealed, expanded ? hiddenRight : 0, reveal);
+    return () => c.stop();
+  }, [expanded, hiddenRight, reveal, revealed]);
+  const clip = useTransform(revealed, (r) => `inset(0px ${Math.max(0, hiddenRight - r)}px 0px 0px)`);
+  // Shadow only while the panel floats, and it grows WITH the reveal (never pops on at frame 0).
+  const shadow = useTransform(revealed, (r) => {
+    const k = floating ? Math.min(1, r / 24) : 0;
+    return `12px 0 28px -10px rgba(2, 11, 27, ${(0.28 * k).toFixed(3)})`;
+  });
 
   return (
     <NavRailContext.Provider value={ctx}>
@@ -191,31 +206,21 @@ export function NavRail({
           {...handlers}
           {...props}
         >
-          {/* The panel is always `panelWidth` wide; collapsed = clipped to the rail. Labels never reflow. */}
+          {/* The panel is always `panelWidth` wide; collapsed = clipped to the rail. Labels never reflow.
+              Clip, hairline and shadow are ONE motion value (`reveal`), so they share every frame: two
+              springs on two properties drifted by a frame and flashed a bar of bare panel (André). */}
           <motion.div
             className="absolute inset-y-0 left-0 z-40 flex flex-col"
-            style={{ width: panelWidth, background: RAIL_BG, color: "var(--sidebar-foreground, var(--foreground))" }}
-            initial={false}
-            animate={{ clipPath: `inset(0px ${expanded ? 0 : hiddenRight}px 0px 0px)` }}
-            transition={reveal}
+            style={{ width: panelWidth, background: RAIL_BG, color: "var(--sidebar-foreground, var(--foreground))", clipPath: clip }}
           >
             {header && <div className="flex shrink-0 flex-col py-2">{header}</div>}
             <div className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-hidden py-2">{children}</div>
             {footer && <div className="flex shrink-0 flex-col gap-0.5 py-2">{footer}</div>}
           </motion.div>
-          {/* The edge: one hairline that travels with the reveal; lifts with a shadow only while floating. */}
           <motion.div
             aria-hidden
             className="pointer-events-none absolute inset-y-0 z-40 w-px"
-            style={{ left: collapsedWidth - 1, background: RAIL_BORDER }}
-            initial={false}
-            animate={{
-              x: expanded ? hiddenRight : 0,
-              boxShadow: floating
-                ? "12px 0 28px -10px rgba(2, 11, 27, 0.28)"
-                : "0px 0 0px 0px rgba(2, 11, 27, 0)",
-            }}
-            transition={reveal}
+            style={{ left: collapsedWidth - 1, background: RAIL_BORDER, x: revealed, boxShadow: shadow }}
           />
         </motion.nav>
       </LayoutGroup>
