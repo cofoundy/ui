@@ -15,8 +15,9 @@ import { springTransition } from "../../lib/spring";
 /**
  * Collapsible — Radix Collapsible with an animated height.
  *
- * Opening: the height grows with the `smooth` spring (`height: auto`) and the content fades in
- * a beat later. Closing: the content fades out first (~80 ms), then the height collapses.
+ * Opening: the height grows with the `smooth` spring (`height: auto`) and the content is fully
+ * visible within ~170 ms. Closing: the height collapses at once; the content stays visible,
+ * clipped by the box, and only fades in the last stretch.
  * `CollapsibleChevron` is an optional helper whose icon turns with the `snappy` spring.
  * Reduced motion (OS or `<MotionConfig reducedMotion="always">`): instant height, opacity ≤120 ms.
  *
@@ -68,9 +69,18 @@ function CollapsibleTrigger({
   );
 }
 
-/** Content leaves before the box closes; enters once the box has started opening. */
-const CONTENT_EXIT_S = 0.08;
-const CONTENT_ENTER_DELAY_S = 0.08;
+/**
+ * El texto tiene que verse MIENTRAS la caja se mueve (André: «el texto no aparece al desplegar, y al
+ * plegar recién aparece un frame y se oculta»). Antes el contenido entraba con el spring smooth
+ * (0,5 s) y un delay: a mitad del despliegue seguía casi transparente. Ahora:
+ *   abrir  → la caja crece (smooth) y el contenido llega a opacidad 1 en ~140 ms, casi de inmediato.
+ *   cerrar → la caja se pliega YA (smooth, sin delay) y el contenido queda visible, recortado por la
+ *            caja; sólo se apaga en el último tramo. Nada «reaparece» al cerrar.
+ */
+const CONTENT_IN_S = 0.14;
+const CONTENT_IN_DELAY_S = 0.03;
+const CONTENT_OUT_S = 0.12;
+const CONTENT_OUT_DELAY_S = 0.14;
 
 function useContentMotion() {
   const reduced = useReducedMotionConfig() ?? false;
@@ -79,29 +89,20 @@ function useContentMotion() {
     const box: Variants = reduced
       ? {
           open: { height: "auto", transition: { duration: 0 } },
-          closed: { height: 0, transition: { duration: 0, delay: CONTENT_EXIT_S } },
+          closed: { height: 0, transition: { duration: 0 } },
         }
       : {
           open: { height: "auto", transition: smooth },
-          closed: {
-            height: 0,
-            transition: { ...smooth, delay: CONTENT_EXIT_S * 0.75 },
-          },
+          closed: { height: 0, transition: smooth },
         };
     const inner: Variants = reduced
       ? {
           open: { opacity: 1, transition: { duration: 0.12 } },
-          closed: { opacity: 0, transition: { duration: CONTENT_EXIT_S } },
+          closed: { opacity: 0, transition: { duration: 0.12 } },
         }
       : {
-          open: {
-            opacity: 1,
-            transition: { ...smooth, delay: CONTENT_ENTER_DELAY_S },
-          },
-          closed: {
-            opacity: 0,
-            transition: { duration: CONTENT_EXIT_S, ease: "linear" },
-          },
+          open: { opacity: 1, transition: { duration: CONTENT_IN_S, delay: CONTENT_IN_DELAY_S, ease: "linear" } },
+          closed: { opacity: 0, transition: { duration: CONTENT_OUT_S, delay: CONTENT_OUT_DELAY_S, ease: "linear" } },
         };
     return { box, inner };
   }, [reduced]);
