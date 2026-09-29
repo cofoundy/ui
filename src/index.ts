@@ -317,7 +317,73 @@ export {
   type NavDropdownProps,
   type NavDropdownItem,
   type FeaturedEffect,
+  NavRail,
+  NavRailItem,
+  NavRailSection,
+  type NavRailProps,
+  type NavRailItemProps,
+  type NavRailSectionProps,
+  NavRailOverflow,
+  NavRailOverflowRow,
+  type NavRailOverflowProps,
+  type NavRailOverflowRowProps,
+  type NavRailOverflowRenderContext,
+  type NavRailOverflowTriggerContext,
+  TabBar,
+  TabBarItem,
+  type TabBarProps,
+  type TabBarItemProps,
+  MoreSheet,
+  type MoreSheetProps,
+  type MoreSheetItem,
+  type MoreSheetSection,
+  WorkspaceSwitcher,
+  WorkspaceMark,
+  markRadius,
+  type Workspace,
+  type WorkspaceSwitcherProps,
+  type WorkspaceSwitcherLabels,
+  type WorkspaceMarkProps,
+  NewDot,
+  NewChip,
+  type NewDotProps,
+  type NewChipProps,
 } from "./components/navigation";
+
+// Plugins, estado y formularios generados (nav-motion 2026-09-29)
+export {
+  PluginCard,
+  PluginCardSkeleton,
+  PluginSheet,
+  PluginStatus,
+  PluginIconTile,
+  type PluginCardProps,
+  type PluginSheetProps,
+  type PluginStatusValue,
+  type PluginTone,
+  type PluginNotice,
+  type PluginPrimaryAction,
+  type PluginCardAction,
+} from "./components/ui/plugin-card";
+export { StatusPill, type StatusPillProps, type StatusPillTone } from "./components/ui/status-pill";
+export {
+  SchemaForm,
+  validateSchemaForm,
+  isSchemaFieldVisible,
+  SCHEMA_FORM_STRINGS,
+  type SchemaFormProps,
+  type SchemaFormSchema,
+  type SchemaFormField,
+  type SchemaFormGroup,
+  type SchemaFormFieldLabels,
+  type SchemaFormValue,
+  type SchemaFormStrings,
+  type SchemaFormCustomContext,
+  type SchemaFormUnit,
+} from "./components/ui/schema-form";
+export { CollapsibleChevron } from "./components/ui/collapsible";
+export { type SkeletonProps, type SkeletonAnimation } from "./components/ui/skeleton";
+export { type BadgeProps, type BadgeCountProps } from "./components/ui/badge";
 
 // Effect Components
 export {

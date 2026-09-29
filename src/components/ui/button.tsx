@@ -6,8 +6,12 @@ import { CircleAlertIcon, CircleCheckIcon } from "lucide-react";
 import { cn } from "../../utils/cn";
 import { after, commit, MOTION, prefersReducedMotion } from "../../lib/motion-timeline";
 
+// Press: the whole button settles to .96 on pointer-down (fast, --cf-duration-press) and
+// springs back on release (--cf-spring-snappy). `scale`, not `transform`, so it composes with
+// any transform a caller adds. Reduced motion: no scale, no transition. The morph mode
+// (`status`/`loading`) owns its press in styles/index.css (`.cf-btn[data-pressed]`).
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,background-color,border-color,box-shadow,scale] duration-[var(--cf-spring-snappy-duration)] ease-[var(--cf-spring-snappy)] active:scale-[.96] active:duration-[var(--cf-duration-press)] motion-reduce:transition-none motion-reduce:active:scale-100 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
   {
     variants: {
       variant: {
@@ -67,6 +71,12 @@ type ButtonProps = React.ComponentProps<"button"> &
     status?: ButtonStatus;
     /** Words for each state. Shown in both motion modes; reduced motion removes only movement. */
     statusLabels?: ButtonStatusLabels;
+    /**
+     * Shorthand for `status`: `true` → `"loading"`, `false` → `"idle"`. Pass it from the first
+     * render (even as `false`) so the button already has the morph structure when it flips.
+     * `status` wins when both are set. Ignored with `asChild`.
+     */
+    loading?: boolean;
   };
 
 function Button({
@@ -76,15 +86,19 @@ function Button({
   asChild = false,
   status,
   statusLabels,
+  loading,
   ...props
 }: ButtonProps) {
-  if (status !== undefined && !asChild) {
+  const resolved: ButtonStatus | undefined =
+    status ?? (loading === undefined ? undefined : loading ? "loading" : "idle");
+  if (resolved !== undefined && !asChild) {
     return (
       <StatusButton
         className={className}
         variant={variant}
         size={size}
-        status={status}
+        status={resolved}
+        reserve={status === undefined ? LOADING_ONLY : ALL_STATES}
         statusLabels={statusLabels}
         {...props}
       />
@@ -116,7 +130,16 @@ function useReducedMotion() {
   return reduced;
 }
 
-type StatusButtonProps = Omit<ButtonProps, "asChild" | "status"> & { status: ButtonStatus };
+type Reservable = Exclude<ButtonStatus, "idle">;
+const ALL_STATES: readonly Reservable[] = ["loading", "success", "error"];
+// `loading` never reaches success/error, so it reserves only the loading words: the button
+// keeps its own width instead of growing to fit "No se guardó · Reintentar".
+const LOADING_ONLY: readonly Reservable[] = ["loading"];
+
+type StatusButtonProps = Omit<ButtonProps, "asChild" | "status" | "loading"> & {
+  status: ButtonStatus;
+  reserve: readonly Reservable[];
+};
 
 /**
  * Morph-in-place button. Movement lives in styles/index.css (`.cf-btn`); this component only
@@ -129,6 +152,7 @@ function StatusButton({
   size,
   status,
   statusLabels,
+  reserve,
   children,
   onClick,
   onPointerDown,
@@ -203,7 +227,9 @@ function StatusButton({
       data-reduced={reduced ? "" : undefined}
       aria-busy={status === "loading" || undefined}
       aria-disabled={blocked || undefined}
-      className={cn(buttonVariants({ variant, size, className }), "cf-btn")}
+      // `active:scale-100`: the base press is a `scale` utility; here `.cf-btn[data-pressed]`
+      // presses instead (it knows when the button is blocked), so the two never compound.
+      className={cn(buttonVariants({ variant, size, className }), "cf-btn active:scale-100")}
       onClick={(e) => {
         if (blocked) {
           e.preventDefault(); // a submit button must not re-submit while saving
@@ -241,7 +267,7 @@ function StatusButton({
         </span>
         {/* Width reservation: the button is as wide as its longest state from the first
             frame, so success/error never grow it (and never shift what sits beside it). */}
-        {(["loading", "success", "error"] as const).map((s) => (
+        {reserve.map((s) => (
           <span key={s} className="cf-btn__sizer" aria-hidden>
             <StatusGlyph status={s} />
             {labels[s]}

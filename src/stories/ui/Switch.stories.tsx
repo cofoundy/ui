@@ -178,3 +178,30 @@ export const MobileBaseline: Story = {
     </div>
   ),
 };
+
+/** Optimistic save that fails: the knob flips at once, then returns on the same two-edge spring. */
+const OptimisticRevertSwitch = () => {
+  const [on, setOn] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="flex items-center gap-3">
+      <Switch
+        size="lg"
+        checked={on}
+        onCheckedChange={(v) => {
+          setOn(v);
+          setError(null);
+          setTimeout(() => {
+            setOn(!v);
+            setError('No se pudo guardar. Vuelve a intentarlo.');
+          }, 700);
+        }}
+      />
+      <span className="text-sm text-muted-foreground">{error ?? 'Promo del ceviche'}</span>
+    </div>
+  );
+};
+
+export const OptimisticRevert: Story = {
+  render: () => <OptimisticRevertSwitch />,
+};

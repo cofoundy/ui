@@ -4,6 +4,7 @@ import { ChevronsUpDown } from "lucide-react";
 
 import {
   Collapsible,
+  CollapsibleChevron,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../../components/ui/collapsible";
@@ -139,6 +140,30 @@ export const NestedCollapsibles: Story = {
           </div>
         </CollapsibleContent>
       </Collapsible>
+    </div>
+  ),
+};
+
+/** Height animates with the smooth spring, content fades in after; the chevron helper turns (snappy). */
+export const WithChevron: Story = {
+  render: () => (
+    <div className="w-[350px] rounded-xl border border-[var(--border)] p-1">
+      {[
+        { title: "Entradas", items: ["Causa limeña", "Papa a la huancaína"] },
+        { title: "Fondos", items: ["Ceviche clásico", "Arroz con mariscos", "Lomo saltado"] },
+      ].map((sec) => (
+        <Collapsible key={sec.title}>
+          <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg px-4 py-3 text-left text-sm font-medium hover:bg-[var(--accent)]">
+            {sec.title}
+            <CollapsibleChevron className="text-[var(--muted-foreground)]" />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="px-4 pb-2">
+            {sec.items.map((it) => (
+              <div key={it} className="py-2 text-sm">{it}</div>
+            ))}
+          </CollapsibleContent>
+        </Collapsible>
+      ))}
     </div>
   ),
 };

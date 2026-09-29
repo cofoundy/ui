@@ -4,8 +4,10 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 
 import { cn } from "../../utils/cn";
+import { springTransition } from "../../lib/spring";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { Button } from "./button";
 import { Input } from "./input";
@@ -37,6 +39,12 @@ type SidebarContextType = {
 };
 
 const SidebarContext = React.createContext<SidebarContextType | null>(null);
+
+/**
+ * Per-provider namespace for the traveling active indicator's `layoutId`, so two sidebars on
+ * the same page never swap indicators. Separate from SidebarContext to keep its type unchanged.
+ */
+const SidebarIndicatorScopeContext = React.createContext<string>("sidebar");
 
 function useSidebar() {
   const context = React.useContext(SidebarContext);
@@ -121,27 +129,31 @@ function SidebarProvider({
     [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar]
   );
 
+  const indicatorScope = React.useId();
+
   return (
     <SidebarContext.Provider value={contextValue}>
-      <TooltipProvider delayDuration={0}>
-        <div
-          data-slot="sidebar-wrapper"
-          style={
-            {
-              "--sidebar-width": SIDEBAR_WIDTH,
-              "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-              ...style,
-            } as React.CSSProperties
-          }
-          className={cn(
-            "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-[var(--sidebar-background)]",
-            className
-          )}
-          {...props}
-        >
-          {children}
-        </div>
-      </TooltipProvider>
+      <SidebarIndicatorScopeContext.Provider value={indicatorScope}>
+        <TooltipProvider delayDuration={0}>
+          <div
+            data-slot="sidebar-wrapper"
+            style={
+              {
+                "--sidebar-width": SIDEBAR_WIDTH,
+                "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+                ...style,
+              } as React.CSSProperties
+            }
+            className={cn(
+              "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-[var(--sidebar-background)]",
+              className
+            )}
+            {...props}
+          >
+            {children}
+          </div>
+        </TooltipProvider>
+      </SidebarIndicatorScopeContext.Provider>
     </SidebarContext.Provider>
   );
 }
@@ -513,35 +525,153 @@ const sidebarMenuButtonVariants = cva(
   }
 );
 
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
+
+type SidebarBox = { top: number; left: number; width: number; height: number };
+
+/** Tracks an element's box relative to its offsetParent (the `relative` SidebarMenuItem). */
+function useOffsetBox(
+  ref: React.RefObject<HTMLElement | null>,
+  enabled: boolean,
+) {
+  const [box, setBox] = React.useState<SidebarBox | null>(null);
+  useIsomorphicLayoutEffect(() => {
+    const el = ref.current;
+    if (!enabled || !el) return;
+    const read = () =>
+      setBox((prev) => {
+        const next = {
+          top: el.offsetTop,
+          left: el.offsetLeft,
+          width: el.offsetWidth,
+          height: el.offsetHeight,
+        };
+        return prev &&
+          prev.top === next.top &&
+          prev.left === next.left &&
+          prev.width === next.width &&
+          prev.height === next.height
+          ? prev
+          : next;
+      });
+    read();
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(read);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref, enabled]);
+  return box;
+}
+
+/**
+ * The traveling active indicator. It lives in the SidebarMenuItem (a sibling painted BEFORE the
+ * button), not inside the button: the button is `overflow-hidden`, and a layoutId element that
+ * travels from another row would be clipped by its new parent mid-flight. Row content
+ * (button, badge, action, sub-menu) sits at `z-[1]` so the shape passes UNDER other rows.
+ */
+function SidebarMenuActiveIndicator({
+  layoutId,
+  box,
+}: {
+  layoutId: string;
+  box: SidebarBox;
+}) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.span
+      aria-hidden
+      data-sidebar="menu-active-indicator"
+      layoutId={layoutId}
+      initial={false}
+      transition={reduce ? { duration: 0 } : springTransition("edge")}
+      className="pointer-events-none absolute rounded-md bg-[var(--sidebar-accent)]"
+      style={{
+        top: box.top,
+        left: box.left,
+        width: box.width,
+        height: box.height,
+      }}
+    />
+  );
+}
+
 function SidebarMenuButton({
   asChild = false,
   isActive = false,
+  activeIndicator = false,
   variant = "default",
   size = "default",
   tooltip,
   className,
+  ref,
   ...props
 }: React.ComponentProps<"button"> & {
   asChild?: boolean;
   isActive?: boolean;
+  /**
+   * Opt-in traveling active indicator: instead of each active button painting its own
+   * background, ONE shape slides to the active row (layoutId, `edge` spring; instant with
+   * reduced motion). `true` shares the indicator across every menu of the nearest
+   * SidebarProvider; a string names a separate track (e.g. `"projects"`), so buttons that
+   * pass the same string share one indicator. Default `false` = today's static background.
+   */
+  activeIndicator?: boolean | string;
   tooltip?: string | React.ComponentProps<typeof TooltipContent>;
 } & VariantProps<typeof sidebarMenuButtonVariants>) {
   const Comp = asChild ? Slot : "button";
   const { isMobile, state } = useSidebar();
+  const scope = React.useContext(SidebarIndicatorScopeContext);
+
+  const travels = activeIndicator !== false;
+  const innerRef = React.useRef<HTMLButtonElement | null>(null);
+  const setRefs = React.useCallback(
+    (node: HTMLButtonElement | null) => {
+      innerRef.current = node;
+      if (typeof ref === "function") ref(node);
+      else if (ref)
+        (ref as React.MutableRefObject<HTMLButtonElement | null>).current =
+          node;
+    },
+    [ref],
+  );
+  const box = useOffsetBox(innerRef, travels);
+  const layoutId = `${scope}-menu-active-${
+    typeof activeIndicator === "string" ? activeIndicator : "default"
+  }`;
 
   const button = (
     <Comp
+      ref={setRefs}
       data-slot="sidebar-menu-button"
       data-sidebar="menu-button"
       data-size={size}
       data-active={isActive}
-      className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+      data-active-indicator={travels ? "" : undefined}
+      className={cn(
+        sidebarMenuButtonVariants({ variant, size }),
+        // The indicator paints the active background; the button stays transparent above it.
+        travels && "relative z-[1] data-[active=true]:bg-transparent",
+        className,
+      )}
       {...props}
     />
   );
 
+  const indicator =
+    travels && isActive && box ? (
+      <SidebarMenuActiveIndicator layoutId={layoutId} box={box} />
+    ) : null;
+
   if (!tooltip) {
-    return button;
+    return indicator ? (
+      <>
+        {indicator}
+        {button}
+      </>
+    ) : (
+      button
+    );
   }
 
   if (typeof tooltip === "string") {
@@ -551,15 +681,18 @@ function SidebarMenuButton({
   }
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent
-        side="right"
-        align="center"
-        hidden={state !== "collapsed" || isMobile}
-        {...tooltip}
-      />
-    </Tooltip>
+    <>
+      {indicator}
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent
+          side="right"
+          align="center"
+          hidden={state !== "collapsed" || isMobile}
+          {...tooltip}
+        />
+      </Tooltip>
+    </>
   );
 }
 
@@ -579,7 +712,7 @@ function SidebarMenuAction({
       data-slot="sidebar-menu-action"
       data-sidebar="menu-action"
       className={cn(
-        "absolute right-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-[var(--sidebar-foreground)] outline-none ring-[var(--sidebar-ring)] transition-transform hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)] focus-visible:ring-2 peer-hover/menu-button:text-[var(--sidebar-accent-foreground)] [&>svg]:size-4 [&>svg]:shrink-0",
+        "absolute right-1 top-1.5 z-[1] flex aspect-square w-5 items-center justify-center rounded-md p-0 text-[var(--sidebar-foreground)] outline-none ring-[var(--sidebar-ring)] transition-transform hover:bg-[var(--sidebar-accent)] hover:text-[var(--sidebar-accent-foreground)] focus-visible:ring-2 peer-hover/menu-button:text-[var(--sidebar-accent-foreground)] [&>svg]:size-4 [&>svg]:shrink-0",
         // Increases the hit area of the button on mobile.
         "after:absolute after:-inset-2 after:md:hidden",
         "peer-data-[size=sm]/menu-button:top-1",
@@ -604,7 +737,7 @@ function SidebarMenuBadge({
       data-slot="sidebar-menu-badge"
       data-sidebar="menu-badge"
       className={cn(
-        "pointer-events-none absolute right-1 flex h-5 min-w-5 select-none items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums text-[var(--sidebar-foreground)] peer-hover/menu-button:text-[var(--sidebar-accent-foreground)] peer-data-[active=true]/menu-button:text-[var(--sidebar-accent-foreground)]",
+        "pointer-events-none absolute right-1 z-[1] flex h-5 min-w-5 select-none items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums text-[var(--sidebar-foreground)] peer-hover/menu-button:text-[var(--sidebar-accent-foreground)] peer-data-[active=true]/menu-button:text-[var(--sidebar-accent-foreground)]",
         "peer-data-[size=sm]/menu-button:top-1",
         "peer-data-[size=default]/menu-button:top-1.5",
         "peer-data-[size=lg]/menu-button:top-2.5",
@@ -663,7 +796,7 @@ function SidebarMenuSub({
       data-slot="sidebar-menu-sub"
       data-sidebar="menu-sub"
       className={cn(
-        "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-[var(--sidebar-border)] px-2.5 py-0.5",
+        "relative z-[1] mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-[var(--sidebar-border)] px-2.5 py-0.5",
         "group-data-[collapsible=icon]:hidden",
         className
       )}

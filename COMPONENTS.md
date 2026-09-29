@@ -1,6 +1,6 @@
 # @cofoundy/ui — Component Catalog
 
-**Last updated:** 2026-09-25 · **Storybook:** [ui.cofoundy.dev](https://ui.cofoundy.dev) · **Total exports:** ~95 (`chat-sim` is a separate subpath, not yet in this count — see its section)
+**Last updated:** 2026-09-29 · **Storybook:** [ui.cofoundy.dev](https://ui.cofoundy.dev) · **Total exports:** ~106 (`chat-sim` is a separate subpath, not yet in this count — see its section)
 
 > **For agents:** start at the [Intent Map](#intent-map) below — maps "I need X" → component name + import + story URL. If you don't find your need there, fall through to the [Section tables](#chat) (alphabetical) or run `grep '^export' ~/cofoundy/packages/ui/src/index.ts` for the raw export list. Storybook auto-discovery: `curl -sS https://ui.cofoundy.dev/index.json` returns 598 entries (all stories, parseable JSON).
 
@@ -60,6 +60,15 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 | Switch (two-edge knob, `size="lg"` 48×28) / Separator | `Switch`, `switchVariants`, `Separator` | UI | `ui-switch`, `ui-separator` |
 | Logo (3D cube isologo) | `Logo` | UI | `ui-logo` |
 | Dropdown nav (mega-menu-lite) | `NavDropdown` | Navigation | `navigation-navdropdown` |
+| App rail (icons, traveling active indicator, optional expand-on-hover) | `NavRail`, `NavRailItem`, `NavRailSection` | Navigation | `navigation-navrail` |
+| Rail items that don't fit collapse into «+N» | `NavRailOverflow`, `NavRailOverflowRow` | Navigation | `navigation-navrailoverflow` |
+| Mobile bottom tab bar (≤5) | `TabBar`, `TabBarItem` | Navigation | `navigation-tabbar` |
+| Mobile «Más» bottom sheet | `MoreSheet` | Navigation | `navigation-moresheet` |
+| Workspace / tenant switcher (rail + sheet) | `WorkspaceSwitcher`, `WorkspaceMark` | Navigation | `navigation-workspaceswitcher` |
+| «New» marker (dot / chip, enters once) | `NewDot`, `NewChip` | Navigation | `navigation-newindicator` |
+| Installable plugin card + detail sheet | `PluginCard`, `PluginSheet` | UI | `ui-plugincard` |
+| Status dot + label that morphs between states | `StatusPill` | UI | `ui-statuspill` |
+| Form generated from JSON Schema + `x-ui` hints | `SchemaForm` | UI | `ui-schemaform` |
 | Hero with animated WebGL gradient + poster fallback | `ShaderHero` | Hero | `hero-shaderhero` |
 | Transactional email template (rendered server-side) | see [Email](#email) (9 templates) | Email | `email-*` |
 | **Docs MDX components** (allowlist for `docs-ai/content/*`) | see [Docs](#docs) (15 components) | Docs | `docs-*` |
@@ -210,6 +219,12 @@ For **brand identity work** (badge, logo, attribution) use the `/branding` skill
 | Component | Description |
 |---|---|
 | `NavDropdown` | Mega-menu-lite dropdown for top nav. |
+| `NavRail` / `NavRailItem` / `NavRailSection` | Vertical icon rail; active indicator travels (`layoutId`, edge spring); `expandOnHover` overlays labels, `pinned` reserves width; `isNew`, `badge`. |
+| `NavRailOverflow` | Measures available height (ResizeObserver) and folds the rest into «+N»; popover stays inside the viewport. |
+| `TabBar` / `TabBarItem` | Mobile bottom bar, two-edge active pill, badge pop, safe-area. |
+| `MoreSheet` | Bottom sheet over `Sheet`: optional header, sections with kicker, cascading rows. |
+| `WorkspaceSwitcher` / `WorkspaceMark` | Tenant switcher: single-shape mark + solid rotating badge, traveling hover/✓, `onSelect` after the ✓ lands. Variants `rail` / `sheet`. |
+| `NewDot` / `NewChip` | «New» marker that enters once and never pulses. |
 
 ### Email
 

@@ -102,3 +102,29 @@ export const Table: Story = {
     </div>
   ),
 };
+
+export const Animations: Story = {
+  render: () => (
+    <div className="space-y-4 w-full max-w-sm">
+      {(["shimmer", "pulse", "none"] as const).map((a) => (
+        <div key={a} className="space-y-1">
+          <p className="text-xs text-[var(--muted-foreground)]">{a}</p>
+          <Skeleton animation={a} className="h-10 w-full" />
+        </div>
+      ))}
+    </div>
+  ),
+};
+
+/** `reduced` (or the OS setting / `MotionConfig reducedMotion="always"`) leaves a static block. */
+export const Reduced: Story = {
+  render: () => (
+    <div className="flex items-center space-x-4">
+      <Skeleton reduced className="size-12 rounded-full" />
+      <div className="space-y-2">
+        <Skeleton reduced className="h-4 w-[250px]" />
+        <Skeleton reduced className="h-4 w-[200px]" />
+      </div>
+    </div>
+  ),
+};

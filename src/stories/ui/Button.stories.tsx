@@ -244,3 +244,27 @@ export const StatusMobileBaseline: Story = {
     </div>
   ),
 };
+
+/**
+ * `loading` is the boolean shorthand for `status` (`true` → loading, `false` → idle). Pass it
+ * from the first render so the button already has the morph structure when it flips.
+ * Without `status`/`loading` the button only gains the press (scale .96).
+ */
+export const Loading: Story = {
+  render: () => {
+    const [loading, setLoading] = React.useState(false);
+    return (
+      <Button
+        size="lg"
+        loading={loading}
+        statusLabels={{ loading: 'Enviando' }}
+        onClick={() => {
+          setLoading(true);
+          window.setTimeout(() => setLoading(false), 1200);
+        }}
+      >
+        <Send /> Enviar pedido
+      </Button>
+    );
+  },
+};
