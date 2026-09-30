@@ -185,9 +185,14 @@ function MoreSheet({
           "flex max-h-[min(85dvh,640px)] flex-col gap-0 rounded-t-[20px] border-x-0 bg-[var(--popover)] p-0 text-[var(--popover-foreground)]",
           // The Sheet's corner ✕ is replaced by the grab handle (a real close button, 44 px tall).
           "[&>button]:hidden",
+          // Above a tab bar (bottomOffset): the sheet lives UNDER the bar (z-30 < TabBar z-40), so it
+          // rises from behind it and goes back behind it; the bar is never covered or dimmed.
+          offset && "z-30",
           className,
         )}
         style={offset ? { bottom: offset } : undefined}
+        overlayClassName={offset ? "z-30" : undefined}
+        overlayStyle={offset ? { bottom: offset } : undefined}
       >
         <div className="flex min-h-0 flex-1 flex-col">
           <SheetClose
