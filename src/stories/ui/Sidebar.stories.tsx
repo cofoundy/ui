@@ -716,6 +716,83 @@ export const WithBadges: Story = {
   ),
 };
 
+// Opt-in traveling active indicator: ONE shape slides to the active row (edge spring)
+const TRAVEL_GROUPS = [
+  {
+    label: "Operación",
+    items: [
+      { id: "inicio", title: "Inicio", icon: Home },
+      { id: "chats", title: "Conversaciones", icon: MessageSquare, badge: "7" },
+      { id: "reservas", title: "Reservas de hoy", icon: Calendar, badge: "3" },
+    ],
+  },
+  {
+    label: "Negocio",
+    items: [
+      { id: "clientes", title: "Clientes frecuentes", icon: Users },
+      { id: "pagos", title: "Caja del día", icon: CreditCard },
+      { id: "ajustes", title: "Ajustes del local", icon: Settings },
+    ],
+  },
+];
+
+function TravelingIndicatorDemo() {
+  const [active, setActive] = React.useState("chats");
+  return (
+    <SidebarProvider>
+      <Sidebar collapsible="icon">
+        <SidebarContent>
+          {TRAVEL_GROUPS.map((group) => (
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        isActive={active === item.id}
+                        activeIndicator
+                        tooltip={item.title}
+                        onClick={() => setActive(item.id)}
+                      >
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                      {item.badge ? (
+                        <SidebarMenuBadge>{item.badge}</SidebarMenuBadge>
+                      ) : null}
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
+        <SidebarRail />
+      </Sidebar>
+      <SidebarInset>
+        <header className="flex h-14 items-center gap-2 border-b border-[var(--border)] px-4">
+          <SidebarTrigger className="-ml-1" />
+          <span className="font-semibold">Traveling active indicator</span>
+        </header>
+        <main className="flex-1 p-4">
+          <p className="text-[var(--muted-foreground)]">
+            <code>activeIndicator</code> on <code>SidebarMenuButton</code>: one
+            shape travels between rows and groups (spring <code>edge</code>,
+            instant with reduced motion). Pass a string to give a menu its own
+            track. Without the prop, each active button paints its own
+            background as before.
+          </p>
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
+
+export const TravelingActiveIndicator: Story = {
+  render: () => <TravelingIndicatorDemo />,
+};
+
 // Loading state with skeletons
 export const LoadingState: Story = {
   render: () => (

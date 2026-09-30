@@ -191,3 +191,19 @@ export const MobileBaseline: Story = {
     </div>
   ),
 };
+
+/** Four toasts in a burst: the stack reflows on --cf-spring-smooth (transform AND height), no jump. */
+export const Stacking: Story = {
+  render: () => (
+    <Button
+      onClick={() => {
+        toast("Nueva reserva · Mesa 3");
+        setTimeout(() => toast.success("Pago recibido · S/ 42.00"), 140);
+        setTimeout(() => toast("Pedido para llevar", { description: "Ceviche clásico + chicha morada. Recoge a la 1:30 p. m." }), 280);
+        setTimeout(() => toast.warning("La cocina va con 15 min de demora"), 420);
+      }}
+    >
+      Ráfaga de 4
+    </Button>
+  ),
+};

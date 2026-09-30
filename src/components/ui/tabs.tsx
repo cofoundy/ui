@@ -1,8 +1,10 @@
+"use client";
+
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 
 import { cn } from "../../utils/cn"
-import { EdgeLayers } from "./edge-layers"
+import { EdgeLayers, useEdgeIndicator } from "./edge-layers"
 
 function Tabs({
   className,
@@ -18,9 +20,22 @@ function Tabs({
 }
 
 /**
+ * The pill spans the whole row of triggers (also the part scrolled out of view). Measured from
+ * the triggers, never from scrollWidth: the pill itself counts toward scrollWidth, so that
+ * would feed back and grow the row until it scrolls.
+ */
+function sizePillToRow(list: HTMLElement, pill: HTMLElement) {
+  let end = 0
+  list.querySelectorAll<HTMLElement>('[role="tab"]').forEach((t) => {
+    end = Math.max(end, t.offsetLeft + t.offsetWidth)
+  })
+  pill.style.width = `${Math.max(0, end - pill.offsetLeft)}px`
+}
+
+/**
  * One pill travels under the active trigger with two edges (see EdgeLayers): the leading edge
  * on `--cf-spring-edge`, the trailing one on `--cf-spring-smooth` compressed to 400 ms.
- * The list measures the active trigger itself (MutationObserver on `data-state`), so the
+ * The list measures the active trigger itself (`useEdgeIndicator`, on `data-state`), so the
  * composable API is unchanged. No slide-in on mount: transitions arm after the first placement.
  */
 function TabsList({
@@ -31,8 +46,6 @@ function TabsList({
 }: React.ComponentProps<typeof TabsPrimitive.List>) {
   const listRef = React.useRef<HTMLDivElement | null>(null)
   const pillRef = React.useRef<HTMLSpanElement | null>(null)
-  const lastLeft = React.useRef<number | null>(null)
-
   const setRefs = React.useCallback(
     (node: HTMLDivElement | null) => {
       listRef.current = node
@@ -42,59 +55,11 @@ function TabsList({
     [ref]
   )
 
-  const measure = React.useCallback(() => {
-    const list = listRef.current
-    const pill = pillRef.current
-    if (!list || !pill) return
-    const active = list.querySelector<HTMLElement>('[role="tab"][data-state="active"]')
-    if (!active) {
-      pill.dataset.empty = ""
-      return
-    }
-    delete pill.dataset.empty
-    // The pill spans the whole row of triggers (also the part scrolled out of view). Measured
-    // from the triggers, never from scrollWidth: the pill itself counts toward scrollWidth,
-    // so that would feed back and grow the row until it scrolls.
-    let end = 0
-    list.querySelectorAll<HTMLElement>('[role="tab"]').forEach((t) => {
-      end = Math.max(end, t.offsetLeft + t.offsetWidth)
-    })
-    pill.style.width = `${Math.max(0, end - pill.offsetLeft)}px`
-    const p = pill.getBoundingClientRect()
-    const a = active.getBoundingClientRect()
-    const l = a.left - p.left
-    const r = a.right - p.left // right-edge position (not an inset)
-    if (lastLeft.current !== null && l !== lastLeft.current) {
-      list.dataset.cfDir = l > lastLeft.current ? "right" : "left"
-    }
-    lastLeft.current = l
-    // Concentric corners: inner radius = the list's radius − its padding (the list clips its
-    // overflow to its own rounded box, so a squarer pill would be cut at the ends).
-    const outer = parseFloat(getComputedStyle(list).borderTopLeftRadius) || 0
-    pill.style.setProperty("--cf-edge-rad", `${Math.max(0, outer - pill.offsetTop)}px`)
-    pill.style.setProperty("--cf-edge-l", `${l}px`)
-    pill.style.setProperty("--cf-edge-r", `${r}px`)
-  }, [])
-
-  React.useLayoutEffect(() => {
-    const list = listRef.current
-    if (!list) return
-    measure()
-    const arm = requestAnimationFrame(() => {
-      list.dataset.ready = ""
-    })
-    const mo = new MutationObserver(measure)
-    mo.observe(list, { subtree: true, attributes: true, attributeFilter: ["data-state"] })
-    // A resize re-measures in place: if it lands mid-travel (content swap resizing the row)
-    // the springs retarget instead of being cut.
-    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => measure())
-    ro?.observe(list)
-    return () => {
-      cancelAnimationFrame(arm)
-      mo.disconnect()
-      ro?.disconnect()
-    }
-  }, [measure])
+  useEdgeIndicator(listRef, pillRef, '[role="tab"][data-state="active"]', {
+    observe: ["data-state"],
+    concentric: true,
+    beforeMeasure: sizePillToRow,
+  })
 
   return (
     <TabsPrimitive.List

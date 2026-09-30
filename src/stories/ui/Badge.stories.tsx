@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import * as React from "react";
 import { Badge } from "../../components/ui/badge";
 
 const meta: Meta<typeof Badge> = {
@@ -134,4 +135,41 @@ export const NotificationCount: Story = {
       </div>
     </div>
   ),
+};
+
+/**
+ * `count` mode: pops (snappy spring) on change, swaps only the digits that changed
+ * vertically, grows its width with the digits (9 → 10) and leaves at 0 unless `showZero`.
+ * Honors `prefers-reduced-motion` and `<MotionConfig reducedMotion>` (instant change).
+ */
+export const Counter: Story = {
+  render: () => {
+    const [count, setCount] = React.useState(3);
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-6">
+          <div className="relative">
+            <div className="size-10 rounded-lg bg-accent flex items-center justify-center">
+              <span className="text-foreground text-xs">Bandeja</span>
+            </div>
+            <Badge
+              count={count}
+              variant="error"
+              size="sm"
+              className="absolute -top-1.5 -right-1.5"
+            />
+          </div>
+          <Badge count={count} showZero />
+          <Badge count={count} size="lg" showZero />
+          <Badge count={count} max={9} variant="outline" showZero />
+        </div>
+        <div className="flex gap-2">
+          <button className="rounded-md border px-2 py-1 text-sm" onClick={() => setCount((c) => c + 1)}>+1</button>
+          <button className="rounded-md border px-2 py-1 text-sm" onClick={() => setCount((c) => Math.max(0, c - 1))}>−1</button>
+          <button className="rounded-md border px-2 py-1 text-sm" onClick={() => setCount(0)}>0</button>
+          <button className="rounded-md border px-2 py-1 text-sm" onClick={() => setCount(120)}>120 (99+)</button>
+        </div>
+      </div>
+    );
+  },
 };

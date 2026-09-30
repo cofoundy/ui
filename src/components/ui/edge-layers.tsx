@@ -6,7 +6,7 @@ import * as React from "react"
  *  C  translateX(-(--cf-edge-l))   same spring as L → cancels L exactly, back to frame coords
  *  R  translateX(--cf-edge-r)      box whose RIGHT edge is the right edge; paint + right radius
  * Visible = L ∩ R = [left, right]. Each edge rides its own spring; nothing animates a length.
- * Shared by Switch (knob) and TabsList (pill). CSS: `.cf-edge-*` in styles/index.css.
+ * Shared by Switch (knob) and TabsList (pill). CSS: `.cf-edge-*` in styles/motion.css.
  */
 export function EdgeLayers() {
   return (
@@ -17,3 +17,6 @@ export function EdgeLayers() {
     </span>
   )
 }
+
+export { useEdgeIndicator } from "./use-edge-indicator"
+export type { UseEdgeIndicatorOptions } from "./use-edge-indicator"

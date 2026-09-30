@@ -112,8 +112,8 @@ describe("springTransition", () => {
 });
 
 describe("CSS tokens", () => {
-  it("styles/index.css carries every preset (run npm run gen:springs if this fails)", () => {
-    const css = readFileSync(resolve(__dirname, "../../styles/index.css"), "utf8");
+  it("styles/motion.css carries every preset (run npm run gen:springs if this fails)", () => {
+    const css = readFileSync(resolve(__dirname, "../../styles/motion.css"), "utf8");
     for (const [name, p] of Object.entries(SPRINGS)) {
       const { easing, duration } = springToCSSLinear(p);
       expect(css).toContain(`--cf-spring-${name}: ${easing};`);

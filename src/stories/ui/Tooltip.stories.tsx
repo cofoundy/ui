@@ -145,3 +145,21 @@ export const Keyboard: Story = {
     </Tooltip>
   ),
 };
+
+/** Neighbours under one provider share the skip window: after the first delay, the next opens instantly. */
+export const Neighbours: Story = {
+  render: () => (
+    <TooltipProvider delayDuration={400}>
+      <div className="flex gap-1">
+        {["Pedidos", "Reservas", "Carta", "Ajustes"].map((label) => (
+          <Tooltip key={label}>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="sm">{label}</Button>
+            </TooltipTrigger>
+            <TooltipContent>{label}</TooltipContent>
+          </Tooltip>
+        ))}
+      </div>
+    </TooltipProvider>
+  ),
+};

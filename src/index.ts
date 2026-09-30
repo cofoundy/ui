@@ -53,29 +53,11 @@ export { CofoundyBadge, cofoundyBadgeVariants } from "./components/ui";
 export type { CofoundyBadgeProps } from "./components/ui";
 export { ThemeSwitcher, themeSwitcherVariants } from "./components/ui";
 
-// Workspace governance primitives — RoleChip, WorkspaceShell, ActivationNote
+// Workspace governance primitives — RoleChip, ActivationNote
 export { RoleChip, roleChipVariants } from "./components/ui";
 export type { RoleChipProps } from "./components/ui";
 export { ActivationNote, activationNoteVariants } from "./components/ui";
 export type { ActivationNoteProps } from "./components/ui";
-export {
-  WorkspaceShell,
-  WorkspaceShellRail,
-  WorkspaceShellIdentity,
-  WorkspaceShellNav,
-  WorkspaceShellNavItem,
-  WorkspaceShellRailFooter,
-  WorkspaceShellWell,
-} from "./components/ui";
-export type {
-  WorkspaceShellProps,
-  WorkspaceShellRailProps,
-  WorkspaceShellIdentityProps,
-  WorkspaceShellNavProps,
-  WorkspaceShellNavItemProps,
-  WorkspaceShellRailFooterProps,
-  WorkspaceShellWellProps,
-} from "./components/ui";
 
 // Sidebar system components
 export { Separator } from "./components/ui";
@@ -317,7 +299,78 @@ export {
   type NavDropdownProps,
   type NavDropdownItem,
   type FeaturedEffect,
+  NavRail,
+  NavRailItem,
+  NavRailSection,
+  type NavRailProps,
+  type NavRailItemProps,
+  type NavRailSectionProps,
+  NavRailOverflow,
+  NavRailOverflowRow,
+  type NavRailOverflowProps,
+  type NavRailOverflowRowProps,
+  type NavRailOverflowRenderContext,
+  type NavRailOverflowTriggerContext,
+  TabBar,
+  TabBarItem,
+  type TabBarProps,
+  type TabBarItemProps,
+  MoreSheet,
+  type MoreSheetProps,
+  type MoreSheetItem,
+  type MoreSheetSection,
+  WorkspaceSwitcher,
+  WorkspaceMark,
+  markRadius,
+  type Workspace,
+  type WorkspaceSwitcherProps,
+  type WorkspaceSwitcherLabels,
+  type WorkspaceMarkProps,
+  NewDot,
+  NewChip,
+  type NewDotProps,
+  type NewChipProps,
+  NavListRow,
+  type NavListRowProps,
+  MoreSheetRow,
+  type MoreSheetRowProps,
 } from "./components/navigation";
+export { useEdgeIndicator, type UseEdgeIndicatorOptions } from "./components/ui/use-edge-indicator";
+
+// Plugins, estado y formularios generados (nav-motion 2026-09-29)
+export {
+  PluginCard,
+  PluginCardSkeleton,
+  PluginSheet,
+  PluginStatus,
+  PluginIconTile,
+  type PluginCardProps,
+  type PluginSheetProps,
+  type PluginStatusValue,
+  type PluginTone,
+  type PluginNotice,
+  type PluginPrimaryAction,
+  type PluginCardAction,
+} from "./components/ui/plugin-card";
+export { StatusPill, type StatusPillProps, type StatusPillTone } from "./components/ui/status-pill";
+export {
+  SchemaForm,
+  validateSchemaForm,
+  isSchemaFieldVisible,
+  SCHEMA_FORM_STRINGS,
+  type SchemaFormProps,
+  type SchemaFormSchema,
+  type SchemaFormField,
+  type SchemaFormGroup,
+  type SchemaFormFieldLabels,
+  type SchemaFormValue,
+  type SchemaFormStrings,
+  type SchemaFormCustomContext,
+  type SchemaFormUnit,
+} from "./components/ui/schema-form";
+export { CollapsibleChevron } from "./components/ui/collapsible";
+export { type SkeletonProps, type SkeletonAnimation } from "./components/ui/skeleton";
+export { type BadgeProps, type BadgeCountProps } from "./components/ui/badge";
 
 // Effect Components
 export {
