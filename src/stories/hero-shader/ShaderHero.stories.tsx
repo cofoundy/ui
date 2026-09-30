@@ -6,6 +6,10 @@ const meta: Meta<typeof ShaderHero> = {
   component: ShaderHero,
   parameters: {
     layout: 'fullscreen',
+    // WebGL canvas: not deterministic, and Chromatic's cloud renderer has no GPU context — the
+    // snapshot is noise at best and a "component error" at worst. The poster path is covered by
+    // the component's own tests.
+    chromatic: { disableSnapshot: true },
     docs: {
       description: {
         component:
