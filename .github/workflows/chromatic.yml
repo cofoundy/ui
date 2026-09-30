@@ -28,3 +28,9 @@ jobs:
         uses: chromaui/action@latest
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          # Chromatic NO es compuerta de deploy (decisión de André, 2026-09-30: «quita eso q sea
+          # filtro para deployment, q sea automático e inmediato»). Los cambios visuales se
+          # aceptan solos como baseline y el check nunca queda en rojo por diferencias; sigue
+          # sirviendo como historial visual por build. Un error real de Storybook sí falla.
+          autoAcceptChanges: true
+          exitZeroOnChanges: true
