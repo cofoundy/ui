@@ -192,10 +192,16 @@ function DropdownMenuItem({
       )}
       {...props}
     >
-      {hl.on && !props.asChild && (
-        <ItemHighlight reduced={hl.scope!.reduced} destructive={destructive} />
+      {/* With `asChild` the Item is a Radix Slot, which needs EXACTLY one child: a sibling
+          `false` next to it still counts (`Children.count`) and `Children.only` throws. */}
+      {props.asChild ? (
+        children
+      ) : (
+        <>
+          {hl.on && <ItemHighlight reduced={hl.scope!.reduced} destructive={destructive} />}
+          {children}
+        </>
       )}
-      {children}
     </DropdownMenuPrimitive.Item>
   );
 }
