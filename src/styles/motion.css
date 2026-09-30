@@ -452,6 +452,16 @@
   overflow: clip;
   pointer-events: none;
 }
+/* The thumb element is the knob's lane-wide FRAME, not the round knob (only .cf-edge-r paints).
+   A consumer decorating `[data-slot="switch-thumb"]` the shadcn way would paint a lane-wide
+   rectangle — a 1 px inset highlight reads as a line across the track. Two selectors outrank any
+   single-selector consumer rule without !important. */
+[data-slot="switch"] > .cf-switch__knob {
+  border: 0;
+  border-radius: var(--cf-edge-rad);
+  background: none;
+  box-shadow: none;
+}
 .cf-switch__knob[data-state="checked"] {
   --cf-edge-l: calc(var(--cf-lane) - var(--cf-knob));
   --cf-edge-r: var(--cf-lane);
