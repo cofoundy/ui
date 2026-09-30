@@ -205,3 +205,39 @@ const OptimisticRevertSwitch = () => {
 export const OptimisticRevert: Story = {
   render: () => <OptimisticRevertSwitch />,
 };
+
+/**
+ * A consumer that decorates `[data-slot="switch-thumb"]` the shadcn way — here the exact lift
+ * Fovente ships (`--fov-lift-1`: a 1 px inset highlight + two drop shadows). The thumb element is
+ * the knob's lane-wide FRAME, not the round knob, so the package must keep that decoration off
+ * it; unguarded, the inset highlight draws a light line across the top of the whole track.
+ * The consumer rule is written at a single attribute's specificity, like the real one.
+ */
+export const ConsumerDecoratesThumb: Story = {
+  render: () => (
+    <div className="consumer-thumb-lift flex flex-col gap-4 p-4">
+      <style>{`
+        :where(.consumer-thumb-lift) [data-slot="switch-thumb"] {
+          box-shadow:
+            inset 0 1px 0 rgba(255,253,251,.9),
+            0 1px 2px rgba(36,27,23,.04),
+            0 2px 6px -1px rgba(36,27,23,.06);
+        }
+      `}</style>
+      <div className="flex items-center gap-4">
+        <Switch aria-label="default" />
+        <Switch aria-label="default on" defaultChecked />
+        <Switch aria-label="lg" size="lg" />
+        <Switch aria-label="lg on" size="lg" defaultChecked />
+      </div>
+    </div>
+  ),
+  // Real-browser guard (Chromatic runs it): jsdom resolves the cascade by source order, not
+  // specificity, so it passes this case with or without the package rule.
+  play: async ({ canvasElement }) => {
+    for (const thumb of canvasElement.querySelectorAll('[data-slot="switch-thumb"]')) {
+      const shadow = getComputedStyle(thumb).boxShadow;
+      if (shadow !== 'none') throw new Error(`switch-thumb frame carries a consumer shadow: ${shadow}`);
+    }
+  },
+};
