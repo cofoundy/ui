@@ -17,7 +17,7 @@ import { cn } from "../../utils/cn";
  * One shape per size: the tile radius and the row radius match the container they sit in
  * (sm: 8 px inside a 14 px panel with 6 px padding · md: 12 px inside a 20 px sheet with 8 px).
  *
- * Tokens (fallbacks inline; defined in index.css): `--cf-nav-active-bg`, `--cf-nav-active-fg`,
+ * Tokens (fallbacks inline; defined in motion.css): `--cf-nav-active-bg`, `--cf-nav-active-fg`,
  * `--cf-nav-hover-bg`.
  */
 

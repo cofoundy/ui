@@ -4,7 +4,7 @@ import * as React from "react"
  * Drives an `EdgeLayers` indicator: finds the active element inside `listRef`, measures it
  * against `pillRef` (the frame that hosts `<EdgeLayers />`) and writes `--cf-edge-l` /
  * `--cf-edge-r` on the pill. The travel direction goes on the list as `data-cf-dir`
- * ("left" | "right"), which is what arms the per-edge springs in `styles/index.css`.
+ * ("left" | "right"), which is what arms the per-edge springs in `styles/motion.css`.
  *
  * Re-measures on attribute changes inside the list (MutationObserver on `observe`) and on
  * resize (a resize mid-travel retargets the springs instead of cutting them).

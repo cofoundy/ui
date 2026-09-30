@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import {
@@ -36,7 +38,7 @@ import { NewChip, NewDot } from "./NewIndicator";
 
 // ─────────────────────────────── tokens ───────────────────────────────
 
-/** Nav tokens live in styles/index.css; the fallbacks keep the rail usable without them. */
+/** Nav tokens live in styles/motion.css; the fallbacks keep the rail usable without them. */
 const ACTIVE_BG = "var(--cf-nav-active-bg, color-mix(in oklab, var(--primary) 16%, transparent))";
 const ACTIVE_FG = "var(--cf-nav-active-fg, var(--primary))";
 const HOVER_BG = "var(--cf-nav-hover-bg, color-mix(in oklab, var(--sidebar-foreground, var(--foreground)) 7%, transparent))";

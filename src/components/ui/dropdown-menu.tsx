@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react";
@@ -15,7 +17,7 @@ import { springTransition } from "../../lib/spring";
  *   CSS keyframes (not framer) so Radix `Presence` keeps the surface mounted
  *   until the exit ends and the Root stays uncontrolled — the API is untouched.
  *   The CSS is `.cf-dd-surface` + the shared `cf-pop-in/out` pair in
- *   `styles/index.css` (same `[data-side]` rule as Tooltip).
+ *   `styles/motion.css` (same `[data-side]` rule as Tooltip).
  * - The highlight is ONE element per menu that travels between items
  *   (framer `layoutId`, `edge` spring). Sub-menus get their own.
  * - Reduced motion (OS or framer `MotionConfig reducedMotion`): opacity only,

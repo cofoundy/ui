@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -9,7 +11,7 @@ import { after, commit, MOTION, prefersReducedMotion } from "../../lib/motion-ti
 // Press: the whole button settles to .96 on pointer-down (fast, --cf-duration-press) and
 // springs back on release (--cf-spring-snappy). `scale`, not `transform`, so it composes with
 // any transform a caller adds. Reduced motion: no scale, no transition. The morph mode
-// (`status`/`loading`) owns its press in styles/index.css (`.cf-btn[data-pressed]`).
+// (`status`/`loading`) owns its press in styles/motion.css (`.cf-btn[data-pressed]`).
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,background-color,border-color,box-shadow,scale] duration-[var(--cf-spring-snappy-duration)] ease-[var(--cf-spring-snappy)] active:scale-[.96] active:duration-[var(--cf-duration-press)] motion-reduce:transition-none motion-reduce:active:scale-100 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
   {
@@ -142,7 +144,7 @@ type StatusButtonProps = Omit<ButtonProps, "asChild" | "status" | "loading"> & {
 };
 
 /**
- * Morph-in-place button. Movement lives in styles/index.css (`.cf-btn`); this component only
+ * Morph-in-place button. Movement lives in styles/motion.css (`.cf-btn`); this component only
  * flips `data-phase` at measured times. `exit`/`restore` are the 80 ms content-only windows
  * around the circle.
  */

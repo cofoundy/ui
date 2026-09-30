@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import {
   AnimatePresence,
@@ -50,6 +52,9 @@ export interface Workspace {
   logo?: string | React.ReactNode;
   /** Iniciales a mostrar sin logo (default: derivadas del nombre). */
   initials?: string;
+  /** Color de marca de ESE workspace para las iniciales (default: `--primary` del tema activo,
+   *  que pinta a todos con el color del negocio ACTUAL). */
+  color?: string;
 }
 
 export interface WorkspaceSwitcherLabels {
@@ -154,8 +159,8 @@ export function WorkspaceMark({ workspace, size = 32, className }: WorkspaceMark
   };
   const initialsStyle: React.CSSProperties = {
     fontSize: Math.round(size * 0.38),
-    background: "var(--primary)",
-    color: "var(--primary-foreground)",
+    background: workspace.color ?? "var(--primary)",
+    color: workspace.color ? "#fff" : "var(--primary-foreground)",
   };
   if (typeof logo === "string") {
     // Avatar del paquete: si la imagen falla (404, CORS, URL vieja) quedan las iniciales.

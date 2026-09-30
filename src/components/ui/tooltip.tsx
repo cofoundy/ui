@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { useReducedMotion } from "framer-motion";
@@ -12,7 +14,7 @@ import { cn } from "../../utils/cn";
  *   skip window (`skipDelayDuration`, 300 ms), and a bare `Tooltip` reuses an outer provider.
  * - Reduced motion (OS setting, or framer `MotionConfig reducedMotion="always"`): opacity only.
  * Radix `Presence` waits for a CSS `animationend` before unmounting, so the motion is a CSS
- * animation (not framer): the shared `cf-pop-in/out` pair in `styles/index.css`, keyed by
+ * animation (not framer): the shared `cf-pop-in/out` pair in `styles/motion.css`, keyed by
  * `[data-slot="tooltip-content"]` + Radix's `data-side` (same rule as DropdownMenu).
  */
 

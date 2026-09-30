@@ -193,7 +193,7 @@ export function NavRailOverflow<T>({
   const measure = React.useCallback(() => {
     const c = containerRef.current;
     if (!c) return;
-    for (const [k, el] of itemEls.current) heights.current.set(k, el.getBoundingClientRect().height);
+    for (const [k, el] of Array.from(itemEls.current)) heights.current.set(k, el.getBoundingClientRect().height);
     if (triggerRef.current) triggerHeight.current = triggerRef.current.getBoundingClientRect().height;
 
     const n = keys.length;
