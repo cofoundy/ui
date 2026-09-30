@@ -130,9 +130,15 @@ function SheetContent({
   children,
   side = "right",
   style,
+  overlayClassName: overlayExtra,
+  overlayStyle,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> &
-  VariantProps<typeof sheetVariants>) {
+  VariantProps<typeof sheetVariants> & {
+    /** Extra classes / style for the scrim (e.g. stop it above a bottom tab bar, change its z). */
+    overlayClassName?: string;
+    overlayStyle?: React.CSSProperties;
+  }) {
   const open = React.useContext(SheetOpenContext);
   // OS preference, or a <MotionConfig reducedMotion="always"> above (which useReducedMotion ignores).
   const prefersReduced = useReducedMotion();
@@ -167,7 +173,8 @@ function SheetContent({
         <SheetPortal forceMount>
           <SheetPrimitive.Overlay data-slot="sheet-overlay" forceMount asChild>
             <motion.div
-              className={overlayClassName}
+              className={cn(overlayClassName, overlayExtra)}
+              style={overlayStyle as MotionStyle}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, pointerEvents: "none" }}
@@ -186,7 +193,9 @@ function SheetContent({
               initial={hidden}
               animate={shown}
               exit={{ ...hidden, pointerEvents: "none" }}
-              transition={reduced ? REDUCED_FADE : springTransition("gentle")}
+              // restDelta/restSpeed tiny: with a "%" target framer's default rest threshold is 0.5 %
+              // of the panel — it stopped ~3 px short and snapped the last frame (André, 2026-09-29).
+              transition={reduced ? REDUCED_FADE : { ...springTransition("gentle"), restDelta: 0.001, restSpeed: 0.001 }}
             >
               <SheetCloseButton />
               {children}
