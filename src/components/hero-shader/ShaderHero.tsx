@@ -1,12 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import dynamic from 'next/dynamic';
-import type { ShaderHeroConfig, ShaderHeroCanvasProps } from './ShaderHeroCanvas';
+import type { ShaderHeroConfig } from './ShaderHeroCanvas';
 
-const ShaderHeroCanvas = dynamic<ShaderHeroCanvasProps>(
-  () => import('./ShaderHeroCanvas').then((m) => m.ShaderHeroCanvas),
-  { ssr: false, loading: () => null },
+// React.lazy, not next/dynamic: the package is framework-agnostic (Storybook/Vite has no
+// `next`, and `dynamic` came out undefined — "FE is not a function" broke Chromatic from
+// 2026-09-25). `ssr: false` is kept by construction: the canvas only mounts after `mounted`.
+const ShaderHeroCanvas = React.lazy(() =>
+  import('./ShaderHeroCanvas').then((m) => ({ default: m.ShaderHeroCanvas })),
 );
 
 export interface ShaderHeroProps {
@@ -102,11 +103,13 @@ export function ShaderHero({
             transition: 'opacity 150ms linear',
           }}
         >
-          <ShaderHeroCanvas
-            config={config}
-            pixelDensity={pixelDensity}
-            onPainted={() => setPainted(true)}
-          />
+          <React.Suspense fallback={null}>
+            <ShaderHeroCanvas
+              config={config}
+              pixelDensity={pixelDensity}
+              onPainted={() => setPainted(true)}
+            />
+          </React.Suspense>
         </div>
       )}
     </>
