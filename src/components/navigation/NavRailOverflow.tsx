@@ -96,6 +96,8 @@ export interface NavRailOverflowProps<T> {
   minVisible?: number;
   /** Show at most this many, even if there is room (more is noise). Default: no cap. */
   maxVisible?: number;
+  /** Breathing room (px) kept free below the last item before folding into «+N». Default 12. */
+  reserve?: number;
   /** Popover width in px (clamped to the viewport). Default 280. */
   popoverWidth?: number;
   /** Gap between the anchor and the popover. Default 8. */
@@ -137,6 +139,31 @@ function sum(xs: number[]) {
 
 // ───────────────────────── component ─────────────────────────
 
+
+/**
+ * Height the container may use: its parent's content box minus every sibling (and the gaps between
+ * them). Works whether the container is `flex-1` (fills) or `flex-initial` (hugs its content, so
+ * siblings like «Agregar» sit right under it) — the container's own clientHeight only covers the first.
+ */
+function availableHeight(c: HTMLElement): number {
+  const parent = c.parentElement;
+  if (!parent) return c.clientHeight;
+  const ps = getComputedStyle(parent);
+  const inner = parent.clientHeight - (parseFloat(ps.paddingTop) || 0) - (parseFloat(ps.paddingBottom) || 0);
+  const pgap = parseFloat(ps.rowGap || "0") || 0;
+  const kids = Array.from(parent.children).filter((el) => {
+    const cs = getComputedStyle(el as HTMLElement);
+    return cs.display !== "none" && cs.position !== "absolute" && cs.position !== "fixed";
+  }) as HTMLElement[];
+  let others = 0;
+  for (const el of kids) {
+    if (el === c) continue;
+    const cs = getComputedStyle(el);
+    others += el.getBoundingClientRect().height + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+  }
+  const fromParent = inner - others - pgap * Math.max(0, kids.length - 1);
+  return Math.max(c.clientHeight, fromParent);
+}
 export function NavRailOverflow<T>({
   items,
   renderItem,
@@ -160,6 +187,7 @@ export function NavRailOverflow<T>({
   triggerClassName,
   popoverClassName,
   onVisibleCountChange,
+  reserve = 12,
 }: NavRailOverflowProps<T>) {
   const reduce = useReducedMotionConfig() ?? false;
 
@@ -202,7 +230,7 @@ export function NavRailOverflow<T>({
     const hs = keys.map((k) => heights.current.get(k) ?? avg);
     const trig = triggerHeight.current ?? avg;
     const gap = parseFloat(getComputedStyle(c).rowGap || "0") || 0;
-    const avail = c.clientHeight;
+    const avail = availableHeight(c) - reserve;
     const cap = maxVisible ?? Infinity;
     const EPS = 0.5;
 
@@ -221,7 +249,7 @@ export function NavRailOverflow<T>({
     }
     setVisibleCount((prev) => (prev === next ? prev : next));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [keySig, maxVisible, minVisible]);
+  }, [keySig, maxVisible, minVisible, reserve]);
 
   // Items changed → forget the correction and re-measure.
   useIsoLayoutEffect(() => {
@@ -242,14 +270,20 @@ export function NavRailOverflow<T>({
   useIsoLayoutEffect(() => {
     const c = containerRef.current;
     if (!c || typeof ResizeObserver === "undefined") return;
-    let lastH = c.clientHeight;
+    // Watch the PARENT too: with `flex-initial` the container is as tall as its content, so when the
+    // window grows (zoom out, resize) only the parent grows — watching the container alone left the
+    // rail stuck at its smallest count (André, 2026-09-29).
+    const parent = c.parentElement;
+    let last = `${c.clientHeight}|${parent?.clientHeight ?? 0}`;
     const ro = new ResizeObserver(() => {
-      if (c.clientHeight === lastH) return;
-      lastH = c.clientHeight;
+      const now = `${c.clientHeight}|${parent?.clientHeight ?? 0}`;
+      if (now === last) return;
+      last = now;
       correction.current = 0;
       measure();
     });
     ro.observe(c);
+    if (parent) ro.observe(parent);
     return () => ro.disconnect();
   }, [measure]);
 
