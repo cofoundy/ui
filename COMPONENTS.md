@@ -1,6 +1,6 @@
 # @cofoundy/ui — Component Catalog
 
-**Last updated:** 2026-09-29 · **Storybook:** [ui.cofoundy.dev](https://ui.cofoundy.dev) · **Total exports:** ~106 (`chat-sim` is a separate subpath, not yet in this count — see its section)
+**Last updated:** 2026-10-12 · **Storybook:** [ui.cofoundy.dev](https://ui.cofoundy.dev) · **Total exports:** ~108 (`chat-sim` is a separate subpath, not yet in this count — see its section)
 
 > **For agents:** start at the [Intent Map](#intent-map) below — maps "I need X" → component name + import + story URL. If you don't find your need there, fall through to the [Section tables](#chat) (alphabetical) or run `grep '^export' ~/cofoundy/packages/ui/src/index.ts` for the raw export list. Storybook auto-discovery: `curl -sS https://ui.cofoundy.dev/index.json` returns 598 entries (all stories, parseable JSON).
 
@@ -21,6 +21,7 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 | Custom message bubble rendering | `MessageBubble`, `MessageContent`, `MessageAvatar`, `MessageTimestamp` | Messaging | `messaging-primitives-*` |
 | Compose user input (multi-modal, quick actions, toolbar) | `MessageComposer` | Messaging | `messaging-messagecomposer` |
 | Inbox-style message list (Cofoundy InboxAI) | `InboxMessage`, `InboxMessageList` | Messaging | `messaging-inboxmessage` |
+| Show what an AI **tool call** did (name, summary, status, folded input/output) — one or a turn's group | `ToolInvocation`, `ToolInvocationGroup` | Messaging | `messaging-toolinvocation` |
 | KPI metric tile (number / duration / percentage + trend) | `StatCard` | Analytics | `analytics-statcard` |
 | Inline mini trend line (fits in StatCard / DataTable) | `SparkLine` | Analytics | `analytics-sparkline` |
 | Vertical bar chart (CSS-only, animated) | `BarChart` | Analytics | `analytics-barchart` |
@@ -157,6 +158,8 @@ Generic messaging primitives (used by InboxAI; reusable for any chat surface).
 | `InboxMessage`, `InboxMessageList` | Composed message list (InboxAI). |
 | `MessageComposer` | Multi-modal input (text + attachments + toolbar + quick actions). `busy` swaps Send for Stop while an automatic reply is in flight — the textarea stays live. |
 | `AIBadge` | "AI" inline pill (mark AI-generated content). |
+| **`ToolInvocation`** | **NEW (2026-10-12)** — Collapsible card for one tool call of an AI turn: `name`, one-line `summary`, `state` (`input-streaming` · `input-available` · `output-available` · `output-error`), `input` (flat object → key/value list, else JSON), `output` (text · JSON string pretty-printed, a truncated one stays text · object · ReactNode), `errorText`, `defaultOpen` (folded by default), `labels` (English defaults, all overridable). Reference: Vercel AI Elements «Tool». Helpers: `ToolInvocationStatus`, `ToolValue`. |
+| `ToolInvocationGroup` | Folds several `ToolInvocation` of one turn behind «AI ran N actions» (`labels.title(n)` to localize); flags the error count. |
 
 ### Analytics
 
