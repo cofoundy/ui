@@ -1,0 +1,37 @@
+name: CI
+
+# Reemplaza a Chromatic (decisión de André, 2026-10-12: «creo q no lo necesitamos, q se mergee
+# automático»). La compuerta es la misma que daba Chromatic en la práctica: que Storybook compile.
+# Typecheck y tests corren como señal y no bloquean: en main ya fallaban el 2026-10-12
+# (3 errores de tsc, 2 tests rojos), y gatear en eso trabaría todo PR con auto-merge.
+# El Storybook publicado sigue en Cloudflare Pages (deploy.yml).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Typecheck (señal, no bloquea)
+        run: npm run typecheck
+        continue-on-error: true
+
+      - name: Tests (señal, no bloquea)
+        run: npm test
+        continue-on-error: true
