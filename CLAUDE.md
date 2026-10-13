@@ -292,7 +292,8 @@ npm run test:coverage       # With coverage
 
 Storybook is deployed to **Cloudflare Pages** (not Railway) at **ui.cofoundy.dev**.
 - **Auto-deploy on push to `main`** via GitHub Actions (`.github/workflows/deploy.yml`)
-- Chromatic visual testing also runs on push
+- No visual-regression service: Chromatic was removed on 2026-10-12. `.github/workflows/ci.yml` gates every PR on `npm run build-storybook`; typecheck and tests run as signal only.
+- PRs auto-merge once CI is green (repo setting `allow_auto_merge`; `gh pr merge --auto --squash`).
 - No manual deploy needed — just push
 
 ## Products Using This Package
