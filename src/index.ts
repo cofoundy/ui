@@ -232,6 +232,9 @@ export { useAutoScroll } from "./hooks";
 export type { UseAutoScrollOptions, UseAutoScrollReturn } from "./hooks";
 export { useIsMobile } from "./hooks";
 export { useAnimatedValue } from "./hooks";
+// Estrategia 6 «Wave MD» (StreamingAnimation.stories.tsx): drip adaptativo + <StreamingMarkdown>.
+export { useStreamingDrip } from "./hooks";
+export type { DripMode, UseStreamingDripOptions, UseStreamingDripResult } from "./hooks";
 export type { UseAnimatedValueOptions } from "./hooks";
 export { useMountTransition } from "./hooks";
 export { useAGUI, AGUIEventType } from "./hooks";
