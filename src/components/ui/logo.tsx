@@ -19,14 +19,12 @@ const logoVariants = cva("cf-logo", {
 });
 
 /**
- * Cómo se pinta el isologo (regla de marca: handbook/positioning/BRAND/identity.md §02).
- * - `color`: colores de marca. Fondos claros (sobre oscuro los azules se hunden: usa `mono` o `flat`).
- * - `mono`: un color (currentColor) con relieve por opacidad de cara. Pensado para BLANCO sobre
- *   fondo oscuro neutro y tamaño mediano o mayor. En un color oscuro sobre claro la luz se
- *   invierte (la cara iluminada sale casi negra): para eso usa `flat`.
- * - `flat`: un color plano (currentColor) con las caras separadas por un offset (geometría de
- *   BRAND/assets/isologo/isologo-pure-white.svg). Tamaños chicos, favicon, avatar, sobre el
- *   color de un cliente, y cualquier mono que no sea blanco con relieve.
+ * Variantes del isologo = las de la marca. Cuál usar según fondo y tamaño lo decide la tabla
+ * «Qué variante usar» de handbook/positioning/BRAND/identity.md §02 (no se redefine aquí).
+ * - `color` ↔ `*-color`: colores de marca.
+ * - `mono` ↔ `*-white`: currentColor con relieve por opacidad de cara (se diseñó para blanco).
+ * - `flat` ↔ `*-pure-white`: currentColor plano, caras separadas por un offset (geometría de
+ *   BRAND/assets/isologo/isologo-pure-white.svg).
  */
 type LogoVariant = "color" | "mono" | "flat";
 
@@ -61,7 +59,7 @@ const FLAT_FACES = [
 interface LogoProps
   extends Omit<React.SVGProps<SVGSVGElement>, "fill">,
     VariantProps<typeof logoVariants> {
-  /** `color` (default) · `mono` (blanco con relieve sobre oscuro) · `flat` (un color plano). */
+  /** `color` ↔ `*-color` (default) · `mono` ↔ `*-white` · `flat` ↔ `*-pure-white`. Cuál usar: BRAND/identity.md §02. */
   variant?: LogoVariant;
   /** @deprecated Usa `variant="mono"`. Se mantiene por compatibilidad. */
   mono?: boolean;

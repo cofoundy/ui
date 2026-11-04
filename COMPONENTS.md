@@ -38,7 +38,7 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 | Time range picker (7d / 30d / 90d) | `TimeRangeSelector` | Analytics | `analytics-timerangeselector` |
 | Section title + action slot | `AnalyticsSectionHeader` | Analytics | `analytics-analyticssectionheader` |
 | Cal.com booking CTA | `CalBookingButton` (canonical) / `CalendlyButton` (legacy alias) | UI | `ui-calbookingbutton` |
-| **Cofoundy branding** (logo, footer attribution) | `Logo` (isologo), `LogoHeader` (isologo + wordmark · `layout="horizontal"` default · `"stacked"` apilado oficial), `Wordmark`, `CofoundyBadge` · `variant`: `color` default (fondos claros) · `mono` blanco con relieve sobre oscuro neutro · `flat` un color plano (chico, sobre color, mono oscuro). Regla: `handbook/positioning/BRAND/identity.md` §02 | UI | use `/branding` skill (it handles these) |
+| **Cofoundy branding** (logo, footer attribution) | `Logo` (isologo), `LogoHeader` (isologo + wordmark · `layout="horizontal"` default · `"stacked"` apilado oficial), `Wordmark`, `CofoundyBadge` · `variant`: `color` ↔ `*-color` (default) · `mono` ↔ `*-white` · `flat` ↔ `*-pure-white`. Cuál usar: tabla «Qué variante usar» de `handbook/positioning/BRAND/identity.md` §02 (reflejada en la página Docs de Logo y LogoHeader) | UI | use `/branding` skill (it handles these) |
 | 404 / not-found page | `NotFound` | UI | `ui-notfound` |
 | Sidebar layout system (composable) | `Sidebar*` (Provider / Content / Header / Footer / Menu / ...) | UI | `ui-sidebar` |
 | Dialog / modal | `Dialog` (+ `DialogContent`, `DialogTrigger`, ...) | UI | `ui-dialog` |

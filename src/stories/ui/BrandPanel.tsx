@@ -30,7 +30,7 @@ export function BrandPanel({
     >
       <div className="flex min-h-28 items-center justify-center">{children}</div>
       <figcaption className="flex flex-col items-center gap-1 text-center">
-        <span className={cn("text-xs font-medium", surface === "brand" ? "text-primary-foreground" : "text-foreground")}>
+        <span className={cn("whitespace-pre-line text-xs font-medium", surface === "brand" ? "text-primary-foreground" : "text-foreground")}>
           {title}
         </span>
         <span className={cn("text-[11px] leading-snug", surface === "brand" ? "text-primary-foreground/80" : "text-muted-foreground")}>
