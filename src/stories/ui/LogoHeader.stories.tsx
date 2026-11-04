@@ -11,6 +11,11 @@ const meta: Meta<typeof LogoHeader> = {
       options: ['sm', 'default', 'lg', 'xl'],
       description: 'The size of the logo header',
     },
+    layout: {
+      control: 'inline-radio',
+      options: ['horizontal', 'stacked'],
+      description: 'horizontal (cubos + «Cofoundy» al lado) o stacked (cubos arriba, «Cofoundy» debajo y centrado)',
+    },
     mono: {
       control: 'boolean',
       description: 'Use monochrome version (inherits currentColor)',
@@ -27,7 +32,7 @@ const meta: Meta<typeof LogoHeader> = {
   parameters: {
     docs: {
       description: {
-        component: 'Cofoundy Logo Header - Horizontal layout combining the 3D isologo with the Space Grotesk Semibold wordmark.',
+        component: 'Cofoundy Logo Header - combina el isologo 3D con el wordmark Space Grotesk Semibold. `layout="horizontal"` (default) para headers y barras; `layout="stacked"` es el logo apilado oficial (portadas, avatares, cabeceras centradas).',
       },
     },
   },
@@ -144,6 +149,56 @@ export const ThemeAdaptive: Story = {
         El wordmark usa text-foreground y se adapta automáticamente al tema activo.
         Cambia el tema en Storybook para ver el comportamiento.
       </p>
+    </div>
+  ),
+};
+
+// Logo apilado oficial (isologo arriba, «Cofoundy» debajo y centrado)
+export const Stacked: Story = {
+  args: {
+    size: 'lg',
+    layout: 'stacked',
+  },
+  render: (args) => (
+    <div className="flex flex-wrap items-stretch gap-6">
+      {/* Cada tarjeta fija su tema con data-theme: el wordmark usa text-foreground. */}
+      <div
+        data-theme="light"
+        data-testid="stacked-light"
+        className="flex flex-col items-center gap-4 rounded-xl border border-border bg-background px-12 py-10"
+      >
+        <LogoHeader {...args} />
+        <span className="text-xs text-muted-foreground">Color · fondo claro</span>
+      </div>
+      <div
+        data-theme="dark"
+        data-testid="stacked-dark"
+        className="flex flex-col items-center gap-4 rounded-xl border border-border bg-background px-12 py-10 text-foreground"
+      >
+        <LogoHeader {...args} mono />
+        <span className="text-xs text-muted-foreground">Mono blanco · fondo oscuro</span>
+      </div>
+      <div
+        data-theme="light"
+        data-testid="stacked-mono-light"
+        className="flex flex-col items-center gap-4 rounded-xl border border-border bg-background px-12 py-10 text-foreground"
+      >
+        <LogoHeader {...args} mono />
+        <span className="text-xs text-muted-foreground">Mono oscuro · fondo claro</span>
+      </div>
+    </div>
+  ),
+};
+
+export const StackedAllSizes: Story = {
+  render: () => (
+    <div className="flex flex-wrap items-end gap-10">
+      {(['sm', 'default', 'lg', 'xl'] as const).map((size) => (
+        <div key={size} className="flex flex-col items-center gap-2">
+          <LogoHeader size={size} layout="stacked" />
+          <span className="text-xs text-muted-foreground">{size}</span>
+        </div>
+      ))}
     </div>
   ),
 };

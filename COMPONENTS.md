@@ -38,7 +38,7 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 | Time range picker (7d / 30d / 90d) | `TimeRangeSelector` | Analytics | `analytics-timerangeselector` |
 | Section title + action slot | `AnalyticsSectionHeader` | Analytics | `analytics-analyticssectionheader` |
 | Cal.com booking CTA | `CalBookingButton` (canonical) / `CalendlyButton` (legacy alias) | UI | `ui-calbookingbutton` |
-| **Cofoundy branding** (logo, footer attribution, shimmer) | `Logo`, `LogoHeader`, `Wordmark`, `CofoundyBadge`, `ShimmerText`, `GradientBorder` | UI | use `/branding` skill (it handles these) |
+| **Cofoundy branding** (logo, footer attribution, shimmer) | `Logo`, `LogoHeader` (`layout="horizontal"` default · `"stacked"` = logo apilado oficial: cubos arriba, «Cofoundy» debajo centrado), `Wordmark`, `CofoundyBadge`, `ShimmerText`, `GradientBorder` | UI | use `/branding` skill (it handles these) |
 | 404 / not-found page | `NotFound` | UI | `ui-notfound` |
 | Sidebar layout system (composable) | `Sidebar*` (Provider / Content / Header / Footer / Menu / ...) | UI | `ui-sidebar` |
 | Dialog / modal | `Dialog` (+ `DialogContent`, `DialogTrigger`, ...) | UI | `ui-dialog` |
@@ -189,7 +189,7 @@ Generic messaging primitives (used by InboxAI; reusable for any chat surface).
 
 shadcn/ui base, theme-tokenized.
 
-`Button`, `Input`, `Badge`, `ChannelBadge`, `Avatar`, `Spinner`, `Skeleton`, `Switch`, `Separator`, `Tabs`, `Tooltip`, `Collapsible`, `Select`, `DropdownMenu`, `Sheet`, `Dialog`, `Breadcrumb`, `Sidebar` (+ ~20 subcomponents), `Toaster`/`toast`, `ConfirmDialog`, `DangerZone`/`DangerZoneItem`/`DangerZoneHeader`, `RoleChip`, `ActivationNote`, `ComposerQuickAction`, `Logo`, `LogoHeader`/`Wordmark`, `CofoundyBadge`, `ChannelBadge`, `CalBookingButton`/`CalendlyButton` (legacy alias), `NotFound`, `ThemeSwitcher`, `ShimmerText`, `GradientBorder`.
+`Button`, `Input`, `Badge`, `ChannelBadge`, `Avatar`, `Spinner`, `Skeleton`, `Switch`, `Separator`, `Tabs`, `Tooltip`, `Collapsible`, `Select`, `DropdownMenu`, `Sheet`, `Dialog`, `Breadcrumb`, `Sidebar` (+ ~20 subcomponents), `Toaster`/`toast`, `ConfirmDialog`, `DangerZone`/`DangerZoneItem`/`DangerZoneHeader`, `RoleChip`, `ActivationNote`, `ComposerQuickAction`, `Logo`, `LogoHeader` (layout horizontal · stacked)/`Wordmark`, `CofoundyBadge`, `ChannelBadge`, `CalBookingButton`/`CalendlyButton` (legacy alias), `NotFound`, `ThemeSwitcher`, `ShimmerText`, `GradientBorder`.
 
 
 **Command palette** — `CommandPalette` + `CommandPaletteTrigger`: ⌘K-style fuzzy command launcher. Styles eager-inject so the trigger renders styled on first paint.

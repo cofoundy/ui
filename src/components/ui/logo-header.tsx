@@ -14,25 +14,47 @@ const logoHeaderVariants = cva(
         lg: "gap-3",
         xl: "gap-4",
       },
+      layout: {
+        horizontal: "flex-row",
+        stacked: "flex-col text-center",
+      },
     },
     defaultVariants: {
       size: "default",
+      layout: "horizontal",
     },
   }
 );
 
-const wordmarkSizes = {
-  sm: "text-lg",
-  default: "text-xl",
-  lg: "text-2xl",
-  xl: "text-4xl",
+type LogoHeaderSize = "sm" | "default" | "lg" | "xl";
+type LogoHeaderLayout = "horizontal" | "stacked";
+
+/**
+ * Tamaños por layout. En el apilado el isologo crece un escalón y el
+ * wordmark va con interlineado 1, para que «Cofoundy» quede pegado y
+ * centrado bajo los cubos (proporción del logo oficial de la web).
+ */
+const wordmarkSizes: Record<LogoHeaderLayout, Record<LogoHeaderSize, string>> = {
+  horizontal: {
+    sm: "text-lg",
+    default: "text-xl",
+    lg: "text-2xl",
+    xl: "text-4xl",
+  },
+  stacked: {
+    sm: "text-lg leading-none",
+    default: "text-2xl leading-none",
+    lg: "text-4xl leading-none",
+    xl: "text-5xl leading-none",
+  },
 };
 
-const isoloSizes = {
-  sm: "sm" as const,
-  default: "default" as const,
-  lg: "lg" as const,
-  xl: "xl" as const,
+const isoloSizes: Record<
+  LogoHeaderLayout,
+  Record<LogoHeaderSize, "sm" | "default" | "lg" | "xl" | "2xl">
+> = {
+  horizontal: { sm: "sm", default: "default", lg: "lg", xl: "xl" },
+  stacked: { sm: "default", default: "lg", lg: "xl", xl: "2xl" },
 };
 
 interface LogoHeaderProps
@@ -47,30 +69,36 @@ interface LogoHeaderProps
 }
 
 /**
- * Cofoundy Logo Header - Horizontal layout with isologo + wordmark
+ * Cofoundy Logo Header - isologo + wordmark
+ * `layout="horizontal"` (default): cubos a la izquierda, «Cofoundy» a la derecha.
+ * `layout="stacked"`: cubos arriba, «Cofoundy» debajo y centrado (logo apilado oficial).
  * Uses Space Grotesk Semibold for the wordmark
  */
 function LogoHeader({
   className,
   size = "default",
+  layout = "horizontal",
   mono = false,
   wordmarkOnly = false,
   isologoOnly = false,
   ...props
 }: LogoHeaderProps) {
-  const wordmarkSize = wordmarkSizes[size || "default"];
-  const isoloSize = isoloSizes[size || "default"];
+  const sizeKey = size || "default";
+  const layoutKey = layout || "horizontal";
+  const wordmarkSize = wordmarkSizes[layoutKey][sizeKey];
+  const isoloSize = isoloSizes[layoutKey][sizeKey];
+  const rootClassName = cn(logoHeaderVariants({ size, layout }), className);
 
   if (isologoOnly) {
     return (
-      <div className={cn(logoHeaderVariants({ size }), className)} {...props}>
+      <div className={rootClassName} data-layout={layoutKey} {...props}>
         <Logo size={isoloSize} mono={mono} />
       </div>
     );
   }
 
   return (
-    <div className={cn(logoHeaderVariants({ size }), className)} {...props}>
+    <div className={rootClassName} data-layout={layoutKey} {...props}>
       {!wordmarkOnly && <Logo size={isoloSize} mono={mono} />}
       <span
         className={cn(
