@@ -16,7 +16,7 @@ const cofoundyBadgeVariants = cva(
           "hover:drop-shadow-[0_0_8px_var(--chat-primary)]",
         /** Full-color cube + shimmer brand text. Animated premium feel. */
         shimmer: "hover:drop-shadow-[0_0_8px_var(--chat-primary)]",
-        /** Pill badge with mono cube + hover shimmer & brand color reveal. */
+        /** Pill badge with flat cube + hover shimmer & brand color reveal. */
         pill: "px-4 py-1.5 rounded-full border border-[var(--chat-border)] hover:border-[var(--chat-foreground)]/20 hover:-translate-y-px",
         /** Friendly with separator lines, cube, heart icon. Warm and approachable. */
         friendly: "gap-2.5",
@@ -43,7 +43,7 @@ interface CofoundyBadgeProps
  * Variants:
  * - `professional` — Full-color 3D cube + brand blue text + hover glow.
  * - `shimmer` — Full-color 3D cube + shimmer animated brand text.
- * - `pill` — Contained pill with mono cube, border, hover shimmer reveal.
+ * - `pill` — Contained pill with a flat one-color cube, border, hover shimmer reveal.
  * - `friendly` — Separator lines + cube + "Hecho con amor por Cofoundy" + heart. Warm feel.
  */
 function CofoundyBadge({
@@ -66,7 +66,7 @@ function CofoundyBadge({
     >
       {variant === "professional" && (
         <>
-          <Logo size="sm" className="w-4 h-4 shrink-0" />
+          <Logo size="sm" className="w-4 h-4 shrink-0" aria-hidden />
           <span className="text-[var(--chat-primary)]/60 group-hover/cf-badge:text-[var(--chat-primary)] transition-colors">
             {resolvedPrefix}{" "}
             <span className="font-semibold">Cofoundy</span>
@@ -75,7 +75,7 @@ function CofoundyBadge({
       )}
       {variant === "shimmer" && (
         <>
-          <Logo size="sm" className="w-4 h-4 shrink-0" />
+          <Logo size="sm" className="w-4 h-4 shrink-0" aria-hidden />
           <span className="text-[var(--chat-muted)]/60 group-hover/cf-badge:text-[var(--chat-muted)] transition-colors">
             {resolvedPrefix}
           </span>
@@ -87,7 +87,8 @@ function CofoundyBadge({
       {variant === "pill" && (
         <>
           <Logo
-            mono
+            variant="flat"
+            aria-hidden
             size="sm"
             className="w-3.5 h-3.5 shrink-0 text-[var(--chat-muted)]/50 group-hover/cf-badge:text-[var(--chat-primary)] transition-colors duration-300"
           />
@@ -109,10 +110,7 @@ function CofoundyBadge({
       {variant === "friendly" && (
         <>
           <span className="block w-8 h-px bg-[var(--chat-border)] group-hover/cf-badge:bg-[var(--chat-foreground)]/20 transition-colors" />
-          <Logo
-            size="sm"
-            className="w-4 h-4 shrink-0"
-          />
+          <Logo size="sm" className="w-4 h-4 shrink-0" aria-hidden />
           <span className="text-[var(--chat-muted)]/50 group-hover/cf-badge:text-[var(--chat-muted)] transition-colors">
             {resolvedPrefix}{" "}
             <span className="font-semibold text-[var(--chat-muted)]/60 group-hover/cf-badge:text-[var(--chat-primary)] transition-colors">

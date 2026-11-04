@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { LogoHeader, Wordmark } from '../../components/ui/logo-header';
+import { BrandGrid, BrandPanel } from './BrandPanel';
 
 const meta: Meta<typeof LogoHeader> = {
   title: 'UI/LogoHeader',
@@ -9,30 +10,29 @@ const meta: Meta<typeof LogoHeader> = {
     size: {
       control: 'select',
       options: ['sm', 'default', 'lg', 'xl'],
-      description: 'The size of the logo header',
+      description: 'Tamaño del lockup',
     },
     layout: {
       control: 'inline-radio',
       options: ['horizontal', 'stacked'],
-      description: 'horizontal (cubos + «Cofoundy» al lado) o stacked (cubos arriba, «Cofoundy» debajo y centrado)',
+      description:
+        '`horizontal` para headers, barras y cabeceras de documento · `stacked` (cubos arriba, «Cofoundy» debajo) para portadas centradas y avatares',
     },
-    mono: {
-      control: 'boolean',
-      description: 'Use monochrome version (inherits currentColor)',
+    variant: {
+      control: 'inline-radio',
+      options: ['color', 'mono', 'flat'],
+      description:
+        '`color` colores de marca · `mono` blanco con relieve sobre oscuro neutro · `flat` un color plano (sobre color, chico, mono oscuro). En `mono` y `flat` el wordmark hereda `currentColor`.',
     },
-    wordmarkOnly: {
-      control: 'boolean',
-      description: 'Show only the wordmark without the isologo',
-    },
-    isologoOnly: {
-      control: 'boolean',
-      description: 'Show only the isologo without the wordmark',
-    },
+    mono: { table: { disable: true } },
+    wordmarkOnly: { table: { disable: true } },
+    isologoOnly: { table: { disable: true } },
   },
   parameters: {
     docs: {
       description: {
-        component: 'Cofoundy Logo Header - combina el isologo 3D con el wordmark Space Grotesk Semibold. `layout="horizontal"` (default) para headers y barras; `layout="stacked"` es el logo apilado oficial (portadas, avatares, cabeceras centradas).',
+        component:
+          'Logo de Cofoundy: isologo + wordmark «Cofoundy» (Space Grotesk Semibold, -0.02em). Es la fuente de los archivos de `handbook/positioning/BRAND/assets/logo/` (`make-stacked.py`). Regla de uso: `identity.md` §02. Solo los cubos → `Logo`; solo el texto → `Wordmark`.',
       },
     },
   },
@@ -42,157 +42,66 @@ export default meta;
 type Story = StoryObj<typeof LogoHeader>;
 
 export const Default: Story = {
-  args: {
-    size: 'default',
-  },
+  args: { size: 'lg', layout: 'horizontal', variant: 'color' },
 };
 
-export const Small: Story = {
-  args: {
-    size: 'sm',
-  },
-};
-
-export const Large: Story = {
-  args: {
-    size: 'lg',
-  },
-};
-
-export const ExtraLarge: Story = {
-  args: {
-    size: 'xl',
-  },
-};
-
-export const AllSizes: Story = {
+export const Sizes: Story = {
   render: () => (
-    <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-2">
-        <LogoHeader size="sm" />
-        <span className="text-xs text-muted-foreground">sm</span>
-      </div>
-      <div className="flex flex-col gap-2">
+    <div data-theme="light" className="flex flex-col gap-6 rounded-xl bg-background p-8">
+      {(['sm', 'default', 'lg', 'xl'] as const).map((size) => (
+        <div key={size} className="flex items-center gap-6">
+          <span className="w-14 text-xs text-muted-foreground">{size}</span>
+          <LogoHeader size={size} />
+        </div>
+      ))}
+    </div>
+  ),
+};
+
+/** Horizontal: qué variante va sobre qué fondo. */
+export const Variants: Story = {
+  render: () => (
+    <BrandGrid>
+      <BrandPanel theme="light" title="color · fondo claro" rule="Default: web, documentos, cotizaciones.">
         <LogoHeader size="default" />
-        <span className="text-xs text-muted-foreground">default</span>
-      </div>
-      <div className="flex flex-col gap-2">
-        <LogoHeader size="lg" />
-        <span className="text-xs text-muted-foreground">lg</span>
-      </div>
-      <div className="flex flex-col gap-2">
-        <LogoHeader size="xl" />
-        <span className="text-xs text-muted-foreground">xl</span>
-      </div>
-    </div>
+      </BrandPanel>
+      <BrandPanel theme="dark" title="mono · oscuro neutro" rule="Blanco con relieve, mediano o grande.">
+        <LogoHeader size="default" variant="mono" className="text-white" />
+      </BrandPanel>
+      <BrandPanel theme="dark" surface="brand" title="flat · sobre color" rule="Sobre el color de un cliente o de la marca.">
+        <LogoHeader size="default" variant="flat" className="text-white" />
+      </BrandPanel>
+      <BrandPanel theme="light" title="flat · un color sobre claro" rule="Una tinta (impresión, sello). Nunca mono con relieve.">
+        <LogoHeader size="default" variant="flat" className="text-foreground" />
+      </BrandPanel>
+    </BrandGrid>
   ),
 };
 
-export const WordmarkOnly: Story = {
-  args: {
-    size: 'lg',
-    wordmarkOnly: true,
-  },
-};
-
-export const IsologoOnly: Story = {
-  args: {
-    size: 'lg',
-    isologoOnly: true,
-  },
-};
-
-export const Monochrome: Story = {
-  args: {
-    size: 'lg',
-    mono: true,
-  },
-};
-
-export const MonochromeColors: Story = {
-  render: () => (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <LogoHeader size="lg" mono className="text-primary" />
-        <span className="text-xs text-muted-foreground">Primary</span>
-      </div>
-      <div className="flex flex-col gap-2">
-        <LogoHeader size="lg" mono className="text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">Muted</span>
-      </div>
-      <div className="flex flex-col gap-2">
-        <LogoHeader size="lg" mono className="text-white" />
-        <span className="text-xs text-muted-foreground">White</span>
-      </div>
-    </div>
-  ),
-};
-
-export const InHeader: Story = {
-  render: () => (
-    <header className="flex items-center justify-between w-full max-w-4xl px-8 py-4 bg-card rounded-xl border border-border gap-12">
-      <LogoHeader size="default" />
-      <nav className="flex items-center gap-8 text-sm text-muted-foreground">
-        <a href="#" className="hover:text-foreground">Products</a>
-        <a href="#" className="hover:text-foreground">About</a>
-        <a href="#" className="hover:text-foreground">Contact</a>
-      </nav>
-    </header>
-  ),
-};
-
-export const ThemeAdaptive: Story = {
-  render: () => (
-    <div className="flex flex-col gap-4">
-      <LogoHeader size="lg" />
-      <p className="text-xs text-muted-foreground">
-        El wordmark usa text-foreground y se adapta automáticamente al tema activo.
-        Cambia el tema en Storybook para ver el comportamiento.
-      </p>
-    </div>
-  ),
-};
-
-// Logo apilado oficial (isologo arriba, «Cofoundy» debajo y centrado)
+/** Logo apilado oficial. Mismas reglas; es la fuente de `logo-stacked-*` del BRAND. */
 export const Stacked: Story = {
-  args: {
-    size: 'lg',
-    layout: 'stacked',
-  },
+  args: { size: 'lg', layout: 'stacked' },
   render: (args) => (
-    <div className="flex flex-wrap items-stretch gap-6">
-      {/* Cada tarjeta fija su tema con data-theme: el wordmark usa text-foreground. */}
-      <div
-        data-theme="light"
-        data-testid="stacked-light"
-        className="flex flex-col items-center gap-4 rounded-xl border border-border bg-background px-12 py-10"
-      >
-        <LogoHeader {...args} />
-        <span className="text-xs text-muted-foreground">Color · fondo claro</span>
-      </div>
-      <div
-        data-theme="dark"
-        data-testid="stacked-dark"
-        className="flex flex-col items-center gap-4 rounded-xl border border-border bg-background px-12 py-10 text-foreground"
-      >
-        <LogoHeader {...args} mono />
-        <span className="text-xs text-muted-foreground">Mono blanco · fondo oscuro</span>
-      </div>
-      <div
-        data-theme="light"
-        data-testid="stacked-mono-light"
-        className="flex flex-col items-center gap-4 rounded-xl border border-border bg-background px-12 py-10 text-foreground"
-      >
-        <LogoHeader {...args} mono />
-        <span className="text-xs text-muted-foreground">Mono oscuro · fondo claro</span>
-      </div>
-    </div>
+    <BrandGrid>
+      <BrandPanel theme="light" title="color · fondo claro" rule="logo-stacked-color">
+        <LogoHeader {...args} variant="color" />
+      </BrandPanel>
+      <BrandPanel theme="dark" title="mono · oscuro neutro" rule="logo-stacked-white (relieve)">
+        <LogoHeader {...args} variant="mono" className="text-white" />
+      </BrandPanel>
+      <BrandPanel theme="dark" surface="brand" title="flat · color de cliente" rule="logo-stacked-pure-white">
+        <LogoHeader {...args} variant="flat" className="text-white" />
+      </BrandPanel>
+      <BrandPanel theme="light" title="flat oscuro · fondo claro" rule="Una tinta oscura">
+        <LogoHeader {...args} variant="flat" className="text-foreground" />
+      </BrandPanel>
+    </BrandGrid>
   ),
 };
 
-export const StackedAllSizes: Story = {
+export const StackedSizes: Story = {
   render: () => (
-    <div className="flex flex-wrap items-end gap-10">
+    <div data-theme="light" className="flex flex-wrap items-end gap-10 rounded-xl bg-background p-8">
       {(['sm', 'default', 'lg', 'xl'] as const).map((size) => (
         <div key={size} className="flex flex-col items-center gap-2">
           <LogoHeader size={size} layout="stacked" />
@@ -203,31 +112,26 @@ export const StackedAllSizes: Story = {
   ),
 };
 
-// Standalone Wordmark stories
-export const StandaloneWordmark: Story = {
+export const InHeader: Story = {
   render: () => (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <Wordmark className="h-6" />
-        <span className="text-xs text-muted-foreground">h-6</span>
-      </div>
-      <div className="flex flex-col gap-2">
-        <Wordmark className="h-8" />
-        <span className="text-xs text-muted-foreground">h-8</span>
-      </div>
-      <div className="flex flex-col gap-2">
-        <Wordmark className="h-12" />
-        <span className="text-xs text-muted-foreground">h-12</span>
-      </div>
-    </div>
+    <header data-theme="light" className="flex w-full max-w-4xl items-center justify-between gap-12 rounded-xl border border-border bg-background px-8 py-4">
+      <LogoHeader size="default" />
+      <nav className="flex items-center gap-8 text-sm text-muted-foreground">
+        <a href="#" className="hover:text-foreground">Productos</a>
+        <a href="#" className="hover:text-foreground">Nosotros</a>
+        <a href="#" className="hover:text-foreground">Contacto</a>
+      </nav>
+    </header>
   ),
 };
 
-export const WordmarkBranded: Story = {
+/** Wordmark suelto: es texto, se dimensiona con `text-*` y se colorea con `text-*`. */
+export const WordmarkStandalone: Story = {
   render: () => (
-    <div className="flex flex-col gap-4">
-      <Wordmark className="h-10 text-primary" />
-      <span className="text-xs text-muted-foreground">Wordmark in brand primary color</span>
+    <div data-theme="light" className="flex flex-col gap-4 rounded-xl bg-background p-8">
+      <Wordmark className="text-lg" />
+      <Wordmark className="text-2xl" />
+      <Wordmark className="text-4xl text-primary" />
     </div>
   ),
 };
