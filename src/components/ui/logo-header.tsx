@@ -2,7 +2,7 @@ import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "../../utils/cn";
-import { Logo } from "./logo";
+import { Logo, type LogoVariant } from "./logo";
 
 const logoHeaderVariants = cva(
   "cf-logo-header inline-flex items-center gap-2",
@@ -57,19 +57,30 @@ const isoloSizes: Record<
   stacked: { sm: "default", default: "lg", lg: "xl", xl: "2xl" },
 };
 
+/** Wordmark «Cofoundy»: Space Grotesk Semibold, tracking -0.02em (igual en web, PDF y BRAND). */
+const WORDMARK_STYLE: React.CSSProperties = {
+  fontFamily: "var(--font-brand, 'Space Grotesk', sans-serif)",
+  letterSpacing: "-0.02em",
+};
+
 interface LogoHeaderProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof logoHeaderVariants> {
-  /** Use monochrome version with current color */
+  /**
+   * Cómo se pinta el isologo (ver `Logo`): `color` (default) · `mono` (blanco con relieve sobre
+   * oscuro) · `flat` (un color plano). En `mono` y `flat` el wordmark hereda `currentColor`.
+   */
+  variant?: LogoVariant;
+  /** @deprecated Usa `variant="mono"`. Se mantiene por compatibilidad. */
   mono?: boolean;
-  /** Hide the isologo, show only wordmark */
+  /** @deprecated Usa `<Wordmark />`. */
   wordmarkOnly?: boolean;
-  /** Hide the wordmark, show only isologo */
+  /** @deprecated Usa `<Logo />`. */
   isologoOnly?: boolean;
 }
 
 /**
- * Cofoundy Logo Header - isologo + wordmark
+ * Cofoundy Logo Header — isologo + wordmark
  * `layout="horizontal"` (default): cubos a la izquierda, «Cofoundy» a la derecha.
  * `layout="stacked"`: cubos arriba, «Cofoundy» debajo y centrado (logo apilado oficial).
  * Uses Space Grotesk Semibold for the wordmark
@@ -78,6 +89,7 @@ function LogoHeader({
   className,
   size = "default",
   layout = "horizontal",
+  variant,
   mono = false,
   wordmarkOnly = false,
   isologoOnly = false,
@@ -87,30 +99,27 @@ function LogoHeader({
   const layoutKey = layout || "horizontal";
   const wordmarkSize = wordmarkSizes[layoutKey][sizeKey];
   const isoloSize = isoloSizes[layoutKey][sizeKey];
+  const resolved: LogoVariant = variant ?? (mono ? "mono" : "color");
   const rootClassName = cn(logoHeaderVariants({ size, layout }), className);
 
   if (isologoOnly) {
     return (
       <div className={rootClassName} data-layout={layoutKey} {...props}>
-        <Logo size={isoloSize} mono={mono} />
+        <Logo size={isoloSize} variant={resolved} />
       </div>
     );
   }
 
   return (
-    <div className={rootClassName} data-layout={layoutKey} {...props}>
-      {!wordmarkOnly && <Logo size={isoloSize} mono={mono} />}
+    <div className={rootClassName} data-layout={layoutKey} data-variant={resolved} {...props}>
+      {!wordmarkOnly && <Logo size={isoloSize} variant={resolved} aria-hidden />}
       <span
         className={cn(
           wordmarkSize,
-          "font-semibold text-foreground",
-          mono && "text-current"
+          "font-semibold",
+          resolved === "color" ? "text-foreground" : "text-current"
         )}
-        style={{
-          fontFamily: "var(--font-brand, 'Space Grotesk', sans-serif)",
-          letterSpacing: "-0.02em"
-        }}
-        aria-label="Cofoundy"
+        style={WORDMARK_STYLE}
       >
         Cofoundy
       </span>
@@ -119,20 +128,18 @@ function LogoHeader({
 }
 
 /**
- * Standalone Wordmark component (Space Grotesk Semibold "Cofoundy")
+ * Wordmark suelto («Cofoundy» en Space Grotesk Semibold). Es texto: el tamaño va con
+ * clases `text-*` (no `h-*`) y el color con `text-*` o `currentColor`.
  */
 function Wordmark({
   className,
+  style,
   ...props
 }: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
       className={cn("text-xl font-semibold text-foreground", className)}
-      style={{
-        fontFamily: "var(--font-brand, 'Space Grotesk', sans-serif)",
-        letterSpacing: "-0.02em"
-      }}
-      aria-label="Cofoundy"
+      style={{ ...WORDMARK_STYLE, ...style }}
       {...props}
     >
       Cofoundy

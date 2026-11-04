@@ -38,7 +38,7 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 | Time range picker (7d / 30d / 90d) | `TimeRangeSelector` | Analytics | `analytics-timerangeselector` |
 | Section title + action slot | `AnalyticsSectionHeader` | Analytics | `analytics-analyticssectionheader` |
 | Cal.com booking CTA | `CalBookingButton` (canonical) / `CalendlyButton` (legacy alias) | UI | `ui-calbookingbutton` |
-| **Cofoundy branding** (logo, footer attribution, shimmer) | `Logo`, `LogoHeader` (`layout="horizontal"` default · `"stacked"` = logo apilado oficial: cubos arriba, «Cofoundy» debajo centrado), `Wordmark`, `CofoundyBadge`, `ShimmerText`, `GradientBorder` | UI | use `/branding` skill (it handles these) |
+| **Cofoundy branding** (logo, footer attribution) | `Logo` (isologo), `LogoHeader` (isologo + wordmark · `layout="horizontal"` default · `"stacked"` apilado oficial), `Wordmark`, `CofoundyBadge` · `variant`: `color` default (fondos claros) · `mono` blanco con relieve sobre oscuro neutro · `flat` un color plano (chico, sobre color, mono oscuro). Regla: `handbook/positioning/BRAND/identity.md` §02 | UI | use `/branding` skill (it handles these) |
 | 404 / not-found page | `NotFound` | UI | `ui-notfound` |
 | Sidebar layout system (composable) | `Sidebar*` (Provider / Content / Header / Footer / Menu / ...) | UI | `ui-sidebar` |
 | Dialog / modal | `Dialog` (+ `DialogContent`, `DialogTrigger`, ...) | UI | `ui-dialog` |
@@ -194,7 +194,7 @@ shadcn/ui base, theme-tokenized.
 
 **Command palette** — `CommandPalette` + `CommandPaletteTrigger`: ⌘K-style fuzzy command launcher. Styles eager-inject so the trigger renders styled on first paint.
 
-For **brand identity work** (badge, logo, attribution) use the `/branding` skill — it covers `Logo`, `LogoHeader`, `CofoundyBadge`, `ShimmerText`, `GradientBorder` with brand-aligned variants.
+For **brand identity work** (badge, logo, attribution) use the `/branding` skill — it covers `Logo`, `LogoHeader`, `CofoundyBadge`, `ShimmerText`, `GradientBorder` with brand-aligned variants. `mono` (prop booleano) y `wordmarkOnly`/`isologoOnly` siguen funcionando pero están deprecados: usa `variant="mono"`, `<Wordmark />` y `<Logo />`.
 
 ### Foundation
 

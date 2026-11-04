@@ -46,6 +46,7 @@ export { ChannelBadge, channelBadgeVariants } from "./components/ui";
 export type { ChannelBadgeProps } from "./components/ui";
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui";
 export { Logo, logoVariants } from "./components/ui";
+export type { LogoProps, LogoVariant } from "./components/ui";
 export { LogoHeader, logoHeaderVariants, Wordmark } from "./components/ui";
 export { NotFound, notFoundVariants } from "./components/ui";
 export type { NotFoundProps } from "./components/ui";

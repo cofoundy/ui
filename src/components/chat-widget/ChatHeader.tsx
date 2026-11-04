@@ -48,7 +48,7 @@ export function ChatHeader({
               className="w-full h-full object-contain"
             />
           ) : (
-            <Logo size="default" className="w-full h-full" />
+            <Logo size="default" className="w-full h-full" aria-hidden />
           )}
           {/* Status indicator - bottom right corner of logo */}
           <div

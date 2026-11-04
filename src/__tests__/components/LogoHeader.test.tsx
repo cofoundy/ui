@@ -9,7 +9,9 @@ describe("LogoHeader", () => {
     expect(root.dataset.layout).toBe("horizontal");
     expect(root.className).toContain("flex-row");
     expect(root.className).not.toContain("flex-col");
-    expect(screen.getByLabelText("Cofoundy")).toBeTruthy();
+    expect(screen.getByText("Cofoundy")).toBeTruthy();
+    // el isologo es decorativo junto al wordmark
+    expect(root.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("apila isologo arriba y wordmark debajo con layout='stacked'", () => {
@@ -29,5 +31,17 @@ describe("LogoHeader", () => {
     const root = container.firstElementChild as HTMLElement;
     expect(root.children).toHaveLength(1);
     expect(root.children[0].tagName.toLowerCase()).toBe("svg");
+  });
+
+  it("mono (deprecado) equivale a variant='mono' y deja el wordmark en currentColor", () => {
+    const { container } = render(<LogoHeader mono />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.dataset.variant).toBe("mono");
+    expect(root.querySelector("span")?.className).toContain("text-current");
+  });
+
+  it("variant='flat' usa el isologo plano", () => {
+    const { container } = render(<LogoHeader variant="flat" layout="stacked" />);
+    expect(container.querySelector("svg")?.dataset.variant).toBe("flat");
   });
 });
