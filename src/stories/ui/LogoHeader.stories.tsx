@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { LogoHeader, Wordmark } from '../../components/ui/logo-header';
 import { BrandGrid, BrandPanel } from './BrandPanel';
+import { ROWS, VARIANT_TABLE_MD, rowLabel } from './brandRule';
 
 const meta: Meta<typeof LogoHeader> = {
   title: 'UI/LogoHeader',
@@ -22,7 +23,7 @@ const meta: Meta<typeof LogoHeader> = {
       control: 'inline-radio',
       options: ['color', 'mono', 'flat'],
       description:
-        '`color` colores de marca · `mono` blanco con relieve sobre oscuro neutro · `flat` un color plano (sobre color, chico, mono oscuro). En `mono` y `flat` el wordmark hereda `currentColor`.',
+        '`color` ↔ `*-color` · `mono` ↔ `*-white` · `flat` ↔ `*-pure-white`. En `mono` y `flat` el wordmark hereda `currentColor`. Cuál usar: tabla «Qué variante usar» (arriba).',
     },
     mono: { table: { disable: true } },
     wordmarkOnly: { table: { disable: true } },
@@ -32,7 +33,8 @@ const meta: Meta<typeof LogoHeader> = {
     docs: {
       description: {
         component:
-          'Logo de Cofoundy: isologo + wordmark «Cofoundy» (Space Grotesk Semibold, -0.02em). Es la fuente de los archivos de `handbook/positioning/BRAND/assets/logo/` (`make-stacked.py`). Regla de uso: `identity.md` §02. Solo los cubos → `Logo`; solo el texto → `Wordmark`.',
+          'Logo de Cofoundy: isologo + wordmark «Cofoundy» (Space Grotesk Semibold, -0.02em). Es la fuente de los archivos de `handbook/positioning/BRAND/assets/logo/` (`make-stacked.py`). Regla de uso: `identity.md` §02. Solo los cubos → `Logo`; solo el texto → `Wordmark`.\n' +
+          VARIANT_TABLE_MD,
       },
     },
   },
@@ -42,10 +44,12 @@ export default meta;
 type Story = StoryObj<typeof LogoHeader>;
 
 export const Default: Story = {
+  name: 'Playground (controles)',
   args: { size: 'lg', layout: 'horizontal', variant: 'color' },
 };
 
 export const Sizes: Story = {
+  name: 'Tamaños · fila 1 (claro → *-color)',
   render: () => (
     <div data-theme="light" className="flex flex-col gap-6 rounded-xl bg-background p-8">
       {(['sm', 'default', 'lg', 'xl'] as const).map((size) => (
@@ -58,48 +62,51 @@ export const Sizes: Story = {
   ),
 };
 
-/** Horizontal: qué variante va sobre qué fondo. */
+/** Horizontal: las cuatro filas de la tabla «Qué variante usar» (identity.md §02). */
 export const Variants: Story = {
+  name: 'Qué variante usar (filas 1–4)',
   render: () => (
     <BrandGrid>
-      <BrandPanel theme="light" title="color · fondo claro" rule="Default: web, documentos, cotizaciones.">
-        <LogoHeader size="default" />
+      <BrandPanel theme="light" title={rowLabel(ROWS.claro)} rule="Cotización, web en modo claro, firma de correo.">
+        <LogoHeader size="lg" variant="color" />
       </BrandPanel>
-      <BrandPanel theme="dark" title="mono · oscuro neutro" rule="Blanco con relieve, mediano o grande.">
-        <LogoHeader size="default" variant="mono" className="text-white" />
+      <BrandPanel theme="dark" title={rowLabel(ROWS.oscuroGrande)} rule="Portada de PDF, slide, hero, video.">
+        <LogoHeader size="lg" variant="mono" className="text-white" />
       </BrandPanel>
-      <BrandPanel theme="dark" surface="brand" title="flat · sobre color" rule="Sobre el color de un cliente o de la marca.">
-        <LogoHeader size="default" variant="flat" className="text-white" />
+      <BrandPanel theme="dark" title={rowLabel(ROWS.oscuroChico)} rule="Header de app, sello en footer.">
+        <LogoHeader size="sm" variant="flat" className="text-white" />
       </BrandPanel>
-      <BrandPanel theme="light" title="flat · un color sobre claro" rule="Una tinta (impresión, sello). Nunca mono con relieve.">
-        <LogoHeader size="default" variant="flat" className="text-foreground" />
+      <BrandPanel theme="dark" surface="brand" title={rowLabel(ROWS.deColor)} rule="Co-branding, sobre una foto o un degradado.">
+        <LogoHeader size="lg" variant="flat" className="text-white" />
       </BrandPanel>
     </BrandGrid>
   ),
 };
 
-/** Logo apilado oficial. Mismas reglas; es la fuente de `logo-stacked-*` del BRAND. */
+/** Logo apilado oficial: las mismas filas. Cada tarjeta es la fuente de su archivo `logo-stacked-*` del BRAND. */
 export const Stacked: Story = {
+  name: 'Apilado · filas 1–4',
   args: { size: 'lg', layout: 'stacked' },
   render: (args) => (
     <BrandGrid>
-      <BrandPanel theme="light" title="color · fondo claro" rule="logo-stacked-color">
+      <BrandPanel theme="light" title={rowLabel(ROWS.claro)} rule="Archivo: logo-stacked-color">
         <LogoHeader {...args} variant="color" />
       </BrandPanel>
-      <BrandPanel theme="dark" title="mono · oscuro neutro" rule="logo-stacked-white (relieve)">
+      <BrandPanel theme="dark" title={rowLabel(ROWS.oscuroGrande)} rule="Archivo: logo-stacked-white">
         <LogoHeader {...args} variant="mono" className="text-white" />
       </BrandPanel>
-      <BrandPanel theme="dark" surface="brand" title="flat · color de cliente" rule="logo-stacked-pure-white">
-        <LogoHeader {...args} variant="flat" className="text-white" />
+      <BrandPanel theme="dark" title={rowLabel(ROWS.oscuroChico)} rule="Archivo: logo-stacked-pure-white">
+        <LogoHeader {...args} size="sm" variant="flat" className="text-white" />
       </BrandPanel>
-      <BrandPanel theme="light" title="flat oscuro · fondo claro" rule="Una tinta oscura">
-        <LogoHeader {...args} variant="flat" className="text-foreground" />
+      <BrandPanel theme="dark" surface="brand" title={rowLabel(ROWS.deColor)} rule="Archivo: logo-stacked-pure-white (foto de grupo)">
+        <LogoHeader {...args} variant="flat" className="text-white" />
       </BrandPanel>
     </BrandGrid>
   ),
 };
 
 export const StackedSizes: Story = {
+  name: 'Tamaños de apilado · fila 1 (claro → *-color)',
   render: () => (
     <div data-theme="light" className="flex flex-wrap items-end gap-10 rounded-xl bg-background p-8">
       {(['sm', 'default', 'lg', 'xl'] as const).map((size) => (
@@ -113,6 +120,7 @@ export const StackedSizes: Story = {
 };
 
 export const InHeader: Story = {
+  name: 'En un header · fila 1 (claro → *-color)',
   render: () => (
     <header data-theme="light" className="flex w-full max-w-4xl items-center justify-between gap-12 rounded-xl border border-border bg-background px-8 py-4">
       <LogoHeader size="default" />

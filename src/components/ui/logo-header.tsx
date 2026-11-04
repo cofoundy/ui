@@ -67,8 +67,9 @@ interface LogoHeaderProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof logoHeaderVariants> {
   /**
-   * Cómo se pinta el isologo (ver `Logo`): `color` (default) · `mono` (blanco con relieve sobre
-   * oscuro) · `flat` (un color plano). En `mono` y `flat` el wordmark hereda `currentColor`.
+   * Variante del isologo (ver `Logo`): `color` ↔ `*-color` (default) · `mono` ↔ `*-white` ·
+   * `flat` ↔ `*-pure-white`. Cuál usar: BRAND/identity.md §02. En `mono` y `flat` el wordmark
+   * hereda `currentColor`.
    */
   variant?: LogoVariant;
   /** @deprecated Usa `variant="mono"`. Se mantiene por compatibilidad. */
