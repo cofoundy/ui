@@ -238,7 +238,7 @@ export class CfChatSimElement extends HTMLElement {
     // itself, composer controls move side per real app (simulator, marketing capture). 'consistent'
     // — Cofoundy's own composer layout, fixed regardless of channel (the app: an operator works
     // both channels in one session, and controls moving between them reads as a UX bug, not
-    // fidelity). 'branded' (T-027 E, element-local — see ChromeMode above) — Fovente's real
+    // fidelity). 'branded' (T-027 E, element-local — see ChromeMode above) — Tracta's real
     // production case: the outbound palette is the CONSUMER's brand color, not the channel's real
     // one; structure (tail/ticks/grouping) stays exactly the channel's, only paints differently
     // (styles.css `[data-chrome='branded']`). Not a `ChannelAdapter` field on purpose — it's how

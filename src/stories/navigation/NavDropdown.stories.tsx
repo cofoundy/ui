@@ -123,7 +123,7 @@ const productItems: NavDropdownItem[] = [
   {
     key: "inbox",
     href: "/productos/inbox-ai",
-    label: "InboxAI",
+    label: "Tracta",
     description: "Omnichannel inbox unificado",
   },
   {

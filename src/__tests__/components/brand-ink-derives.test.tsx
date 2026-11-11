@@ -5,10 +5,10 @@ import { badgeVariants } from "../../components/ui/badge";
 /**
  * La tinta de una variante de MARCA se deriva; no se fija.
  *
- * `--primary` es reasignable por la app que consume el paquete. Fovente lo ata
+ * `--primary` es reasignable por la app que consume el paquete. Tracta lo ata
  * al color que el cliente elige en Ajustes → Marca, así que un `text-white`
  * clavado acá deja el relleno variable y la tinta constante — y sobre un
- * relleno claro el rótulo desaparece. Medido en el DOM vivo de Fovente antes
+ * relleno claro el rótulo desaparece. Medido en el DOM vivo de Tracta antes
  * del arreglo: **1.68:1** con una marca amarilla, **2.61:1** en tema oscuro con
  * la marca por defecto. → inbox-ai#617
  *

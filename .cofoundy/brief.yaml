@@ -41,19 +41,19 @@ worker: cto-d606f0
 goal: >
   Reescritura desde cero de un simulador de chat multi-canal en @cofoundy/ui, con arquitectura de
   channel-adapter, capa de captura determinista para marketing, y un skin reusable por la app de
-  Fovente (inbox-ai). Destino final: open source.
+  Tracta (inbox-ai). Destino final: open source.
 
 # --- Las 6 forcing questions ---
 
 problema_real: >
   Existen TRES implementaciones del mismo chat en Cofoundy (ChatDemo.astro 190 líneas en la landing
-  de Fovente, MessageBubble.tsx 68 KB en inbox-ai prod, y las primitivas de @cofoundy/ui que ninguno
+  de Tracta, MessageBubble.tsx 68 KB en inbox-ai prod, y las primitivas de @cofoundy/ui que ninguno
   usa de verdad). Las dos primeras comparten código copiado, no abstracción: mismo SVG de tick, misma
   regla de agrupación, citada textualmente entre repos. Ya hay un lenguaje de diseño validado en
   producción; lo que no hay es un lugar donde viva.
 
 quien_lo_sufre:
-  - "Fovente (inbox-ai): mantiene 68 KB de bubble + 13 KB de composer móvil forkeados"
+  - "Tracta (inbox-ai): mantiene 68 KB de bubble + 13 KB de composer móvil forkeados"
   - "Marketing: no hay forma de generar imágenes de conversación reproducibles; el prior art del rubro las graba con herramientas externas"
   - "Las dos landings (Astro): no pueden consumir @cofoundy/ui porque es React-only"
 
@@ -112,7 +112,7 @@ decisiones_humanas_abiertas:
     recomendacion_cto: "si — costo cero, norma OSS, y el downside reputacional de omitirla es desproporcionado"
     gate: "antes del push publico, NO antes de construir"
   D-2:
-    pregunta: "¿Hay deadline de la app de Fovente que justifique invertir la secuencia?"
+    pregunta: "¿Hay deadline de la app de Tracta que justifique invertir la secuencia?"
     default_asumido: "no — se construye simulador primero, skin de app despues"
 
 agents:

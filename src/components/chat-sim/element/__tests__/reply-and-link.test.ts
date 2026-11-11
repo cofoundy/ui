@@ -66,7 +66,7 @@ describe('reply-in label — same slot/pattern as editedLabel', () => {
   it('does not appear on a service/card message even if media also sets replyFast (short-circuited before the stamp is ever built)', () => {
     const msg: RenderMessage = {
       ...BASE,
-      text: 'FOVENTE SE DETUVO',
+      text: 'TRACTA SE DETUVO',
       media: { kind: 'service', variant: 'warn', replyFast: true },
       replyLabel: 'Respondió en 4 s',
     };

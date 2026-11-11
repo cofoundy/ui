@@ -44,7 +44,7 @@ el ciclo `base → capabilities → whatsapp → base`, exactamente como en el P
 ## Mitigación concreta del riesgo #1 (dependencia sin pin)
 
 **Nada nuevo en el barrel principal.** El ciclo exporta solo por subpath `@cofoundy/ui/chat-sim`.
-Un merge a `main` no puede romper ningún import existente de Fovente porque no toca `src/index.ts`.
+Un merge a `main` no puede romper ningún import existente de Tracta porque no toca `src/index.ts`.
 Esto convierte el riesgo de "todo push entra a su prod" en "todo push agrega un subpath que nadie
 importa todavía".
 

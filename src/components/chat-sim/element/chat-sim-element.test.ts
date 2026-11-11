@@ -286,7 +286,7 @@ describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
     });
   });
 
-  describe('chrome axis (T-017 Alcance B — operator: "así el cliente de Fovente no se confunde con los botones que estén cambiando")', () => {
+  describe('chrome axis (T-017 Alcance B — operator: "así el cliente de Tracta no se confunde con los botones que estén cambiando")', () => {
     it('fidelity (default): the clip sits on opposite sides for Telegram vs WhatsApp', () => {
       const tg = mountWithChannel('telegram');
       const wa = mountWithChannel('whatsapp');
@@ -316,7 +316,7 @@ describe('<cf-chat-sim> — real pipeline (compile -> fold -> render)', () => {
     });
   });
 
-  describe("chrome='branded' (T-027 E — operator: producción usa la paleta de Fovente, no la del canal)", () => {
+  describe("chrome='branded' (T-027 E — operator: producción usa la paleta de Tracta, no la del canal)", () => {
     // jsdom never loads styles.css (no `<link>`/`<style>` in these tests — same reasoning as
     // every other test in this file), so `getComputedStyle` can't verify the actual resolved
     // color here; that's styles.css's own concern (a browser/Storybook check, out of this

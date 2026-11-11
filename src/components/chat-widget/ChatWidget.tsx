@@ -78,7 +78,7 @@ function parseDateFromTool(dateStr: string): Date {
  *
  * Transports:
  * - WebSocket (default): For TimelyAI backend
- * - Socket.IO: For InboxAI backend
+ * - Socket.IO: For Tracta backend
  * - AG-UI: For SSE streaming
  */
 export function ChatWidget({

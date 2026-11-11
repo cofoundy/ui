@@ -6,7 +6,7 @@ Shared UI component library for the Cofoundy product suite.
 
 This package provides **shared, reusable UI components** used across multiple Cofoundy products:
 
-- **InboxAI** - Omnichannel inbox
+- **Tracta** - Omnichannel inbox
 - **TimelyAI** - Scheduling assistant
 - **PulseAI** - Voice agent
 - **Transcript** - Call intelligence

@@ -114,7 +114,7 @@ export const WhatsApp: Story = {
     channel: 'whatsapp',
     seed: 7,
     t0: 1789761600000,
-    contactName: 'Fovente — Reservas',
+    contactName: 'Tracta — Reservas',
     contactStatus: 'en línea',
   },
 };
@@ -127,7 +127,7 @@ export const Telegram: Story = {
     script: TELEGRAM_SCRIPT,
     channel: 'telegram',
     seed: 3,
-    contactName: 'Fovente — Canal',
+    contactName: 'Tracta — Canal',
   },
 };
 
@@ -141,7 +141,7 @@ export const ConsistentChrome: Story = {
     seed: 7,
     t0: 1789761600000,
     chrome: 'consistent',
-    contactName: 'Fovente — Reservas',
+    contactName: 'Tracta — Reservas',
     contactStatus: 'en línea',
   },
 };

@@ -211,11 +211,11 @@ describe('T-031 D — tag pill above the frame (opt-in, per-slide override)', ()
   });
 
   it('host-level tag-icon/tag-label attributes render the pill', () => {
-    const el = mount({ 'tag-icon': '💬', 'tag-label': 'FOVENTE' }, [scriptTag(SCRIPT)]);
+    const el = mount({ 'tag-icon': '💬', 'tag-label': 'TRACTA' }, [scriptTag(SCRIPT)]);
     const tag = el.querySelector('.cf-tag') as HTMLElement;
     expect(tag.hidden).toBe(false);
     expect(el.querySelector('.cf-tag-icon')!.textContent).toBe('💬');
-    expect(el.querySelector('.cf-tag-label')!.textContent).toBe('FOVENTE');
+    expect(el.querySelector('.cf-tag-label')!.textContent).toBe('TRACTA');
   });
 
   it('el gemelo (acceptance #3): changing the attribute changes the text', () => {
@@ -228,7 +228,7 @@ describe('T-031 D — tag pill above the frame (opt-in, per-slide override)', ()
   });
 
   it('a per-slide `data-tag-icon`/`data-tag-label` on the <script> child overrides the host default when that slide is active', () => {
-    const el = mount({ 'tag-icon': '💬', 'tag-label': 'FOVENTE' }, [
+    const el = mount({ 'tag-icon': '💬', 'tag-label': 'TRACTA' }, [
       scriptTag(SCRIPT, { 'data-tag-icon': '🎉', 'data-tag-label': 'EVENTOS / CATERING' }),
       scriptTag(SCRIPT),
     ]);

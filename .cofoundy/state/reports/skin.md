@@ -545,7 +545,7 @@ my own scope, reversible)
   tiene fix del mismo tono que llegue a AA** (verificado por qa hasta `#2a5326`, el más oscuro que
   T-023 D usó alguna vez, sigue bajo 4.5:1) — resuelto por el eje `chrome` ya existente:
   `fidelity` retrata a Telegram tal cual (falla AA como el original — estamos retratando otra app,
-  nadie lee contenido real ahí); `consistent`/`branded` (la app de Fovente, gente real leyendo
+  nadie lee contenido real ahí); `consistent`/`branded` (la app de Tracta, gente real leyendo
   contenido real) exige AA — reutiliza `--cf-cs-bubble-out-meta` (ya `#e9edef` para ese mismo fondo,
   fix de T-023 A) en vez de un literal nuevo.
 - Tokens nuevos `--channel-telegram-quote-text` / `--channel-telegram-out-quote-text`, dedicados

@@ -40,7 +40,7 @@ function scriptTag(attrs: Record<string, string>): HTMLScriptElement {
   return el;
 }
 
-/** Los tres rubros del hero de Fovente, con el contacto que producción rota en cada uno. */
+/** Los tres rubros del hero de Tracta, con el contacto que producción rota en cada uno. */
 const RUBROS = [
   { 'data-contact-name': 'Marisol Quispe', 'data-contact-status': '+51 987 654 321' },
   { 'data-contact-name': 'Sazón de Barranco', 'data-contact-status': 'en línea' },

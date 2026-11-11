@@ -363,7 +363,7 @@ veredicto a propósito.
 ## What would flip this
 
 - **A `escalate`:** que el acumulado de wall-clock cruce **24 h** en cualquier ola, o **16 h** al
-  cierre de la ola 3 (B-7). También si aparece un deadline de la app de Fovente (D-2, registrado en
+  cierre de la ola 3 (B-7). También si aparece un deadline de la app de Tracta (D-2, registrado en
   Fase 2 como escalación inmediata), o si alguna lane reporta necesitar copia literal de
   `whatsimule` (A-2).
 - **A `approve`:** que las ocho enmiendas se apliquen y el graph vuelva a gate. **Ojo: ese approve

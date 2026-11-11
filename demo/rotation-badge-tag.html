@@ -14,7 +14,7 @@
       its own `data-tag-icon`/`data-tag-label` (T-031 D) — the pill above the frame changes with
       the active slide, read verbatim off the markup, never a literal in the renderer. `badge-flag`
       watches the `aiOn` flag the core already emits (T-031 C): the catering script flips it off
-      near the end (Fovente stops, a human takes over) and the eventos script never touches it, so
+      near the end (Tracta stops, a human takes over) and the eventos script never touches it, so
       the badge visibly differs between the two rotations without any new core event.
 
       Right: the SAME two scripts, but `height="300"` on the host — the override still holds
@@ -78,13 +78,13 @@
           t0="1789761600000"
           loop
           loop-pause-ms="2200"
-          contact-name="Fovente — Reservas"
+          contact-name="Tracta — Reservas"
           contact-status="en línea"
           badge-flag="aiOn"
           badge-on-label="IA ACTIVA"
           badge-off-label="TE TOCA A TI"
           tag-icon="💬"
-          tag-label="FOVENTE"
+          tag-label="TRACTA"
         >
           <script type="application/json" data-tag-icon="🎉" data-tag-label="EVENTOS / CATERING">
             [
@@ -99,7 +99,7 @@
               { "k": "draft", "by": "out:ai", "chars": 30, "delayMs": 700 },
               { "k": "post", "by": "out:ai", "text": "Paga aquí: pagos.fovente.pe/r/8x2", "media": { "link": true }, "delayMs": 900 },
               { "k": "flag", "key": "aiOn", "value": false, "delayMs": 300 },
-              { "k": "post", "by": "system", "text": "FOVENTE SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 }
+              { "k": "post", "by": "system", "text": "TRACTA SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 }
             ]
           </script>
           <script type="application/json" data-tag-icon="🛠️" data-tag-label="SOPORTE TÉCNICO">
@@ -121,7 +121,7 @@
           height="300"
           loop
           loop-pause-ms="2200"
-          contact-name="Fovente — Reservas"
+          contact-name="Tracta — Reservas"
           contact-status="en línea"
           badge-flag="aiOn"
           badge-on-label="IA ACTIVA"
@@ -140,7 +140,7 @@
               { "k": "draft", "by": "out:ai", "chars": 30, "delayMs": 700 },
               { "k": "post", "by": "out:ai", "text": "Paga aquí: pagos.fovente.pe/r/8x2", "media": { "link": true }, "delayMs": 900 },
               { "k": "flag", "key": "aiOn", "value": false, "delayMs": 300 },
-              { "k": "post", "by": "system", "text": "FOVENTE SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 }
+              { "k": "post", "by": "system", "text": "TRACTA SE DETUVO · PAGO DECLARADO", "media": { "kind": "service", "variant": "warn" }, "delayMs": 900 }
             ]
           </script>
           <script type="application/json" data-tag-icon="🛠️" data-tag-label="SOPORTE TÉCNICO">

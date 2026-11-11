@@ -21,7 +21,7 @@ interface NotFoundProps {
 }
 
 const productLabel: Record<NonNullable<NotFoundProps['productContext']>, string> = {
-  inbox: 'Inbox AI',
+  inbox: 'Tracta',
   timely: 'Timely AI',
   pulse: 'Pulse AI',
   landing: 'Cofoundy',

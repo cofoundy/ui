@@ -48,7 +48,7 @@ const RECIPE_BASE = {
   locale: 'es-PE',
   tz: 'America/Lima',
   t0: 1767261600000,
-  contactName: 'Fovente — Reservas',
+  contactName: 'Tracta — Reservas',
   contactStatus: 'en línea',
 };
 

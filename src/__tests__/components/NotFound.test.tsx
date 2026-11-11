@@ -40,9 +40,9 @@ describe("NotFound", () => {
   });
 
   describe("productContext variants", () => {
-    it("renders Inbox AI kicker and scope wording for productContext='inbox'", () => {
+    it("renders Tracta kicker and scope wording for productContext='inbox'", () => {
       render(<NotFound {...baseProps} productContext="inbox" />);
-      expect(screen.getByText("Inbox AI")).toBeInTheDocument();
+      expect(screen.getByText("Tracta")).toBeInTheDocument();
       expect(screen.getByText(/ya no existe en tu inbox/i)).toBeInTheDocument();
     });
 

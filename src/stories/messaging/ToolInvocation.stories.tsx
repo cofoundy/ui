@@ -7,7 +7,7 @@ import {
 import { VIEWPORT_MOBILE } from "../_shared/viewports";
 
 /**
- * Data below is fictitious. Its SHAPE mirrors Fovente's `metadata.ai_trace.tool_calls[]`
+ * Data below is fictitious. Its SHAPE mirrors Tracta's `metadata.ai_trace.tool_calls[]`
  * entry: `{ tool, args, result_preview }` — `result_preview` is the tool's JSON result,
  * truncated to 200 chars with «…» (a truncated preview is shown as text, a complete one
  * is pretty-printed).

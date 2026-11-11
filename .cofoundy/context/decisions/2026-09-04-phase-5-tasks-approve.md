@@ -70,7 +70,7 @@ Y los cuatro detectores que podían pasar en verde con el bug presente están ce
   escala; **16 h al cierre de la ola 3** ⇒ reproyectás con 6 datos reales y **si la reproyección
   supera 24 h, escalás ahí**.
 - **A-2 sigue vivo:** una lane que pida copia literal de `whatsimule` PARA y escala. No lo decide sola.
-- **D-2 sigue vivo:** si aparece un deadline de la app de Fovente, va a la cola como pedido de
+- **D-2 sigue vivo:** si aparece un deadline de la app de Tracta, va a la cola como pedido de
   re-secuencia, no como decisión de lane.
 - **T-002 #6 corre en la ola 1, antes de que `capture/` congele goldens en la ola 2.** Ese orden es
   lo que compra el detector; si se corre después, el hallazgo llega tarde por diseño.
@@ -115,7 +115,7 @@ Ninguno de los dos se ve leyendo la acceptance sola.
 ## What would flip this
 
 - **A `escalate`:** acumulado >24 h; reproyección de la ola 3 >24 h; gasto de terceros >USD 50;
-  deadline de Fovente (D-2); pedido de copia literal de `whatsimule` (A-2); o **disenso del
+  deadline de Tracta (D-2); pedido de copia literal de `whatsimule` (A-2); o **disenso del
   refute-pass**, que escala al humano por config (`disagreement: escalate`).
 - **A `amend` en vuelo:** que una lane reporte que un acceptance no se puede satisfacer dentro de su
   `scope.write` — el modo de falla que ya cazamos dos veces (`ChannelId` en T-006, `src/types/**` en

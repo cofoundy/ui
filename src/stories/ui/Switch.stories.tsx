@@ -208,7 +208,7 @@ export const OptimisticRevert: Story = {
 
 /**
  * A consumer that decorates `[data-slot="switch-thumb"]` the shadcn way — here the exact lift
- * Fovente ships (`--fov-lift-1`: a 1 px inset highlight + two drop shadows). The thumb element is
+ * Tracta ships (`--fov-lift-1`: a 1 px inset highlight + two drop shadows). The thumb element is
  * the knob's lane-wide FRAME, not the round knob, so the package must keep that decoration off
  * it; unguarded, the inset highlight draws a light line across the top of the whole track.
  * The consumer rule is written at a single attribute's specificity, like the real one.

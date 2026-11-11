@@ -48,7 +48,7 @@ export interface RenderMessage {
 }
 
 // ---------------------------------------------------------------------------
-// service (T-027 C) — "no es vocabulario de Fovente": WhatsApp's e2e-encryption notice and
+// service (T-027 C) — "no es vocabulario de Tracta": WhatsApp's e2e-encryption notice and
 // Telegram's unread-divider are both a `service` message with a different variant/text. Rides
 // the ordinary `post` event (by/text/media) — no new SimStep/Ev variant, so this stays inside
 // element/**'s scope.write. `by` still participates in computeGroupFlags (a service message
@@ -101,7 +101,7 @@ export function asLinkBubble(media: Json | undefined): boolean {
 
 /** Centered pill, `data-variant`-styled (styles.css) — the SAME primitive `.cf-date-pill`
  * already is (team-lead: "ya renderizamos uno"), generalized past dates: WhatsApp's e2e notice,
- * Telegram's unread divider, Fovente's `stop`/`done`, all one shape with 3 tones. */
+ * Telegram's unread divider, Tracta's `stop`/`done`, all one shape with 3 tones. */
 function populateServiceElement(li: HTMLLIElement, msg: RenderMessage, service: ServiceMedia): void {
   li.className = 'cf-msg cf-msg-service';
   delete li.dataset.dir;

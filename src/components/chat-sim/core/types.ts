@@ -96,7 +96,7 @@ export type ReceiptModel = TicksReceiptModel | LabelReceiptModel;
 // consumer wiring in core/. Fidelity: cada canal se ve como sí mismo (simulador, marketing) —
 // clip/controles del composer se mueven de lado por canal. Consistent: cromo Cofoundy fijo, solo
 // el mensaje cambia por canal — para la app, donde mover los controles entre canales es un bug de
-// UX ("el cliente de Fovente no se confunde con los botones que estén cambiando"), no fidelidad.
+// UX ("el cliente de Tracta no se confunde con los botones que estén cambiando"), no fidelidad.
 // ---------------------------------------------------------------------------
 
 export type Chrome = 'fidelity' | 'consistent';

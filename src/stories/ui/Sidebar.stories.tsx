@@ -895,7 +895,7 @@ export const WithSearch: Story = {
 export const CofoundyAppSidebar: Story = {
   render: () => {
     const products = [
-      { name: "InboxAI", icon: Inbox, description: "Omnichannel inbox" },
+      { name: "Tracta", icon: Inbox, description: "Omnichannel inbox" },
       { name: "TimelyAI", icon: Calendar, description: "Scheduling assistant" },
       { name: "PulseAI", icon: MessageSquare, description: "Voice agent" },
       { name: "Transcript", icon: Sparkles, description: "Call intelligence" },
@@ -926,7 +926,7 @@ export const CofoundyAppSidebar: Story = {
                       <div className="grid flex-1 text-left text-sm leading-tight">
                         <span className="truncate font-semibold">Cofoundy</span>
                         <span className="truncate text-xs text-[var(--muted-foreground)]">
-                          InboxAI
+                          Tracta
                         </span>
                       </div>
                       <ChevronDown className="ml-auto" />
@@ -1089,7 +1089,7 @@ export const CofoundyAppSidebar: Story = {
           </header>
           <main className="flex-1 p-6">
             <div className="rounded-lg border border-[var(--border)] p-6">
-              <h2 className="text-lg font-semibold mb-2">Welcome to InboxAI</h2>
+              <h2 className="text-lg font-semibold mb-2">Welcome to Tracta</h2>
               <p className="text-[var(--muted-foreground)]">
                 This is a demo of the Cofoundy sidebar component. It includes product
                 switching, navigation items with badges, and a user dropdown menu.
@@ -1111,7 +1111,7 @@ export const CofoundyAppSidebar: Story = {
   },
 };
 
-// InboxAI Dual Sidebar Pattern
+// Tracta Dual Sidebar Pattern
 // Icon sidebar + Inbox list + Main content
 export const InboxAISidebar: Story = {
   render: () => {

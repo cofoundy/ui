@@ -4,7 +4,7 @@
  * ---
  * STRATEGIC BRIEF (compact, from ui-strategist 2026-05-16)
  * ---
- * Consumers: Inbox AI (in-product), Timely AI (public scheduling), Pulse AI
+ * Consumers: Tracta (in-product), Timely AI (public scheduling), Pulse AI
  * (in-product), Cofoundy Landing (public).
  *
  * User state: operator/booker/analyst/prospect mid-task — already had momentum
@@ -68,7 +68,7 @@ export default meta;
 
 type Story = StoryObj<typeof NotFound>;
 
-/** Default touchpoint — Inbox AI in-product 404. */
+/** Default touchpoint — Tracta in-product 404. */
 export const Default: Story = {
   args: {
     productContext: "inbox",
@@ -76,8 +76,8 @@ export const Default: Story = {
   },
 };
 
-/** Inbox AI — operator mid-flow loses a thread URL. */
-export const InboxAI: Story = {
+/** Tracta — operator mid-flow loses a thread URL. */
+export const Tracta: Story = {
   args: {
     productContext: "inbox",
     primaryAction: { label: "Volver al inbox", href: "/" },

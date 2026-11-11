@@ -255,7 +255,7 @@ Snapshot at fixed drip positions (25 %, 50 %, 75 %, 100 %) of a representative m
 2. Update `Message.tsx` to use the new component **only when streaming**; idle messages keep the cheap `MessageContent` path.
 3. Add Storybook Strategy 6 for visual A/B against Strategy 5.
 4. Ship to TimelyAI + ChatWidgetFloating in the next ui release.
-5. Adopt in InboxAI's `InboxMessage` when streaming arrives there.
+5. Adopt in Tracta's `InboxMessage` when streaming arrives there.
 
 ## Open questions
 

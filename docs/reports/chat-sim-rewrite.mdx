@@ -2,10 +2,10 @@
 
 **TL;DR** — `@cofoundy/ui/chat-sim` renderiza una conversación de WhatsApp o Telegram desde un
 guion, con diferencias **estructurales** entre canales (no de color), y escupe PNGs **byte-idénticos**
-corrida tras corrida. Sirve a las dos landings Astro sin agregar React, y a la app de Fovente vía
+corrida tras corrida. Sirve a las dos landings Astro sin agregar React, y a la app de Tracta vía
 React. 33+ commits, ~13.6k líneas, 6 lanes en paralelo.
 
-**Estado final: 83 commits · 23.4k líneas · 361/362 · preview de la landing de Fovente regenerado y
+**Estado final: 83 commits · 23.4k líneas · 361/362 · preview de la landing de Tracta regenerado y
 verificado en navegador, sin mergear.** El único rojo del gate es ajeno y está fileado
 (`cofoundy/ui#25`); se probó ajeno corriendo el control a HEAD sin el commit sospechoso.
 
@@ -69,7 +69,7 @@ extensión de la primera.
 | Un guion → PNG reproducible | `sha256` de dos corridas coincide; cambiar la seed lo rompe |
 | El mismo guion en dos canales, con diferencias reales | colita en la primera vs la última de la racha; reacciones overlay vs fila propia; **Telegram sin estado "entregado"** |
 | Montar en una landing Astro sin React | assert sobre el grafo del bundle: `react`/`react-dom` ausentes |
-| Montar en la app de Fovente | `<ChatSim>` React sobre el mismo `SimState` |
+| Montar en la app de Tracta | `<ChatSim>` React sobre el mismo `SimState` |
 | Sonido por canal | digest PCM distinto por canal, con gemelo de determinismo |
 
 ## Las 7 sondas que se ponen rojas de verdad
@@ -145,11 +145,11 @@ contrato.
 2. **D-1 — línea de prior art en el README** al abrir el repo. No hay copia literal de `whatsimule`
    (restricción con tripwire), así que MIT no impone atribución en build-time: es decisión
    reputacional, no legal. Recomendación del CTO: incluirla.
-3. **Merge a `main`.** No auto-aprobado a propósito. `inbox-ai` (Fovente, en producción) consume
+3. **Merge a `main`.** No auto-aprobado a propósito. `inbox-ai` (Tracta, en producción) consume
    `github:cofoundy/ui#main`; su `node_modules` está en **v0.2.2** contra 0.6.1 actual, pinneado por
    lockfile. Cuando alguien re-resuelva ese lockfile —justo lo que adoptar el skin requiere— salta
    de golpe cruzando un major de Tailwind.
-4. **D-2 — deadline de la app de Fovente.** Sin respuesta se asumió que no hay. Si aparece, la
+4. **D-2 — deadline de la app de Tracta.** Sin respuesta se asumió que no hay. Si aparece, la
    secuencia se invierte y es otra arquitectura, no un reordenamiento.
 
 ## Deuda declarada, no reparada

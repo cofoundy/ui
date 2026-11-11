@@ -13,7 +13,7 @@ const switchVariants = cva("cf-switch peer", {
     size: {
       /** 36 × 20 track — the historical footprint (hit area still 44 px tall). */
       default: "",
-      /** 48 × 28 track — touch-first surfaces (Fovente operator). */
+      /** 48 × 28 track — touch-first surfaces (Tracta operator). */
       lg: "",
     },
   },

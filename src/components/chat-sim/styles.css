@@ -176,7 +176,7 @@
    green gets dark enough; verified down to #2a5326, as dark as T-023 D's own darkening ever went,
    still under 4.5:1). Team-lead's call (T-025 follow-up, 2026-09-07): `fidelity` reproduces
    Telegram AS-IS, failing AA exactly like the real app does — we're PORTRAYING another app there,
-   nobody reads real messages in a simulator. `consistent`/`branded` IS Fovente's own app with real
+   nobody reads real messages in a simulator. `consistent`/`branded` IS Tracta's own app with real
    people reading real content, so AA is not negotiable there: reuses `--cf-cs-bubble-out-meta`
    (already `#e9edef` for this exact bubble — T-023 A's own fix for the hora/ticks meta text
    sharing this same background) instead of inventing a new literal — 4.66:1, verified, and it's a
@@ -440,7 +440,7 @@
 
 /* ── service message (T-027 C) ──────────────────────────────────────────
    Generalizes the SAME pill primitive `.cf-date-pill` already is (WhatsApp's e2e-encryption
-   notice, Telegram's unread divider, Fovente's `stop`/`done` are all "one centered service
+   notice, Telegram's unread divider, Tracta's `stop`/`done` are all "one centered service
    message, three tones" — not per-brand vocabulary). `data-variant` is the only axis; per-channel
    tone tinting (below) is the same declared exception `.cf-date-pill` above already takes
    ([data-channel]-keyed brand chrome, file header), not a structural fact. */
@@ -896,7 +896,7 @@
 
 /* ── branded chrome axis (T-027 E) ────────────────────────────────────────
    'branded' (element/chat-sim-element.ts's `ChromeMode` — core's own `Chrome` type stays exactly
-   'fidelity' | 'consistent', untouched) is Fovente's real production case: the outbound palette
+   'fidelity' | 'consistent', untouched) is Tracta's real production case: the outbound palette
    is the CONSUMER's brand color, not the channel's real green/mint — it's the consumer wearing
    chat clothes, not a channel simulation. Structure (tail position, tick glyph/count, grouping,
    corner radius) stays exactly what the channel/adapter say — the gemelo test

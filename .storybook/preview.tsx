@@ -39,7 +39,7 @@ const preview: Preview = {
       const bgColor = theme === 'light' ? '#f8fafc' : '#020916';
       // El tema también va en <html>: lo portaleado (DropdownMenu, Tooltip, Sheet, Toast,
       // popovers) se monta en <body>, FUERA del wrapper, y sin esto siempre salía oscuro.
-      // Es el mismo lugar donde lo pone una app real (Fovente: <html data-theme>).
+      // Es el mismo lugar donde lo pone una app real (Tracta: <html data-theme>).
       if (typeof document !== 'undefined') {
         const root = document.documentElement;
         root.setAttribute('data-theme', theme);

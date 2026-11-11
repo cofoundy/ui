@@ -170,7 +170,7 @@ sola vez y la llaman allowlist, validador y renderer. Copiado tal cual del razon
 core/       compile · fold · seek · playhead      TS puro, cero framework, puro por lint
 adapters/   capabilities · registry · 2 canales   TS puro
 element/    custom element — pre-render + reveal  → landings Astro · preview · captura
-react/      componentes                            → inbox-ai / app de Fovente
+react/      componentes                            → inbox-ai / app de Tracta
 capture/    CLI headless                           → PNG/WebP deterministas
 ```
 
@@ -281,7 +281,7 @@ atribución en build-time, y el release público ya está fuera del alcance del 
 
 | # | Riesgo | Mitigación |
 |---|---|---|
-| 1 | `inbox-ai` consume `github:cofoundy/ui#main` **sin pin**: todo merge a `main` entra a su prod | No mergear sin verde verificado; el gate de Fase 11 evalúa blast radius sobre Fovente, no sobre Storybook. Proponer el pin (repo ajeno ⇒ no lo ejecutamos) |
+| 1 | `inbox-ai` consume `github:cofoundy/ui#main` **sin pin**: todo merge a `main` entra a su prod | No mergear sin verde verificado; el gate de Fase 11 evalúa blast radius sobre Tracta, no sobre Storybook. Proponer el pin (repo ajeno ⇒ no lo ejecutamos) |
 | 2 | Romper la continuidad visual landing↔app, que es deliberada | La divergencia de `ui-architect` se acota a **elevar**, no redefinir. Baseline visual contra `ChatDemo.astro` antes de tocar |
 | 3 | El adapter no aguanta el canal 4 | Ya se probó en papel contra 3 y rindió 3 campos nuevos. Regla: **cero opcionales** — un `?` es un `if` diferido |
 | 4 | Determinismo falso: PNG que difieren por fuentes o layout | Gate de settle (fuentes + `--pad`) antes de capturar. Test que compara dos corridas byte a byte — **la sonda tiene gemelo positivo**: un cambio conocido debe romperla |
@@ -332,7 +332,7 @@ Un componente que dependa del Tailwind del host no puede shipear ahí. La opció
 ### Lo que esto compra
 
 El mismo artefacto renderiza idéntico en Storybook (v4), en `capture/` headless, en dos landings
-Astro y en Fovente (v3) — **sin depender del compilador de CSS del consumidor**. Es la única forma
+Astro y en Tracta (v3) — **sin depender del compilador de CSS del consumidor**. Es la única forma
 de que los golden PNG byte-comparados de las iteraciones 2-3 signifiquen algo, y de que el criterio
 de éxito #4 ("sin regresión visual") sea medible en vez de afirmado.
 
