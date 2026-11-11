@@ -2,18 +2,18 @@
 
 Fecha: 2026-09-04 · Worker `cto-d606f0` · verificado a mano, no inferido.
 
-## H-1 — Fovente es un PRODUCTO de Cofoundy, no un cliente
+## H-1 — Tracta es un PRODUCTO de Cofoundy, no un cliente
 
 Agente de ventas por WhatsApp, en producción. Landing `fovente.cofoundy.ai`, app
 `app.fovente.cofoundy.ai`, MCP propio con 31 tools en prod. SKU recurrente S/.150–250/mes
 (`deals/clients/XGodel/`, `deals/REACTIVATION-BACKLOG.md`).
 
 **Consecuencia:** "que el cliente lo sienta idéntico a WhatsApp" no es una metáfora de marketing —
-la app de Fovente le muestra a un negocio las conversaciones de WhatsApp de sus leads. El skin
+la app de Tracta le muestra a un negocio las conversaciones de WhatsApp de sus leads. El skin
 tiene un consumidor de producto real, no hipotético.
 
 **Abierto:** no existe repo `fovente-app` en la org (`gh repo list cofoundy`). Hipótesis a
-confirmar por `recon-inbox`: la app de Fovente es una instancia white-label de `inbox-ai`
+confirmar por `recon-inbox`: la app de Tracta es una instancia white-label de `inbox-ai`
 (cofoundy-platform se describe como "White-label SaaS suite"). Si se confirma, inbox-ai ES el
 consumidor del skin y su modelo de mensaje es el modelo canónico.
 
@@ -37,7 +37,7 @@ SEO/perf, o (b) exponer un **custom element** framework-agnóstico.
 ```
 core/      engine + timeline        (TS puro, cero framework)
 adapters/  canales                  (TS puro)
-react/     componentes React        → app de Fovente / inbox-ai
+react/     componentes React        → app de Tracta / inbox-ai
 element/   custom element wrapper   → landings Astro
 capture/   headless → PNG/WebP/mp4  (apunta al element: sin runtime de React)
 ```
@@ -69,7 +69,7 @@ last_phase 6), ya shippeado y mergeado. Movido a
 
 # Recon de agentes — hallazgos confirmados (parcial, secciones truncadas pendientes)
 
-## H-1 CONFIRMADO — `inbox-ai` ES Fovente
+## H-1 CONFIRMADO — `inbox-ai` ES Tracta
 
 El producto que corre en `app.fovente.cofoundy.ai` es `inbox-ai`. No hay repo aparte.
 ⇒ **El consumidor del skin ya existe, en producción, y ya consume `@cofoundy/ui`.**
@@ -83,11 +83,11 @@ El producto que corre en `app.fovente.cofoundy.ai` es `inbox-ai`. No hay repo ap
 
 ## H-5 — ⚠️ CORREGIDO: la dependencia SÍ está pinneada por el lockfile
 
-`github:cofoundy/ui#main` sigue la rama. **Cada push a `ui/main` entra a Fovente en prod sin
+`github:cofoundy/ui#main` sigue la rama. **Cada push a `ui/main` entra a Tracta en prod sin
 gate.** No es hipotético: 139 archivos y `MessageComposer` en el `ConversationView` real.
 
 **Disposición:** el ciclo NO mergea a `main` hasta tener verificación verde, y el gate de Fase 11
-tiene que considerar el blast radius sobre Fovente, no solo sobre Storybook. Recomendar el pin a
+tiene que considerar el blast radius sobre Tracta, no solo sobre Storybook. Recomendar el pin a
 un tag es una decisión de repo ajeno ⇒ se propone, no se ejecuta.
 
 ## H-6 — 🟢 El modelo de capabilities YA está resuelto en prod (en Python)
@@ -149,7 +149,7 @@ Copiar literal: `direction`, `sender.type` de 4 valores, `reply_to` denormalizad
 `channel_revoked`, y **los dos relojes** (`timestamp` del evento vs `created_at` de ingesta).
 
 Recortar: reacciones deben ser **campo de primera clase** (hoy se anclan por `channel_message_id`);
-`delivery_status` cerrado **sin** `draft|discarded` (eso es vocabulario de producto Fovente); y
+`delivery_status` cerrado **sin** `draft|discarded` (eso es vocabulario de producto Tracta); y
 tipar `media`, hoy `any[]` (`api.ts:236`).
 
 ## 🔴 Corrección a NUESTRO modelo: `channel` ≠ `provider`
@@ -167,7 +167,7 @@ deuda de diseño conocida antes de agregar el canal 4.
    **Pinnear a un tag ANTES de tocar messaging.** (Hoy el lockfile lo congela en v0.2.2, así que el
    riesgo se materializa al re-resolver — que es justo lo que adoptar el skin requiere.)
 2. No filtrar vocabulario de producto al skin: `draft`, `is_sandbox`, `ai_paused_reason` son de
-   Fovente, no del componente.
+   Tracta, no del componente.
 3. **`can_edit` y `delete_reaches_customer` se reciben como props, NUNCA se derivan de `channel`** —
    ellos lo prohíben explícitamente en `api.ts:288`. Son política del servidor, no de presentación.
 4. Separar `channel` de `provider` (arriba).

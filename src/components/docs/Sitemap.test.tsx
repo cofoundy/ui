@@ -19,7 +19,7 @@ const canonical: SitemapInput = {
           depth: 1,
           nav_group: 'primary',
           children: [
-            { path: '/products/inbox', label: 'Inbox AI', depth: 2, intent: 'transactional' },
+            { path: '/products/inbox', label: 'Tracta', depth: 2, intent: 'transactional' },
             { path: '/products/agenda', label: 'Agenda AI', depth: 2, intent: 'transactional' },
           ],
         },

@@ -178,7 +178,7 @@ es asimétrico: tres líneas hoy, contra re-congelar todos los goldens de la ola
 - **A `approve`:** aplicar C-1, C-2, C-2b y C-3. Son tres archivos y cuatro líneas; no tocan
   arquitectura, alcance ni la matriz de propiedad.
 - **A `escalate`:** que el acumulado cruce 24 h, o que la reproyección de la ola 3 supere 24 h
-  (C-3); un deadline de Fovente (D-2); o una lane pidiendo copia literal de `whatsimule` (A-2).
+  (C-3); un deadline de Tracta (D-2); o una lane pidiendo copia literal de `whatsimule` (A-2).
 - **C-2 se relaja** si al escribir el fixture resulta que `reactions` no es observable en el DOM de
   la ola 1 (el layout de WhatsApp podría no renderizar reacciones todavía). En ese caso `timestamp`
   solo ya cierra el hueco real, y `reactions` puede diferirse a T-005 — pero `wallpaper` sale igual.

@@ -140,11 +140,11 @@ export interface WebSocketTransportConfig extends BaseTransportConfig {
 }
 
 /**
- * Socket.IO transport configuration (for InboxAI)
+ * Socket.IO transport configuration (for Tracta)
  */
 export interface SocketIOTransportConfig extends BaseTransportConfig {
   type: "socketio";
-  /** Tenant ID for InboxAI */
+  /** Tenant ID for Tracta */
   tenantId: string;
   /** Namespace (optional) */
   namespace?: string;

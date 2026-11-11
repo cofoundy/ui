@@ -39,14 +39,14 @@ describe('asServiceMedia — narrow, defensive read of an opaque Json', () => {
 
 describe('service message rendering', () => {
   it('renders a centered pill, not a directional bubble', () => {
-    const msg: RenderMessage = { ...BASE, text: 'FOVENTE SE DETUVO · PAGO DECLARADO', media: { kind: 'service', variant: 'warn' } };
+    const msg: RenderMessage = { ...BASE, text: 'TRACTA SE DETUVO · PAGO DECLARADO', media: { kind: 'service', variant: 'warn' } };
     const li = render(msg, whatsapp);
     expect(li.className).toContain('cf-msg-service');
     expect(li.hasAttribute('data-dir')).toBe(false);
     expect(li.dataset.variant).toBe('warn');
     expect(li.querySelector('.cf-bubble')).toBeNull();
     const pill = li.querySelector('.cf-service-pill');
-    expect(pill?.textContent).toBe('FOVENTE SE DETUVO · PAGO DECLARADO');
+    expect(pill?.textContent).toBe('TRACTA SE DETUVO · PAGO DECLARADO');
   });
 
   it('renders in both channels — same structure, no channel branch in the code path', () => {

@@ -42,7 +42,7 @@ src/
 │   │   ├── Message.tsx
 │   │   └── ...
 │   │
-│   ├── messaging/             # InboxAI messaging primitives
+│   ├── messaging/             # Tracta messaging primitives
 │   │   ├── MessageBubble.tsx
 │   │   ├── InboxMessage.tsx
 │   │   └── ...
@@ -68,7 +68,7 @@ src/
 ├── transports/                # Backend connection adapters
 │   ├── types.ts               # Transport interfaces
 │   ├── WebSocketTransport.ts  # For TimelyAI
-│   └── SocketIOTransport.ts   # For InboxAI (dynamic import)
+│   └── SocketIOTransport.ts   # For Tracta (dynamic import)
 │
 ├── hooks/
 │   ├── useChatTransport.ts    # Unified transport hook
@@ -130,7 +130,7 @@ import {
 } from '@cofoundy/ui'
 ```
 
-### Messaging (for InboxAI)
+### Messaging (for Tracta)
 ```typescript
 import {
   MessageBubble,
@@ -301,7 +301,7 @@ Storybook is deployed to **Cloudflare Pages** (not Railway) at **ui.cofoundy.dev
 | Product | Components Used |
 |---------|-----------------|
 | **TimelyAI** | ChatWidget, ChatWidgetFloating, transports |
-| **InboxAI** | Badge, Avatar, Messaging components |
+| **Tracta** | Badge, Avatar, Messaging components |
 | **Landing Page** | ChatWidgetFloating, FloatingLauncher |
 | **PulseAI** | UI primitives, Analytics components |
 
@@ -312,7 +312,7 @@ Storybook is deployed to **Cloudflare Pages** (not Railway) at **ui.cofoundy.dev
 | Type | Backend | Protocol |
 |------|---------|----------|
 | `websocket` | TimelyAI | Raw WebSocket + AG-UI events |
-| `socketio` | InboxAI | Socket.IO + AG-UI relay |
+| `socketio` | Tracta | Socket.IO + AG-UI relay |
 
 ### AG-UI Event Protocol
 
@@ -375,7 +375,7 @@ interface AppointmentConfirmation {
 }
 ```
 
-### Socket.IO Transport (InboxAI)
+### Socket.IO Transport (Tracta)
 
 ```typescript
 // Connection config
@@ -454,7 +454,7 @@ at `docs.cofoundy.dev/team/docs-ai/mobile-first-contract-v1` (§7).
 2. **ALWAYS add tests** for hooks and transports
 3. **Use CSS variables** - never hardcode colors
 4. **Export from index.ts** - all public components must be exported
-5. **Check multiple projects** - changes here affect TimelyAI, InboxAI, Landing
+5. **Check multiple projects** - changes here affect TimelyAI, Tracta, Landing
 6. **Run Storybook** to verify visual changes: `npm run storybook`
 7. **Keep schemas synced** - frontend types MUST match backend tool outputs
 8. **No external charting libraries** - analytics components use pure CSS/Tailwind

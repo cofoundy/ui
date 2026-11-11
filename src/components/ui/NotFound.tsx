@@ -46,7 +46,7 @@ const notFoundVariants = cva(
 // Product-aware microcopy. Strings live with the component so hosts only have
 // to pass productContext; the Sage line stays consistent across touchpoints.
 const PRODUCT_LABEL: Record<string, string> = {
-  inbox: "Inbox AI",
+  inbox: "Tracta",
   timely: "Timely AI",
   pulse: "Pulse AI",
   landing: "Cofoundy",

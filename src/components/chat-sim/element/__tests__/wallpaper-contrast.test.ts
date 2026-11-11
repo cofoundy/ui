@@ -397,7 +397,7 @@ describe('Telegram quote-author text contrast (T-025 + follow-up chrome decision
     expect(contrastRatio(color, TELEGRAM_DARK_OUT_BUBBLE)).toBeLessThan(TEXT_AA_THRESHOLD);
   });
 
-  it("OUT, dark bubble (#3e6aa7), chrome='consistent': AA is not negotiable in Fovente's own app — clears it", () => {
+  it("OUT, dark bubble (#3e6aa7), chrome='consistent': AA is not negotiable in Tracta's own app — clears it", () => {
     const color = resolveColor(telegramDarkConsistentTokens['--channel-telegram-out-quote-text'], telegramDarkConsistentTokens);
     expect(contrastRatio(color, TELEGRAM_DARK_OUT_BUBBLE)).toBeGreaterThanOrEqual(TEXT_AA_THRESHOLD);
   });

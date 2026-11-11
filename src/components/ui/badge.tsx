@@ -14,7 +14,7 @@ const badgeVariants = cva(
     variants: {
       variant: {
         // Mismo motivo que en `button.tsx`: `--primary` es reasignable por la app
-        // (Fovente lo ata al color del tenant), así que la tinta se deriva de él.
+        // (Tracta lo ata al color del tenant), así que la tinta se deriva de él.
         // Las demás variantes conservan `text-white` a propósito — sus rellenos
         // son colores FIJOS del sistema, no de marca. → inbox-ai#617
         default:
@@ -34,7 +34,7 @@ const badgeVariants = cva(
           "border-transparent bg-[var(--status-error)] text-white",
         info:
           "border-transparent bg-[var(--status-info)] text-white",
-        // Channel variants for InboxAI omnichannel - white text for visibility
+        // Channel variants for Tracta omnichannel - white text for visibility
         whatsapp:
           "border-transparent bg-[var(--channel-whatsapp)] text-white",
         telegram:

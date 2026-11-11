@@ -160,7 +160,7 @@ export const ChannelColors: Story = {
     <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
       <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Channel Brand Colors</h2>
       <p className="text-[var(--chat-muted)] mb-8">
-        Official brand colors for messaging platforms (InboxAI)
+        Official brand colors for messaging platforms (Tracta)
       </p>
 
       <ColorRow title="Messaging Platforms">

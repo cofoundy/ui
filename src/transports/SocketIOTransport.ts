@@ -10,7 +10,7 @@ import type { ConnectionStatus } from "../types";
 import { CircuitBreaker, type CircuitBreakerState } from "./circuitBreaker";
 
 /**
- * Socket.IO message types for InboxAI backend
+ * Socket.IO message types for Tracta backend
  */
 interface SocketIOMessage {
   content?: string;
@@ -82,7 +82,7 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 const HEARTBEAT_TIMEOUT = 10000; // 10 seconds to receive pong
 
 /**
- * Creates a Socket.IO transport instance for InboxAI backend
+ * Creates a Socket.IO transport instance for Tracta backend
  */
 export async function createSocketIOTransport(
   config: SocketIOTransportConfig,
@@ -306,7 +306,7 @@ export async function createSocketIOTransport(
       randomizationFactor: 0.5,     // Jitter to avoid thundering herd
       timeout: 10000,               // 10s timeout per connection attempt
       auth: {
-        widget: true,  // Required for InboxAI to allow connection without JWT
+        widget: true,  // Required for Tracta to allow connection without JWT
       },
       query: {
         sessionId,
@@ -369,13 +369,13 @@ export async function createSocketIOTransport(
       }
     });
 
-    // InboxAI widget events
+    // Tracta widget events
     socket.on("widget:session", (data: { sessionId: string; conversationId: string | null }) => {
       // Session initialized successfully
       console.log("[SocketIO] Widget session initialized:", data);
     });
 
-    // Listen for messages (InboxAI emits message:new)
+    // Listen for messages (Tracta emits message:new)
     socket.on("message:new", (data: SocketIOMessage) => {
       // Only handle if it's from AI/agent (not echoed user message)
       if (data.type !== "user" && (data as { sender?: { type?: string } }).sender?.type !== "visitor") {
@@ -464,7 +464,7 @@ export async function createSocketIOTransport(
 
   function sendMessage(message: string, messageId?: string) {
     if (socket?.connected) {
-      // Use widget_message event for InboxAI backend
+      // Use widget_message event for Tracta backend
       // Include messageId for delivery acknowledgment
       socket.emit("widget_message", {
         content: message,

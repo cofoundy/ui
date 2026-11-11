@@ -7,7 +7,7 @@ import { Button } from "../../components/ui/button";
 
 /**
  * Markup captured from origin/main BEFORE `status` existed (2026-09-25). Without `status` the
- * Button must render byte-for-byte the same — Fovente, TimelyAI and Landing depend on it.
+ * Button must render byte-for-byte the same — Tracta, TimelyAI and Landing depend on it.
  */
 /**
  * The ONE sanctioned delta since that baseline (slot 14, 2026-09-29): the press. `transition-all`

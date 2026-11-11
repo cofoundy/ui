@@ -20,7 +20,7 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 | Decouple network arrival from visual reveal rate | `useStreamingDrip` (hook) | Hooks | (see [Hooks](#hooks)) |
 | Custom message bubble rendering | `MessageBubble`, `MessageContent`, `MessageAvatar`, `MessageTimestamp` | Messaging | `messaging-primitives-*` |
 | Compose user input (multi-modal, quick actions, toolbar) | `MessageComposer` | Messaging | `messaging-messagecomposer` |
-| Inbox-style message list (Cofoundy InboxAI) | `InboxMessage`, `InboxMessageList` | Messaging | `messaging-inboxmessage` |
+| Inbox-style message list (Cofoundy Tracta) | `InboxMessage`, `InboxMessageList` | Messaging | `messaging-inboxmessage` |
 | Show what an AI **tool call** did (name, summary, status, folded input/output) — one or a turn's group | `ToolInvocation`, `ToolInvocationGroup` | Messaging | `messaging-toolinvocation` |
 | KPI metric tile (number / duration / percentage + trend) | `StatCard` | Analytics | `analytics-statcard` |
 | Inline mini trend line (fits in StatCard / DataTable) | `SparkLine` | Analytics | `analytics-sparkline` |
@@ -83,7 +83,7 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 
 | Hook | Description |
 |---|---|
-| `useChatTransport` | Unified hook over WebSocket + Socket.IO transports (TimelyAI + InboxAI). Returns AG-UI event stream. |
+| `useChatTransport` | Unified hook over WebSocket + Socket.IO transports (TimelyAI + Tracta). Returns AG-UI event stream. |
 | `useWebSocket` | Raw WebSocket hook (TimelyAI). |
 | `useAGUI` | AG-UI event protocol consumer. Tool-call lifecycle states. |
 | `useChatStore` | Zustand chat store (messages, streaming state, suggested slots, appointment confirmation). |
@@ -100,7 +100,7 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 
 ### Chat
 
-12 stories. Chat widget surface (TimelyAI, landing chat, InboxAI shell).
+12 stories. Chat widget surface (TimelyAI, landing chat, Tracta shell).
 
 | Component | Description |
 |---|---|
@@ -143,7 +143,7 @@ the JSX just never receives it). Tracked at `.cofoundy/tasks/T-010.md` (role: `a
 
 ### Messaging
 
-Generic messaging primitives (used by InboxAI; reusable for any chat surface).
+Generic messaging primitives (used by Tracta; reusable for any chat surface).
 
 | Component | Description |
 |---|---|
@@ -155,7 +155,7 @@ Generic messaging primitives (used by InboxAI; reusable for any chat surface).
 | `MessageContainer` | Layout primitive (flex row + alignment). |
 | `MessageMedia` | Media attachment renderer (image / file / audio). |
 | **`StreamingMarkdown`** | **NEW (v0.5.1)** — Per-char wave reveal for LLM streaming. Walks hast tree, emits flat spans keyed by source offset. Drops to `<MessageContent>` when content > 5000 chars or `prefers-reduced-motion`. |
-| `InboxMessage`, `InboxMessageList` | Composed message list (InboxAI). |
+| `InboxMessage`, `InboxMessageList` | Composed message list (Tracta). |
 | `MessageComposer` | Multi-modal input (text + attachments + toolbar + quick actions). `busy` swaps Send for Stop while an automatic reply is in flight — the textarea stays live. |
 | `AIBadge` | "AI" inline pill (mark AI-generated content). |
 | **`ToolInvocation`** | **NEW (2026-10-12)** — Collapsible card for one tool call of an AI turn: `name`, one-line `summary`, `state` (`input-streaming` · `input-available` · `output-available` · `output-error`), `input` (flat object → key/value list, else JSON), `output` (text · JSON string pretty-printed, a truncated one stays text · object · ReactNode), `errorText`, `defaultOpen` (folded by default), `labels` (English defaults, all overridable). Reference: Vercel AI Elements «Tool». Helpers: `ToolInvocationStatus`, `ToolValue`. |

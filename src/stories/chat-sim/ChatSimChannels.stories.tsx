@@ -61,7 +61,7 @@ export const WhatsAppDemoAutoplay: Story = {
     seed: 7,
     t0: 1789761600000,
     mode: 'demo',
-    contactName: 'Fovente — Reservas',
+    contactName: 'Tracta — Reservas',
     contactStatus: 'en línea',
   },
 };
@@ -73,7 +73,7 @@ export const WhatsAppLive: Story = {
     seed: 7,
     t0: 1789761600000,
     mode: 'live',
-    contactName: 'Fovente — Reservas',
+    contactName: 'Tracta — Reservas',
     contactStatus: 'en línea',
   },
 };
@@ -86,7 +86,7 @@ export const TelegramLive: Story = {
     channel: 'telegram',
     seed: 3,
     mode: 'live',
-    contactName: 'Fovente — Canal',
+    contactName: 'Tracta — Canal',
   },
 };
 
@@ -101,7 +101,7 @@ export const MobileBaseline: Story = {
     seed: 7,
     t0: 1789761600000,
     mode: 'live',
-    contactName: 'Fovente — Reservas',
+    contactName: 'Tracta — Reservas',
     contactStatus: 'en línea',
   },
 };

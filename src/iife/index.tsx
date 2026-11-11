@@ -196,7 +196,7 @@ if (typeof window !== "undefined" && window.cofoundyChatConfig) {
   }
 }
 
-// Also support legacy InboxAI config format for backwards compatibility
+// Also support legacy Tracta config format for backwards compatibility
 declare global {
   interface Window {
     inboxaiConfig?: {
@@ -208,13 +208,13 @@ declare global {
       subtitle?: string;
       position?: string;
     };
-    InboxAI?: {
+    Tracta?: {
       init: (config: unknown) => void;
     };
   }
 }
 
-// Legacy InboxAI compatibility layer
+// Legacy Tracta compatibility layer
 if (typeof window !== "undefined") {
   window.InboxAI = {
     init: (legacyConfig: unknown) => {

@@ -61,9 +61,9 @@ disparar ⇒ el script de captura necesita un gate de settle, no un screenshot i
 
 ## Vocabulario de dominio que el prior art no tiene
 
-`ChatDemo.astro` maneja tipos de paso propios de Fovente: `in`, `out`, `typing`, `stop` (la IA
+`ChatDemo.astro` maneja tipos de paso propios de Tracta: `in`, `out`, `typing`, `stop` (la IA
 frena y pasa a humano — apaga el badge), `done`, y `brief` (tarjeta con `head`/`bullets`/`action`).
-`stop` es la historia de producto de Fovente. Los guiones vienen de i18n (`t.hero.chat`,
+`stop` es la historia de producto de Tracta. Los guiones vienen de i18n (`t.hero.chat`,
 `t.sectors.items`), o sea **contenido traducible, no hardcodeado**.
 
 ⇒ El modelo de pasos debe ser extensible por el consumidor, no un enum cerrado de WhatsApp.

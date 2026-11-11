@@ -101,7 +101,7 @@ export const TelegramReceipt: Story = {
     channel: 'telegram',
     seed: 1,
     mode: 'live',
-    contactName: 'Fovente — Canal',
+    contactName: 'Tracta — Canal',
   },
 };
 
