@@ -9,6 +9,9 @@ build/
 # Storybook
 storybook-static/
 
+# ds-bundle (salida de `npm run build:ds`, se publica en ui.cofoundy.dev/ds-bundle/)
+/ds-bundle/
+
 # Logs
 *.log
 npm-debug.log*

@@ -104,6 +104,7 @@
     "build-storybook": "storybook build",
     "build:iife": "vite build --config vite.config.iife.ts",
     "build:iife:watch": "vite build --config vite.config.iife.ts --watch",
+    "build:ds": "vite build -c vite.config.ds.ts && vite build -c vite.config.ds.ts --mode react && vite build -c vite.config.ds.ts --mode react-dom",
     "capture-shader-poster": "node scripts/capture-shader-poster.mjs",
     "gen:agents": "tsx scripts/gen-atelier-agents-md.ts",
     "verify:agents": "tsx scripts/gen-atelier-agents-md.ts --check",

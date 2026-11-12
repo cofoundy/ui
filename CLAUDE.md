@@ -19,7 +19,12 @@ npm run test:coverage    # Coverage report
 
 # Build IIFE (standalone widget)
 npm run build:iife
+
+# Build ds-bundle (toda la librería para el navegador, sin npm) → ds-bundle/
+npm run build:ds
 ```
+
+**ds-bundle** (`vite.config.ds.ts`): el deploy lo publica en `https://ui.cofoundy.dev/ds-bundle/` para páginas HTML sueltas (también por `file://`). Contrato: `styles.css` + `_vendor/react.js` (`window.React`) + `_vendor/react-dom.js` (`window.ReactDOM`) + `_ds_bundle.js` (`window.CofoundyUI` = todos los exports de `src/index.ts`, con el React global). React 19 no trae UMD: `_vendor/` es nuestro.
 
 ## Package Structure
 
