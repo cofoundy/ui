@@ -28,6 +28,10 @@ jobs:
       - name: Build Storybook
         run: npm run build-storybook
 
+      # El deploy publica ds-bundle/ en ui.cofoundy.dev/ds-bundle/: si no compila, que lo diga el PR.
+      - name: Build ds-bundle
+        run: npm run build:ds
+
       - name: Typecheck (señal, no bloquea)
         run: npm run typecheck
         continue-on-error: true

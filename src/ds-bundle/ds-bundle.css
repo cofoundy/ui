@@ -1,0 +1,5 @@
+/* Hoja del ds-bundle (`ds-bundle/styles.css`): utilidades de Tailwind que usan los componentes
+ * + tokens y estilos base de la librería. Mismo patrón que src/iife/iife.css (#251): el
+ * `@import "tailwindcss"` vive acá y no en ../styles/index.css (que es CSS plano). */
+@import "tailwindcss";
+@import "../styles/index.css";
