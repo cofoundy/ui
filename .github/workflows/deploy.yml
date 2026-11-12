@@ -25,6 +25,13 @@ jobs:
       - name: Build Storybook
         run: npx storybook build
 
+      # ds-bundle: @cofoundy/ui para el navegador sin npm (React global + window.CofoundyUI).
+      # Va dentro de storybook-static para servirse en https://ui.cofoundy.dev/ds-bundle/.
+      - name: Build ds-bundle
+        run: |
+          npm run build:ds
+          cp -R ds-bundle storybook-static/ds-bundle
+
       # cloudflare/pages-action was removed from GitHub (404 since ~2026-09-23);
       # wrangler-action is its official replacement.
       - name: Deploy to Cloudflare Pages
