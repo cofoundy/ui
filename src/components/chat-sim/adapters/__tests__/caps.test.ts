@@ -51,7 +51,7 @@ describe('isAllowedReactionEmoji', () => {
 
 // T-028 — key PRESENCE is the question, never the value's truthiness. A capability entry's
 // value is always `null` today ("supported, nothing to constrain"), so `set.buttons` alone
-// would read as falsy even when supported — the exact footgun inbox-ai's own registry.py
+// would read as falsy even when supported — the exact footgun Tracta's own registry.py
 // docstring warns about (`constraint_for(...) is None` does NOT mean unsupported).
 describe('hasCapability', () => {
   it('true when the key is present, even though its value is null', () => {

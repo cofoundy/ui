@@ -88,7 +88,7 @@ scoped_to:
   worker_id: cto-d606f0
 
 # DECISION DEL CTO 2026-09-04: NO se otorga auto_approve_main_deploy.
-# Razon (finding H-5): inbox-ai (= Tracta, en produccion) consume
+# Razon (finding H-5): Tracta (= Tracta, en produccion) consume
 # `github:cofoundy/ui#main` SIN PIN, en 139 archivos de su frontend. Todo merge a
 # main de este repo entra a su prod sin gate. El blast radius de un deploy a main
 # NO es "se redeploya Storybook": es la app que se factura a S/.150-250/mes.

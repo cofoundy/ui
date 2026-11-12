@@ -4,7 +4,7 @@
  * ALL tokens live under `.cf-chat-sim` — zero new declarations at `:root` (T-002 acceptance #2).
  * ZERO Tailwind utility classes anywhere in this family (T-002 acceptance #3) — every rule below
  * is a semantic class the element/ layer sets itself, styled here in plain CSS, the same
- * language products/fovente-landingpage/src/components/ChatDemo.astro already speaks in
+ * language the retired first landing's ChatDemo.astro already speaks in
  * production (that continuity is deliberate — architecture-v1.md §12 point 4).
  *
  * Structure is adapter-driven, not channel-driven: every STRUCTURAL selector below keys off a
@@ -759,7 +759,7 @@
    infinite dot animation actually loop instead of restarting on every reconcile (the bug the
    old floating/`appendChild`-per-frame version had). It's a real bubble in the flow — same
    left/right rule as .cf-msg, same shape — not a floating pill. Numbers (5px dots, 3px gap,
-   1.2s cycle, .18s stagger) match products/fovente-landingpage's global.css:444-451 exactly;
+   1.2s cycle, .18s stagger) match the retired first landing's global.css:444-451 exactly;
    those are what read as WhatsApp instead of a generic spinner. */
 
 .cf-typing-row {

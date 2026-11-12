@@ -13,7 +13,7 @@
 // purity-test precedent for banned-globals-in-prose).
 //
 // One more exclusion beyond purity.test.ts's: `adapters/caps.ts` — Telegram's 73-emoji reaction
-// ALLOWLIST (T-005, verified byte-identical to inbox-ai's prod `telegram_reactions.py`). Those
+// ALLOWLIST (T-005, verified byte-identical to Tracta's prod `telegram_reactions.py`). Those
 // emoji are the reaction picker's actual values, not a per-channel glyph baked into a rendered
 // receipt/composer icon — banning them would break real, already-shipped, already-verified
 // product data. The bug this task fixes is specifically "a channel bakes a raw glyph character

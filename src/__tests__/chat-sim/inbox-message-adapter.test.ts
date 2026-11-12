@@ -2,7 +2,7 @@
 //
 // Runtime behavior of stories/chat-sim/lib/inboxMessageAdapter.ts on top of the compile-time
 // check T-008 acceptance #1 asks for (the fixtures themselves are typed against the REAL
-// inbox-ai `Message`, not a hand-copied mirror — see inboxMessageFixtures.ts). A type that
+// Tracta `Message`, not a hand-copied mirror — see inboxMessageFixtures.ts). A type that
 // compiles proves the SHAPE lines up; these tests prove the VALUES map correctly.
 
 import { describe, expect, it } from 'vitest';

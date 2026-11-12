@@ -5,7 +5,7 @@
 // the DOM must change; swap it back, the DOM must match the reference render byte-for-byte.
 //
 // `by: ActorId` doubles as the group key (adapter-interface-draft.md §groupKey): scripts use
-// exactly 'in' | 'out:ai' | 'out:human:<id>', the same three shapes inbox-ai's
+// exactly 'in' | 'out:ai' | 'out:human:<id>', the same three shapes Tracta's
 // lib/messageGrouping.ts:25 groups by. No separate cast/registry — the id already carries
 // direction + sender kind, so nothing here reinvents it.
 

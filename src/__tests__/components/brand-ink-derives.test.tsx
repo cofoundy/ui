@@ -10,7 +10,7 @@ import { badgeVariants } from "../../components/ui/badge";
  * clavado acá deja el relleno variable y la tinta constante — y sobre un
  * relleno claro el rótulo desaparece. Medido en el DOM vivo de Tracta antes
  * del arreglo: **1.68:1** con una marca amarilla, **2.61:1** en tema oscuro con
- * la marca por defecto. → inbox-ai#617
+ * la marca por defecto. → tracta#617
  *
  * Este test se escribió contra la versión ROTA primero y falló ahí; si alguna
  * vez pasa sobre un `text-white` reintroducido, es este test el que está mal.

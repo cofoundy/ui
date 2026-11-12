@@ -553,7 +553,7 @@ var CfChatSim = (() => {
     avatarSide: "inbound",
     // T-028: WhatsApp Business's `interactive.type: "buttons"|"list"` — each its own native
     // message type with its own chrome (reply-buttons, and a scrollable list opened via a button).
-    // Both supported, nothing to constrain yet (inbox-ai capabilities.py/registry.py's model).
+    // Both supported, nothing to constrain yet (Tracta capabilities.py/registry.py's model).
     capabilities: {
       buttons: null,
       list: null

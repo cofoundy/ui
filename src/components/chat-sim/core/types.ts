@@ -133,7 +133,7 @@ export type AvatarSide = 'inbound' | 'none';
 //
 // Key PRESENCE is the question, never a value's truthiness (`Partial`, not a total `Record`):
 // every entry's value is `null` today ("supported, nothing to constrain yet"), so absent-from-set
-// is how "unsupported" is spelled. Mirrors inbox-ai's `Capability` StrEnum + `registry.py`'s
+// is how "unsupported" is spelled. Mirrors Tracta's `Capability` StrEnum + `registry.py`'s
 // `Constraint | None` map. Use `hasCapability` (adapters/caps.ts) to ask, never `cap in set` or a
 // value-truthiness check by hand.
 // ---------------------------------------------------------------------------

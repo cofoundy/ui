@@ -1,14 +1,14 @@
 # Mobile composer checklist — T-007 acceptance #3
 
 architecture-v1.md §8: *"Medible: el fork de `MobileComposer` queda sin razón de ser."* This is
-that measurement, not an opinion. Source: `products/cofoundy-platform/inbox-ai/frontend/src/
+that measurement, not an opinion. Source: `projects/tracta/frontend/src/
 components/conversation/MobileComposer.tsx` (13 KB, read in full 2026-09-04). One row per reason
 **the file itself declares** for existing — not reasons inferred from outside it.
 
 ## A finding before the table
 
 None of the seven reasons below is "the keyboard/viewport" — `MobileComposer.tsx` never mentions
-`visualViewport`, `dvh`, or `interactive-widget` (grepped, zero hits across all of inbox-ai's
+`visualViewport`, `dvh`, or `interactive-widget` (grepped, zero hits across all of Tracta's
 frontend, confirmed by team-lead). The fork exists for **layout and interaction-budget** reasons,
 not for a keyboard-resize bug it never attempted to fix. `useKeyboardInset.ts` (this task) closes
 the actual §8 gap — but that's an addition `react/` makes on top of the checklist below, not a row

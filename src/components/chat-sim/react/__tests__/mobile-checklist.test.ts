@@ -1,8 +1,8 @@
-// T-007 acceptance #3: "Checklist derivada del `MobileComposer.tsx` real (13 KB, inbox-ai): por
+// T-007 acceptance #3: "Checklist derivada del `MobileComposer.tsx` real (13 KB, Tracta): por
 // cada razón que ese fork declara para existir, una fila con veredicto cubierto/no-cubierto."
 //
-// This test does NOT read `products/cofoundy-platform/inbox-ai/...` at runtime: `packages/ui` and
-// `inbox-ai` are separate repos in the Cofoundy workspace (see workspace CLAUDE.md's repo map),
+// This test does NOT read `projects/tracta/...` at runtime: `packages/ui` and
+// `tracta` are separate repos in the Cofoundy workspace (see workspace CLAUDE.md's repo map),
 // so a CI job that checks out only `packages/ui` would never have that path — a runtime read
 // would make this test fail for an environment reason, not a real regression. Instead, the exact
 // fragments below are literal quotes captured from that file on 2026-09-04 (same date
@@ -17,7 +17,7 @@ import { describe, expect, it } from 'vitest';
 const CHECKLIST_PATH = join(__dirname, '..', 'MOBILE-CHECKLIST.md');
 
 // One literal fragment per declared reason, captured verbatim from MobileComposer.tsx
-// (products/cofoundy-platform/inbox-ai/frontend/src/components/conversation/MobileComposer.tsx,
+// (projects/tracta/frontend/src/components/conversation/MobileComposer.tsx,
 // 2026-09-04). Order matches the checklist table's row order.
 const DECLARED_REASON_FINGERPRINTS: readonly string[] = [
   'ajuste de CSS sobre el', // R1 — layout propio, no un parche sobre MessageComposer
@@ -36,7 +36,7 @@ describe('T-007 acceptance #3 — mobile composer checklist is real, not prose',
 
   it('exists and cites the source file it was derived from', () => {
     expect(doc).toContain('MobileComposer.tsx');
-    expect(doc).toContain('inbox-ai');
+    expect(doc).toContain('Tracta');
   });
 
   it('has exactly one table row per declared reason, in order', () => {

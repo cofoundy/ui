@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
 import { createElement } from 'react';
 import { ChatSim } from '../../components/chat-sim';
-import * as InboxAIReplacement from '../../stories/chat-sim/InboxAIReplacement.stories';
+import * as TractaReplacement from '../../stories/chat-sim/TractaReplacement.stories';
 import * as ChatSimStates from '../../stories/chat-sim/ChatSimStates.stories';
 import * as ChatSimChannels from '../../stories/chat-sim/ChatSimChannels.stories';
 
@@ -27,7 +27,7 @@ function storiesOf(mod: StoryModule): Array<[string, Record<string, unknown>]> {
 }
 
 describe.each([
-  ['InboxAIReplacement', InboxAIReplacement as unknown as StoryModule],
+  ['TractaReplacement', TractaReplacement as unknown as StoryModule],
   ['ChatSimStates', ChatSimStates as unknown as StoryModule],
   ['ChatSimChannels', ChatSimChannels as unknown as StoryModule],
 ])('%s stories render without throwing', (_fileName, mod) => {
