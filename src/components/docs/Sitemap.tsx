@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../utils/cn';
 
 export interface SitemapNode {
-  /** Canonical path / slug (e.g. `/about`, `/products/inbox-ai`). */
+  /** Canonical path / slug (e.g. `/about`, `/products/tracta`). */
   path: string;
   /** Human-readable label rendered in the tree. */
   label: string;

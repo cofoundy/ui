@@ -53,7 +53,7 @@ export const Edit: Story = {
 };
 
 /** chat-sim's `delete` removes the message from the visible thread — see
- * `InboxAIReplacement.stories.tsx`'s `EditedAndDeletedDivergence` for why that's a named
+ * `TractaReplacement.stories.tsx`'s `EditedAndDeletedDivergence` for why that's a named
  * divergence from the real product's tombstone. Shown here alongside a second message so the
  * story isn't just an empty thread. */
 export const Delete: Story = {

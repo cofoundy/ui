@@ -1,18 +1,18 @@
 // stories/chat-sim/lib/inboxMessageFixtures.ts — qa's own write cell.
 //
-// Representative inbox-ai `Message` objects, typed against the REAL interface
-// (inbox-ai/frontend/src/lib/api.ts:229) — every required field is filled in explicitly, on
+// Representative Tracta `Message` objects, typed against the REAL interface
+// (tracta/frontend/src/lib/api.ts:229) — every required field is filled in explicitly, on
 // purpose: this is exactly what the "sin escape hatch" acceptance line is checking. Shared by
-// InboxAIReplacement.stories.tsx (visual) and __tests__/chat-sim/inbox-message-adapter.test.ts
+// TractaReplacement.stories.tsx (visual) and __tests__/chat-sim/inbox-message-adapter.test.ts
 // (behavioral) so both exercise the identical data.
 
-import type { Message } from '../../../../../../products/cofoundy-platform/inbox-ai/frontend/src/lib/api';
+import type { Message } from '../../../../../../projects/tracta/frontend/src/lib/api';
 
 const BASE_TS = '2026-09-04T15:00:00.000Z';
 
 /** Plain inbound text — the simplest real row: a customer message, `queued` never applies
  * inbound (that's an outbound-only concept), so this is `delivered` (WhatsApp confirmed receipt
- * server-side; inbox-ai never marks its own inbound rows `read` — that's the AGENT reading it). */
+ * server-side; Tracta never marks its own inbound rows `read` — that's the AGENT reading it). */
 export const INBOUND_TEXT: Message = {
   id: 'msg_1',
   conversation_id: 'conv_1',
@@ -69,7 +69,7 @@ export const OUTBOUND_EDITED: Message = {
 /** Soft-deleted by the operator (#604) — `deleted_at` set, `channel_revoked: false` (WhatsApp
  * itself exposes no retraction; the customer's phone still shows it). See
  * `inboxMessageAdapter.ts`'s own doc comment for why chat-sim's `delete` Ev does NOT reproduce
- * inbox-ai's real tombstone rendering, and why that's a named divergence, not a bug. */
+ * Tracta's real tombstone rendering, and why that's a named divergence, not a bug. */
 export const OUTBOUND_SOFT_DELETED: Message = {
   id: 'msg_4',
   conversation_id: 'conv_1',

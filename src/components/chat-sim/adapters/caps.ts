@@ -1,4 +1,4 @@
-// adapters/caps.ts — leaf. Mirrors inbox-ai's capabilities.py: the reaction vocabulary + the ONE
+// adapters/caps.ts — leaf. Mirrors Tracta's capabilities.py: the reaction vocabulary + the ONE
 // normalizeReactionEmoji, with zero imports of chat-sim's own runtime code so `whatsapp.ts` and
 // `telegram.ts` can depend on it without risk of the cycle api-contract.md warns about
 // (base -> capabilities -> whatsapp -> base). The `import type` below is erased at compile — it
@@ -19,7 +19,7 @@ export function normalizeReactionEmoji(emoji: string): string {
 
 // Verbatim from https://core.telegram.org/bots/api#reactiontypeemoji (`ReactionTypeEmoji.emoji`),
 // last-fetched 2026-08-01 — the same 73 entries, same doc order, as
-// inbox-ai/backend/src/services/channel_adapters/telegram_reactions.py. Telegram spells several
+// tracta/backend/src/services/channel_adapters/telegram_reactions.py. Telegram spells several
 // of these WITHOUT U+FE0F (`❤`, `⚡`, `🕊`, `✍`, `☃`, the `🤷` family); every emoji picker
 // (ours included) emits the variation-selector form, so the set is stored normalized below —
 // comparing raw is a guaranteed miss.

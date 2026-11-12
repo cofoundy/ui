@@ -1113,7 +1113,7 @@ export const CofoundyAppSidebar: Story = {
 
 // Tracta Dual Sidebar Pattern
 // Icon sidebar + Inbox list + Main content
-export const InboxAISidebar: Story = {
+export const TractaSidebar: Story = {
   render: () => {
     const [selectedMail, setSelectedMail] = React.useState(0);
     const [mobileOpen, setMobileOpen] = React.useState(false);

@@ -16,7 +16,7 @@ const badgeVariants = cva(
         // Mismo motivo que en `button.tsx`: `--primary` es reasignable por la app
         // (Tracta lo ata al color del tenant), así que la tinta se deriva de él.
         // Las demás variantes conservan `text-white` a propósito — sus rellenos
-        // son colores FIJOS del sistema, no de marca. → inbox-ai#617
+        // son colores FIJOS del sistema, no de marca. → tracta#617
         default:
           "border-transparent bg-[var(--primary)] text-[var(--primary-foreground)] [a&]:hover:bg-[var(--primary)]/90",
         secondary:

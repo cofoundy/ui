@@ -1,14 +1,14 @@
-// Ambient shim for inbox-ai/frontend's `@/lib/auth` path alias.
+// Ambient shim for tracta/frontend's `@/lib/auth` path alias.
 //
-// InboxAIReplacement.stories.tsx type-checks its fixtures against the REAL
-// `Message` interface at `inbox-ai/frontend/src/lib/api.ts:229` via a plain
+// TractaReplacement.stories.tsx type-checks its fixtures against the REAL
+// `Message` interface at `tracta/frontend/src/lib/api.ts:229` via a plain
 // cross-repo `import type`. That file's *own* top-level imports (`axios`,
 // `@/lib/auth`) are pulled into this package's `tsc` program the moment
 // anything imports from it — even a type-only import, since the checker
 // still needs to parse the whole module to find the exported symbol.
 //
-// `axios` resolves fine (node module resolution walks up to inbox-ai's own
-// node_modules). `@/lib/auth` does not: `@/*` is inbox-ai's OWN tsconfig
+// `axios` resolves fine (node module resolution walks up to Tracta's own
+// node_modules). `@/lib/auth` does not: `@/*` is Tracta's OWN tsconfig
 // alias, and packages/ui's tsconfig maps `@/*` to `./src/*` instead — there's
 // no `src/lib/auth` here. That is a module-resolution collision on an
 // import `Message` never touches, not a shape mismatch, so shimming it

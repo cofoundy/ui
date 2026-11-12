@@ -76,7 +76,7 @@ describe('T-012 acceptance — no 1:1 views counter', () => {
 });
 
 // T-028 acceptance #1 — getAdapter(c).capabilities includes BUTTONS and LIST with their
-// per-channel constraints (ported from inbox-ai's capabilities.py/registry.py model).
+// per-channel constraints (ported from Tracta's capabilities.py/registry.py model).
 describe('T-028 acceptance #1 — getAdapter(c).capabilities', () => {
   it("whatsapp supports both buttons and list — reply-buttons and list message are each a native, distinct interactive type", () => {
     expect(getAdapter('whatsapp').capabilities).toEqual({ buttons: null, list: null });

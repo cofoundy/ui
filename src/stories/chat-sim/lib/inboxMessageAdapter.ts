@@ -1,5 +1,5 @@
 // stories/chat-sim/lib/inboxMessageAdapter.ts — qa's own write cell (file-ownership-matrix.md:
-// `src/stories/chat-sim/**` is `W` for qa). Turns a REAL inbox-ai `Message` (typed against the
+// `src/stories/chat-sim/**` is `W` for qa). Turns a REAL Tracta `Message` (typed against the
 // actual interface, not a hand-copied mirror — T-008 acceptance #1) into the `SimStep[]` the
 // public chat-sim contract already understands (`post` / `receipt` / `edit` / `react`,
 // api-contract.md § "Tipos núcleo"). Nothing here reaches into chat-sim internals: every step
@@ -9,12 +9,12 @@
 // react/'s and core/'s internal shapes (`R`, not `W`, for qa per the ownership matrix), and
 // bypassing `compile`/`fold` would test a shortcut nobody ships, not the real replacement.
 
-import type { Message } from '../../../../../../products/cofoundy-platform/inbox-ai/frontend/src/lib/api';
+import type { Message } from '../../../../../../projects/tracta/frontend/src/lib/api';
 import type { ActorId, DeliveryState, SimStep } from '../../../components/chat-sim/core/types';
 
 /**
  * `by: ActorId` convention (element/render.ts's own comment, api-contract.md's `Ev.draft`
- * amendment): 'in' | 'out:ai' | 'out:human:<id>' — the same three shapes inbox-ai's
+ * amendment): 'in' | 'out:ai' | 'out:human:<id>' — the same three shapes Tracta's
  * `lib/messageGrouping.ts:25` groups by. Derived from `Message.direction` + `Message.sender`,
  * never invented.
  */
@@ -52,7 +52,7 @@ export interface ReactionInput {
 
 export interface MapMessageOptions {
   /** Reactions anchored to this message. NEVER read off `Message` — the real interface has no
-   * `reactions` field; inbox-ai's own `MessageBubbleProps.reactions` is a sibling prop, pulled
+   * `reactions` field; Tracta's own `MessageBubbleProps.reactions` is a sibling prop, pulled
    * out of the timeline upstream (`prepareTimeline`, MessageBubble.tsx:73-75). Mirroring that
    * split here (instead of inventing a `Message.reactions` that doesn't exist) is what keeps
    * this an honest replacement rather than a loosened one. */
@@ -71,7 +71,7 @@ export interface MapMessageOptions {
  * muted tombstone bubble (`SystemPlaceholder`, MessageBubble.tsx:1153-1179) in the deleted
  * message's place, while chat-sim's `delete` Ev removes the message from `SimState.order`
  * entirely (`fold.ts`'s visibility filter is `deleted === null`) — the thread behaves as if it
- * never happened, not as if it happened-and-was-retracted. `InboxAIReplacement.stories.tsx`
+ * never happened, not as if it happened-and-was-retracted. `TractaReplacement.stories.tsx`
  * documents this at the story level; it is why the "N KB reemplazables" count in qa.md does NOT
  * include `SystemPlaceholder` — that block is not actually covered.
  */

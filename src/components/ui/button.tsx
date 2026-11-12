@@ -24,7 +24,7 @@ const buttonVariants = cva(
         // vivo de Tracta, tema oscuro: blanco sobre #D98D7D = 2.61:1, reprueba AA
         // en TODA acción primaria de la app. `--primary-foreground` ya existe en
         // `styles/index.css` y vale `#ffffff` en los dos temas, así que para quien
-        // no lo reasigne (TimelyAI, Landing) esto no mueve un píxel. → inbox-ai#617
+        // no lo reasigne (TimelyAI, Landing) esto no mueve un píxel. → tracta#617
         default: "bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--primary)]/90",
         destructive: "bg-[var(--destructive)] text-white hover:bg-[var(--destructive)]/90",
         outline:

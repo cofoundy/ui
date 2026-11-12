@@ -1,17 +1,17 @@
-// stories/chat-sim/InboxAIReplacement.stories.tsx — T-008 acceptance #1.
+// stories/chat-sim/TractaReplacement.stories.tsx — T-008 acceptance #1.
 //
-// The fixtures below (inboxMessageFixtures.ts) are typed as the REAL inbox-ai `Message`
-// (inbox-ai/frontend/src/lib/api.ts:229) via a plain cross-repo `import type` — no adapter, no
+// The fixtures below (inboxMessageFixtures.ts) are typed as the REAL Tracta `Message`
+// (tracta/frontend/src/lib/api.ts:229) via a plain cross-repo `import type` — no adapter, no
 // hand-copied mirror. If that interface's required fields ever change shape, this story stops
-// compiling; there is no fallback path (see `__shims/inbox-ai-alias.d.ts` for the one thing that
+// compiling; there is no fallback path (see `__shims/tracta-alias.d.ts` for the one thing that
 // IS shimmed, and why it doesn't loosen this).
 //
-// "N KB reemplazables": inbox-ai/frontend/src/components/conversation/MessageBubble.tsx's own
+// "N KB reemplazables": tracta/frontend/src/components/conversation/MessageBubble.tsx's own
 // `Ticks` (delivery-tick SVG, lines 1265-1286), `DeliveryStatus` (+ its `DELIVERY_STATUS_KEYS`
 // lookup, lines 1287-1364) and `ReactionPill` (lines 1125-1152) — the three blocks this replaces
 // end to end (receipt/read state + reactions). Measured with:
 //
-//   F=inbox-ai/frontend/src/components/conversation/MessageBubble.tsx
+//   F=tracta/frontend/src/components/conversation/MessageBubble.tsx
 //   { sed -n '1125,1152p' "$F"; sed -n '1265,1286p' "$F"; sed -n '1287,1364p' "$F"; } | wc -c
 //   => 4976 bytes (4.86 KB)
 //
@@ -35,7 +35,7 @@ import {
 import '../../components/chat-sim/styles.css';
 
 const meta: Meta<typeof ChatSim> = {
-  title: 'ChatSim/InboxAI Replacement',
+  title: 'ChatSim/Tracta Replacement',
   component: ChatSim,
   tags: ['autodocs'],
   parameters: {
@@ -43,7 +43,7 @@ const meta: Meta<typeof ChatSim> = {
       description: {
         component:
           'Replaces the receipt-tick, read-state and reaction rendering of `MessageBubble.tsx` ' +
-          '(inbox-ai) with `@cofoundy/ui/chat-sim`. Fixtures are typed against the real ' +
+          '(Tracta) with `@cofoundy/ui/chat-sim`. Fixtures are typed against the real ' +
           '`Message` interface — see the file header for the exact byte range replaced.',
       },
     },
@@ -90,7 +90,7 @@ export const ReadReceipt: Story = {
   },
 };
 
-/** `TELEGRAM_CHANNEL_POST` has no `views` count in the real `Message` shape — inbox-ai is a
+/** `TELEGRAM_CHANNEL_POST` has no `views` count in the real `Message` shape — Tracta is a
  * 1:1 support inbox, not a broadcast channel, so there is no `view_count`-shaped field to map.
  * This story stays scoped to what IS derivable from `Message` (the delivery_status -> receipt
  * mapping, still exercised); `ChatSimStates.stories.tsx`'s `ViewsCounter` story is where the
@@ -108,7 +108,7 @@ export const TelegramReceipt: Story = {
 /**
  * Two named divergences from the real product, both real findings (not silently patched over):
  *
- * 1. **Edited.** inbox-ai's own `isEdited` check reads `message.metadata.edited === true`
+ * 1. **Edited.** Tracta's own `isEdited` check reads `message.metadata.edited === true`
  *    (MessageBubble.tsx:182) — NOT `message.edited_at`, even though `Message` carries both.
  *    `inboxMessageAdapter.ts` mirrors that exact field, on purpose (see its own comment) — a
  *    mapper that used the more-obvious `edited_at` would compile fine and still not match

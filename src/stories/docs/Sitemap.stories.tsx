@@ -26,7 +26,7 @@ export const Default: Story = {
             intent: "informational",
             nav_group: "primary",
             children: [
-              { path: "/products/inbox-ai", label: "Tracta" },
+              { path: "/products/tracta", label: "Tracta" },
               { path: "/products/agenda-ai", label: "Agenda AI" },
             ],
           },

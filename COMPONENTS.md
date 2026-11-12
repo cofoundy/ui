@@ -75,7 +75,7 @@ Most common needs first. Story URL pattern: `https://ui.cofoundy.dev/?path=/docs
 | **Docs MDX components** (allowlist for `docs-ai/content/*`) | see [Docs](#docs) (15 components) | Docs | `docs-*` |
 | Slot-composable client portal page | `ClientPortalPanel` | Docs | `docs-clientportalpanel` |
 | Wikilink hover preview in docs | `LinkPreviewProvider` | Docs | `docs-linkpreview` |
-| Deterministic, seeded chat-conversation simulator (WhatsApp/Telegram look, byte-identical screenshots) | `ChatSim` (React), `<cf-chat-sim>` (custom element) | Chat Sim | `chatsim-channels`, `chatsim-states`, `chatsim-inboxai-replacement` |
+| Deterministic, seeded chat-conversation simulator (WhatsApp/Telegram look, byte-identical screenshots) | `ChatSim` (React), `<cf-chat-sim>` (custom element) | Chat Sim | `chatsim-channels`, `chatsim-states`, `chatsim-tracta-replacement` |
 
 ---
 

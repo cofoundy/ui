@@ -1,5 +1,5 @@
 // react/useKeyboardInset.ts — the actual mobile-keyboard fix (architecture-v1.md §8 / T-007
-// acceptance #2). `MobileComposer.tsx` (inbox-ai, 13 KB fork) never touches `visualViewport` —
+// acceptance #2). `MobileComposer.tsx` (Tracta, 13 KB fork) never touches `visualViewport` —
 // grepped, zero hits across its whole frontend — so THIS is new ground, not a port of anything.
 //
 // Two layers, deliberately BOTH present, because a consumer page may or may not set
@@ -13,7 +13,7 @@
 //  2. If the page does NOT (default `resizes-visual`, or an older engine): the layout viewport
 //     stays full-height and `visualViewport` shrinks instead — THIS is the gap
 //     `MobileComposer.tsx` never had to close because it relies entirely on native layout
-//     (architecture-v1.md §8's own framing) and inbox-ai apparently accepted that gap. The
+//     (architecture-v1.md §8's own framing) and Tracta apparently accepted that gap. The
 //     fallback inset below (`innerHeight - visualViewport.height - offsetTop`) is what pulls the
 //     composer back above the keyboard in that case.
 //
