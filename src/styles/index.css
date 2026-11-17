@@ -113,6 +113,72 @@
   --status-info: var(--chat-primary);
 }
 
+/* ============================================
+   BRAND ACCENTS — verde, rojo, coral y WhatsApp afinados a la marca
+   Estudio de color 2026-11-17 (Figma R60d10CYPkmUGjiY9fl0Xn, pág. «06 · Estudio de color»).
+   Mismo croma OKLCH que el azul de marca (#46A0D0, C≈0.11) en vez del
+   croma neón de --chat-success / --channel-whatsapp (C 0.15-0.21).
+   Para superficies de marketing (landing, blog, CTAs). No reemplazan a
+   --chat-* / --status-* / --channel-*: esos siguen con texto blanco encima
+   en los productos.
+   Cada acento trae: base (relleno sólido y énfasis), -subtle (fondo),
+   -border y -text (texto sobre el fondo del tema). Sobre la base, el texto
+   va en --cf-on-accent: ink en oscuro (≥7:1), blanco en claro (≥5:1).
+   ============================================ */
+:root,
+[data-theme="dark"] {
+  --cf-on-accent: #0a0a0f;
+
+  --cf-accent-success: #58C295;          /* 9.0:1 con ink encima */
+  --cf-accent-success-subtle: #162623;
+  --cf-accent-success-border: #254A3E;
+  --cf-accent-success-text: #85D5AF;     /* 11.4:1 sobre #0a0a0f */
+
+  --cf-accent-error: #E38182;            /* 7.3:1 con ink encima */
+  --cf-accent-error-subtle: #2B1C20;
+  --cf-accent-error-border: #563437;
+  --cf-accent-error-text: #EF9F9E;       /* 9.5:1 sobre #0a0a0f */
+
+  --cf-accent-coral: #E68774;            /* CTA alterno, badge «nuevo». 7.6:1 con ink */
+  --cf-accent-coral-subtle: #2B1D1E;
+  --cf-accent-coral-border: #573632;
+  --cf-accent-coral-text: #F2A494;       /* 9.9:1 sobre #0a0a0f */
+
+  /* WhatsApp como CTA: botón ghost (subtle + border + ícono en la base, texto
+     en foreground). --channel-whatsapp sigue siendo el verde oficial para
+     identificar el canal en el inbox. */
+  --cf-accent-whatsapp: #6FC884;         /* 9.7:1 con ink encima */
+  --cf-accent-whatsapp-subtle: #192621;
+  --cf-accent-whatsapp-border: #2D4C38;
+  --cf-accent-whatsapp-text: #95DBA4;    /* 12.2:1 sobre #0a0a0f */
+}
+
+/* Brand accents — tema claro: mismo tono y croma, luminosidad bajada hasta
+   ≥5:1 sobre blanco y ≥4.5:1 sobre su -subtle. */
+[data-theme="light"] {
+  --cf-on-accent: #ffffff;
+
+  --cf-accent-success: #007D55;          /* 5.2:1 blanco encima */
+  --cf-accent-success-subtle: #E1F9EC;
+  --cf-accent-success-border: #AEDEC6;
+  --cf-accent-success-text: #007D55;     /* 4.7:1 sobre su subtle */
+
+  --cf-accent-error: #AB4F52;            /* 5.3:1 */
+  --cf-accent-error-subtle: #FFEAE9;
+  --cf-accent-error-border: #F6C2C1;
+  --cf-accent-error-text: #AB4F52;       /* 4.6:1 sobre su subtle */
+
+  --cf-accent-coral: #AB5241;            /* 5.2:1 */
+  --cf-accent-coral-subtle: #FFEBE5;
+  --cf-accent-coral-border: #F6C3B9;
+  --cf-accent-coral-text: #AB5241;       /* 4.6:1 sobre su subtle */
+
+  --cf-accent-whatsapp: #1C7D3D;         /* 5.2:1 */
+  --cf-accent-whatsapp-subtle: #E4F8E7;
+  --cf-accent-whatsapp-border: #B6DDBD;
+  --cf-accent-whatsapp-text: #1C7D3D;    /* 4.7:1 sobre su subtle */
+}
+
 /* Docs design tokens — promoted from docs-ai 2026-05-13.
    Consumed by docs components in @cofoundy/ui/components/docs/.
    Dark-mode defaults; light overrides below in [data-theme="light"]. */

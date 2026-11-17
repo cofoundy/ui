@@ -154,6 +154,65 @@ export const SemanticColors: Story = {
   ),
 };
 
+const ACCENTS = [
+  { key: "success", label: "Éxito", sample: "Probado en volumen" },
+  { key: "error", label: "Error", sample: "Más promesa que dato" },
+  { key: "coral", label: "Coral", sample: "Nuevo" },
+  { key: "whatsapp", label: "WhatsApp", sample: "Escribir por WhatsApp" },
+] as const;
+
+const ACCENT_SUFFIXES = ["", "-subtle", "-border", "-text"] as const;
+
+export const BrandAccents: Story = {
+  name: "Brand Accents",
+  render: () => (
+    <div className="p-6 bg-[var(--chat-card)] rounded-xl border border-[var(--chat-border)]">
+      <h2 className="text-2xl font-bold mb-2 text-[var(--chat-foreground)]">Brand Accents</h2>
+      <p className="text-[var(--chat-muted)] mb-8 max-w-2xl">
+        Verde, rojo, coral y WhatsApp con el mismo croma que el azul de marca. Para superficies de
+        marketing (landing, blog, CTAs). Sobre la base, el texto va en <code>--cf-on-accent</code>.
+        Error y coral son vecinos de tono: no van juntos en el mismo bloque.
+      </p>
+      <div className="flex flex-col gap-8">
+        {ACCENTS.map(({ key, label, sample }) => (
+          <div key={key} className="flex flex-wrap items-center gap-6">
+            <span className="w-24 text-sm font-semibold text-[var(--chat-foreground)]">{label}</span>
+            {ACCENT_SUFFIXES.map((suffix) => (
+              <div key={suffix} className="flex flex-col items-start gap-1">
+                <div
+                  className="w-16 h-16 rounded-lg border border-[var(--chat-border)]"
+                  style={{ backgroundColor: `var(--cf-accent-${key}${suffix})` }}
+                />
+                <span className="text-xs font-mono text-[var(--chat-muted)]">
+                  --cf-accent-{key}
+                  {suffix}
+                </span>
+              </div>
+            ))}
+            <span
+              className="rounded-full px-5 py-2.5 text-sm font-semibold"
+              style={{ backgroundColor: `var(--cf-accent-${key})`, color: "var(--cf-on-accent)" }}
+            >
+              {sample}
+            </span>
+            <span
+              className="rounded-full border px-5 py-2.5 text-sm font-semibold"
+              style={{
+                backgroundColor: `var(--cf-accent-${key}-subtle)`,
+                borderColor: `var(--cf-accent-${key}-border)`,
+                color: key === "whatsapp" ? "var(--chat-foreground)" : `var(--cf-accent-${key}-text)`,
+              }}
+            >
+              {key === "whatsapp" ? <span style={{ color: "var(--cf-accent-whatsapp)" }}>● </span> : null}
+              {sample}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  ),
+};
+
 export const ChannelColors: Story = {
   name: "Channel Colors",
   render: () => (
