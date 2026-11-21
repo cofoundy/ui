@@ -6,6 +6,7 @@ import {
   useEffect,
   useId,
   useCallback,
+  useLayoutEffect,
   type CSSProperties,
   type FormEvent,
   type KeyboardEvent,
@@ -38,6 +39,20 @@ export interface ComposerToolbarItem {
   onClick: () => void;
   /** Hide this item in certain modes */
   hideInModes?: string[];
+  /**
+   * Disable just this item. Default `false`. The whole-composer `disabled`
+   * still wins: an inert composer disables every item, as before.
+   */
+  disabled?: boolean;
+  /** Render `label` as visible text next to the icon (default: icon only, label as tooltip). */
+  showLabel?: boolean;
+  /** Extra classes for this item's button (e.g. an accent color). */
+  className?: string;
+  /**
+   * `data-*` attributes forwarded to the button — anchors for guided tours or
+   * tests (`{ "data-tour": "composer-instruct" }`).
+   */
+  dataAttributes?: Record<`data-${string}`, string>;
 }
 
 /** @deprecated Use ComposerMode + ComposerToolbarItem instead */
@@ -67,6 +82,20 @@ export interface MessageComposerProps {
   /* ─── Toolbar ─── */
   /** Extra toolbar items (emoji picker, template picker, etc.) rendered before attach */
   toolbarItems?: ComposerToolbarItem[];
+
+  /* ─── Controlled text (optional) ─── */
+  /**
+   * The textarea text, controlled by the parent. Omit it and the composer keeps
+   * its own state exactly as before (uncontrolled is the default).
+   *
+   * Controlled is for a parent that WRITES the text — a restored draft, a text
+   * generated for the operator to review — without going around React through
+   * the native value setter. On send the composer asks to clear it through
+   * `onValueChange("")`; it never clears a controlled value by itself.
+   */
+  value?: string;
+  /** Every change of the text: typing, and the `""` after a send. Called in both modes. */
+  onValueChange?: (value: string) => void;
 
   /* ─── Basics ─── */
   placeholder?: string;
@@ -117,6 +146,10 @@ export interface MessageComposerProps {
   quickActions?: QuickAction[];
 
   className?: string;
+  /** Extra classes for the bordered input box that wraps textarea + toolbar (e.g. a different background). */
+  inputContainerClassName?: string;
+  /** Extra classes for the textarea itself. */
+  textareaClassName?: string;
 }
 
 /**
@@ -154,8 +187,21 @@ export function MessageComposer({
   busyLabel,
   quickActions,
   className,
+  inputContainerClassName,
+  textareaClassName,
+  value,
+  onValueChange,
 }: MessageComposerProps) {
-  const [message, setMessage] = useState("");
+  const isControlled = value !== undefined;
+  const [uncontrolledMessage, setUncontrolledMessage] = useState("");
+  const message = isControlled ? value : uncontrolledMessage;
+  const setMessage = useCallback(
+    (next: string) => {
+      if (!isControlled) setUncontrolledMessage(next);
+      onValueChange?.(next);
+    },
+    [isControlled, onValueChange]
+  );
   const [stopping, setStopping] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -205,8 +251,20 @@ export function MessageComposer({
       const newHeight = Math.min(textarea.scrollHeight, maxHeight);
       textarea.style.height = `${newHeight}px`;
     },
-    [maxHeight]
+    [maxHeight, setMessage]
   );
+
+  // A controlled value can change without an input event (the parent wrote it):
+  // the textarea has to grow to fit it. Uncontrolled keeps resizing on input only.
+  useLayoutEffect(() => {
+    if (!isControlled) return;
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    if (message) {
+      textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+    }
+  }, [isControlled, message, maxHeight]);
 
   // There is something to send: text, or whatever the parent has queued.
   const canSend = (message.trim().length > 0 || allowEmptySend) && !disabled;
@@ -225,7 +283,7 @@ export function MessageComposer({
         }
       }
     },
-    [canSend, message, isBusy, onSend]
+    [canSend, message, isBusy, onSend, setMessage]
   );
 
   // Enter to send, Shift+Enter for newline
@@ -327,7 +385,8 @@ export function MessageComposer({
           "mx-3 mb-3 mt-2 rounded-xl border transition-colors",
           isAccented
             ? "border-[var(--chat-warning)]/40 bg-[var(--chat-warning)]/5"
-            : "border-[var(--chat-border)] bg-[var(--chat-input-bg,var(--chat-card-hover))]"
+            : "border-[var(--chat-border)] bg-[var(--chat-input-bg,var(--chat-card-hover))]",
+          inputContainerClassName
         )}
       >
         {/* ─── Estado: la IA está redactando ─────────────────────────────
@@ -376,7 +435,8 @@ export function MessageComposer({
               "text-[var(--chat-foreground)] text-sm",
               "placeholder:text-[var(--chat-muted)]",
               "focus:outline-none",
-              "disabled:opacity-50 disabled:cursor-not-allowed"
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+              textareaClassName
             )}
             style={{ maxHeight: `${maxHeight}px` }}
           />
@@ -424,11 +484,17 @@ export function MessageComposer({
                 key={item.id}
                 type="button"
                 onClick={item.onClick}
-                disabled={disabled}
-                className="p-1.5 rounded-lg text-[var(--chat-muted)] hover:text-[var(--chat-foreground)] hover:bg-[var(--chat-border)]/50 transition-colors disabled:opacity-50"
+                disabled={disabled || item.disabled}
+                className={cn(
+                  "p-1.5 rounded-lg text-[var(--chat-muted)] hover:text-[var(--chat-foreground)] hover:bg-[var(--chat-border)]/50 transition-colors disabled:opacity-50",
+                  item.showLabel && "inline-flex items-center gap-1.5 px-2 text-xs font-medium",
+                  item.className
+                )}
                 title={item.label}
+                {...item.dataAttributes}
               >
                 {item.icon}
+                {item.showLabel && <span>{item.label}</span>}
               </button>
             ))}
 
