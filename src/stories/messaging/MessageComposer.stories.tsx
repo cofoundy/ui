@@ -510,3 +510,43 @@ export const AllowEmptySend = () => {
     </div>
   );
 };
+
+/**
+ * Controlled text + per-item options (`value`/`onValueChange`, `disabled`,
+ * `showLabel`, `dataAttributes`, `inputContainerClassName`). The parent writes
+ * a draft into the box and tints it; typing by hand turns it back into the
+ * operator's own text.
+ */
+export const ControlledDraft = () => {
+  const [value, setValue] = useState("");
+  const [isDraft, setIsDraft] = useState(false);
+  return (
+    <div className="max-w-lg">
+      <MessageComposer
+        value={value}
+        onValueChange={(next) => {
+          setValue(next);
+          setIsDraft(false);
+        }}
+        onSend={() => setIsDraft(false)}
+        sendLabel="Enviar"
+        placeholder="Escribe un mensaje..."
+        inputContainerClassName={isDraft ? "bg-[var(--chat-primary)]/10" : undefined}
+        toolbarItems={[
+          {
+            id: "draft",
+            icon: <Sparkles className="w-[18px] h-[18px]" />,
+            label: "Redactar",
+            showLabel: true,
+            disabled: !value.trim() || isDraft,
+            dataAttributes: { "data-tour": "composer-instruct" },
+            onClick: () => {
+              setValue(`¡Hola! ${value.trim()}. Cualquier cosa, me escribes por aquí.`);
+              setIsDraft(true);
+            },
+          },
+        ]}
+      />
+    </div>
+  );
+};

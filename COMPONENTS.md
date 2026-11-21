@@ -156,7 +156,7 @@ Generic messaging primitives (used by Tracta; reusable for any chat surface).
 | `MessageMedia` | Media attachment renderer (image / file / audio). |
 | **`StreamingMarkdown`** | **NEW (v0.5.1)** — Per-char wave reveal for LLM streaming. Walks hast tree, emits flat spans keyed by source offset. Drops to `<MessageContent>` when content > 5000 chars or `prefers-reduced-motion`. |
 | `InboxMessage`, `InboxMessageList` | Composed message list (Tracta). |
-| `MessageComposer` | Multi-modal input (text + attachments + toolbar + quick actions). `busy` swaps Send for Stop while an automatic reply is in flight — the textarea stays live. |
+| `MessageComposer` | Multi-modal input (text + attachments + toolbar + quick actions). `busy` swaps Send for Stop while an automatic reply is in flight — the textarea stays live. Optional `value`/`onValueChange` make the text controlled; toolbar items take `disabled`, `showLabel`, `className`, `dataAttributes`; `inputContainerClassName`/`textareaClassName` style the box. |
 | `AIBadge` | "AI" inline pill (mark AI-generated content). |
 | **`ToolInvocation`** | **NEW (2026-10-12)** — Collapsible card for one tool call of an AI turn: `name`, one-line `summary`, `state` (`input-streaming` · `input-available` · `output-available` · `output-error`), `input` (flat object → key/value list, else JSON), `output` (text · JSON string pretty-printed, a truncated one stays text · object · ReactNode), `errorText`, `defaultOpen` (folded by default), `labels` (English defaults, all overridable). Reference: Vercel AI Elements «Tool». Helpers: `ToolInvocationStatus`, `ToolValue`. |
 | `ToolInvocationGroup` | Folds several `ToolInvocation` of one turn behind «AI ran N actions» (`labels.title(n)` to localize); flags the error count. |
